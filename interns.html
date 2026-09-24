@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interns & Research Cohorts — Curiomas CRII</title>
+  <meta name="description" content="Meet student researchers and apply for the upcoming research fellowship cohort at Curiomas CRII.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+  <canvas id="universeCanvas"></canvas>
+
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-link">
+        <div class="brand-symbol">✦</div>
+        <div class="brand-titles">
+          <span class="brand-name">CURIOMAS CRII</span>
+          <span class="brand-sub">Research & Innovation</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="research.html" class="nav-link">Research & Data</a></li>
+          <li><a href="blog.html" class="nav-link">Dispatches & Blog</a></li>
+          <li><a href="interns.html" class="nav-link active">Interns & Teams</a></li>
+          <li><a href="#apply" class="nav-link" style="color:var(--cyan-bright);">Apply as Intern</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="portal.html" class="btn btn-secondary btn-sm nav-portal-btn">
+          <span>Portal Access</span> 🔒
+        </a>
+        <button class="menu-toggle" aria-label="Toggle navigation">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 4rem 1.5rem 6rem;">
+    <!-- Interns Roster Header -->
+    <div class="section-header" style="text-align: center; margin-bottom: 3.5rem;">
+      <span class="section-tag">Student Fellowship Roster</span>
+      <h1 class="section-title">The Student Minds Behind the Frontiers</h1>
+      <p class="section-desc" style="margin: 0 auto;">
+        Our fellows are undergraduate and self-taught student scientists driving research forward across space physics, molecular evolution, machine learning, and mycology.
+      </p>
+    </div>
+
+    <!-- Active Interns Grid -->
+    <div id="internRosterContainer" class="domain-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); margin-bottom: 5rem;">
+      <!-- Injected via interns.js -->
+    </div>
+
+    <!-- Internship Application Section -->
+    <section id="apply" style="scroll-margin-top: 100px;">
+      <div class="section-header" style="text-align: center; margin-bottom: 2.5rem;">
+        <span class="section-tag">Cohort Admissions</span>
+        <h2 class="section-title">Apply for the CRII Research Fellowship</h2>
+        <p class="section-desc" style="margin: 0 auto;">
+          We are seeking dedicated student interns and researchers. Whether you specialize in computational astrophysics or evolutionary biology, there is a place for your inquiry here.
+        </p>
+      </div>
+
+      <div id="applicationFormCard" style="max-width: 760px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-glow-cyan);">
+        <form id="internApplicationForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="appFullName">Full Legal Name *</label>
+              <input type="text" id="appFullName" class="form-input" placeholder="e.g. Maya Lin" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="appEmail">Primary Email Address *</label>
+              <input type="email" id="appEmail" class="form-input" placeholder="maya.lin@university.edu" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="appUniversity">University / Institution *</label>
+              <input type="text" id="appUniversity" class="form-input" placeholder="e.g. Institute of Science" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="appFieldOfStudy">Field of Study / Major *</label>
+              <input type="text" id="appFieldOfStudy" class="form-input" placeholder="e.g. Physics, Molecular Biology, CS" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="appDivision">Preferred Research Division *</label>
+              <select id="appDivision" class="form-select" required>
+                <option value="Astrophysics & Space Science">Astrophysics & Space Science</option>
+                <option value="Ancient Biology & Paleontology">Ancient Biology & Paleontology</option>
+                <option value="AI & Computational Sciences">AI & Computational Sciences</option>
+                <option value="Astrobiology & Extremophiles">Astrobiology & Extremophiles</option>
+                <option value="Interdisciplinary Science">Interdisciplinary Frontier</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="appLevel">Current Academic Level</label>
+              <select id="appLevel" class="form-select">
+                <option value="Undergraduate (1st - 2nd Year)">Undergraduate (1st - 2nd Year)</option>
+                <option value="Undergraduate (3rd - 4th Year)">Undergraduate (3rd - 4th Year)</option>
+                <option value="Postgraduate / Master's">Postgraduate / Master's</option>
+                <option value="Independent Self-Taught Researcher">Independent Self-Taught Researcher</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="appPortfolio">GitHub Profile, ORCID, or Portfolio Link</label>
+            <input type="url" id="appPortfolio" class="form-input" placeholder="https://github.com/your-username or personal website">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="appStatement">Statement of Scientific Curiosity & Research Motivation *</label>
+            <textarea id="appStatement" class="form-textarea" placeholder="Describe the scientific question that obsesses you. What do you want to explore at CRII? (e.g., exoplanet atmospheres, Precambrian fossils, machine learning in structural biology)..." required></textarea>
+            <span style="font-size:0.75rem; color:var(--text-dim); margin-top:0.25rem;">
+              Be authentic. We care more about intellectual tenacity and curiosity than polish.
+            </span>
+          </div>
+
+          <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.95rem; font-size: 1.05rem;">
+              Submit Research Application ✦
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <div>
+        © 2026 Curiomas Research & Innovation Institute (CRII). "Learning has no bound."
+      </div>
+      <div>
+        <a href="portal.html">Admissions Review Portal</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/canvas.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/interns.js"></script>
+</body>
+</html>

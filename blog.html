@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scientific Dispatches & Blog — Curiomas CRII</title>
+  <meta name="description" content="Scientific dispatches, student research reflections, and multidisciplinary thought pieces from CRII fellows.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+</head>
+<body>
+  <canvas id="universeCanvas"></canvas>
+
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-link">
+        <div class="brand-symbol">✦</div>
+        <div class="brand-titles">
+          <span class="brand-name">CURIOMAS CRII</span>
+          <span class="brand-sub">Research & Innovation</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="research.html" class="nav-link">Research & Data</a></li>
+          <li><a href="blog.html" class="nav-link active">Dispatches & Blog</a></li>
+          <li><a href="interns.html" class="nav-link">Interns & Teams</a></li>
+          <li><a href="interns.html#apply" class="nav-link" style="color:var(--cyan-bright);">Apply as Intern</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="portal.html" class="btn btn-secondary btn-sm nav-portal-btn">
+          <span>Portal Access</span> 🔒
+        </a>
+        <button class="menu-toggle" aria-label="Toggle navigation">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 4rem 1.5rem 6rem; max-width: 980px;">
+    <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
+      <span class="section-tag">Scientific Dispatches</span>
+      <h1 class="section-title">Field Notes & Deep Dives</h1>
+      <p class="section-desc" style="margin: 0 auto;">
+        Student perspectives, theoretical explorations, and laboratory dispatches breaking down the mysteries of life, time, and cosmos.
+      </p>
+    </div>
+
+    <!-- Tag Cloud -->
+    <div style="margin-bottom: 3rem; text-align: center;">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.75rem; letter-spacing: 0.08em;">
+        Filter by Research Topic
+      </div>
+      <div id="tagList" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;">
+        <!-- Injected via blog.js -->
+      </div>
+    </div>
+
+    <!-- Blog Posts Container -->
+    <div id="blogContainer">
+      <!-- Injected via blog.js -->
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <div>
+        © 2026 Curiomas Research & Innovation Institute (CRII). "Learning has no bound."
+      </div>
+      <div>
+        <a href="portal.html">Admin & Fellow Publishing</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/canvas.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/blog.js"></script>
+</body>
+</html>

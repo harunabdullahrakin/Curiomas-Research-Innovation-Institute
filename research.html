@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research & Open Datasets — Curiomas CRII</title>
+  <meta name="description" content="Explore peer-grade preprints, articles, and verifiable open datasets across space astrophysics and ancient biology.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧬</text></svg>">
+</head>
+<body>
+  <canvas id="universeCanvas"></canvas>
+
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-link">
+        <div class="brand-symbol">✦</div>
+        <div class="brand-titles">
+          <span class="brand-name">CURIOMAS CRII</span>
+          <span class="brand-sub">Research & Innovation</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="research.html" class="nav-link active">Research & Data</a></li>
+          <li><a href="blog.html" class="nav-link">Dispatches & Blog</a></li>
+          <li><a href="interns.html" class="nav-link">Interns & Teams</a></li>
+          <li><a href="interns.html#apply" class="nav-link" style="color:var(--cyan-bright);">Apply as Intern</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="portal.html" class="btn btn-secondary btn-sm nav-portal-btn">
+          <span>Portal Access</span> 🔒
+        </a>
+        <button class="menu-toggle" aria-label="Toggle navigation">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 4rem 1.5rem 6rem;">
+    <!-- Catalog Header -->
+    <div class="section-header" style="text-align: center; margin-bottom: 2.5rem;">
+      <span class="section-tag">Open Science Repository</span>
+      <h1 class="section-title">Research Papers & Open Datasets</h1>
+      <p class="section-desc" style="margin: 0 auto;">
+        Peer-grade scientific publications, synthetic simulations, and curated open-source datasets produced by our student cohorts.
+      </p>
+    </div>
+
+    <!-- Catalog Tabs: Papers vs Datasets -->
+    <div style="display:flex; justify-content:center; gap:1rem; margin-bottom:2.5rem;">
+      <button class="btn btn-glass catalog-tab active" data-tab="papers" style="padding:0.75rem 2rem; font-size:1rem;">
+        📄 Research Papers & Preprints
+      </button>
+      <button class="btn btn-glass catalog-tab" data-tab="datasets" style="padding:0.75rem 2rem; font-size:1rem;">
+        💾 Open Scientific Datasets
+      </button>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="filter-bar">
+      <div class="search-input-group">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="researchSearch" class="search-input" placeholder="Search papers, authors, topics, or exoplanets...">
+      </div>
+
+      <div class="category-pills">
+        <button class="category-pill active" data-category="all">All Disciplines</button>
+        <button class="category-pill" data-category="Space">Space & Astrophysics</button>
+        <button class="category-pill" data-category="Ancient">Ancient Biology</button>
+        <button class="category-pill" data-category="AI">AI & Computational</button>
+        <button class="category-pill" data-category="Astrobiology">Astrobiology</button>
+      </div>
+    </div>
+
+    <!-- Research Papers Grid -->
+    <div id="papersContainer" class="domain-grid" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));">
+      <!-- Injected via research.js -->
+    </div>
+
+    <!-- Open Datasets Grid -->
+    <div id="datasetsContainer" class="domain-grid" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); display: none;">
+      <!-- Injected via research.js -->
+    </div>
+  </main>
+
+  <!-- Citation Modal -->
+  <div id="citeModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="citeModalTitle" class="modal-title">Cite Publication</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div id="citeModalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dataset Inspection Modal -->
+  <div id="datasetModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 820px;">
+      <div class="modal-header">
+        <h3 id="datasetModalTitle" class="modal-title">Inspect Dataset Schema & Samples</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div id="datasetModalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <div>
+        © 2026 Curiomas Research & Innovation Institute (CRII). "Learning has no bound."
+      </div>
+      <div>
+        <a href="portal.html">Researcher Management Portal</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/canvas.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/research.js"></script>
+</body>
+</html>
