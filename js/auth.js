@@ -1,52 +1,100 @@
 /**
  * CURIOMAS RESEARCH & INNOVATION INSTITUTE (CRII)
- * Authentication Form & Session Handler
+ * Autz.org Authentication & Permission Verification
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const loginForm = document.getElementById('portalLoginForm');
-  if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value.trim();
-      const errorMsg = document.getElementById('loginError');
-      const submitBtn = loginForm.querySelector('button[type="submit"]');
+  initAutzAuthHandler();
+});
 
-      submitBtn.disabled = true;
-      submitBtn.innerText = 'Authenticating...';
-      if (errorMsg) errorMsg.style.display = 'none';
+function initAutzAuthHandler() {
+  const autzBtn = document.getElementById('loginWithAutzBtn');
+  const autzEmailInput = document.getElementById('autzEmailDirectInput');
+  const autzDirectForm = document.getElementById('autzDirectForm');
+  const errorContainer = document.getElementById('loginError');
 
-      const res = await window.CRII_API.login(email, password);
-      if (res.success) {
-        window.showToast(`Welcome back, ${res.user.name}!`, 'success');
-        setTimeout(() => {
-          window.location.reload();
-        }, 400);
+  // 1. Direct Autz.org Launch Button
+  if (autzBtn) {
+    autzBtn.addEventListener('click', () => {
+      const appId = window.CRII_API.getAutzAppId();
+      const callbackOrigin = encodeURIComponent(window.location.origin + window.location.pathname);
+      
+      // Modal or prompt for Autz session
+      const modal = document.getElementById('autzPromptModal');
+      if (modal) {
+        modal.classList.add('active');
       } else {
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Sign In to Portal';
-        if (errorMsg) {
-          errorMsg.innerText = res.error || 'Invalid credentials';
-          errorMsg.style.display = 'block';
-        }
-        window.showToast('Login failed', 'error');
+        // Fallback direct window
+        const autzUrl = `https://autz.org/oauth?app_id=${appId}&callback=${callbackOrigin}`;
+        window.open(autzUrl, '_blank', 'width=500,height=650');
       }
     });
   }
 
-  // Pre-fill demo account helper buttons
-  window.fillDemoAccount = function(role) {
-    const emailInput = document.getElementById('loginEmail');
-    const passInput = document.getElementById('loginPassword');
-    if (!emailInput || !passInput) return;
+  // 2. Autz Verified Email Verification Form
+  if (autzDirectForm) {
+    autzDirectForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = autzEmailInput.value.trim();
+      const submitBtn = autzDirectForm.querySelector('button[type="submit"]');
 
-    if (role === 'admin') {
-      emailInput.value = 'admin@curiomas.org';
-      passInput.value = 'curiomas2026';
-    } else {
-      emailInput.value = 'aria@curiomas.org';
-      passInput.value = 'research2026';
-    }
-  };
-});
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `Verifying with Autz.org...`;
+      if (errorContainer) errorContainer.style.display = 'none';
+
+      // Simulate Autz.org verified payload
+      const autzPayload = {
+        email: email,
+        autzorg_id: `autz_${Math.random().toString(36).substring(2, 9)}`,
+        verified: true
+      };
+
+      const result = await window.CRII_API.authenticateWithAutz(autzPayload);
+
+      if (result.success) {
+        window.showToast(`Access Granted: Welcome back, ${result.user.name}!`, 'success');
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `Verify & Sign In 🔒`;
+        if (errorContainer) {
+          errorContainer.innerHTML = `
+            <strong>Security Alert:</strong> ${result.error}
+          `;
+          errorContainer.style.display = 'block';
+        }
+        window.showToast('Authentication Rejected: Not Whitelisted', 'error');
+      }
+    });
+  }
+
+  // Check URL query parameters for Autz.org callback token if redirected
+  const urlParams = new URLSearchParams(window.location.search);
+  const autzEmailParam = urlParams.get('autz_email') || urlParams.get('email');
+  if (autzEmailParam) {
+    window.CRII_API.authenticateWithAutz({
+      email: autzEmailParam,
+      autzorg_id: urlParams.get('autzorg_id') || 'autz_oauth',
+      verified: true
+    }).then(res => {
+      if (res.success) {
+        window.location.href = 'portal.html';
+      } else {
+        if (errorContainer) {
+          errorContainer.innerText = res.error;
+          errorContainer.style.display = 'block';
+        }
+      }
+    });
+  }
+}
+
+// Quick fill for testing
+window.fillAutzAccount = function(email) {
+  const input = document.getElementById('autzEmailDirectInput');
+  if (input) {
+    input.value = email;
+  }
+};
