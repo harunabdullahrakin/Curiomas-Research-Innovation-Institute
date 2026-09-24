@@ -172,6 +172,7 @@
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .card:hover {
@@ -179,6 +180,48 @@
   border-color: var(--border-focus);
   box-shadow: var(--shadow-md);
   transform: translateY(-3px);
+}
+
+.card:hover .card-cover-img {
+  transform: scale(1.04);
+}
+
+/* Card Cover Image */
+.card-cover {
+  width: calc(100% + 4rem);
+  margin: -2rem -2rem 1.5rem -2rem;
+  height: 190px;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+/* Full Article Hero Cover Banner */
+.article-cover-wrapper {
+  width: 100%;
+  max-height: 440px;
+  border-radius: 18px;
+  overflow: hidden;
+  margin: 1.5rem 0 2.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  background: var(--bg-surface);
+}
+
+.article-cover-img {
+  width: 100%;
+  height: 100%;
+  max-height: 440px;
+  object-fit: cover;
+  display: block;
 }
 
 .card-top {

@@ -41,6 +41,20 @@ function renderArticle(post) {
   const authorsEl = document.getElementById('postAuthors');
   if (authorsEl) authorsEl.innerText = (post.authors || []).join(' • ');
 
+  // Cover Image
+  const coverWrapper = document.getElementById('postCoverWrapper');
+  if (coverWrapper) {
+    if (post.coverImage) {
+      coverWrapper.innerHTML = `
+        <div class="article-cover-wrapper">
+          <img src="${post.coverImage}" alt="${post.title}" class="article-cover-img" loading="eager" onerror="this.parentElement.style.display='none'">
+        </div>
+      `;
+    } else {
+      coverWrapper.innerHTML = '';
+    }
+  }
+
   // Abstract
   const abstractEl = document.getElementById('postAbstract');
   if (abstractEl && post.abstract) {
