@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research Publication — Curiomas CRII</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
+  <style>
+    /* Top Reading Progress Bar */
+    #readProgressBar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: var(--grad-cyan-blue);
+      box-shadow: 0 0 10px var(--cyan-bright);
+      z-index: 9999;
+      transition: width 0.1s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="readProgressBar"></div>
+  <canvas id="universeCanvas"></canvas>
+
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-link">
+        <div class="brand-symbol">✦</div>
+        <div class="brand-titles">
+          <span class="brand-name">CURIOMAS CRII</span>
+          <span class="brand-sub">Research & Innovation</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="research.html" class="nav-link active">Research & Data</a></li>
+          <li><a href="blog.html" class="nav-link">Dispatches & Blog</a></li>
+          <li><a href="interns.html" class="nav-link">Interns & Teams</a></li>
+          <li><a href="interns.html#apply" class="nav-link" style="color:var(--cyan-bright);">Apply as Intern</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="portal.html" class="btn btn-secondary btn-sm nav-portal-btn">
+          <span>Portal Access</span> 🔒
+        </a>
+        <button class="menu-toggle" aria-label="Toggle navigation">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 3.5rem 1.5rem 6rem; max-width: 860px;" id="articleContainer">
+    <!-- Breadcrumb -->
+    <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.5rem;">
+      <a href="index.html">Home</a> / <a href="research.html">Research Publications</a> / <span id="postCategory" style="color: var(--cyan-bright);"></span>
+    </div>
+
+    <!-- Article Header -->
+    <div style="margin-bottom: 2.5rem;">
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;">
+        <span class="paper-date" id="postDate"></span>
+        <span style="color: var(--border-subtle);">•</span>
+        <span class="paper-date" id="postReadTime"></span>
+        <span style="color: var(--border-subtle);">•</span>
+        <span class="paper-date" id="postDoi" style="color: var(--text-cyan); font-family: var(--font-mono);"></span>
+      </div>
+
+      <h1 id="postTitle" style="font-size: 2.5rem; line-height: 1.2; margin-bottom: 1.25rem;"></h1>
+
+      <div style="font-size: 1rem; color: #cbd5e1; margin-bottom: 2rem;">
+        <strong>Authors:</strong> <span id="postAuthors" style="color: var(--cyan-bright);"></span>
+      </div>
+
+      <!-- Action Toolbar -->
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; padding: 1rem 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+        <button id="citePostBtn" class="btn btn-secondary btn-sm">Cite This Paper</button>
+        <button id="sharePostBtn" class="btn btn-secondary btn-sm">Share Article</button>
+        <a href="research.html" class="btn btn-glass btn-sm">Browse Associated Datasets</a>
+      </div>
+    </div>
+
+    <!-- Abstract Box -->
+    <div id="postAbstract"></div>
+
+    <!-- Full Article Body -->
+    <article id="postContent" style="margin-bottom: 3.5rem;">
+      <!-- Injected via article.js -->
+    </article>
+
+    <!-- Tags -->
+    <div style="padding: 1.5rem 0; border-top: 1px solid var(--border-subtle); margin-bottom: 3rem;">
+      <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-dim); display: block; margin-bottom: 0.5rem;">Index Keywords</span>
+      <div id="postTags" style="display: flex; flex-wrap: wrap; gap: 0.4rem;"></div>
+    </div>
+
+    <!-- Institute Attribution Box -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 2rem; display: flex; gap: 1.5rem; align-items: center;">
+      <div style="width: 60px; height: 60px; border-radius: var(--radius-md); background: linear-gradient(135deg, rgba(0,242,254,0.2), rgba(121,40,202,0.3)); border: 1px solid var(--border-glow); display: grid; place-items: center; font-size: 1.8rem; flex-shrink: 0;">
+        ✦
+      </div>
+      <div>
+        <h4 style="font-size: 1.15rem; margin-bottom: 0.35rem; color: #fff;">Curiomas Research & Innovation Institute</h4>
+        <p style="font-size: 0.9rem; line-height: 1.5; color: var(--text-muted); margin: 0;">
+          This paper is authored by student researchers at CRII under open science principles. We believe scientific inquiry belongs to anyone with curious tenacity. "Learning has no bound."
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <div>
+        © 2026 Curiomas Research & Innovation Institute (CRII). Open Access under CC-BY 4.0.
+      </div>
+      <div>
+        <a href="research.html">← Back to All Research</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/canvas.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/article.js"></script>
+</body>
+</html>
