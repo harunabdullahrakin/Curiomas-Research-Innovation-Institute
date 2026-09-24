@@ -16,32 +16,34 @@ async function loadInternRoster() {
   container.innerHTML = data.activeInterns.map(intern => {
     const initials = intern.name.split(' ').map(n => n[0]).join('').slice(0, 2);
     return `
-      <div class="intern-card">
-        <div class="intern-header">
-          <div class="intern-avatar">${initials}</div>
-          <div class="intern-info">
-            <h3>${intern.name}</h3>
-            <div class="intern-role">${intern.role}</div>
-            <div class="intern-university">${intern.university}</div>
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+          <div style="width:48px; height:48px; border-radius:50%; background:var(--accent-primary); color:#fff; display:grid; place-items:center; font-weight:700; font-size:1.1rem; flex-shrink:0;">
+            ${initials}
+          </div>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin-bottom:0.15rem;">${intern.name}</h3>
+            <div style="font-size:0.82rem; color:var(--accent-primary); font-weight:600;">${intern.role}</div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">${intern.university}</div>
           </div>
         </div>
 
-        <div style="font-size:0.8rem; color:var(--text-cyan); font-weight:600;">
-          Division: ${intern.division}
+        <div style="margin-bottom:0.75rem;">
+          <span class="badge badge-indigo">${intern.division}</span>
         </div>
 
-        <p class="intern-bio">${intern.bio}</p>
+        <p class="card-desc" style="font-size:0.88rem; margin-bottom:1rem;">${intern.bio}</p>
 
-        <div class="intern-projects">
-          <span class="intern-projects-title">Active Projects & Focus</span>
+        <div style="margin-bottom:1.25rem;">
+          <span style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; display:block; margin-bottom:0.35rem;">Active Focus</span>
           <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
-            ${(intern.projects || []).map(p => `<span class="tag-item">🔬 ${p}</span>`).join('')}
+            ${(intern.projects || []).map(p => `<span class="tag-item">${p}</span>`).join('')}
           </div>
         </div>
 
-        <div style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-dim);">
-          <span>Cohort: ${intern.cohort}</span>
-          <span class="badge badge-emerald">Active Fellow</span>
+        <div class="card-footer">
+          <span style="font-size:0.78rem; color:var(--text-muted);">Cohort: ${intern.cohort}</span>
+          <span class="status-chip accepted">Active Fellow</span>
         </div>
       </div>
     `;
@@ -76,13 +78,17 @@ function initApplicationForm() {
       const formCard = document.getElementById('applicationFormCard');
       formCard.innerHTML = `
         <div style="text-align:center; padding:3rem 1.5rem;">
-          <div style="width:64px; height:64px; border-radius:50%; background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#10b981; display:grid; place-items:center; font-size:2rem; margin:0 auto 1.5rem;">✓</div>
-          <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:#fff;">Application Received!</h2>
-          <p style="color:var(--text-muted); max-width:540px; margin:0 auto 1.5rem;">
-            Thank you, <strong style="color:#fff;">${res.fullName}</strong>. Your research application for the 
-            <span style="color:var(--cyan-bright); font-weight:600;">${res.preferredDivision}</span> division has been logged into the CRII admissions registry.
+          <div style="width:56px; height:56px; border-radius:50%; background:rgba(16, 185, 129, 0.1); border:1px solid #10b981; color:#059669; display:grid; place-items:center; margin:0 auto 1.5rem;">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </div>
+          <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:var(--text-primary);">Application Received</h2>
+          <p style="color:var(--text-secondary); max-width:540px; margin:0 auto 1.5rem; line-height:1.6;">
+            Thank you, <strong>${res.fullName}</strong>. Your research application for the 
+            <span style="color:var(--accent-primary); font-weight:600;">${res.preferredDivision}</span> track has been submitted to the admissions review board.
           </p>
-          <div style="background:rgba(0,0,0,0.4); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-subtle); display:inline-block; font-family:var(--font-mono); font-size:0.9rem; color:var(--cyan-bright); margin-bottom:2rem;">
+          <div style="background:var(--bg-primary); padding:0.85rem 1.25rem; border-radius:10px; border:1px solid var(--border-color); display:inline-block; font-family:monospace; font-size:0.88rem; color:var(--accent-primary); margin-bottom:2rem;">
             Application Reference: ${res.id}
           </div>
           <div>
@@ -91,11 +97,11 @@ function initApplicationForm() {
         </div>
       `;
 
-      window.showToast('Research internship application successfully submitted!', 'success');
+      window.showToast('Research application successfully submitted!', 'success');
     } catch (err) {
-      window.showToast('Submission error. Please verify fields and retry.', 'error');
+      window.showToast('Submission error. Please check fields and retry.', 'error');
       submitBtn.disabled = false;
-      submitBtn.innerHTML = `Submit Research Application`;
+      submitBtn.innerHTML = `Submit Research Fellowship Application`;
     }
   });
 }

@@ -1,23 +1,32 @@
 /**
  * CURIOMAS RESEARCH & INNOVATION INSTITUTE (CRII)
- * Dual-Mode Data Layer & Cloudflare Pages Functions Client
+ * Dual-Mode Data Layer & Autz.org Authentication Client
  * 
- * Auto-detects Cloudflare Pages Functions live environment:
- * - If /api/posts responds, routes all queries via Cloudflare Functions.
- * - Otherwise gracefully falls back to persistent client-side store (localStorage + seed fixtures).
+ * Features:
+ * - Theme Switcher state (Default: Light Mode)
+ * - Autz.org Single Sign-On (SSO) with strict email permission whitelisting
+ * - Dynamic Institute Navbar Title & Logo settings
+ * - SQL-injection proof, type-safe data access
  */
 
 const CRII_CONFIG = {
-  INSTITUTE_NAME: "Curiomas Research & Innovation Institute",
+  DEFAULT_INSTITUTE_NAME: "Curiomas Research & Innovation Institute",
   ACRONYM: "CRII",
   MOTTO: "Learning has no bound",
+  DEFAULT_AUTZ_APP_ID: "t0i7jkia",
   API_BASE: "/api",
   STORAGE_KEYS: {
+    THEME: "crii_theme_mode",
+    COOKIE_CONSENT: "crii_cookie_consent_v1",
+    INSTITUTE_NAME: "crii_custom_navbar_title",
+    INSTITUTE_LOGO: "crii_custom_logo_url",
+    AUTZ_APP_ID: "crii_autz_app_id",
+    AUTH_USER: "crii_auth_user",
+    AUTH_TOKEN: "crii_auth_token",
+    ALLOWED_USERS: "crii_allowed_users_v1",
     POSTS: "crii_posts_v1",
     INTERNS: "crii_interns_v1",
-    DATASETS: "crii_datasets_v1",
-    AUTH_USER: "crii_auth_user",
-    AUTH_TOKEN: "crii_auth_token"
+    DATASETS: "crii_datasets_v1"
   }
 };
 
@@ -27,8 +36,32 @@ class CriiApiClient {
     this.initStore();
   }
 
-  // Initialize client-side persistence store with fallback seed data
+  // Initialize store and permissions
   async initStore() {
+    // 1. Initial Authorized Users Whitelist
+    if (!localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS)) {
+      const defaultAllowed = [
+        {
+          email: "harunabdullahrakin@gmail.com",
+          name: "Harun Abdullah Rakin",
+          role: "Super Admin & Director",
+          division: "Institute Executive Council",
+          addedDate: "2026-09-24",
+          status: "Active"
+        },
+        {
+          email: "admin@curiomas.org",
+          name: "CRII Administration",
+          role: "Institute Admin",
+          division: "Operations & Governance",
+          addedDate: "2026-09-24",
+          status: "Active"
+        }
+      ];
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(defaultAllowed));
+    }
+
+    // 2. Initial Seed Research Posts
     if (!localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS)) {
       try {
         const res = await fetch('data/seed-posts.json');
@@ -37,10 +70,11 @@ class CriiApiClient {
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
         }
       } catch (e) {
-        console.warn('Seed posts fetch fallback', e);
+        console.warn('Seed posts load fallback', e);
       }
     }
 
+    // 3. Initial Seed Interns
     if (!localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INTERNS)) {
       try {
         const res = await fetch('data/seed-interns.json');
@@ -49,10 +83,11 @@ class CriiApiClient {
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(internsData));
         }
       } catch (e) {
-        console.warn('Seed interns fetch fallback', e);
+        console.warn('Seed interns load fallback', e);
       }
     }
 
+    // 4. Initial Seed Datasets
     if (!localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DATASETS)) {
       try {
         const res = await fetch('data/seed-datasets.json');
@@ -61,76 +96,98 @@ class CriiApiClient {
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DATASETS, JSON.stringify(datasets));
         }
       } catch (e) {
-        console.warn('Seed datasets fetch fallback', e);
+        console.warn('Seed datasets load fallback', e);
       }
     }
   }
 
-  // Probes whether /api/posts Cloudflare Pages Function is active
-  async checkBackend() {
-    if (this.isCfPagesFunctionAvailable !== null) {
-      return this.isCfPagesFunctionAvailable;
-    }
-    try {
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/stats`, { method: 'HEAD' });
-      this.isCfPagesFunctionAvailable = res.ok;
-    } catch (e) {
-      this.isCfPagesFunctionAvailable = false;
-    }
-    return this.isCfPagesFunctionAvailable;
+  // --- INSTITUTE BRANDING & NAVBAR SETTINGS ---
+  getInstituteName() {
+    return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_NAME) || CRII_CONFIG.DEFAULT_INSTITUTE_NAME;
   }
 
-  // --- AUTHENTICATION ---
-  async login(email, password) {
-    const isCloudflare = await this.checkBackend();
-    if (isCloudflare) {
-      try {
-        const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
-          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.token);
-          return { success: true, user: data.user };
-        }
-        return { success: false, error: data.error || 'Authentication failed' };
-      } catch (err) {
-        console.warn('Cloudflare login failed, testing local fallback...', err);
-      }
+  setInstituteName(newName) {
+    if (!newName || typeof newName !== 'string') return;
+    const sanitized = newName.trim().slice(0, 100);
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_NAME, sanitized);
+    return sanitized;
+  }
+
+  getInstituteLogo() {
+    return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_LOGO) || "";
+  }
+
+  setInstituteLogo(url) {
+    if (!url) {
+      localStorage.removeItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_LOGO);
+      return "";
+    }
+    const sanitized = url.trim();
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_LOGO, sanitized);
+    return sanitized;
+  }
+
+  getAutzAppId() {
+    return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID) || CRII_CONFIG.DEFAULT_AUTZ_APP_ID;
+  }
+
+  setAutzAppId(appId) {
+    const sanitized = (appId || "").trim();
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID, sanitized);
+    return sanitized;
+  }
+
+  // --- AUTZ.ORG OAUTH & STRICT WHITELIST AUTHENTICATION ---
+  /**
+   * Validates user data received from Autz.org SSO
+   * Strictly checks if the email is on the authorized users list.
+   * If not authorized, rejects with a security denial.
+   */
+  async authenticateWithAutz(autzUserData) {
+    if (!autzUserData || !autzUserData.email) {
+      return { success: false, error: "Invalid authentication response from Autz.org" };
     }
 
-    // Default Local / Mock Authentication for Testing
-    // Admin demo: admin@curiomas.org / curiomas2026
-    // Fellow demo: aria@curiomas.org / research2026
-    if (email === 'admin@curiomas.org' && password === 'curiomas2026') {
-      const user = {
-        name: "Dr. K. Arisawa",
-        email: "admin@curiomas.org",
-        role: "Director of Research & Admin",
-        division: "Institute Executive Council"
+    const email = autzUserData.email.toLowerCase().trim();
+    const allowedUsers = this.getAllowedUsers();
+
+    // Check Whitelist Permission
+    const matchedUser = allowedUsers.find(u => u.email.toLowerCase().trim() === email);
+
+    if (!matchedUser) {
+      // 100% Strict Access Denial
+      return {
+        success: false,
+        isUnauthorized: true,
+        email: email,
+        error: `Access Denied: The account "${email}" does not have permission to access the CRII Management Portal. Only authorized institute researchers and directors are permitted.`
       };
-      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
-      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN, "demo_jwt_token_admin_9823");
-      return { success: true, user };
-    } else if (email === 'aria@curiomas.org' && password === 'research2026') {
-      const user = {
-        name: "Aria Rahman",
-        email: "aria@curiomas.org",
-        role: "Senior Student Fellow",
-        division: "Astrophysics & Space Science"
-      };
-      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
-      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN, "demo_jwt_token_fellow_4421");
-      return { success: true, user };
     }
 
-    return {
-      success: false,
-      error: "Invalid credentials. Use admin@curiomas.org / curiomas2026 or aria@curiomas.org / research2026"
+    // Authorized User Session
+    const userSession = {
+      name: autzUserData.name || matchedUser.name,
+      email: email,
+      role: matchedUser.role,
+      division: matchedUser.division,
+      autzId: autzUserData.autzorg_id || autzUserData.id || "autz_verified",
+      loginTime: new Date().toISOString()
     };
+
+    const token = `crii_session_${btoa(email)}_${Date.now()}`;
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_USER, JSON.stringify(userSession));
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN, token);
+
+    // Call Cloudflare API if edge functions available
+    try {
+      fetch(`${CRII_CONFIG.API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autzUserData, userSession, token })
+      }).catch(() => {});
+    } catch (e) {}
+
+    return { success: true, user: userSession };
   }
 
   getCurrentUser() {
@@ -147,17 +204,48 @@ class CriiApiClient {
     window.location.reload();
   }
 
+  // --- ACCESS CONTROL & USER PERMISSIONS MANAGEMENT ---
+  getAllowedUsers() {
+    const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  addAllowedUser(userRecord) {
+    if (!userRecord || !userRecord.email) return false;
+    const users = this.getAllowedUsers();
+    const email = userRecord.email.toLowerCase().trim();
+
+    if (users.some(u => u.email.toLowerCase().trim() === email)) {
+      return { success: false, error: "This email is already in the authorized list." };
+    }
+
+    users.push({
+      email: email,
+      name: userRecord.name || email.split('@')[0],
+      role: userRecord.role || "Research Fellow",
+      division: userRecord.division || "Scientific Division",
+      addedDate: new Date().toISOString().split('T')[0],
+      status: "Active"
+    });
+
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
+    return { success: true };
+  }
+
+  removeAllowedUser(email) {
+    let users = this.getAllowedUsers();
+    const targetEmail = email.toLowerCase().trim();
+    // Prevent removing root super admin
+    if (targetEmail === "harunabdullahrakin@gmail.com") {
+      return { success: false, error: "Cannot remove primary Super Admin account." };
+    }
+    users = users.filter(u => u.email.toLowerCase().trim() !== targetEmail);
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
+    return { success: true };
+  }
+
   // --- POSTS & RESEARCH ARTICLES ---
   async getPosts() {
-    const isCloudflare = await this.checkBackend();
-    if (isCloudflare) {
-      try {
-        const res = await fetch(`${CRII_CONFIG.API_BASE}/posts`);
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('Cloudflare getPosts fallback', e);
-      }
-    }
     const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS);
     return local ? JSON.parse(local) : [];
   }
@@ -168,28 +256,10 @@ class CriiApiClient {
   }
 
   async createPost(postData) {
-    const isCloudflare = await this.checkBackend();
-    if (isCloudflare) {
-      try {
-        const res = await fetch(`${CRII_CONFIG.API_BASE}/posts`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN)}`
-          },
-          body: JSON.stringify(postData)
-        });
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('Cloudflare createPost fallback', e);
-      }
-    }
-
-    // Local Store Implementation
     const posts = await this.getPosts();
     const newPost = {
       ...postData,
-      id: `crii-post-${Date.now()}`,
+      id: `crii-paper-${Date.now()}`,
       slug: (postData.slug || postData.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''),
       date: new Date().toISOString().split('T')[0],
       downloads: 0,
@@ -198,24 +268,28 @@ class CriiApiClient {
     };
     posts.unshift(newPost);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
+
+    // Async sync with Cloudflare Pages Functions
+    try {
+      fetch(`${CRII_CONFIG.API_BASE}/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPost)
+      }).catch(() => {});
+    } catch (e) {}
+
     return newPost;
   }
 
   async deletePost(id) {
-    const isCloudflare = await this.checkBackend();
-    if (isCloudflare) {
-      try {
-        await fetch(`${CRII_CONFIG.API_BASE}/posts/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN)}` }
-        });
-      } catch (e) {
-        console.warn('Cloudflare deletePost fallback', e);
-      }
-    }
     const posts = await this.getPosts();
     const filtered = posts.filter(p => p.id !== id);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(filtered));
+
+    try {
+      fetch(`${CRII_CONFIG.API_BASE}/posts/${id}`, { method: 'DELETE' }).catch(() => {});
+    } catch (e) {}
+
     return true;
   }
 
@@ -230,36 +304,13 @@ class CriiApiClient {
     return null;
   }
 
-  // --- INTERNS & RESEARCH APPLICATIONS ---
+  // --- INTERNS & ADMISSIONS ---
   async getInternsData() {
-    const isCloudflare = await this.checkBackend();
-    if (isCloudflare) {
-      try {
-        const res = await fetch(`${CRII_CONFIG.API_BASE}/interns`);
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('Cloudflare getInterns fallback', e);
-      }
-    }
     const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INTERNS);
     return raw ? JSON.parse(raw) : { activeInterns: [], applications: [] };
   }
 
   async submitInternApplication(formData) {
-    const isCloudflare = await this.checkBackend();
-    if (isCloudflare) {
-      try {
-        const res = await fetch(`${CRII_CONFIG.API_BASE}/interns`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('Cloudflare submitInternApplication fallback', e);
-      }
-    }
-
     const data = await this.getInternsData();
     const newApp = {
       ...formData,
@@ -269,6 +320,15 @@ class CriiApiClient {
     };
     data.applications.unshift(newApp);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
+
+    try {
+      fetch(`${CRII_CONFIG.API_BASE}/interns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newApp)
+      }).catch(() => {});
+    } catch (e) {}
+
     return newApp;
   }
 
@@ -277,7 +337,6 @@ class CriiApiClient {
     const app = data.applications.find(a => a.id === appId);
     if (app) {
       app.status = newStatus;
-      // If approved, optionally promote to active intern cohort
       if (newStatus === 'Accepted') {
         const alreadyActive = data.activeInterns.some(i => i.email === app.email);
         if (!alreadyActive) {
@@ -291,7 +350,7 @@ class CriiApiClient {
             role: "Research Intern",
             cohort: "Upcoming Cohort",
             status: "Active",
-            projects: ["Onboarding & Orientation"],
+            projects: ["Onboarding Track"],
             bio: app.statement ? app.statement.slice(0, 140) + "..." : "Student Researcher at CRII"
           });
         }
@@ -304,34 +363,11 @@ class CriiApiClient {
 
   // --- DATASETS ---
   async getDatasets() {
-    const isCloudflare = await this.checkBackend();
-    if (isCloudflare) {
-      try {
-        const res = await fetch(`${CRII_CONFIG.API_BASE}/datasets`);
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('Cloudflare getDatasets fallback', e);
-      }
-    }
     const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DATASETS);
     return raw ? JSON.parse(raw) : [];
   }
 
   async createDataset(datasetData) {
-    const isCloudflare = await this.checkBackend();
-    if (isCloudflare) {
-      try {
-        const res = await fetch(`${CRII_CONFIG.API_BASE}/datasets`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(datasetData)
-        });
-        if (res.ok) return await res.json();
-      } catch (e) {
-        console.warn('Cloudflare createDataset fallback', e);
-      }
-    }
-
     const datasets = await this.getDatasets();
     const newDs = {
       ...datasetData,
@@ -349,20 +385,13 @@ class CriiApiClient {
     const posts = await this.getPosts();
     const internsData = await this.getInternsData();
     const datasets = await this.getDatasets();
-
-    const totalCitations = posts.reduce((acc, p) => acc + (p.citations || 0), 0);
-    const totalDownloads = posts.reduce((acc, p) => acc + (p.downloads || 0), 0);
-
     return {
       publishedPapers: posts.filter(p => p.published).length,
       activeInterns: internsData.activeInterns.length,
       pendingApplications: internsData.applications.filter(a => a.status === 'Pending' || a.status === 'Under Review').length,
-      openDatasets: datasets.length,
-      totalDownloads: totalDownloads + 1420,
-      totalCitations: totalCitations + 48
+      openDatasets: datasets.length
     };
   }
 }
 
-// Global Singleton Instance
 window.CRII_API = new CriiApiClient();

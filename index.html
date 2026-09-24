@@ -1,293 +1,324 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Curiomas Research & Innovation Institute — CRII</title>
-  <meta name="description" content="A student-led scientific institute pioneering open research from deep space astrophysics to ancient biology. Learning has no bound.">
+  <meta name="description" content="A secure platform for developing and sharing reproducible methods. Bring structure to your research from deep space to ancient biology.">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%232563eb%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><circle cx=%2212%22 cy=%2212%22 r=%2210%22/><path d=%22m4.93 4.93 4.24 4.24%22/><path d=%22m14.83 9.17 4.24-4.24%22/><path d=%22m14.83 14.83 4.24 4.24%22/><path d=%22m9.17 14.83-4.24 4.24%22/></svg>">
 </head>
 <body>
-  <!-- Interactive Cosmic & Synaptic Canvas -->
-  <canvas id="universeCanvas"></canvas>
-
-  <!-- Site Navigation -->
-  <header class="site-header">
-    <div class="container navbar">
+  <!-- Floating 85% Width Glassy Navbar Separated From Top -->
+  <div class="header-wrapper">
+    <header class="navbar">
       <a href="index.html" class="brand-link">
-        <div class="brand-symbol">✦</div>
-        <div class="brand-titles">
-          <span class="brand-name">CURIOMAS CRII</span>
-          <span class="brand-sub">Research & Innovation</span>
+        <div class="brand-logo-container">
+          <div class="brand-logo-fallback">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+              <path d="M2 12h20"/>
+            </svg>
+          </div>
+        </div>
+        <div class="brand-text-block">
+          <span class="brand-title">Curiomas Research & Innovation Institute</span>
+          <span class="brand-sub">CRII • Open Science Collective</span>
         </div>
       </a>
 
       <nav>
-        <ul class="nav-links">
+        <ul class="nav-menu">
           <li><a href="index.html" class="nav-link active">Home</a></li>
           <li><a href="research.html" class="nav-link">Research & Data</a></li>
-          <li><a href="blog.html" class="nav-link">Dispatches & Blog</a></li>
-          <li><a href="interns.html" class="nav-link">Interns & Teams</a></li>
-          <li><a href="interns.html#apply" class="nav-link" style="color:var(--cyan-bright);">Apply as Intern</a></li>
+          <li><a href="blog.html" class="nav-link">Dispatches</a></li>
+          <li><a href="interns.html" class="nav-link">Interns & Roster</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
         </ul>
       </nav>
 
       <div class="nav-actions">
+        <!-- Light / Dark Theme Switcher Button -->
+        <button class="theme-toggle-btn" aria-label="Toggle Light and Dark Mode" title="Toggle theme">
+          <!-- Sun Icon (shown in dark mode) -->
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+          <!-- Moon Icon (shown in light mode) -->
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        </button>
+
         <a href="portal.html" class="btn btn-secondary btn-sm nav-portal-btn">
-          <span>Portal Access</span> 🔒
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>Portal</span>
         </a>
-        <button class="menu-toggle" aria-label="Toggle navigation">☰</button>
+
+        <button class="menu-toggle" aria-label="Toggle Menu">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+  </div>
+
+  <!-- Hero Section with Background Video -->
+  <section class="hero-section">
+    <!-- Ambient Scientific Video Background -->
+    <div class="hero-video-container">
+      <video class="hero-bg-video" autoplay muted loop playsinline poster="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%230f172a'/>">
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4" type="video/mp4">
+      </video>
+      <div class="hero-video-overlay"></div>
+    </div>
+
+    <!-- Hero Content -->
+    <div class="hero-content">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6Z"/>
+        </svg>
+        <span>Open Science Research Platform</span>
+      </div>
+
+      <h1 class="hero-title">
+        Bring structure to your research
+      </h1>
+
+      <p class="hero-subtitle">
+        A secure platform for developing and sharing reproducible methods.
+      </p>
+
+      <p class="hero-desc">
+        Curiomas Research & Innovation Institute (CRII) is an autonomous, student-driven scientific institute. 
+        We complete research from deep space exoplanetary atmospheres to ancient biology and genomic divergence — providing verifiable datasets, peer-grade articles, and open pipelines so learning has no bound.
+      </p>
+
+      <div class="hero-actions">
+        <a href="research.html" class="btn btn-primary" style="padding: 0.8rem 1.8rem;">
+          <span>Explore Featured Articles</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+          </svg>
+        </a>
+        <a href="interns.html#apply" class="btn btn-secondary" style="padding: 0.8rem 1.8rem;">
+          <span>Apply as Student Fellow</span>
+        </a>
+        <a href="contact.html" class="btn btn-glass" style="padding: 0.8rem 1.6rem;">
+          <span>Contact Institute</span>
+        </a>
       </div>
     </div>
-  </header>
+  </section>
 
-  <!-- Main Content -->
-  <main>
-    <!-- Hero Section -->
-    <section class="hero-section">
-      <div class="container hero-content">
-        <div class="hero-pill">
-          <span class="pulse-dot"></span>
-          <span>Student-Led Open Science Frontier • 2026 Cohorts</span>
+  <!-- Featured Articles Section -->
+  <section class="section container">
+    <div class="section-header">
+      <span class="section-pill">Peer-Grade Publications</span>
+      <h2 class="section-title">Featured Articles</h2>
+      <p class="section-desc">
+        Rigorous, reproducible research across astrophysics, evolutionary paleogenomics, and machine-learning biophysics.
+      </p>
+    </div>
+
+    <div class="cards-grid" id="featuredArticlesContainer">
+      <!-- Article 1 -->
+      <article class="card">
+        <div class="card-top">
+          <span class="badge badge-blue">Space & Astrophysics</span>
+          <span class="card-date">March 2026</span>
         </div>
-
-        <h1 class="hero-title">
-          From Deep Space to <br>
-          <span class="text-gradient">Ancient Biology.</span> <br>
-          <span class="text-gradient-purple">Learning Has No Bound.</span>
-        </h1>
-
-        <p class="hero-subtitle">
-          Curiomas Research & Innovation Institute (CRII) is an autonomous, student-driven research powerhouse. 
-          We investigate cosmic exoplanetary atmospheres, ancient Ediacaran genomic clocks, and extreme AI biophysics — 
-          publishing peer-grade papers and verifiable open datasets to elevate young scientists worldwide.
+        <h3 class="card-title">
+          <a href="article.html?id=crii-paper-2026-001">Spectroscopic Signatures of Atmospheric Biosignatures on TRAPPIST-1e</a>
+        </h3>
+        <div class="card-authors">
+          Aria Rahman (CRII Fellow), Tariq Al-Mansoor
+        </div>
+        <p class="card-desc">
+          High-resolution atmospheric modeling using synthetic transit transmission spectroscopy across 0.6–12 μm to disentangle abiotic photolytic oxygen from biological disequilibrium on rocky worlds.
         </p>
-
-        <div class="hero-cta">
-          <a href="research.html" class="btn btn-primary">
-            <span>Explore Research Catalog</span> →
-          </a>
-          <a href="interns.html#apply" class="btn btn-purple">
-            <span>Join Our Research Cohort</span> ✦
-          </a>
-          <a href="portal.html" class="btn btn-secondary">
-            <span>Researcher & Admin Portal</span>
-          </a>
+        <div class="card-footer">
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">DOI: 10.5281/crii.2026.0101</span>
+          <a href="article.html?id=crii-paper-2026-001" class="btn btn-glass btn-sm">Read Article</a>
         </div>
+      </article>
 
-        <!-- Live Institute Stats Bar -->
-        <div class="stats-strip">
-          <div class="stat-item">
-            <div class="stat-number" id="homeStatPapers">4+</div>
-            <div class="stat-label">Published Preprints</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number" id="homeStatInterns">12+</div>
-            <div class="stat-label">Student Fellows</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number" id="homeStatDatasets">4</div>
-            <div class="stat-label">Open Datasets</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number" id="homeStatDownloads">1,600+</div>
-            <div class="stat-label">Data Downloads</div>
-          </div>
+      <!-- Article 2 -->
+      <article class="card">
+        <div class="card-top">
+          <span class="badge badge-amber">Ancient Biology</span>
+          <span class="card-date">February 2026</span>
         </div>
-      </div>
-    </section>
+        <h3 class="card-title">
+          <a href="article.html?id=crii-paper-2026-002">Molecular Clocks and the Ediacaran-Cambrian Explosion: Reassessing Divergence Chronologies</a>
+        </h3>
+        <div class="card-authors">
+          Shayan Debnath, Maya Lin-Cruz
+        </div>
+        <p class="card-desc">
+          Reconstructing early metazoan lineage bifurcation through relaxed Bayesian molecular clock algorithms and stratigraphic calibrations from 38 fossil formations worldwide.
+        </p>
+        <div class="card-footer">
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">DOI: 10.5281/crii.2026.0102</span>
+          <a href="article.html?id=crii-paper-2026-002" class="btn btn-glass btn-sm">Read Article</a>
+        </div>
+      </article>
 
-    <!-- Research Divisions Overview -->
-    <section class="container" style="padding: 4rem 0;">
-      <div class="section-header text-center" style="text-align: center; margin-bottom: 3.5rem;">
-        <span class="section-tag">Scientific Divisions</span>
-        <h2 class="section-title">Bridging Frontiers Across Deep Time & Space</h2>
-        <p class="section-desc" style="margin: 0 auto;">
-          Our interdisciplinary divisions cross-pollinate methods from astrophysical radiative transfer into taphonomic paleobiology and geometric machine learning.
+      <!-- Article 3 -->
+      <article class="card">
+        <div class="card-top">
+          <span class="badge badge-indigo">AI & Computation</span>
+          <span class="card-date">January 2026</span>
+        </div>
+        <h3 class="card-title">
+          <a href="article.html?id=crii-paper-2026-003">Geometric Deep Learning for Thermostable Enzyme Design Inspired by Vent Microbes</a>
+        </h3>
+        <div class="card-authors">
+          Kenji Takahashi, Elena Rostova
+        </div>
+        <p class="card-desc">
+          Deploying SE(3)-equivariant Graph Neural Networks on hyperthermophilic archaea structures to uncover thermal stabilization motifs and engineer green biocatalysts.
+        </p>
+        <div class="card-footer">
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">DOI: 10.5281/crii.2026.0103</span>
+          <a href="article.html?id=crii-paper-2026-003" class="btn btn-glass btn-sm">Read Article</a>
+        </div>
+      </article>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem;">
+      <a href="research.html" class="btn btn-secondary">
+        <span>Browse All Research Publications & Open Datasets</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Open Science & Reproducible Methods Pillars -->
+  <section class="section" style="background: var(--bg-surface); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-pill">Open Science Standards</span>
+        <h2 class="section-title">Built for Rigorous, Verifiable Science</h2>
+        <p class="section-desc">
+          Every preprint, model checkpoint, and calibration dataset is published transparently for global verification and education.
         </p>
       </div>
 
-      <div class="domain-grid">
-        <!-- Division 1 -->
-        <div class="domain-card">
-          <div class="domain-icon">🪐</div>
-          <h3 class="domain-title">Space & Astrophysics</h3>
-          <p class="domain-desc">
-            Modeling rocky exoplanetary atmospheres, stellar flare photometric deconvolution, synthetic transmission spectra, and orbital perturbation dynamics.
+      <div class="cards-grid">
+        <div class="card" style="border-radius: 16px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--accent-primary); display: grid; place-items: center; margin-bottom: 1.25rem;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/>
+            </svg>
+          </div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-primary);">Preprints & Open Access</h3>
+          <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+            All papers are authored by undergraduate, postgraduate, and self-directed student researchers with verifiable DOIs under Creative Commons licenses.
           </p>
-          <div class="domain-topics">
-            <span class="tag-item">JWST Simulations</span>
-            <span class="tag-item">Biosignatures</span>
-            <span class="tag-item">TRAPPIST-1</span>
-          </div>
-          <a href="research.html?domain=space" class="btn btn-glass btn-sm" style="margin-top: auto;">Explore Space Papers →</a>
         </div>
 
-        <!-- Division 2 -->
-        <div class="domain-card">
-          <div class="domain-icon">🧬</div>
-          <h3 class="domain-title">Ancient Biology & Paleontology</h3>
-          <p class="domain-desc">
-            Deciphering the Ediacaran-Cambrian macroevolutionary pulse, microfossil biogeochemistry, Bayesian relaxed molecular clocks, and deep-time phylogenomics.
+        <div class="card" style="border-radius: 16px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #059669; display: grid; place-items: center; margin-bottom: 1.25rem;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>
+            </svg>
+          </div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-primary);">Curated Datasets</h3>
+          <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+            Direct access to raw synthetic spectra, fossil calibration trees, and radiation dosimetry tables in open CSV, JSON, and HDF5 formats.
           </p>
-          <div class="domain-topics">
-            <span class="tag-item">Cambrian Radiation</span>
-            <span class="tag-item">Precambrian Biota</span>
-            <span class="tag-item">Ortholog Clocks</span>
-          </div>
-          <a href="research.html?domain=ancient" class="btn btn-glass btn-sm" style="margin-top: auto;">Explore Ancient Bio →</a>
         </div>
 
-        <!-- Division 3 -->
-        <div class="domain-card">
-          <div class="domain-icon">⚡</div>
-          <h3 class="domain-title">AI & Computational Science</h3>
-          <p class="domain-desc">
-            Deploying geometric deep learning, equivariant graph networks, and thermodynamic latent models to engineer enzymes inspired by hydrothermal vent extremophiles.
+        <div class="card" style="border-radius: 16px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: #6366f1; display: grid; place-items: center; margin-bottom: 1.25rem;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-primary);">Student Fellowship Cohorts</h3>
+          <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+            Empowering students worldwide through collaborative research tracks, mentorship, and real publishing opportunities.
           </p>
-          <div class="domain-topics">
-            <span class="tag-item">Equivariant GNNs</span>
-            <span class="tag-item">Protein Folding</span>
-            <span class="tag-item">Enzyme Resilience</span>
-          </div>
-          <a href="research.html?domain=ai" class="btn btn-glass btn-sm" style="margin-top: auto;">Explore AI Research →</a>
-        </div>
-
-        <!-- Division 4 -->
-        <div class="domain-card">
-          <div class="domain-icon">🍄</div>
-          <h3 class="domain-title">Astrobiology & Extremophiles</h3>
-          <p class="domain-desc">
-            Testing biological resilience under cosmic ionizing radiation, radio-synthesis in melanized fungi, and closed-loop bioregenerative life support systems.
-          </p>
-          <div class="domain-topics">
-            <span class="tag-item">Radiotrophic Fungi</span>
-            <span class="tag-item">Cosmic Radiation</span>
-            <span class="tag-item">Martian Regolith</span>
-          </div>
-          <a href="research.html?domain=astrobiology" class="btn btn-glass btn-sm" style="margin-top: auto;">Explore Astrobiology →</a>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Featured Research Highlight -->
-    <section class="container" style="padding: 2rem 0 5rem;">
-      <div style="background: linear-gradient(135deg, rgba(14, 21, 38, 0.9), rgba(6, 9, 19, 0.95)); border: 1px solid var(--border-glow); border-radius: var(--radius-lg); padding: 3rem; box-shadow: var(--shadow-glow-cyan);">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-          <span class="badge badge-cyan">Featured Research Paper</span>
-          <span style="font-size:0.85rem; font-family:var(--font-mono); color:var(--text-cyan);">DOI: 10.5281/crii.2026.0101</span>
-        </div>
-
-        <h2 style="font-size: 2.1rem; margin-bottom: 1rem; color:#fff;">
-          Spectroscopic Signatures of Atmospheric Biosignatures on TRAPPIST-1e: A Comparative Synthetic Simulation
-        </h2>
-
-        <p style="font-size: 1.05rem; line-height: 1.7; color: var(--text-muted); margin-bottom: 2rem;">
-          By Aria Rahman (CRII Fellow), Tariq Al-Mansoor, and the CRII Astrophysics Cohort. 
-          Discover how our student researchers modeled transit spectroscopy across 0.6–12 μm to disentangle abiotic photolytic oxygen buildup from legitimate biological disequilibrium on nearby temperate rocky exoplanets.
-        </p>
-
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-          <a href="article.html?id=crii-paper-2026-001" class="btn btn-primary">Read Full Research Paper</a>
-          <a href="research.html" class="btn btn-secondary">Browse All 4 Preprints</a>
-          <button class="btn btn-glass" onclick="copyToClipboard('https://curiomas.org/article?id=crii-paper-2026-001', 'Direct paper link copied!')">Share Paper Link</button>
-        </div>
+  <!-- Join the Institute Banner -->
+  <section class="section container" style="text-align: center;">
+    <div style="max-width: 800px; margin: 0 auto; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 24px; padding: 3.5rem 2rem; box-shadow: var(--shadow-md);">
+      <h2 style="font-size: 2.3rem; margin-bottom: 1rem; color: var(--text-primary);">
+        Ready to Advance Frontier Science?
+      </h2>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">
+        Applications are open for the upcoming research fellowship cohort. 
+        Whether you are analyzing exoplanetary light curves or fossil horizons, your curiosity has a home here.
+      </p>
+      <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <a href="interns.html#apply" class="btn btn-primary" style="padding: 0.85rem 2rem;">
+          <span>Submit Fellowship Application</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+          </svg>
+        </a>
+        <a href="contact.html" class="btn btn-secondary" style="padding: 0.85rem 1.8rem;">
+          <span>Contact Institute Desk</span>
+        </a>
       </div>
-    </section>
-
-    <!-- Why Student Open Research Section -->
-    <section class="container" style="padding: 3rem 0 5rem;">
-      <div class="section-header" style="text-align: center;">
-        <span class="section-tag">Institute Philosophy</span>
-        <h2 class="section-title">Why Curiomas CRII?</h2>
-        <p class="section-desc" style="margin: 0 auto;">
-          Traditional academia frequently restricts early undergraduates and self-driven youths to passive coursework. We believe young minds can formulate novel scientific questions today.
-        </p>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
-        <div style="background:var(--bg-card); padding:2rem; border-radius:var(--radius-lg); border:1px solid var(--border-subtle);">
-          <div style="font-size:2rem; margin-bottom:1rem;">🔓</div>
-          <h3 style="font-size:1.25rem; margin-bottom:0.75rem;">100% Open Data & Code</h3>
-          <p style="font-size:0.92rem;">Every simulation, molecular calibration table, and dataset is released under CC-BY 4.0 or Open Science licenses. No paywalls, ever.</p>
-        </div>
-
-        <div style="background:var(--bg-card); padding:2rem; border-radius:var(--radius-lg); border:1px solid var(--border-subtle);">
-          <div style="font-size:2rem; margin-bottom:1rem;">🤝</div>
-          <h3 style="font-size:1.25rem; margin-bottom:0.75rem;">Student-to-Student Mentorship</h3>
-          <p style="font-size:0.92rem;">Senior fellows train incoming interns in Bayesian statistics, phylogenetic toolchains, radiative transfer codes, and computational pipelines.</p>
-        </div>
-
-        <div style="background:var(--bg-card); padding:2rem; border-radius:var(--radius-lg); border:1px solid var(--border-subtle);">
-          <div style="font-size:2rem; margin-bottom:1rem;">🚀</div>
-          <h3 style="font-size:1.25rem; margin-bottom:0.75rem;">Global Collaboration</h3>
-          <p style="font-size:0.92rem;">We bridge members across continents and timezones, unified by a passion to explore nature from quarks and Cambrian fossils to cosmic voids.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Call for Interns Banner -->
-    <section class="container" style="padding: 2rem 0 6rem;">
-      <div style="background: linear-gradient(135deg, rgba(121, 40, 202, 0.25), rgba(0, 242, 254, 0.15)); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 3.5rem 2rem; text-align: center; position: relative; overflow: hidden;">
-        <h2 style="font-size: 2.4rem; margin-bottom: 1rem; color: #fff;">
-          Ready to Conduct Real Research?
-        </h2>
-        <p style="max-width: 650px; margin: 0 auto 2rem; font-size: 1.1rem; color: #cbd5e1;">
-          Applications are now open for the upcoming student research cohort. 
-          No prior publication record required — only genuine curiosity, persistence, and a drive to learn without bounds.
-        </p>
-        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-          <a href="interns.html#apply" class="btn btn-primary" style="padding: 0.9rem 2.2rem; font-size: 1.05rem;">
-            Submit Research Application →
-          </a>
-          <a href="interns.html" class="btn btn-secondary">
-            Meet Current Student Fellows
-          </a>
-        </div>
-      </div>
-    </section>
-  </main>
+    </div>
+  </section>
 
   <!-- Site Footer -->
   <footer class="site-footer">
     <div class="container footer-grid">
       <div class="footer-brand">
         <div class="brand-link" style="margin-bottom: 0.75rem;">
-          <div class="brand-symbol">✦</div>
-          <div class="brand-titles">
-            <span class="brand-name">CURIOMAS CRII</span>
-            <span class="brand-sub">Research & Innovation</span>
+          <div class="brand-logo-container">
+            <div class="brand-logo-fallback" style="width: 32px; height: 32px;">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>
+              </svg>
+            </div>
           </div>
+          <span class="brand-title" style="font-size: 0.95rem;">Curiomas Research & Innovation Institute</span>
         </div>
         <p>
-          Curiomas Research & Innovation Institute — An autonomous, student-driven scientific collective.
-          "Learning has no bound."
+          An autonomous student research collective. "Learning has no bound."
         </p>
-        <div style="font-size: 0.8rem; color: var(--text-dim);">
-          Hosted on Cloudflare Pages with Serverless Edge Functions.
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          Protected with Autz.org SSO • Hosted on Cloudflare Pages.
         </div>
       </div>
 
       <div class="footer-col">
-        <h4>Frontiers</h4>
+        <h4>Navigation</h4>
         <ul class="footer-links">
-          <li><a href="research.html?domain=space">Space & Astrophysics</a></li>
-          <li><a href="research.html?domain=ancient">Ancient Paleobiology</a></li>
-          <li><a href="research.html?domain=ai">AI & Bio-Computation</a></li>
-          <li><a href="research.html?domain=astrobiology">Astrobiology</a></li>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="research.html">Publications & Datasets</a></li>
+          <li><a href="blog.html">Dispatches & Blog</a></li>
+          <li><a href="interns.html">Interns Roster</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
         </ul>
       </div>
 
       <div class="footer-col">
-        <h4>Institute</h4>
+        <h4>Divisions</h4>
         <ul class="footer-links">
-          <li><a href="research.html">Open Publications</a></li>
-          <li><a href="research.html">Scientific Datasets</a></li>
-          <li><a href="blog.html">Dispatches & Blog</a></li>
-          <li><a href="interns.html">Intern Roster</a></li>
-          <li><a href="interns.html#apply">Join as Intern</a></li>
+          <li><a href="research.html?domain=space">Space & Astrophysics</a></li>
+          <li><a href="research.html?domain=ancient">Ancient Biology & Paleontology</a></li>
+          <li><a href="research.html?domain=ai">AI & Computational Science</a></li>
+          <li><a href="research.html?domain=astrobiology">Astrobiology & Extremophiles</a></li>
         </ul>
       </div>
 
@@ -295,39 +326,24 @@
         <h4>Management</h4>
         <ul class="footer-links">
           <li><a href="portal.html">Researcher Portal</a></li>
-          <li><a href="portal.html#login">Admin Login</a></li>
-          <li><a href="https://github.com" target="_blank">GitHub Repository</a></li>
-          <li><a href="mailto:contact@curiomas.org">Contact Institute</a></li>
+          <li><a href="https://autz.org" target="_blank">Autz.org Identity</a></li>
+          <li><a href="interns.html#apply">Admissions</a></li>
+          <li><a href="contact.html">Institutional Collaboration</a></li>
         </ul>
       </div>
     </div>
 
     <div class="container footer-bottom">
       <div>
-        © 2026 Curiomas Research & Innovation Institute (CRII). All research licensed under CC-BY 4.0 Open Science.
+        © 2026 Curiomas Research & Innovation Institute (CRII). All research open under CC-BY 4.0.
       </div>
-      <div style="display: flex; gap: 1.5rem;">
-        <a href="research.html">Open Access Policy</a>
-        <a href="portal.html">System Status</a>
+      <div>
+        <a href="portal.html">Portal Login</a>
       </div>
     </div>
   </footer>
 
-  <!-- Scripts -->
-  <script src="js/canvas.js"></script>
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
-  <script>
-    // Update live stats in Hero from API
-    document.addEventListener('DOMContentLoaded', async () => {
-      const stats = await window.CRII_API.getStats();
-      if (stats) {
-        document.getElementById('homeStatPapers').innerText = stats.publishedPapers + '+';
-        document.getElementById('homeStatInterns').innerText = stats.activeInterns + '+';
-        document.getElementById('homeStatDatasets').innerText = stats.openDatasets;
-        document.getElementById('homeStatDownloads').innerText = stats.totalDownloads.toLocaleString();
-      }
-    });
-  </script>
 </body>
 </html>

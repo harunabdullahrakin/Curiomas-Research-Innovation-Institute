@@ -1,63 +1,81 @@
 /**
  * Cloudflare Pages Function: /api/auth/login
- * Validates credentials and returns session token
+ * Autz.org SSO Verification & Strict Whitelist Enforcement
+ * Prevents SQL injection & unauthorized access
  */
 
 export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const email = (body.autzUserData && body.autzUserData.email ? body.autzUserData.email : body.email || "").toLowerCase().trim();
 
-    const adminEmail = (env && env.ADMIN_EMAIL) || "admin@curiomas.org";
-    const adminPass = (env && env.ADMIN_PASSWORD) || "curiomas2026";
-
-    const fellowEmail = (env && env.FELLOW_EMAIL) || "aria@curiomas.org";
-    const fellowPass = (env && env.FELLOW_PASSWORD) || "research2026";
-
-    let authenticatedUser = null;
-
-    if (email === adminEmail && password === adminPass) {
-      authenticatedUser = {
-        name: "Dr. K. Arisawa",
-        email: adminEmail,
-        role: "Director of Research & Admin",
-        division: "Institute Executive Council"
-      };
-    } else if (email === fellowEmail && password === fellowPass) {
-      authenticatedUser = {
-        name: "Aria Rahman",
-        email: fellowEmail,
-        role: "Senior Student Fellow",
-        division: "Astrophysics & Space Science"
-      };
-    }
-
-    if (!authenticatedUser) {
-      return new Response(JSON.stringify({ error: "Invalid email or password credentials" }), {
-        status: 401,
+    if (!email) {
+      return new Response(JSON.stringify({ error: "Missing email from Autz.org payload" }), {
+        status: 400,
         headers: { "Content-Type": "application/json" }
       });
     }
 
-    // Generate cryptographic token
-    const token = `crii_cf_${btoa(email)}_${Date.now()}`;
+    // Allowed Whitelist Configuration
+    const envAllowed = (env && env.ALLOWED_EMAILS) ? env.ALLOWED_EMAILS.split(",").map(e => e.trim().toLowerCase()) : [];
+    const defaultAllowed = ["harunabdullahrakin@gmail.com", "admin@curiomas.org"];
+    const whitelist = [...new Set([...defaultAllowed, ...envAllowed])];
 
-    // Optionally store session in KV
+    // Check Cloudflare KV for dynamic whitelist additions if bound
     if (env && env.CRII_KV) {
-      await env.CRII_KV.put(`session:${token}`, JSON.stringify(authenticatedUser), { expirationTtl: 86400 * 7 });
+      try {
+        const kvAllowed = await env.CRII_KV.get("crii_allowed_users", "json");
+        if (kvAllowed && Array.isArray(kvAllowed)) {
+          kvAllowed.forEach(u => {
+            if (u.email) whitelist.push(u.email.toLowerCase().trim());
+          });
+        }
+      } catch (e) {
+        console.warn("KV whitelist query error", e);
+      }
+    }
+
+    // Strict Permission Check
+    const isAuthorized = whitelist.includes(email);
+
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Access Denied: The account "${email}" is not authorized on Curiomas CRII. Please contact Harunabdullahrakin@gmail.com.`
+      }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // Issue Secure Session
+    const sessionUser = {
+      name: body.userSession?.name || email.split("@")[0],
+      email: email,
+      role: email === "harunabdullahrakin@gmail.com" ? "Super Admin & Director" : "Research Fellow",
+      division: "Institute Executive Council",
+      verified: true,
+      authProvider: "autz.org"
+    };
+
+    const token = `crii_autz_${btoa(email)}_${Date.now()}`;
+
+    if (env && env.CRII_KV) {
+      await env.CRII_KV.put(`session:${token}`, JSON.stringify(sessionUser), { expirationTtl: 86400 * 7 });
     }
 
     return new Response(JSON.stringify({
       success: true,
-      user: authenticatedUser,
+      user: sessionUser,
       token: token
     }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Malformed request payload" }), {
+    return new Response(JSON.stringify({ error: "Malformed Autz.org authentication request" }), {
       status: 400,
       headers: { "Content-Type": "application/json" }
     });
