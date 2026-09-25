@@ -376,7 +376,15 @@
             <div id="bloggerPaneDetails" class="blogger-tab-pane" style="display: none; max-width: 860px;">
               <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label" for="bloggerCoverInput">Cover Image URL</label>
-                <input type="url" id="bloggerCoverInput" class="form-input" placeholder="https://images.unsplash.com/... or /assets/...">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <input type="url" id="bloggerCoverInput" class="form-input" style="flex: 1;" placeholder="https://images.unsplash.com/... or upload below">
+                  <label class="btn btn-secondary btn-sm" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; margin-bottom: 0; padding: 0.5rem 0.85rem;" title="Upload image directly to Cloudflare R2 storage">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Upload Image</span>
+                    <input type="file" id="bloggerCoverFileInput" accept="image/*" style="display: none;" onchange="handleCoverFileUpload(event)">
+                  </label>
+                </div>
+                <div id="bloggerCoverUploadStatus" style="font-size: 0.78rem; margin-top: 0.35rem; display: none;"></div>
                 <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; font-size: 0.75rem;">
                   <span style="color: var(--text-muted); align-self: center;">Scientific Presets:</span>
                   <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;" onclick="setBloggerCoverPreset('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80')">Space / Cosmos</button>

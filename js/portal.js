@@ -292,6 +292,84 @@ window.setBloggerCoverPreset = function(url) {
   }
 };
 
+window.handleCoverFileUpload = async function(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('bloggerCoverUploadStatus');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = 'var(--accent)';
+    statusEl.innerHTML = `⏳ Uploading "${file.name}" to Cloudflare R2...`;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      throw new Error(data.details || data.error || 'Upload failed');
+    }
+
+    const input = document.getElementById('bloggerCoverInput');
+    if (input) {
+      input.value = data.url;
+      updateCoverPreview(data.url);
+    }
+
+    if (statusEl) {
+      statusEl.style.color = '#10b981';
+      statusEl.innerHTML = `✓ Uploaded to R2 successfully: <code>${data.url}</code>`;
+    }
+  } catch (err) {
+    console.error('R2 Upload error:', err);
+    if (statusEl) {
+      statusEl.style.color = '#ef4444';
+      statusEl.innerHTML = `⚠️ Upload failed: ${err.message}. (You can still paste any external image URL).`;
+    }
+  }
+};
+
+window.handleBlockImageUpload = async function(event, idx) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const statusSpan = document.getElementById(`blockUploadStatus_${idx}`);
+  if (statusSpan) {
+    statusSpan.style.display = 'inline-block';
+    statusSpan.style.color = 'var(--accent)';
+    statusSpan.innerHTML = `⏳ Uploading...`;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      throw new Error(data.details || data.error || 'Upload failed');
+    }
+
+    updateBlockContent(idx, 'url', data.url);
+    renderBlockStack();
+  } catch (err) {
+    console.error('R2 Block Upload error:', err);
+    alert('Upload failed: ' + err.message + '\n\nMake sure Cloudflare R2 is bound as "STORAGE" in Pages Settings -> Functions.');
+    if (statusSpan) statusSpan.style.display = 'none';
+  }
+};
+
 // Convert string markdown to block array
 function convertContentToInitialBlocks(content) {
   if (!content) return [{ id: `b-${Date.now()}`, type: 'text', content: '' }];
@@ -403,9 +481,17 @@ function renderBlockEditorFields(block, idx) {
     case 'image':
       return `
         <div style="display:flex; flex-direction:column; gap:0.5rem;">
-          <input type="url" class="form-input" placeholder="Image URL (https://images.unsplash.com/...)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="url" class="form-input" style="flex:1;" placeholder="Image URL (https://... or upload from device)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
+            <label class="btn btn-secondary btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; margin-bottom:0; font-size:0.75rem; padding:0.4rem 0.65rem;" title="Upload image to Cloudflare R2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload</span>
+              <input type="file" accept="image/*" style="display:none;" onchange="handleBlockImageUpload(event, ${idx})">
+            </label>
+          </div>
+          <span id="blockUploadStatus_${idx}" style="font-size:0.75rem; display:none;"></span>
           <input type="text" class="form-input" placeholder="Optional caption or credit..." value="${escapeHtml(block.caption || '')}" oninput="updateBlockContent(${idx}, 'caption', this.value)">
-          ${block.url ? `<div style="max-height:140px; overflow:hidden; border-radius:8px; border:1px solid var(--border-color);"><img src="${block.url}" style="width:100%; height:140px; object-fit:cover;"></div>` : ''}
+          ${block.url ? `<div style="max-height:160px; overflow:hidden; border-radius:8px; border:1px solid var(--border-color);"><img src="${block.url}" style="width:100%; height:160px; object-fit:cover;"></div>` : ''}
         </div>
       `;
 

@@ -21,4 +21,12 @@ AUTZ_APP_ID = "t0i7jkia"
 [[d1_databases]]
 binding = "DB"
 database_name = "crii-production-db"
-database_id = "crii-production-db-id"
+database_id = "b1d6a28c-8693-4526-812e-a7474ac87bc8"
+
+# ==============================================================================
+# Cloudflare R2 Object Storage Binding (Images, Media, PDFs)
+# Create in Dashboard: Storage & Databases -> R2 -> Create bucket: "crii-storage"
+# ==============================================================================
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "crii-storage"
