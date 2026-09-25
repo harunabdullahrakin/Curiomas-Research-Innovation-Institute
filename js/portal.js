@@ -155,6 +155,8 @@ function initPostForm() {
     const authorsStr = document.getElementById('postAuthorsInput').value.trim();
     const readingTime = document.getElementById('postReadTimeInput').value.trim();
     const summary = document.getElementById('postSummaryInput').value.trim();
+    const coverInput = document.getElementById('postCoverInput');
+    const coverImage = coverInput ? coverInput.value.trim() : '';
     const abstract = document.getElementById('postAbstractInput').value.trim();
     const content = document.getElementById('postContentInput').value.trim();
     const tagsStr = document.getElementById('postTagsInput').value.trim();
@@ -163,6 +165,7 @@ function initPostForm() {
     const postData = {
       title,
       category,
+      coverImage: coverImage || undefined,
       authors: authorsStr ? authorsStr.split(',').map(a => a.trim()) : ["CRII Fellow"],
       readingTime: readingTime || "8 min read",
       summary,
