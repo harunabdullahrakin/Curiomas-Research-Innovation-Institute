@@ -104,27 +104,40 @@ function renderPapers() {
     if (paper.category.includes('AI')) badgeClass = 'badge-indigo';
     if (paper.category.includes('Astrobiology')) badgeClass = 'badge-emerald';
 
+    const coverHtml = paper.coverImage ? `
+      <div class="card-cover">
+        <img src="${paper.coverImage}" alt="${paper.title}" class="card-cover-img" loading="lazy">
+      </div>
+    ` : '';
+
+    const updatedText = paper.updatedBy ? 
+      `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:600; margin-bottom:0.75rem;">● Revised by ${paper.updatedBy} on ${new Date(paper.updatedAt || paper.date).toLocaleDateString()}</div>` : '';
+
     return `
-      <article class="card">
-        <div class="card-top">
-          <span class="badge ${badgeClass}">${paper.category}</span>
-          <span class="card-date">${paper.date}</span>
-        </div>
-        <h3 class="card-title">
-          <a href="article.html?id=${paper.id}">${paper.title}</a>
-        </h3>
-        <div class="card-authors">
-          ${paper.authors ? paper.authors.join(' • ') : 'CRII Fellows'}
-        </div>
-        <p class="card-desc">${paper.summary || paper.abstract.slice(0, 150) + '...'}</p>
-        <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:1.25rem;">
-          ${(paper.tags || []).map(t => `<span class="tag-item">#${t}</span>`).join('')}
-        </div>
-        <div class="card-footer">
-          <span style="font-size: 0.78rem; font-family: monospace; color: var(--text-muted);">${paper.doi || 'Open Research'}</span>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-secondary btn-sm" onclick="openCiteModal('${paper.id}')">Cite</button>
-            <a href="article.html?id=${paper.id}" class="btn btn-primary btn-sm">Read Article</a>
+      <article class="card reveal-on-scroll" style="padding:0; overflow:hidden;">
+        ${coverHtml}
+        <div style="padding:1.5rem; display:flex; flex-direction:column; flex:1;">
+          <div class="card-top" style="margin-bottom:0.75rem;">
+            <span class="badge ${badgeClass}">${paper.category}</span>
+            <span class="card-date">${paper.date}</span>
+          </div>
+          <h3 class="card-title">
+            <a href="article.html?id=${paper.id}">${paper.title}</a>
+          </h3>
+          <div class="card-authors" style="margin-bottom:0.5rem;">
+            ${paper.authors ? paper.authors.join(' • ') : 'CRII Fellows'}
+          </div>
+          ${updatedText}
+          <p class="card-desc" style="flex:1;">${paper.summary || (paper.abstract ? paper.abstract.slice(0, 150) + '...' : '')}</p>
+          <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:1.25rem;">
+            ${(paper.tags || []).map(t => `<span class="tag-item">#${t}</span>`).join('')}
+          </div>
+          <div class="card-footer" style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--border-color);">
+            <span style="font-size: 0.76rem; font-family: monospace; color: var(--text-muted);">${paper.doi || 'Open Research'}</span>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-secondary btn-sm" onclick="openCiteModal('${paper.id}')">Cite</button>
+              <a href="article.html?id=${paper.id}" class="btn btn-primary btn-sm">Read Article</a>
+            </div>
           </div>
         </div>
       </article>

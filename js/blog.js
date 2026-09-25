@@ -37,25 +37,38 @@ function renderArticles() {
   }
 
   container.innerHTML = filtered.map(post => {
+    const coverHtml = post.coverImage ? `
+      <div class="card-cover">
+        <img src="${post.coverImage}" alt="${post.title}" class="card-cover-img" loading="lazy">
+      </div>
+    ` : '';
+
+    const updatedText = post.updatedBy ? 
+      `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:600; margin-bottom:0.75rem;">● Revised by ${post.updatedBy} on ${new Date(post.updatedAt || post.date).toLocaleDateString()}</div>` : '';
+
     return `
-      <article class="card">
-        <div class="card-top">
-          <span class="badge badge-blue">${post.category}</span>
-          <span class="card-date">${post.date} • ${post.readingTime || '8 min read'}</span>
-        </div>
-        <h2 class="card-title" style="font-size:1.45rem;">
-          <a href="article.html?id=${post.id}">${post.title}</a>
-        </h2>
-        <div class="card-authors">
-          By ${post.authors ? post.authors.join(', ') : 'CRII Fellow'}
-        </div>
-        <p class="card-desc">${post.summary || post.abstract.slice(0, 180) + '...'}</p>
-        <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:1.25rem;">
-          ${(post.tags || []).map(t => `<span class="tag-item">#${t}</span>`).join('')}
-        </div>
-        <div class="card-footer">
-          <span style="font-size:0.78rem; font-family:monospace; color:var(--text-muted);">${post.doi || 'Open Access'}</span>
-          <a href="article.html?id=${post.id}" class="btn btn-primary btn-sm">Read Full Dispatch</a>
+      <article class="card reveal-on-scroll" style="padding:0; overflow:hidden;">
+        ${coverHtml}
+        <div style="padding:1.5rem; display:flex; flex-direction:column; flex:1;">
+          <div class="card-top" style="margin-bottom:0.75rem;">
+            <span class="badge badge-blue">${post.category}</span>
+            <span class="card-date">${post.date} • ${post.readingTime || '8 min read'}</span>
+          </div>
+          <h2 class="card-title" style="font-size:1.45rem;">
+            <a href="article.html?id=${post.id}">${post.title}</a>
+          </h2>
+          <div class="card-authors" style="margin-bottom:0.4rem;">
+            By ${post.authors ? post.authors.join(', ') : 'CRII Fellow'}
+          </div>
+          ${updatedText}
+          <p class="card-desc" style="flex:1;">${post.summary || (post.abstract ? post.abstract.slice(0, 180) + '...' : '')}</p>
+          <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:1.25rem;">
+            ${(post.tags || []).map(t => `<span class="tag-item">#${t}</span>`).join('')}
+          </div>
+          <div class="card-footer" style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--border-color);">
+            <span style="font-size:0.78rem; font-family:monospace; color:var(--text-muted);">${post.doi || 'Open Access'}</span>
+            <a href="article.html?id=${post.id}" class="btn btn-primary btn-sm">Read Full Dispatch</a>
+          </div>
         </div>
       </article>
     `;

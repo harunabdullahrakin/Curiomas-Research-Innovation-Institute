@@ -11,12 +11,63 @@
 document.addEventListener('DOMContentLoaded', () => {
   initThemeEngine();
   initBrandingAndNavbar();
+  initHeroCustomization();
+  initScrollRevealEffects();
   initCustomCursor();
   initCookieConsent();
   initMobileNav();
   initUserSessionState();
   initToastContainer();
 });
+
+// Hero Appearance & Video Customization
+function initHeroCustomization() {
+  if (!window.CRII_API) return;
+  const settings = window.CRII_API.getHeroSettings();
+  if (!settings) return;
+
+  const video = document.getElementById('heroVideo');
+  if (video && settings.videoUrl) {
+    const currentSrc = video.querySelector('source')?.getAttribute('src');
+    if (currentSrc !== settings.videoUrl) {
+      video.innerHTML = `<source src="${settings.videoUrl}" type="video/mp4">`;
+      video.load();
+    }
+  }
+
+  const blurPx = settings.blurPx !== undefined ? settings.blurPx : 12;
+  const opacity = settings.overlayOpacity !== undefined ? settings.overlayOpacity : 0.55;
+
+  document.documentElement.style.setProperty('--hero-blur', `${blurPx}px`);
+  document.documentElement.style.setProperty('--hero-overlay-bg', `rgba(10, 15, 30, ${opacity})`);
+}
+
+// Scroll Reveal Animations
+function initScrollRevealEffects() {
+  const targets = document.querySelectorAll('.reveal-on-scroll, .feature-card, .research-preview-card, .data-card, .roster-card, .hero-metric-item');
+  
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach(t => t.classList.add('revealed'));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.12,
+    rootMargin: '0px 0px -40px 0px'
+  });
+
+  targets.forEach(t => {
+    t.classList.add('reveal-on-scroll');
+    observer.observe(t);
+  });
+}
 
 // 1. Theme Engine (Default: Light Mode)
 function initThemeEngine() {

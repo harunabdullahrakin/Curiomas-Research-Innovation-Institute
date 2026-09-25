@@ -41,6 +41,14 @@ function renderArticle(post) {
   const authorsEl = document.getElementById('postAuthors');
   if (authorsEl) authorsEl.innerText = (post.authors || []).join(' • ');
 
+  // Updated By & Timestamp
+  const updatedEl = document.getElementById('postUpdatedText');
+  if (updatedEl) {
+    const editor = post.updatedBy || (post.authors && post.authors[0]) || 'Lead Investigator';
+    const dateStr = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : (post.date || '2026-03-14');
+    updatedEl.innerText = `Revised by ${editor} on ${dateStr}`;
+  }
+
   // Cover Image
   const coverWrapper = document.getElementById('postCoverWrapper');
   if (coverWrapper) {

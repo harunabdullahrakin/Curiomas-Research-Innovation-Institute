@@ -10,12 +10,15 @@ pages_build_output_dir = "."
 INSTITUTE_NAME = "Curiomas Research & Innovation Institute"
 ACRONYM = "CRII"
 MOTTO = "Learning has no bound"
-ADMIN_EMAIL = "admin@curiomas.org"
-FELLOW_EMAIL = "aria@curiomas.org"
+ADMIN_EMAIL = "harunabdullahrakin@gmail.com"
+AUTZ_APP_ID = "t0i7jkia"
 
-# Optional Cloudflare KV Binding for serverless persistence:
-# Run: wrangler kv:namespace create CRII_KV
-# Then uncomment and fill your KV id:
-# [[kv_namespaces]]
-# binding = "CRII_KV"
-# id = "<YOUR_KV_NAMESPACE_ID>"
+# ==============================================================================
+# Cloudflare D1 Serverless SQL Database Binding
+# Create via: wrangler d1 create crii-production-db
+# Execute schema: wrangler d1 execute crii-production-db --file=./schema.sql
+# ==============================================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "crii-production-db"
+database_id = "crii-production-db-id"
