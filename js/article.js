@@ -5,7 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const identifier = urlParams.get('id') || urlParams.get('slug') || 'crii-paper-2026-001';
+  const identifier = urlParams.get('id') || urlParams.get('slug');
 
   const post = await window.CRII_API.getPostBySlugOrId(identifier);
 

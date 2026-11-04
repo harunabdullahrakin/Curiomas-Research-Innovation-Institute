@@ -6,16 +6,24 @@
 export async function onRequestGet(context) {
   const { env } = context;
 
-  // If Cloudflare KV is bound (e.g. CRII_KV)
   let stats = {
-    publishedPapers: 4,
+    publishedPapers: 0,
     activeInterns: 4,
-    pendingApplications: 3,
-    openDatasets: 4,
-    totalDownloads: 1648,
-    totalCitations: 49,
+    pendingApplications: 0,
+    openDatasets: 2,
+    totalDownloads: 0,
+    totalCitations: 0,
     timestamp: new Date().toISOString()
   };
+
+  if (env && env.DB) {
+    try {
+      const papersCount = await env.DB.prepare("SELECT COUNT(*) as count FROM posts WHERE published = 1").first();
+      if (papersCount && papersCount.count !== undefined) {
+        stats.publishedPapers = papersCount.count;
+      }
+    } catch (e) {}
+  }
 
   if (env && env.CRII_KV) {
     try {

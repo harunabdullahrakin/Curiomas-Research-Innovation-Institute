@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileNav();
   initUserSessionState();
   initToastContainer();
+  initFeaturedArticles();
 });
 
 // Hero Appearance & Video Customization
@@ -255,3 +256,51 @@ window.copyToClipboard = async function (text, successMsg = 'Copied to clipboard
     window.showToast('Failed to copy', 'error');
   }
 };
+
+async function initFeaturedArticles() {
+  const container = document.getElementById('featuredArticlesContainer');
+  if (!container || !window.CRII_API) return;
+
+  try {
+    const posts = await window.CRII_API.getPosts({ preferNetwork: true });
+    const published = (posts || []).filter(p => p.published !== false && !p.id.startsWith('crii-paper-2026-00'));
+
+    if (published.length === 0) return;
+
+    container.innerHTML = published.slice(0, 3).map(paper => {
+      let badgeClass = 'badge-blue';
+      if (paper.category && paper.category.includes('Ancient')) badgeClass = 'badge-amber';
+      if (paper.category && paper.category.includes('AI')) badgeClass = 'badge-indigo';
+      if (paper.category && paper.category.includes('Astrobiology')) badgeClass = 'badge-emerald';
+
+      const coverHtml = paper.coverImage ? `
+        <div class="card-cover">
+          <img src="${paper.coverImage}" alt="${paper.title}" class="card-cover-img" loading="lazy">
+        </div>
+      ` : '';
+
+      return `
+        <article class="card reveal-on-scroll">
+          ${coverHtml}
+          <div class="card-top">
+            <span class="badge ${badgeClass}">${paper.category || 'Research'}</span>
+            <span class="card-date">${paper.date || ''}</span>
+          </div>
+          <h3 class="card-title">
+            <a href="article.html?id=${encodeURIComponent(paper.id)}">${paper.title}</a>
+          </h3>
+          <div class="card-authors">
+            ${(paper.authors || []).join(', ') || 'CRII Research Core'}
+          </div>
+          <p class="card-desc">
+            ${paper.summary || (paper.abstract ? paper.abstract.slice(0, 150) + '...' : '')}
+          </p>
+          <div class="card-footer">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">DOI: ${paper.doi || '10.5281/crii.2026'}</span>
+            <a href="article.html?id=${encodeURIComponent(paper.id)}" class="btn btn-glass btn-sm">Read Article</a>
+          </div>
+        </article>
+      `;
+    }).join('');
+  } catch (e) {}
+}

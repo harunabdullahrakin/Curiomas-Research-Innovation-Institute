@@ -3,71 +3,7 @@
  * Relational SQL CRUD operations for research articles & blog dispatches via Cloudflare D1
  */
 
-const SEED_POSTS = [
-  {
-    id: "crii-paper-2026-001",
-    slug: "spectroscopic-signatures-trappist-1e",
-    title: "Spectroscopic Signatures of Atmospheric Biosignatures on TRAPPIST-1e: A Comparative Synthetic Simulation",
-    coverImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
-    authors: ["Aria Rahman (CRII Fellow)", "Tariq Al-Mansoor", "CRII Astrophysics Group"],
-    date: "2026-03-14",
-    updatedAt: "2026-09-24T18:30:00Z",
-    updatedBy: "Harun Abdullah Rakin",
-    category: "Space & Astrophysics",
-    tags: ["Exoplanets", "Spectroscopy", "JWST Data", "Atmospheric Modeling"],
-    readingTime: "12 min read",
-    doi: "10.5281/crii.2026.0101",
-    summary: "Using synthetic radiative transfer modeling and planetary atmospheric codes, our student research team models transit spectroscopy signatures to discern false-positive abiotic oxygen from true biological equilibrium on rocky M-dwarf worlds.",
-    abstract: "The characterization of terrestrial exoplanet atmospheres around M-dwarf host stars presents unprecedented opportunities and distinct challenges. In this research, we construct a 1D radiative-convective photochemical equilibrium model simulating the atmosphere of TRAPPIST-1e across diverse ocean-fraction baselines.",
-    content: "### 1. Introduction and Orbital Dynamics\n\nThe detection of exoplanetary atmospheres has transitioned from broad gas-giant characterization to high-precision terrestrial exoplanet spectroscopy.\n\n$$\\tau_\\nu = \\int \\kappa_\\nu \\rho \\, ds$$\n\n### 2. Abiotic Oxygen False Positives\n\nStellar ultraviolet flare activity can photolyze ocean water inventories, leaving behind massive abiotic oxygen columns that mimic biological signatures without active metabolism.\n\n### 3. Conclusion\n\nHigh-resolution cross-dispersion infrared spectroscopy remains our most viable path for validating genuine chemical disequilibrium.",
-    published: true,
-    featured: true,
-    downloads: 482,
-    citations: 14
-  },
-  {
-    id: "crii-paper-2026-002",
-    slug: "molecular-clocks-ediacaran-cambrian",
-    title: "Molecular Clocks and the Ediacaran-Cambrian Explosion: Reassessing Divergence Chronologies",
-    coverImage: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1200&q=80",
-    authors: ["Shayan Debnath", "Maya Lin-Cruz", "CRII Paleobiology Division"],
-    date: "2026-02-28",
-    updatedAt: "2026-09-24T19:00:00Z",
-    updatedBy: "Harun Abdullah Rakin",
-    category: "Ancient Biology & Paleontology",
-    tags: ["Paleogenomics", "Cambrian Explosion", "Molecular Clocks", "Evolution"],
-    readingTime: "15 min read",
-    doi: "10.5281/crii.2026.0102",
-    summary: "Bridging disparate fossil horizons and Bayesian relaxed molecular clock frameworks to address the enigmatic evolutionary pulse of the early Paleozoic.",
-    abstract: "The rapid emergence of bilateral animal body plans during the Ediacaran-Cambrian transition (~541 Ma) has fascinated biologists since Darwin. We analyze multi-locus nucleotide and amino acid alignments calibrated against conservative paleontological boundary constraints.",
-    content: "### 1. The Darwinian Conundrum in Contemporary Light\n\nThe apparent suddenness of the Cambrian radiation in the fossil record was historically deemed a profound challenge to phyletic gradualism.\n\n### 2. Relaxed Clock Methodologies\n\nBy integrating autocorrelated and uncorrelated lognormal rate models, our divergence estimations align deep metazoan roots into the Cryogenian period.",
-    published: true,
-    featured: true,
-    downloads: 319,
-    citations: 9
-  },
-  {
-    id: "crii-paper-2026-003",
-    slug: "geometric-deep-learning-extremophile-enzymes",
-    title: "Geometric Deep Learning for Thermostable Enzyme Design Inspired by Deep-Sea Hydrothermal Vent Microbes",
-    coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-    authors: ["Kenji Takahashi", "Elena Rostova", "CRII AI & Bioengineering Core"],
-    date: "2026-01-20",
-    updatedAt: "2026-09-24T19:15:00Z",
-    updatedBy: "Harun Abdullah Rakin",
-    category: "AI & Computational Science",
-    tags: ["Machine Learning", "Structural Biology", "Extremophiles", "Graph Neural Networks"],
-    readingTime: "10 min read",
-    doi: "10.5281/crii.2026.0103",
-    summary: "Applying equivariant graph neural networks to decipher thermal stabilization mechanisms in hyperthermophilic archaea and synthesize green biocatalysts.",
-    abstract: "Industrial biocatalysis is severely hindered by enzyme denaturation under thermal stress. We harness geometric deep learning to model electrostatic interactions and salt-bridge networks in deep-sea vent archaea.",
-    content: "### 1. High-Temperature Frontiers\n\nProteins from Methanocaldococcus jannaschii maintain structural integrity at temperatures exceeding 90°C.\n\n### 2. SE(3)-Equivariant Neural Architectures\n\nOur graph architecture explicitly respects 3D rotational and translational symmetries in atomic point clouds.",
-    published: true,
-    featured: true,
-    downloads: 612,
-    citations: 21
-  }
-];
+const SEED_POSTS = [];
 
 function formatSqlRow(row) {
   if (!row) return null;

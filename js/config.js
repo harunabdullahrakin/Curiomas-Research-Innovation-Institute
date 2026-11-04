@@ -66,17 +66,20 @@ class CriiApiClient {
       localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.HERO_SETTINGS, JSON.stringify(defaultHero));
     }
 
-    // 3. Initial Seed Research Posts
-    if (!localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS)) {
-      try {
-        const res = await fetch('data/seed-posts.json');
-        if (res.ok) {
-          const posts = await res.json();
-          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
+    // 3. Initial Seed Research Posts & Cache Purge
+    try {
+      const storedPosts = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS);
+      if (storedPosts) {
+        const parsed = JSON.parse(storedPosts);
+        if (Array.isArray(parsed) && parsed.some(p => p.id && p.id.startsWith('crii-paper-2026-00'))) {
+          const cleaned = parsed.filter(p => !p.id.startsWith('crii-paper-2026-00'));
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(cleaned));
         }
-      } catch (e) {
-        console.warn('Seed posts load fallback', e);
+      } else {
+        localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify([]));
       }
+    } catch (e) {
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify([]));
     }
 
     // 4. Initial Seed Interns & Team Members
