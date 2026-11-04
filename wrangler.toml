@@ -14,19 +14,11 @@ ADMIN_EMAIL = "harunabdullahrakin@gmail.com"
 AUTZ_APP_ID = "t0i7jkia"
 
 # ==============================================================================
-# Cloudflare D1 Serverless SQL Database Binding
-# Create via: wrangler d1 create crii-production-db
-# Execute schema: wrangler d1 execute crii-production-db --file=./schema.sql
+# Cloudflare D1 Database & R2 Storage Bindings
+# Bindings are configured directly in Cloudflare Pages Dashboard:
+# - Settings -> Bindings -> D1 database: "DB" (crii-production-db)
+# - Settings -> Bindings -> R2 bucket: "STORAGE" (crii-storage)
+#
+# (Duplicate declarations in wrangler.toml are omitted to prevent the
+# "Binding name already in use" conflict in Cloudflare Pages builds)
 # ==============================================================================
-[[d1_databases]]
-binding = "DB"
-database_name = "crii-production-db"
-database_id = "b1d6a28c-8693-4526-812e-a7474ac87bc8"
-
-# ==============================================================================
-# Cloudflare R2 Object Storage Binding (Images, Media, PDFs)
-# Create in Dashboard: Storage & Databases -> R2 -> Create bucket: "crii-storage"
-# ==============================================================================
-[[r2_buckets]]
-binding = "STORAGE"
-bucket_name = "crii-storage"
