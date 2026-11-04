@@ -44,30 +44,11 @@ function initHeroCustomization() {
   document.documentElement.style.setProperty('--hero-overlay-bg', `rgba(10, 15, 30, ${opacity})`);
 }
 
-// Scroll Reveal Animations
+// Scroll Reveal Animations - Immediate visibility guaranteed
 function initScrollRevealEffects() {
-  const targets = document.querySelectorAll('.reveal-on-scroll, .feature-card, .research-preview-card, .data-card, .roster-card, .hero-metric-item');
-  
-  if (!('IntersectionObserver' in window)) {
-    targets.forEach(t => t.classList.add('revealed'));
-    return;
-  }
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('revealed');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, {
-    threshold: 0.12,
-    rootMargin: '0px 0px -40px 0px'
-  });
-
+  const targets = document.querySelectorAll('.reveal-on-scroll, .feature-card, .research-preview-card, .data-card, .roster-card, .hero-metric-item, .card');
   targets.forEach(t => {
-    t.classList.add('reveal-on-scroll');
-    observer.observe(t);
+    t.classList.add('revealed');
   });
 }
 
@@ -281,7 +262,7 @@ async function initFeaturedArticles() {
       ` : '';
 
       return `
-        <article class="card reveal-on-scroll">
+        <article class="card">
           ${coverHtml}
           <div class="card-top">
             <span class="badge ${badgeClass}">${paper.category || 'Research'}</span>
@@ -345,7 +326,7 @@ async function initHomeTeam() {
       const avatarUrl = member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
       const badgeText = member.isTeamMember ? '★ Executive Council' : '★ Research Fellow';
       return `
-        <div class="card reveal-on-scroll">
+        <div class="card">
           <div style="display:flex; align-items:center; gap:1.15rem; margin-bottom:1.15rem;">
             <img src="${avatarUrl}" alt="${member.name}" style="width:58px; height:58px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-primary);">
             <div>

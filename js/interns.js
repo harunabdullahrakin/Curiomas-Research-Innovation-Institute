@@ -80,7 +80,7 @@ function renderMemberCard(member) {
   }
 
   return `
-    <div class="card reveal-on-scroll">
+    <div class="card">
       <div style="display:flex; align-items:center; gap:1.15rem; margin-bottom:1.15rem;">
         <img src="${avatarUrl}" alt="${member.name}" style="width:58px; height:58px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-primary); box-shadow:var(--shadow-sm); flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'">
         <div>

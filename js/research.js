@@ -114,7 +114,7 @@ function renderPapers() {
       `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:600; margin-bottom:0.75rem;">● Revised by ${paper.updatedBy} on ${new Date(paper.updatedAt || paper.date).toLocaleDateString()}</div>` : '';
 
     return `
-      <article class="card reveal-on-scroll" style="padding:0; overflow:hidden;">
+      <article class="card" style="padding:0; overflow:hidden;">
         ${coverHtml}
         <div style="padding:1.5rem; display:flex; flex-direction:column; flex:1;">
           <div class="card-top" style="margin-bottom:0.75rem;">
