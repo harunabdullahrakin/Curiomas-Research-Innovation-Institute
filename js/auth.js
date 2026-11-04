@@ -12,23 +12,27 @@ function initAutzAuthHandler() {
   const loginStatus = document.getElementById('loginStatus');
   const loginError = document.getElementById('loginError');
 
-  // 1. Primary Autz.org OAuth Redirect
-  if (autzBtn) {
-    autzBtn.addEventListener('click', () => {
-      const appId = (window.CRII_API && window.CRII_API.getAutzAppId()) || 'gqiqh6qia';
-      const callbackOrigin = window.location.origin.includes('curiomas.zone.id')
-        ? 'https://www.curiomas.zone.id/portal.html'
-        : window.location.origin + window.location.pathname;
+  // Clean legacy cached app ID from localStorage if present
+  if (localStorage.getItem('crii_autz_app_id') === 't0i7jkia') {
+    localStorage.setItem('crii_autz_app_id', 'gqiqh6qia');
+  }
 
-      autzBtn.disabled = true;
+  // 1. Primary Autz.org OAuth Link Setup
+  if (autzBtn) {
+    const appId = 'gqiqh6qia';
+    const callbackOrigin = window.location.origin.includes('curiomas.zone.id')
+      ? 'https://www.curiomas.zone.id/portal.html'
+      : (window.location.origin + window.location.pathname);
+
+    const autzUrl = `https://autz.org/onboarding/${encodeURIComponent(appId)}?callback_url=${encodeURIComponent(callbackOrigin)}`;
+    autzBtn.setAttribute('href', autzUrl);
+
+    autzBtn.addEventListener('click', () => {
+      autzBtn.style.pointerEvents = 'none';
       autzBtn.innerHTML = `
         <span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #ffffff; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:0.5rem;"></span>
         <span>Redirecting to Autz.org...</span>
       `;
-
-      // Redirect to authentic Autz.org OAuth onboarding endpoint
-      const autzUrl = `https://autz.org/onboarding/${encodeURIComponent(appId)}?callback_url=${encodeURIComponent(callbackOrigin)}`;
-      window.location.href = autzUrl;
     });
   }
 

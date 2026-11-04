@@ -242,7 +242,12 @@ class CriiApiClient {
   }
 
   getAutzAppId() {
-    return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID) || CRII_CONFIG.DEFAULT_AUTZ_APP_ID;
+    const stored = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID);
+    if (!stored || stored === "t0i7jkia") {
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID, "gqiqh6qia");
+      return "gqiqh6qia";
+    }
+    return stored;
   }
 
   setAutzAppId(appId) {
