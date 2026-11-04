@@ -252,46 +252,33 @@ class CriiApiClient {
   }
 
   // --- AUTZ.ORG OAUTH & STRICT WHITELIST AUTHENTICATION ---
-  async authenticateWithAutz(autzUserData) {
-    if (!autzUserData || !autzUserData.email) {
-      return { success: false, error: "Invalid authentication response from Autz.org" };
+  async exchangeAutzCode(code) {
+    if (!code) {
+      return { success: false, error: "Missing authorization code from Autz.org" };
     }
-
-    const email = autzUserData.email.toLowerCase().trim();
-    const allowedUsers = this.getAllowedUsers();
-    const matchedUser = allowedUsers.find(u => u.email.toLowerCase().trim() === email);
-
-    if (!matchedUser) {
-      return {
-        success: false,
-        isUnauthorized: true,
-        email: email,
-        error: `Access Denied: The account "${email}" is not authorized on the CRII Portal. Only whitelisted directors and researchers may authenticate.`
-      };
-    }
-
-    const userSession = {
-      name: autzUserData.name || matchedUser.name,
-      email: email,
-      role: matchedUser.role,
-      division: matchedUser.division,
-      autzId: autzUserData.autzorg_id || autzUserData.id || "autz_verified",
-      loginTime: new Date().toISOString()
-    };
-
-    const token = `crii_session_${btoa(email)}_${Date.now()}`;
-    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_USER, JSON.stringify(userSession));
-    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN, token);
 
     try {
-      fetch(`${CRII_CONFIG.API_BASE}/auth/login`, {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ autzUserData, userSession, token })
-      }).catch(() => {});
-    } catch (e) {}
+        body: JSON.stringify({
+          code: code,
+          appId: this.getAutzAppId()
+        })
+      });
 
-    return { success: true, user: userSession };
+      const data = await res.json();
+      if (res.ok && data.success) {
+        localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+        localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.token);
+        return { success: true, user: data.user, token: data.token };
+      } else {
+        return { success: false, error: data.error || "Authentication failed" };
+      }
+    } catch (e) {
+      console.error("Autz login error:", e);
+      return { success: false, error: "Failed to connect to authentication backend" };
+    }
   }
 
   getCurrentUser() {
@@ -302,15 +289,45 @@ class CriiApiClient {
     }
   }
 
-  logout() {
+  getAuthToken() {
+    return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN) || "";
+  }
+
+  async logout() {
+    const token = this.getAuthToken();
+    try {
+      if (token) {
+        await fetch(`${CRII_CONFIG.API_BASE}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+    } catch (e) {}
     localStorage.removeItem(CRII_CONFIG.STORAGE_KEYS.AUTH_USER);
     localStorage.removeItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN);
     window.location.reload();
   }
 
   getAllowedUsers() {
+    // Attempt asynchronous refresh from Cloudflare D1 SQL in background
+    this.syncAllowedUsersFromDb();
     const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
     return raw ? JSON.parse(raw) : [];
+  }
+
+  async syncAllowedUsersFromDb() {
+    try {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users`);
+      if (res.ok) {
+        const users = await res.json();
+        if (Array.isArray(users) && users.length > 0) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
+        }
+      }
+    } catch (e) {}
   }
 
   addAllowedUser(userRecord) {
@@ -322,16 +339,30 @@ class CriiApiClient {
       return { success: false, error: "This email is already in the authorized list." };
     }
 
-    users.push({
+    const newRecord = {
       email: email,
       name: userRecord.name || email.split('@')[0],
       role: userRecord.role || "Research Fellow",
       division: userRecord.division || "Scientific Division",
       addedDate: new Date().toISOString().split('T')[0],
       status: "Active"
-    });
+    };
 
+    users.push(newRecord);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
+
+    // Sync to Cloudflare D1 SQL backend
+    try {
+      fetch(`${CRII_CONFIG.API_BASE}/auth/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}`
+        },
+        body: JSON.stringify(newRecord)
+      }).catch(() => {});
+    } catch (e) {}
+
     return { success: true };
   }
 
@@ -343,6 +374,17 @@ class CriiApiClient {
     }
     users = users.filter(u => u.email.toLowerCase().trim() !== targetEmail);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
+
+    // Sync removal to Cloudflare D1 SQL backend
+    try {
+      fetch(`${CRII_CONFIG.API_BASE}/auth/users?email=${encodeURIComponent(targetEmail)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${this.getAuthToken()}`
+        }
+      }).catch(() => {});
+    } catch (e) {}
+
     return { success: true };
   }
 

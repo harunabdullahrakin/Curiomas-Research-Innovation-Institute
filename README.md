@@ -66,8 +66,10 @@ curiomas-crii/
 │   └── api/
 │       ├── stats.js        # GET /api/stats (Institute statistics)
 │       ├── auth/
-│       │   ├── login.js    # POST /api/auth/login (Autz.org & Whitelist verify)
-│       │   └── me.js       # GET /api/auth/me (Session check)
+│       │   ├── login.js    # POST /api/auth/login (Autz.org code exchange & SQL whitelist verify)
+│       │   ├── me.js       # GET /api/auth/me (Active SQL session verification)
+│       │   ├── logout.js   # POST /api/auth/logout (Session termination in SQL)
+│       │   └── users.js    # GET/POST/DELETE /api/auth/users (D1 SQL whitelist management)
 │       ├── posts/
 │       │   └── [[id]].js   # Publications CRUD
 │       ├── interns/

@@ -81,9 +81,39 @@ CREATE TABLE IF NOT EXISTS settings (
   updatedBy TEXT
 );
 
+-- 5. Authorized Whitelist Users Table (Autz.org & Cloudflare D1 SQL)
+CREATE TABLE IF NOT EXISTS allowed_users (
+  email TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'Research Fellow',
+  division TEXT DEFAULT 'Institute Research Council',
+  status TEXT NOT NULL DEFAULT 'Active',
+  addedDate TEXT NOT NULL,
+  autzorg_id TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_allowed_users_status ON allowed_users(status);
+
+-- 6. Active Authentication Sessions Table (Cloudflare D1 SQL)
+CREATE TABLE IF NOT EXISTS sessions (
+  token TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  user_json TEXT NOT NULL,
+  createdAt TEXT NOT NULL,
+  expiresAt TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_email ON sessions(email);
+CREATE INDEX IF NOT EXISTS idx_sessions_expiresAt ON sessions(expiresAt);
+
 -- ==============================================================================
 -- Initial Production Seed Data
 -- ==============================================================================
+
+-- Seed Whitelisted Users
+INSERT OR IGNORE INTO allowed_users (email, name, role, division, status, addedDate) VALUES
+('harunabdullahrakin@gmail.com', 'Harun Abdullah Rakin', 'Super Admin & Director', 'Institute Executive Council', 'Active', '2026-01-01'),
+('admin@curiomas.org', 'CRII Administration', 'Institute Admin', 'Operations & Governance', 'Active', '2026-01-01');
 
 -- Seed Settings
 INSERT OR IGNORE INTO settings (key, value_json, updatedAt, updatedBy) VALUES
