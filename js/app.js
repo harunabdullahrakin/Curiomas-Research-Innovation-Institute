@@ -359,7 +359,7 @@ async function initHomeTeam() {
           </p>
           <div class="card-footer" style="padding-top:0.75rem; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
             <span class="badge-core-team">${badgeText}</span>
-            <a href="interns.html" class="btn btn-glass btn-sm">Full Roster →</a>
+            <a href="interns.html" class="btn btn-glass btn-sm">Full Team →</a>
           </div>
         </div>
       `;
