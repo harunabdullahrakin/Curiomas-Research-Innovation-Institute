@@ -25,7 +25,7 @@ An autonomous, student-led scientific institute web platform built for high-perf
 - **Cookie Consent Banner**:
   - Clean floating cookie & session storage banner with "Accept All" and preference controls.
 - **Autz.org SSO Authentication & Whitelist Access Control**:
-  - Direct integration with **Autz.org** (App ID: `t0i7jkia` or customizable in settings).
+  - Direct integration with **Autz.org** (App ID: `gqiqh6qia` or customizable in settings).
   - **Strict Whitelist Verification**: Only pre-authorized Gmail/Autz accounts can access the portal.
   - Super Admin (`harunabdullahrakin@gmail.com`) can add/revoke allowed emails and assign permission roles (*Super Admin*, *Research Fellow*, *Intern Coordinator*).
   - Anti-SQL injection, type-safe data access, and parameterized operations.

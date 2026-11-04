@@ -9,7 +9,7 @@ export async function onRequestPost(context) {
   try {
     const body = await request.json().catch(() => ({}));
     const code = (body.code || body.auth_code || "").trim();
-    const appId = (body.appId || (env && env.AUTZ_APP_ID) || "t0i7jkia").trim();
+    const appId = (body.appId || (env && env.AUTZ_APP_ID) || "gqiqh6qia").trim();
 
     let email = "";
     let name = "";

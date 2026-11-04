@@ -11,7 +11,7 @@ INSTITUTE_NAME = "Curiomas Research & Innovation Institute"
 ACRONYM = "CRII"
 MOTTO = "Learning has no bound"
 ADMIN_EMAIL = "harunabdullahrakin@gmail.com"
-AUTZ_APP_ID = "t0i7jkia"
+AUTZ_APP_ID = "gqiqh6qia"
 
 # ==============================================================================
 # Cloudflare D1 Database & R2 Storage Bindings

@@ -15,8 +15,10 @@ function initAutzAuthHandler() {
   // 1. Primary Autz.org OAuth Redirect
   if (autzBtn) {
     autzBtn.addEventListener('click', () => {
-      const appId = (window.CRII_API && window.CRII_API.getAutzAppId()) || 't0i7jkia';
-      const callbackOrigin = window.location.origin + window.location.pathname;
+      const appId = (window.CRII_API && window.CRII_API.getAutzAppId()) || 'gqiqh6qia';
+      const callbackOrigin = window.location.origin.includes('curiomas.zone.id')
+        ? 'https://www.curiomas.zone.id/portal.html'
+        : window.location.origin + window.location.pathname;
 
       autzBtn.disabled = true;
       autzBtn.innerHTML = `
