@@ -180,7 +180,7 @@ class CriiApiClient {
   }
 
   getInstituteLogo() {
-    return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_LOGO) || "";
+    return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_LOGO) || "assets/curiomas-no-bg.png";
   }
 
   setInstituteLogo(url) {

@@ -94,7 +94,7 @@ function applyTheme(theme) {
 function initBrandingAndNavbar() {
   if (!window.CRII_API) return;
   const instituteTitle = window.CRII_API.getInstituteName();
-  const logoUrl = window.CRII_API.getInstituteLogo();
+  const logoUrl = window.CRII_API.getInstituteLogo() || "assets/curiomas-no-bg.png";
 
   document.querySelectorAll('.brand-title').forEach(el => {
     el.innerText = instituteTitle;
@@ -102,7 +102,7 @@ function initBrandingAndNavbar() {
 
   if (logoUrl) {
     document.querySelectorAll('.brand-logo-container').forEach(container => {
-      container.innerHTML = `<img src="${logoUrl}" alt="Logo" class="brand-logo-img" onerror="this.remove()">`;
+      container.innerHTML = `<img src="${logoUrl}" alt="CRII Logo" class="brand-logo-img" style="width:36px; height:36px; object-fit:contain;">`;
     });
   }
 }

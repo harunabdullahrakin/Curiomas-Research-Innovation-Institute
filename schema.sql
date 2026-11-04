@@ -118,7 +118,7 @@ INSERT OR IGNORE INTO allowed_users (email, name, role, division, status, addedD
 -- Seed Settings
 INSERT OR IGNORE INTO settings (key, value_json, updatedAt, updatedBy) VALUES
 ('hero', '{"videoUrl":"assets/hero-bg.mp4","blurPx":12,"overlayOpacity":0.55}', '2026-09-25T00:00:00Z', 'harunabdullahrakin@gmail.com'),
-('navbar', '{"title":"Curiomas Research & Innovation Institute","subtitle":"CRII • Open Science Collective","logoUrl":""}', '2026-09-25T00:00:00Z', 'harunabdullahrakin@gmail.com');
+('navbar', '{"title":"Curiomas Research & Innovation Institute","subtitle":"CRII • Open Science Collective","logoUrl":"assets/curiomas-no-bg.png"}', '2026-09-25T00:00:00Z', 'harunabdullahrakin@gmail.com');
 
 -- Seed Core Leadership
 INSERT OR IGNORE INTO interns (id, name, email, avatar, university, degree, division, role, cohort, status, bio, socials_json, projects_json, isTeamMember, orderIndex, createdAt) VALUES
