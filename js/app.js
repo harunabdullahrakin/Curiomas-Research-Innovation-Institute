@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUserSessionState();
   initToastContainer();
   initFeaturedArticles();
+  initHomeTeam();
 });
 
 // Hero Appearance & Video Customization
@@ -303,4 +304,67 @@ async function initFeaturedArticles() {
       `;
     }).join('');
   } catch (e) {}
+}
+
+async function initHomeTeam() {
+  const container = document.getElementById('homeTeamContainer');
+  if (!container || !window.CRII_API) return;
+
+  try {
+    const data = await window.CRII_API.getInternsData();
+    let members = (data && data.activeInterns) ? data.activeInterns : [];
+
+    // Filter out dummy test members if lingering in legacy local storage
+    const dummyIds = ['team-002', 'team-003', 'int-001', 'int-002', 'crii-int-002', 'crii-int-003', 'crii-int-004'];
+    members = members.filter(m => m.status === 'Active' && !dummyIds.includes(m.id));
+
+    // Sort by priority: Core leadership (isTeamMember) first, then orderIndex ascending, then name
+    members.sort((a, b) => {
+      const teamA = a.isTeamMember ? 1 : 0;
+      const teamB = b.isTeamMember ? 1 : 0;
+      if (teamA !== teamB) return teamB - teamA;
+      const orderA = a.orderIndex !== undefined ? Number(a.orderIndex) : 999;
+      const orderB = b.orderIndex !== undefined ? Number(b.orderIndex) : 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    // Top 3 priority people only on index
+    const top3 = members.slice(0, 3);
+
+    if (top3.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; background: var(--bg-surface); border-radius: 16px; border: 1px dashed var(--border-color);">
+          <p style="color: var(--text-muted);">Leadership council roster initializing.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = top3.map(member => {
+      const avatarUrl = member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+      const badgeText = member.isTeamMember ? '★ Executive Council' : '★ Research Fellow';
+      return `
+        <div class="card reveal-on-scroll">
+          <div style="display:flex; align-items:center; gap:1.15rem; margin-bottom:1.15rem;">
+            <img src="${avatarUrl}" alt="${member.name}" style="width:58px; height:58px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-primary);">
+            <div>
+              <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin-bottom:0.15rem;">${member.name}</h3>
+              <div style="font-size:0.84rem; color:var(--accent-primary); font-weight:600;">${member.role || 'Principal Investigator'}</div>
+              <div style="font-size:0.78rem; color:var(--text-muted);">${member.division || 'Executive Council'}</div>
+            </div>
+          </div>
+          <p class="card-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1.25rem;">
+            ${member.bio || 'Leading open computational research and multi-disciplinary student discovery.'}
+          </p>
+          <div class="card-footer" style="padding-top:0.75rem; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <span class="badge-core-team">${badgeText}</span>
+            <a href="interns.html" class="btn btn-glass btn-sm">Full Roster →</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    console.warn('Failed to load home team:', e);
+  }
 }

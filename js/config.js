@@ -82,99 +82,48 @@ class CriiApiClient {
       localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify([]));
     }
 
-    // 4. Initial Seed Interns & Team Members
-    if (!localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INTERNS)) {
-      const seedRoster = {
-        activeInterns: [
-          {
-            id: "team-001",
-            name: "Harun Abdullah Rakin",
-            email: "harunabdullahrakin@gmail.com",
-            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-            university: "CRII Council",
-            degree: "Director of Research",
-            division: "Executive Council",
-            role: "Super Admin & Lead Investigator",
-            cohort: "Founding",
-            status: "Active",
-            bio: "Pioneering open computational science, astrophysical synthetic models, and multi-agent systems for student discovery.",
-            socials: { github: "https://github.com/harunabdullahrakin", linkedin: "https://linkedin.com", email: "harunabdullahrakin@gmail.com" },
-            projects: ["CRII Computational Core", "Autonomous Research Pipelines"],
-            isTeamMember: true,
-            orderIndex: 1
-          },
-          {
-            id: "team-002",
-            name: "Aria Rahman",
-            email: "aria.rahman@curiomas.org",
-            avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
-            university: "Metropolitan University of Technology",
-            degree: "B.Sc. Applied Physics",
-            division: "Space & Astrophysics",
-            role: "Principal Fellow — Astrophysics",
-            cohort: "Founding",
-            status: "Active",
-            bio: "Lead investigator on terrestrial exoplanet atmospheres and spectroscopic synthetic retrieval models.",
-            socials: { github: "https://github.com", linkedin: "https://linkedin.com" },
-            projects: ["TRAPPIST-1e Atmospheric Retrieval"],
-            isTeamMember: true,
-            orderIndex: 2
-          },
-          {
-            id: "team-003",
-            name: "Zainab Chowdhury",
-            email: "zainab.c@curiomas.org",
-            avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80",
-            university: "Institute of Science & Technology",
-            degree: "B.Sc. Biotechnology",
-            division: "Astrobiology & Extremophiles",
-            role: "Principal Fellow — Astrobiology",
-            cohort: "Founding",
-            status: "Active",
-            bio: "Specializing in radiotrophic fungal biology, extremophile metabolic pathways, and deep-time biochemical resilience.",
-            socials: { github: "https://github.com", linkedin: "https://linkedin.com" },
-            projects: ["Extremophile Enzyme Stabilization"],
-            isTeamMember: true,
-            orderIndex: 3
-          },
-          {
-            id: "int-001",
-            name: "Kenji Takahashi",
-            email: "kenji.t@curiomas.org",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
-            university: "Tokyo Institute of Technology",
-            degree: "M.Sc. Computational Biology",
-            division: "AI & Computational Science",
-            role: "Research Fellow",
-            cohort: "Spring 2026",
-            status: "Active",
-            bio: "Developing equivariant graph neural networks for thermostable enzyme design inspired by hydrothermal vent microbes.",
-            socials: { github: "https://github.com" },
-            projects: ["DeepVent Graph Networks"],
-            isTeamMember: false,
-            orderIndex: 4
-          },
-          {
-            id: "int-002",
-            name: "Maya Lin-Cruz",
-            email: "maya.l@curiomas.org",
-            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-            university: "National University",
-            degree: "B.Sc. Evolutionary Genomics",
-            division: "Ancient Biology & Paleontology",
-            role: "Research Fellow",
-            cohort: "Spring 2026",
-            status: "Active",
-            bio: "Reassessing Cambrian explosion chronologies through Bayesian relaxed molecular clocks and fossil calibrations.",
-            socials: { github: "https://github.com" },
-            projects: ["Ediacaran Divergence Rates"],
-            isTeamMember: false,
-            orderIndex: 5
+    // 4. Initial Seed Interns & Team Members + Cache Purge
+    const singleFounder = {
+      id: "team-001",
+      name: "Harun Abdullah Rakin",
+      email: "harunabdullahrakin@gmail.com",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      university: "CRII Council",
+      degree: "Director of Research",
+      division: "Executive Council",
+      role: "Super Admin & Lead Investigator",
+      cohort: "Founding",
+      status: "Active",
+      bio: "Pioneering open computational science, astrophysical synthetic models, and multi-agent systems for student discovery.",
+      socials: { github: "https://github.com/harunabdullahrakin", linkedin: "https://linkedin.com", email: "harunabdullahrakin@gmail.com" },
+      projects: ["CRII Computational Core", "Autonomous Research Pipelines"],
+      isTeamMember: true,
+      orderIndex: 1
+    };
+
+    try {
+      const stored = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INTERNS);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && Array.isArray(parsed.activeInterns)) {
+          const dummyIds = ['team-002', 'team-003', 'int-001', 'int-002', 'crii-int-002', 'crii-int-003', 'crii-int-004'];
+          parsed.activeInterns = parsed.activeInterns.filter(m => !dummyIds.includes(m.id));
+          if (!parsed.activeInterns.some(m => m.id === 'team-001')) {
+            parsed.activeInterns.unshift(singleFounder);
           }
-        ],
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(parsed));
+        }
+      } else {
+        localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify({
+          activeInterns: [singleFounder],
+          applications: []
+        }));
+      }
+    } catch (e) {
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify({
+        activeInterns: [singleFounder],
         applications: []
-      };
-      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(seedRoster));
+      }));
     }
   }
 

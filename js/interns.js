@@ -10,7 +10,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadRosters() {
   const data = await window.CRII_API.getInternsData();
-  const allMembers = data.activeInterns || [];
+  const dummyIds = ['team-002', 'team-003', 'int-001', 'int-002', 'crii-int-002', 'crii-int-003', 'crii-int-004'];
+  const allMembers = (data.activeInterns || []).filter(m => !dummyIds.includes(m.id));
+
+  allMembers.sort((a, b) => {
+    const orderA = a.orderIndex !== undefined ? Number(a.orderIndex) : 999;
+    const orderB = b.orderIndex !== undefined ? Number(b.orderIndex) : 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return (a.name || '').localeCompare(b.name || '');
+  });
 
   const teamContainer = document.getElementById('coreTeamContainer');
   const fellowsContainer = document.getElementById('fellowsContainer');

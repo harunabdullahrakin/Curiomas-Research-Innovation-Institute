@@ -1,56 +1,28 @@
 {
   "activeInterns": [
     {
-      "id": "crii-int-001",
+      "id": "team-001",
       "name": "Harun Abdullah Rakin",
       "email": "harunabdullahrakin@gmail.com",
-      "university": "Curiomas Research & Innovation Institute",
-      "degree": "Lead Director & Founder",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      "university": "CRII Council",
+      "degree": "Director of Research",
       "division": "Executive Council",
-      "role": "Super Admin & Director",
-      "cohort": "Founding Cohort",
+      "role": "Super Admin & Lead Investigator",
+      "cohort": "Founding",
       "status": "Active",
-      "projects": ["Institute Research Architecture", "Reproducible Open Science Infrastructure"],
-      "bio": "Directing multi-disciplinary student research initiatives across deep space astrophysics, paleobiology, and computational platforms."
-    },
-    {
-      "id": "crii-int-002",
-      "name": "Aria Rahman",
-      "email": "aria.rahman@curiomas.org",
-      "university": "Metropolitan University of Technology",
-      "degree": "B.Sc. Applied Physics & Computational Science",
-      "division": "Astrophysics & Space Science",
-      "role": "Senior Research Fellow",
-      "cohort": "Fall 2025",
-      "status": "Active",
-      "projects": ["TRAPPIST-1e Atmospheric Retrieval", "Transit Lightcurve Deconvolution"],
-      "bio": "Specializes in exoplanetary radiative transfer modeling, stellar flare subtraction, and open computational astrophysics software."
-    },
-    {
-      "id": "crii-int-003",
-      "name": "Shayan Debnath",
-      "email": "shayan.d@curiomas.org",
-      "university": "National Center for Natural Sciences",
-      "degree": "B.Sc. Evolutionary Biology & Paleogenomics",
-      "division": "Ancient Biology & Paleontology",
-      "role": "Student Investigator",
-      "cohort": "Spring 2026",
-      "status": "Active",
-      "projects": ["Ediacaran-Cambrian Molecular Clocks", "Deep Time Phylogenomics"],
-      "bio": "Investigating Precambrian microfossils, taphonomy, and Bayesian phylogenetic rate modeling across early metazoan lineages."
-    },
-    {
-      "id": "crii-int-004",
-      "name": "Zainab Chowdhury",
-      "email": "zainab.c@curiomas.org",
-      "university": "Institute of Science & Technology",
-      "degree": "B.Sc. Biotechnology & Astrobiology",
-      "division": "Astrobiology & Extremophiles",
-      "role": "Lead Student Researcher",
-      "cohort": "Spring 2026",
-      "status": "Active",
-      "projects": ["Radiotrophic Fungal Shielding", "Martian Regolith Bio-leaching"],
-      "bio": "Researching fungal radio-synthesis and self-healing mycelium composites for deep-space ionizing radiation protection."
+      "bio": "Pioneering open computational science, astrophysical synthetic models, and multi-agent systems for student discovery.",
+      "socials": {
+        "github": "https://github.com/harunabdullahrakin",
+        "linkedin": "https://linkedin.com",
+        "email": "harunabdullahrakin@gmail.com"
+      },
+      "projects": [
+        "CRII Computational Core",
+        "Autonomous Research Pipelines"
+      ],
+      "isTeamMember": true,
+      "orderIndex": 1
     }
   ],
   "applications": []
