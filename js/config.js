@@ -125,9 +125,32 @@ class CriiApiClient {
         applications: []
       }));
     }
+
+    // 5. Background sync settings and allowed users from Cloudflare D1
+    this.syncSettingsFromDb().catch(() => {});
+    this.syncAllowedUsersFromDb().catch(() => {});
   }
 
-  // --- HERO SECTION CONFIGURATION ---
+  // --- HERO & BRANDING CONFIGURATION (D1 SYNCED) ---
+  async syncSettingsFromDb() {
+    try {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/settings`);
+      if (res.ok) {
+        const settings = await res.json();
+        if (settings && settings.hero) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.HERO_SETTINGS, JSON.stringify(settings.hero));
+        }
+        if (settings && settings.branding) {
+          if (settings.branding.name) localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_NAME, settings.branding.name);
+          if (settings.branding.logoUrl) localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_LOGO, settings.branding.logoUrl);
+          if (settings.branding.autzAppId && settings.branding.autzAppId !== "t0i7jkia") {
+            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID, settings.branding.autzAppId);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
   getHeroSettings() {
     try {
       const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.HERO_SETTINGS);
@@ -150,10 +173,10 @@ class CriiApiClient {
 
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.HERO_SETTINGS, JSON.stringify(sanitized));
 
-    // Edge API sync
+    // Edge API sync to Cloudflare D1 SQL
     try {
       const user = this.getCurrentUser();
-      fetch(`${CRII_CONFIG.API_BASE}/settings`, {
+      await fetch(`${CRII_CONFIG.API_BASE}/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -161,13 +184,15 @@ class CriiApiClient {
           value: sanitized,
           updatedBy: user ? (user.name || user.email) : "Administrator"
         })
-      }).catch(() => {});
-    } catch (e) {}
+      });
+    } catch (e) {
+      console.warn("Failed to sync hero settings to D1:", e);
+    }
 
     return sanitized;
   }
 
-  // --- INSTITUTE BRANDING & NAVBAR SETTINGS ---
+  // --- INSTITUTE BRANDING & NAVBAR SETTINGS (D1 SYNCED) ---
   getInstituteName() {
     return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_NAME) || CRII_CONFIG.DEFAULT_INSTITUTE_NAME;
   }
@@ -206,6 +231,32 @@ class CriiApiClient {
     const sanitized = (appId || "").trim();
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID, sanitized);
     return sanitized;
+  }
+
+  async saveInstituteSettings(settings) {
+    if (!settings) return;
+    if (settings.name) this.setInstituteName(settings.name);
+    if (settings.logo !== undefined) this.setInstituteLogo(settings.logo);
+    if (settings.autzAppId) this.setAutzAppId(settings.autzAppId);
+
+    try {
+      const user = this.getCurrentUser();
+      await fetch(`${CRII_CONFIG.API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: "branding",
+          value: {
+            name: this.getInstituteName(),
+            logoUrl: this.getInstituteLogo(),
+            autzAppId: this.getAutzAppId()
+          },
+          updatedBy: user ? (user.name || user.email) : "Administrator"
+        })
+      });
+    } catch (e) {
+      console.warn("Failed to sync branding settings to D1:", e);
+    }
   }
 
   // --- AUTZ.ORG OAUTH & STRICT WHITELIST AUTHENTICATION ---
@@ -347,21 +398,25 @@ class CriiApiClient {
 
   // --- POSTS & RESEARCH ARTICLES (D1 SQL SYNCED) ---
   async getPosts(options = {}) {
-    // Attempt D1 fetch if online
-    if (options.preferNetwork) {
-      try {
-        const query = options.includeDrafts ? '?includeDrafts=true' : '';
-        const res = await fetch(`${CRII_CONFIG.API_BASE}/posts${query}`);
-        if (res.ok) {
-          const remote = await res.json();
-          if (Array.isArray(remote) && remote.length > 0) {
-            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(remote));
-            return remote;
+    // 1. Fetch directly from Cloudflare D1 SQL backend
+    try {
+      const query = options.includeDrafts ? '?includeDrafts=true' : '';
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/posts${query}`);
+      if (res.ok) {
+        const remote = await res.json();
+        if (Array.isArray(remote)) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(remote));
+          if (!options.includeDrafts) {
+            return remote.filter(p => p.published !== false);
           }
+          return remote;
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      console.warn("D1 posts fetch error, falling back to cache:", e);
     }
 
+    // 2. Cache fallback
     const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS);
     let posts = local ? JSON.parse(local) : [];
 
@@ -372,6 +427,15 @@ class CriiApiClient {
   }
 
   async getPostBySlugOrId(identifier) {
+    if (!identifier) return null;
+    // Attempt D1 fetch first
+    try {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/posts/${encodeURIComponent(identifier)}`);
+      if (res.ok) {
+        const post = await res.json();
+        if (post && post.id) return post;
+      }
+    } catch (e) {}
     const posts = await this.getPosts({ includeDrafts: true });
     return posts.find(p => p.slug === identifier || p.id === identifier);
   }
@@ -414,17 +478,22 @@ class CriiApiClient {
       posts.unshift(postRecord);
     }
 
-    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
-
-    // Sync to Cloudflare D1 SQL
+    // Direct Cloudflare D1 SQL write
     try {
-      fetch(`${CRII_CONFIG.API_BASE}/posts`, {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postRecord)
-      }).catch(() => {});
-    } catch (e) {}
+      });
+      if (res.ok) {
+        const savedRemote = await res.json();
+        postRecord = { ...postRecord, ...savedRemote };
+      }
+    } catch (e) {
+      console.warn("Failed to sync post to D1:", e);
+    }
 
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
     return postRecord;
   }
 
@@ -438,8 +507,10 @@ class CriiApiClient {
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(filtered));
 
     try {
-      fetch(`${CRII_CONFIG.API_BASE}/posts/${id}`, { method: 'DELETE' }).catch(() => {});
-    } catch (e) {}
+      await fetch(`${CRII_CONFIG.API_BASE}/posts/${id}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn("Failed to delete post from D1:", e);
+    }
 
     return true;
   }
@@ -453,23 +524,39 @@ class CriiApiClient {
       target.updatedAt = new Date().toISOString();
       target.updatedBy = user ? (user.name || user.email) : "Administrator";
 
-      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
-
       try {
-        fetch(`${CRII_CONFIG.API_BASE}/posts`, {
+        await fetch(`${CRII_CONFIG.API_BASE}/posts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(target)
-        }).catch(() => {});
-      } catch (e) {}
+        });
+      } catch (e) {
+        console.warn("Failed to sync publish state to D1:", e);
+      }
 
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
       return target;
     }
     return null;
   }
 
-  // --- INTERNS & CORE TEAM MEMBERS ---
+  // --- INTERNS & CORE TEAM MEMBERS (D1 SQL SYNCED) ---
   async getInternsData() {
+    // 1. Fetch live from Cloudflare D1 SQL backend
+    try {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/interns`);
+      if (res.ok) {
+        const remote = await res.json();
+        if (remote && Array.isArray(remote.activeInterns)) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(remote));
+          return remote;
+        }
+      }
+    } catch (e) {
+      console.warn("D1 interns fetch error, falling back to cache:", e);
+    }
+
+    // 2. Cache fallback
     const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.INTERNS);
     return raw ? JSON.parse(raw) : { activeInterns: [], applications: [] };
   }
@@ -522,17 +609,22 @@ class CriiApiClient {
       return (a.orderIndex || 99) - (b.orderIndex || 99);
     });
 
-    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
-
-    // Cloudflare D1 sync
+    // Save directly to Cloudflare D1 SQL database
     try {
-      fetch(`${CRII_CONFIG.API_BASE}/interns`, {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/interns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(record)
-      }).catch(() => {});
-    } catch (e) {}
+      });
+      if (res.ok) {
+        const savedRemote = await res.json();
+        Object.assign(record, savedRemote);
+      }
+    } catch (e) {
+      console.warn("Failed to sync intern to D1:", e);
+    }
 
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
     return record;
   }
 
@@ -542,8 +634,10 @@ class CriiApiClient {
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
 
     try {
-      fetch(`${CRII_CONFIG.API_BASE}/interns/${id}`, { method: 'DELETE' }).catch(() => {});
-    } catch (e) {}
+      await fetch(`${CRII_CONFIG.API_BASE}/interns/${id}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn("Failed to delete intern from D1:", e);
+    }
 
     return true;
   }
@@ -560,12 +654,14 @@ class CriiApiClient {
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
 
     try {
-      fetch(`${CRII_CONFIG.API_BASE}/interns/apply`, {
+      await fetch(`${CRII_CONFIG.API_BASE}/interns/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newApp)
-      }).catch(() => {});
-    } catch (e) {}
+      });
+    } catch (e) {
+      console.warn("Failed to sync application to D1:", e);
+    }
 
     return newApp;
   }

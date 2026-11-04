@@ -265,13 +265,13 @@ function openBloggerEditor(postId) {
   switchBloggerSubtab('write');
 }
 
-function closeBloggerEditor() {
+async function closeBloggerEditor() {
   const dirView = document.getElementById('postsDirectoryView');
   const editView = document.getElementById('postsEditorView');
   if (dirView) dirView.style.display = 'block';
   if (editView) editView.style.display = 'none';
   currentEditingPostId = null;
-  refreshDashboardData();
+  await refreshDashboardData();
 }
 
 function updateCoverPreview(url) {
@@ -840,7 +840,7 @@ async function saveCurrentPost() {
 
   await window.CRII_API.savePost(postPayload);
   window.showToast(`Publication successfully ${isCurrentPostPublished ? 'published' : 'saved as draft'}!`, 'success');
-  closeBloggerEditor();
+  await closeBloggerEditor();
 }
 
 // Render Directory Table
@@ -1430,17 +1430,19 @@ function initInstituteSettings() {
 
   const form = document.getElementById('instituteSettingsForm');
   if (form) {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const newTitle = titleInput ? titleInput.value : '';
       const newLogo = logoInput ? logoInput.value : '';
       const newAppId = appIdInput ? appIdInput.value : '';
 
-      window.CRII_API.setInstituteName(newTitle);
-      window.CRII_API.setInstituteLogo(newLogo);
-      window.CRII_API.setAutzAppId(newAppId);
+      await window.CRII_API.saveInstituteSettings({
+        name: newTitle,
+        logo: newLogo,
+        autzAppId: newAppId
+      });
 
-      window.showToast('Institute settings saved!', 'success');
+      window.showToast('Institute settings saved to database!', 'success');
       setTimeout(() => window.location.reload(), 800);
     });
   }

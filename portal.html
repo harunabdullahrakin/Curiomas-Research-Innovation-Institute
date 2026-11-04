@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRII Portal — Autz.org Authentication & Research Management</title>
   <link rel="stylesheet" href="css/style.css?v=3.2">
-  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/components.css?v=3.2">
   <link rel="stylesheet" href="css/portal.css">
   <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
 </head>
@@ -919,13 +919,13 @@
        MODAL 2: ADD / EDIT RESEARCHER & CORE TEAM MEMBER
        ========================================================================== -->
   <div id="researcherModal" class="modal-overlay">
-    <div class="modal-dialog" style="max-width: 650px;">
-      <div class="modal-header">
+    <div class="modal-dialog" style="max-width: 650px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+      <div class="modal-header" style="flex-shrink: 0;">
         <h3 id="researcherModalTitle" class="modal-title">Add Researcher / Fellow</h3>
         <button class="modal-close" onclick="closeResearcherModal()">&times;</button>
       </div>
-      <form id="researcherForm">
-        <div class="modal-body">
+      <form id="researcherForm" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;">
+        <div class="modal-body" style="overflow-y: auto; flex: 1; min-height: 0; max-height: calc(90vh - 140px); padding: 1.5rem;">
           <input type="hidden" id="researcherEditId">
 
           <div class="form-row">
@@ -1009,7 +1009,7 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="flex-shrink: 0;">
           <button type="button" class="btn btn-secondary btn-sm" onclick="closeResearcherModal()">Cancel</button>
           <button type="submit" class="btn btn-primary btn-sm">Save Researcher Profile</button>
         </div>
@@ -1039,9 +1039,9 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=2.6"></script>
-  <script src="js/app.js?v=2.6"></script>
-  <script src="js/auth.js?v=2.6"></script>
-  <script src="js/portal.js?v=2.6"></script>
+  <script src="js/config.js?v=3.3"></script>
+  <script src="js/app.js?v=3.3"></script>
+  <script src="js/auth.js?v=3.3"></script>
+  <script src="js/portal.js?v=3.3"></script>
 </body>
 </html>
