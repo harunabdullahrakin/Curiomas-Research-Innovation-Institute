@@ -1439,22 +1439,37 @@ function initAccessControl() {
   const form = document.getElementById('addAllowedUserForm');
   if (!form) return;
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Authorizing...';
+    }
+
     const email = document.getElementById('newAllowedEmail').value.trim();
     const name = document.getElementById('newAllowedName').value.trim();
     const role = document.getElementById('newAllowedRole').value;
     const division = document.getElementById('newAllowedDivision').value;
 
-    const res = window.CRII_API.addAllowedUser({ email, name, role, division });
-    if (!res.success) {
-      window.showToast(res.error, 'error');
-      return;
-    }
+    try {
+      const res = await window.CRII_API.addAllowedUser({ email, name, role, division });
+      if (!res.success) {
+        window.showToast(res.error, 'error');
+        return;
+      }
 
-    window.showToast(`User ${email} added to Autz whitelist!`, 'success');
-    form.reset();
-    renderAllowedUsersTable();
+      window.showToast(`User ${email} authorized and saved successfully!`, 'success');
+      form.reset();
+      renderAllowedUsersTable();
+    } catch (err) {
+      window.showToast('Failed to authorize account: ' + err.message, 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Authorize Account';
+      }
+    }
   });
 }
 
@@ -1475,16 +1490,16 @@ function renderAllowedUsersTable() {
       <td>
         ${u.email === 'harunabdullahrakin@gmail.com' ? 
           `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Protected</span>` : 
-          `<button class="btn btn-sm" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.25);" onclick="removeAllowedEmail('${u.email}')">Revoke</button>`
+          `<button class="btn btn-sm" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.25);" onclick="removeAllowedEmail('${escapeHtml(u.email)}')">Revoke</button>`
         }
       </td>
     </tr>
   `).join('');
 }
 
-window.removeAllowedEmail = function(email) {
+window.removeAllowedEmail = async function(email) {
   if (confirm(`Revoke portal permissions for ${email}?`)) {
-    const res = window.CRII_API.removeAllowedUser(email);
+    const res = await window.CRII_API.removeAllowedUser(email);
     if (!res.success) {
       window.showToast(res.error, 'error');
       return;

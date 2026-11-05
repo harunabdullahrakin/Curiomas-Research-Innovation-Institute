@@ -342,28 +342,85 @@ class CriiApiClient {
   }
 
   getAllowedUsers() {
-    // Attempt asynchronous refresh from Cloudflare D1 SQL in background
-    this.syncAllowedUsersFromDb();
-    const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
-    return raw ? JSON.parse(raw) : [];
+    let users = [];
+    try {
+      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
+      users = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      users = [];
+    }
+
+    if (!Array.isArray(users) || users.length === 0) {
+      users = [
+        {
+          email: "harunabdullahrakin@gmail.com",
+          name: "Harun Abdullah Rakin",
+          role: "Super Admin & Director",
+          division: "Institute Executive Council",
+          status: "Active",
+          addedDate: "2026-01-01"
+        },
+        {
+          email: "admin@curiomas.org",
+          name: "CRII Administration",
+          role: "Institute Admin",
+          division: "Operations & Governance",
+          status: "Active",
+          addedDate: "2026-01-01"
+        }
+      ];
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
+    }
+
+    // Background sync from remote D1 (merges non-destructively)
+    this.syncAllowedUsersFromDb().catch(() => {});
+    return users;
   }
 
   async syncAllowedUsersFromDb() {
     try {
       const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users`);
       if (res.ok) {
-        const users = await res.json();
-        if (Array.isArray(users) && users.length > 0) {
-          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
+        const remoteUsers = await res.json();
+        if (Array.isArray(remoteUsers) && remoteUsers.length > 0) {
+          const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
+          const localUsers = raw ? JSON.parse(raw) : [];
+
+          // Merge by email: Remote users + any locally added users
+          const userMap = new Map();
+          remoteUsers.forEach(u => {
+            if (u && u.email) userMap.set(u.email.toLowerCase().trim(), u);
+          });
+          localUsers.forEach(u => {
+            if (u && u.email) {
+              const k = u.email.toLowerCase().trim();
+              if (!userMap.has(k)) {
+                userMap.set(k, u);
+              }
+            }
+          });
+
+          const merged = Array.from(userMap.values());
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(merged));
+          return merged;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("syncAllowedUsersFromDb notice:", e);
+    }
   }
 
-  addAllowedUser(userRecord) {
-    if (!userRecord || !userRecord.email) return false;
-    const users = this.getAllowedUsers();
+  async addAllowedUser(userRecord) {
+    if (!userRecord || !userRecord.email) {
+      return { success: false, error: "Email is required" };
+    }
     const email = userRecord.email.toLowerCase().trim();
+    if (!email.includes("@")) {
+      return { success: false, error: "Please enter a valid email address" };
+    }
+
+    const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
+    let users = raw ? JSON.parse(raw) : [];
 
     if (users.some(u => u.email.toLowerCase().trim() === email)) {
       return { success: false, error: "This email is already in the authorized list." };
@@ -371,49 +428,57 @@ class CriiApiClient {
 
     const newRecord = {
       email: email,
-      name: userRecord.name || email.split('@')[0],
-      role: userRecord.role || "Research Fellow",
-      division: userRecord.division || "Scientific Division",
+      name: (userRecord.name || email.split('@')[0]).trim(),
+      role: (userRecord.role || "Research Fellow").trim(),
+      division: (userRecord.division || "Scientific Division").trim(),
       addedDate: new Date().toISOString().split('T')[0],
       status: "Active"
     };
 
-    users.push(newRecord);
+    users.unshift(newRecord);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
 
     // Sync to Cloudflare D1 SQL backend
     try {
-      fetch(`${CRII_CONFIG.API_BASE}/auth/users`, {
+      const token = this.getAuthToken();
+      await fetch(`${CRII_CONFIG.API_BASE}/auth/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify(newRecord)
-      }).catch(() => {});
-    } catch (e) {}
+      });
+    } catch (e) {
+      console.warn("D1 users sync error (safely retained locally):", e);
+    }
 
-    return { success: true };
+    return { success: true, user: newRecord };
   }
 
-  removeAllowedUser(email) {
-    let users = this.getAllowedUsers();
-    const targetEmail = email.toLowerCase().trim();
+  async removeAllowedUser(email) {
+    const targetEmail = (email || '').toLowerCase().trim();
     if (targetEmail === "harunabdullahrakin@gmail.com") {
       return { success: false, error: "Cannot remove primary Super Admin account." };
     }
+
+    const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
+    let users = raw ? JSON.parse(raw) : [];
     users = users.filter(u => u.email.toLowerCase().trim() !== targetEmail);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
 
     // Sync removal to Cloudflare D1 SQL backend
     try {
-      fetch(`${CRII_CONFIG.API_BASE}/auth/users?email=${encodeURIComponent(targetEmail)}`, {
+      const token = this.getAuthToken();
+      await fetch(`${CRII_CONFIG.API_BASE}/auth/users?email=${encodeURIComponent(targetEmail)}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${this.getAuthToken()}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
-      }).catch(() => {});
-    } catch (e) {}
+      });
+    } catch (e) {
+      console.warn("D1 delete user error:", e);
+    }
 
     return { success: true };
   }

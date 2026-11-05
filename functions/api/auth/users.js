@@ -27,6 +27,18 @@ export async function onRequestGet(context) {
 
   if (env && env.DB) {
     try {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS allowed_users (
+          email TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          role TEXT NOT NULL DEFAULT 'Research Fellow',
+          division TEXT DEFAULT 'Institute Research Council',
+          status TEXT NOT NULL DEFAULT 'Active',
+          addedDate TEXT NOT NULL,
+          autzorg_id TEXT
+        )
+      `).run().catch(() => {});
+
       const { results } = await env.DB.prepare(
         "SELECT email, name, role, division, status, addedDate, autzorg_id FROM allowed_users ORDER BY addedDate DESC"
       ).all();
@@ -66,6 +78,18 @@ export async function onRequestPost(context) {
 
     if (env && env.DB) {
       try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS allowed_users (
+            email TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'Research Fellow',
+            division TEXT DEFAULT 'Institute Research Council',
+            status TEXT NOT NULL DEFAULT 'Active',
+            addedDate TEXT NOT NULL,
+            autzorg_id TEXT
+          )
+        `).run().catch(() => {});
+
         await env.DB.prepare(`
           INSERT INTO allowed_users (email, name, role, division, status, addedDate)
           VALUES (?, ?, ?, ?, 'Active', ?)
