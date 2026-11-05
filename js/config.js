@@ -245,6 +245,15 @@ class CriiApiClient {
     return sanitized;
   }
 
+  getInstituteSettings() {
+    return {
+      name: this.getInstituteName(),
+      logoUrl: this.getInstituteLogo(),
+      autzAppId: this.getAutzAppId(),
+      emailjsTemplateId: this.getEmailjsTemplateId()
+    };
+  }
+
   async saveInstituteSettings(settings) {
     if (!settings) return;
     if (settings.name) this.setInstituteName(settings.name);

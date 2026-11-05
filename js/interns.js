@@ -170,7 +170,7 @@ function initApplicationForm() {
       if (window.emailjs) {
         try {
           const tplId = localStorage.getItem('crii_emailjs_template_id') || 
-            (window.CRII_API && window.CRII_API.getInstituteSettings()?.emailjsTemplateId) || 'zhelx7y';
+            (window.CRII_API && typeof window.CRII_API.getEmailjsTemplateId === 'function' ? window.CRII_API.getEmailjsTemplateId() : null) || 'zhelx7y';
           if (tplId) {
             emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
             await emailjs.send('curiomas', tplId, {
