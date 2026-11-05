@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Curiomas Research & Innovation Institute — CRII</title>
   <meta name="description" content="Curiomas Research & Innovation Institute (CRII) — Autonomous student-driven scientific institute publishing reproducible research and open datasets.">
-  <link rel="stylesheet" href="css/style.css?v=3.4">
-  <link rel="stylesheet" href="css/components.css?v=3.2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=3.9">
+  <link rel="stylesheet" href="css/components.css?v=3.9">
   <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
 </head>
 <body>
@@ -63,17 +66,19 @@
     </header>
   </div>
 
-  <!-- Featured Articles Section -->
-  <section class="section container" style="padding-top: 3.5rem;">
-    <div class="section-header">
-      <span class="section-pill">Peer-Grade Publications</span>
-      <h2 class="section-title">Featured Articles</h2>
-      <p class="section-desc">
-        Rigorous, reproducible research across astrophysics, evolutionary paleogenomics, and machine-learning biophysics.
-      </p>
+  <!-- Latest News / Featured Research Section -->
+  <section class="section container" style="padding-top: 3.5rem; padding-bottom: 4rem;">
+    <div class="news-section-header">
+      <h2 class="news-section-title">Latest news</h2>
+      <a href="/research" class="news-view-all-btn">
+        <span>View all news</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </a>
     </div>
 
-    <div class="cards-grid" id="featuredArticlesContainer">
+    <div class="editorial-grid" id="featuredArticlesContainer">
       <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1.5rem; background: var(--bg-surface); border-radius: 16px; border: 1px dashed var(--border-color);">
         <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem; color: var(--text-muted); opacity: 0.65;">
           <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
@@ -85,15 +90,6 @@
         </p>
         <a href="/portal" class="btn btn-secondary btn-sm">Research Portal Access</a>
       </div>
-    </div>
-
-    <div style="text-align: center; margin-top: 3rem;">
-      <a href="/research" class="btn btn-secondary">
-        <span>Browse All Research Publications & Open Datasets</span>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-        </svg>
-      </a>
     </div>
   </section>
 
@@ -247,7 +243,7 @@
     </div>
   </footer>
 
-  <script src="js/config.js?v=3.8"></script>
-  <script src="js/app.js?v=3.8"></script>
+  <script src="js/config.js?v=3.9"></script>
+  <script src="js/app.js?v=3.9"></script>
 </body>
 </html>

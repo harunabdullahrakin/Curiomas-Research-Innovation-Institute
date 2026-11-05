@@ -550,3 +550,203 @@
 .toast-info {
   border-left: 4px solid var(--accent-primary);
 }
+
+/* ==========================================================================
+   OXFORD-STYLE EDITORIAL ARTICLE SYSTEM
+   ========================================================================== */
+.news-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 2.25rem;
+  padding-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.news-section-title {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 2.75rem;
+  font-weight: 500;
+  color: #0d2847;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.15;
+}
+
+[data-theme="dark"] .news-section-title {
+  color: #f8fafc;
+}
+
+.news-view-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.4rem;
+  border: 1.5px solid #16365c;
+  border-radius: 8px;
+  color: #16365c;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: transparent;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.news-view-all-btn:hover {
+  background: #16365c;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .news-view-all-btn {
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .news-view-all-btn:hover {
+  background: #38bdf8;
+  color: #070a13;
+}
+
+/* 4-Column Editorial Grid */
+.editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.75rem;
+}
+
+@media (max-width: 1200px) {
+  .editorial-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .editorial-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .news-section-title {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 580px) {
+  .editorial-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Editorial Card */
+.editorial-card {
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  transition: transform 0.25s ease;
+}
+
+.editorial-card:hover {
+  transform: translateY(-3px);
+}
+
+.editorial-card-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  margin-bottom: 1.15rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.editorial-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.editorial-card:hover .editorial-card-img {
+  transform: scale(1.05);
+}
+
+/* Floating Golden Badge */
+.editorial-date-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #facc15;
+  color: #1a1a1a;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.32rem 0.65rem;
+  border-radius: 6px;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+  white-space: nowrap;
+}
+
+/* Card Title */
+.editorial-card-title {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 0.85rem;
+  letter-spacing: -0.01em;
+}
+
+.editorial-card-title a {
+  color: #143254;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.editorial-card-title a:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+[data-theme="dark"] .editorial-card-title a {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .editorial-card-title a:hover {
+  color: #38bdf8;
+}
+
+/* Tag Pills */
+.editorial-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 0.4rem;
+}
+
+.editorial-tag-pill {
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 0.25rem 0.6rem;
+  background: #ffffff;
+  border: 1px solid #dbe2ea;
+  color: #1e3a8a;
+  border-radius: 6px;
+  line-height: 1.3;
+  transition: all 0.2s ease;
+}
+
+.editorial-tag-pill:hover {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.05);
+}
+
+[data-theme="dark"] .editorial-tag-pill {
+  background: #0e172a;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #93c5fd;
+}

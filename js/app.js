@@ -239,6 +239,29 @@ window.copyToClipboard = async function (text, successMsg = 'Copied to clipboard
   }
 };
 
+function formatEditorialDate(dateStr) {
+  if (!dateStr) return '04 November 2026';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getDate()).padStart(2, '0');
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+function formatEditorialReadTime(readingTime) {
+  if (!readingTime) return '5 minutes';
+  const digits = String(readingTime).match(/\d+/);
+  if (digits) {
+    const num = parseInt(digits[0], 10);
+    return `${num} ${num === 1 ? 'minute' : 'minutes'}`;
+  }
+  return readingTime;
+}
+
 async function initFeaturedArticles() {
   const container = document.getElementById('featuredArticlesContainer');
   if (!container || !window.CRII_API) return;
@@ -249,42 +272,42 @@ async function initFeaturedArticles() {
 
     if (published.length === 0) return;
 
-    container.innerHTML = published.slice(0, 3).map(paper => {
-      let badgeClass = 'badge-blue';
-      if (paper.category && paper.category.includes('Ancient')) badgeClass = 'badge-amber';
-      if (paper.category && paper.category.includes('AI')) badgeClass = 'badge-indigo';
-      if (paper.category && paper.category.includes('Astrobiology')) badgeClass = 'badge-emerald';
+    const fallbackCovers = [
+      'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=800&q=80', // Forest canopy / nature
+      'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80', // Active youth / group
+      'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?auto=format&fit=crop&w=800&q=80', // Political / journalism
+      'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=80'  // Nutrition / science
+    ];
 
-      const coverHtml = paper.coverImage ? `
-        <div class="card-cover">
-          <img src="${paper.coverImage}" alt="${paper.title}" class="card-cover-img" loading="lazy">
-        </div>
-      ` : '';
+    container.innerHTML = published.slice(0, 4).map((paper, idx) => {
+      const cover = paper.coverImage || fallbackCovers[idx % fallbackCovers.length];
+      const dateText = formatEditorialDate(paper.date);
+      const readText = formatEditorialReadTime(paper.readingTime);
+
+      let tags = [];
+      if (paper.category) tags.push(paper.category);
+      if (Array.isArray(paper.tags)) tags.push(...paper.tags);
+      tags = [...new Set(tags)].filter(Boolean);
+      if (tags.length === 0) tags = ['Research'];
 
       return `
-        <article class="card">
-          ${coverHtml}
-          <div class="card-top">
-            <span class="badge ${badgeClass}">${paper.category || 'Research'}</span>
-            <span class="card-date">${paper.date || ''}</span>
+        <article class="editorial-card">
+          <div class="editorial-card-media">
+            <img src="${cover}" alt="${paper.title}" class="editorial-card-img" loading="lazy">
+            <div class="editorial-date-badge">${dateText} | ${readText}</div>
           </div>
-          <h3 class="card-title">
+          <h3 class="editorial-card-title">
             <a href="/article?id=${encodeURIComponent(paper.id)}">${paper.title}</a>
           </h3>
-          <div class="card-authors">
-            ${(paper.authors || []).join(', ') || 'CRII Research Core'}
-          </div>
-          <p class="card-desc">
-            ${paper.summary || (paper.abstract ? paper.abstract.slice(0, 150) + '...' : '')}
-          </p>
-          <div class="card-footer">
-            <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">DOI: ${paper.doi || '10.5281/crii.2026'}</span>
-            <a href="/article?id=${encodeURIComponent(paper.id)}" class="btn btn-glass btn-sm">Read Article</a>
+          <div class="editorial-tags-list">
+            ${tags.map(t => `<span class="editorial-tag-pill">${t}</span>`).join('')}
           </div>
         </article>
       `;
     }).join('');
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Featured articles render error:', e);
+  }
 }
 
 async function initHomeTeam() {
