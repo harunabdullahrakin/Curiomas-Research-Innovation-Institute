@@ -16,23 +16,14 @@ export async function onRequestGet(context) {
     timestamp: new Date().toISOString()
   };
 
-  let diag = {
-    envKeys: env ? Object.keys(env) : [],
-    hasDB: Boolean(env && env.DB),
-    dbError: null,
-    tables: []
-  };
-
   if (env && env.DB) {
     try {
-      const tablesRes = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-      diag.tables = (tablesRes && tablesRes.results) ? tablesRes.results.map(r => r.name) : [];
       const papersCount = await env.DB.prepare("SELECT COUNT(*) as count FROM posts WHERE published = 1").first();
       if (papersCount && papersCount.count !== undefined) {
         stats.publishedPapers = papersCount.count;
       }
     } catch (e) {
-      diag.dbError = e.message;
+      console.warn("D1 stats read error", e);
     }
   }
 
@@ -45,10 +36,10 @@ export async function onRequestGet(context) {
     }
   }
 
-  return new Response(JSON.stringify({ ...stats, _diag: diag }), {
+  return new Response(JSON.stringify(stats), {
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": "no-store, max-age=0"
+      "Cache-Control": "public, max-age=30"
     }
   });
 }
