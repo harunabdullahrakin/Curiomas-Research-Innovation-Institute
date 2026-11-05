@@ -197,7 +197,7 @@ function initUserSessionState() {
         ${user.name.split(' ')[0]} (Portal)
       </span>
     `;
-    portalBtn.href = "portal.html";
+    portalBtn.href = "/portal";
   }
 }
 
@@ -269,7 +269,7 @@ async function initFeaturedArticles() {
             <span class="card-date">${paper.date || ''}</span>
           </div>
           <h3 class="card-title">
-            <a href="article.html?id=${encodeURIComponent(paper.id)}">${paper.title}</a>
+            <a href="/article?id=${encodeURIComponent(paper.id)}">${paper.title}</a>
           </h3>
           <div class="card-authors">
             ${(paper.authors || []).join(', ') || 'CRII Research Core'}
@@ -279,7 +279,7 @@ async function initFeaturedArticles() {
           </p>
           <div class="card-footer">
             <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">DOI: ${paper.doi || '10.5281/crii.2026'}</span>
-            <a href="article.html?id=${encodeURIComponent(paper.id)}" class="btn btn-glass btn-sm">Read Article</a>
+            <a href="/article?id=${encodeURIComponent(paper.id)}" class="btn btn-glass btn-sm">Read Article</a>
           </div>
         </article>
       `;
@@ -340,7 +340,7 @@ async function initHomeTeam() {
           </p>
           <div class="card-footer" style="padding-top:0.75rem; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
             <span class="badge-core-team">${badgeText}</span>
-            <a href="interns.html" class="btn btn-glass btn-sm">Full Team →</a>
+            <a href="/team" class="btn btn-glass btn-sm">Full Team →</a>
           </div>
         </div>
       `;

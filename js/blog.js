@@ -55,7 +55,7 @@ function renderArticles() {
             <span class="card-date">${post.date} • ${post.readingTime || '8 min read'}</span>
           </div>
           <h2 class="card-title" style="font-size:1.45rem;">
-            <a href="article.html?id=${post.id}">${post.title}</a>
+            <a href="/article?id=${post.id}">${post.title}</a>
           </h2>
           <div class="card-authors" style="margin-bottom:0.4rem;">
             By ${post.authors ? post.authors.join(', ') : 'CRII Fellow'}
@@ -67,7 +67,7 @@ function renderArticles() {
           </div>
           <div class="card-footer" style="margin-top:auto; padding-top:1rem; border-top:1px solid var(--border-color);">
             <span style="font-size:0.78rem; font-family:monospace; color:var(--text-muted);">${post.doi || 'Open Access'}</span>
-            <a href="article.html?id=${post.id}" class="btn btn-primary btn-sm">Read Full Dispatch</a>
+            <a href="/article?id=${post.id}" class="btn btn-primary btn-sm">Read Full Dispatch</a>
           </div>
         </div>
       </article>

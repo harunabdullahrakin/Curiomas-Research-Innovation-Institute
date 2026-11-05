@@ -122,7 +122,7 @@ function renderPapers() {
             <span class="card-date">${paper.date}</span>
           </div>
           <h3 class="card-title">
-            <a href="article.html?id=${paper.id}">${paper.title}</a>
+            <a href="/article?id=${paper.id}">${paper.title}</a>
           </h3>
           <div class="card-authors" style="margin-bottom:0.5rem;">
             ${paper.authors ? paper.authors.join(' • ') : 'CRII Fellows'}
@@ -136,7 +136,7 @@ function renderPapers() {
             <span style="font-size: 0.76rem; font-family: monospace; color: var(--text-muted);">${paper.doi || 'Open Research'}</span>
             <div style="display:flex; gap:0.5rem;">
               <button class="btn btn-secondary btn-sm" onclick="openCiteModal('${paper.id}')">Cite</button>
-              <a href="article.html?id=${paper.id}" class="btn btn-primary btn-sm">Read Article</a>
+              <a href="/article?id=${paper.id}" class="btn btn-primary btn-sm">Read Article</a>
             </div>
           </div>
         </div>

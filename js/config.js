@@ -717,15 +717,112 @@ class CriiApiClient {
     return null;
   }
 
+  // --- DATASETS (OPEN REPRODUCIBLE DATA) ---
+  async getDatasets() {
+    let localDatasets = [];
+    try {
+      const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DATASETS);
+      localDatasets = local ? JSON.parse(local) : [];
+      if (!Array.isArray(localDatasets)) localDatasets = [];
+    } catch (e) {
+      localDatasets = [];
+    }
+
+    try {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/datasets`);
+      if (res.ok) {
+        const remote = await res.json();
+        if (Array.isArray(remote) && remote.length > 0) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DATASETS, JSON.stringify(remote));
+          return remote;
+        }
+      }
+    } catch (e) {
+      console.warn("Datasets fetch error:", e);
+    }
+
+    if (localDatasets.length > 0) {
+      return localDatasets;
+    }
+
+    // Default seed datasets fallback
+    const defaultSeeds = [
+      {
+        id: "ds-crii-001",
+        title: "TRAPPIST-1e Synthetic Atmospheric Transmission Spectra (0.6 - 12.0 μm)",
+        category: "Space & Astrophysics",
+        version: "v1.4.0",
+        updated: "2026-03-12",
+        format: "CSV & HDF5",
+        size: "42.8 MB",
+        license: "CC-BY 4.0 Open Science",
+        leadResearcher: "Aria Rahman",
+        description: "Synthetic radiative transfer transits modeled under 6 distinct atmospheric regimes.",
+        parameters: ["Wavelength (μm)", "Transit Depth (ppm)", "1-sigma Uncertainty", "Molecular Absorption", "Stellar Flare Residual"],
+        previewRows: [
+          { "wavelength_um": 0.852, "transit_depth_ppm": 5280.12, "uncertainty": 12.4, "primary_absorber": "H2O / Rayleigh", "regime": "Archean" },
+          { "wavelength_um": 1.414, "transit_depth_ppm": 5315.40, "uncertainty": 14.1, "primary_absorber": "H2O", "regime": "Archean" },
+          { "wavelength_um": 3.310, "transit_depth_ppm": 5392.88, "uncertainty": 18.2, "primary_absorber": "CH4", "regime": "Archean" },
+          { "wavelength_um": 4.280, "transit_depth_ppm": 5540.60, "uncertainty": 21.0, "primary_absorber": "CO2", "regime": "Archean" },
+          { "wavelength_um": 9.600, "transit_depth_ppm": 5304.15, "uncertainty": 28.5, "primary_absorber": "O3 (Trace)", "regime": "Archean" }
+        ]
+      },
+      {
+        id: "ds-crii-002",
+        title: "Ediacaran-Cambrian Metazoan Ortholog Calibrations & Fossil Node Chronologies",
+        category: "Ancient Biology & Paleontology",
+        version: "v2.1.0",
+        updated: "2026-02-25",
+        format: "JSON & FASTA",
+        size: "18.3 MB",
+        license: "CC-BY 4.0 Open Science",
+        leadResearcher: "Shayan Debnath",
+        description: "Curated dataset comprising 124 orthologous ribosomal and mitochondrial protein alignments with stratigraphic calibrations.",
+        parameters: ["Gene Family ID", "Phylogenetic Clade", "Minimum Node Age (Ma)", "Maximum Node Age (Ma)", "Stratigraphic Reference"],
+        previewRows: [
+          { "clade": "Basal Bilateria", "node_min_ma": 575.4, "node_max_ma": 612.0, "calibration_marker": "Lantian / Doushantuo", "tree_support_posterior": 0.98 },
+          { "clade": "Ecdysozoa", "node_min_ma": 541.0, "node_max_ma": 560.2, "calibration_marker": "Cloudina / Kimberella", "tree_support_posterior": 0.95 },
+          { "clade": "Lophotrochozoa", "node_min_ma": 538.8, "node_max_ma": 558.0, "calibration_marker": "Small Shelly Fossils (SSF)", "tree_support_posterior": 0.96 },
+          { "clade": "Deuterostomia", "node_min_ma": 526.0, "node_max_ma": 545.1, "calibration_marker": "Chengjiang Vetulicolians", "tree_support_posterior": 0.92 }
+        ]
+      }
+    ];
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DATASETS, JSON.stringify(defaultSeeds));
+    return defaultSeeds;
+  }
+
+  async createDataset(datasetData) {
+    const datasets = await this.getDatasets();
+    const newRecord = {
+      ...datasetData,
+      id: datasetData.id || `ds-crii-${Date.now().toString(36)}`,
+      updated: new Date().toISOString().split('T')[0],
+      version: datasetData.version || "v1.0.0"
+    };
+    datasets.unshift(newRecord);
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DATASETS, JSON.stringify(datasets));
+
+    try {
+      await fetch(`${CRII_CONFIG.API_BASE}/datasets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRecord)
+      });
+    } catch (e) {}
+
+    return newRecord;
+  }
+
   // --- STATS ---
   async getStats() {
     const posts = await this.getPosts({ includeDrafts: true });
     const internsData = await this.getInternsData();
+    const datasets = await this.getDatasets().catch(() => []);
     return {
       publishedPapers: posts.filter(p => p.published).length,
       activeInterns: (internsData.activeInterns || []).length,
       pendingApplications: (internsData.applications || []).filter(a => a.status === 'Pending' || a.status === 'Under Review').length,
-      openDatasets: 4
+      openDatasets: datasets.length
     };
   }
 }

@@ -867,7 +867,11 @@ async function saveCurrentPost() {
   try {
     await window.CRII_API.savePost(postPayload);
     window.showToast(`Publication successfully ${isCurrentPostPublished ? 'published' : 'saved as draft'}!`, 'success');
-    await closeBloggerEditor();
+    try {
+      await closeBloggerEditor();
+    } catch (uiErr) {
+      console.warn('Publication saved, background refresh encountered notice:', uiErr);
+    }
   } catch (err) {
     console.error('Save publication error:', err);
     window.showToast(`Failed to save publication: ${err.message}`, 'error');
@@ -932,7 +936,7 @@ function renderPostsDirectory() {
             <button class="btn btn-secondary btn-sm" onclick="openBloggerEditor('${post.id}')" title="Edit publication in studio">
               Edit
             </button>
-            <a href="article.html?id=${post.id}" target="_blank" class="btn btn-glass btn-sm" title="View public article">
+            <a href="/article?id=${post.id}" target="_blank" class="btn btn-glass btn-sm" title="View public article">
               Preview ↗
             </a>
             <button class="btn btn-sm btn-icon" title="Toggle status" onclick="togglePublishPost('${post.id}')" style="background:rgba(0,0,0,0.04);">
