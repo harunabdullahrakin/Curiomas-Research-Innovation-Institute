@@ -398,6 +398,15 @@ class CriiApiClient {
 
   // --- POSTS & RESEARCH ARTICLES (D1 SQL SYNCED) ---
   async getPosts(options = {}) {
+    let localPosts = [];
+    try {
+      const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS);
+      localPosts = local ? JSON.parse(local) : [];
+      if (!Array.isArray(localPosts)) localPosts = [];
+    } catch (e) {
+      localPosts = [];
+    }
+
     // 1. Fetch directly from Cloudflare D1 SQL backend
     try {
       const query = options.includeDrafts ? '?includeDrafts=true' : '';
@@ -405,11 +414,20 @@ class CriiApiClient {
       if (res.ok) {
         const remote = await res.json();
         if (Array.isArray(remote)) {
-          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(remote));
-          if (!options.includeDrafts) {
-            return remote.filter(p => p.published !== false);
+          if (remote.length > 0) {
+            // Merge remote with locally created posts that might not be in remote yet
+            const remoteIds = new Set(remote.map(r => r.id));
+            const pendingLocal = localPosts.filter(p => !remoteIds.has(p.id));
+            const merged = [...remote, ...pendingLocal];
+            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(merged));
+            return options.includeDrafts ? merged : merged.filter(p => p.published !== false);
+          } else if (localPosts.length > 0) {
+            // Remote returned empty (e.g. fresh DB or offline), preserve local articles!
+            return options.includeDrafts ? localPosts : localPosts.filter(p => p.published !== false);
+          } else {
+            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify([]));
+            return [];
           }
-          return remote;
         }
       }
     } catch (e) {
@@ -417,13 +435,7 @@ class CriiApiClient {
     }
 
     // 2. Cache fallback
-    const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS);
-    let posts = local ? JSON.parse(local) : [];
-
-    if (!options.includeDrafts) {
-      posts = posts.filter(p => p.published !== false);
-    }
-    return posts;
+    return options.includeDrafts ? localPosts : localPosts.filter(p => p.published !== false);
   }
 
   async getPostBySlugOrId(identifier) {
@@ -478,6 +490,9 @@ class CriiApiClient {
       posts.unshift(postRecord);
     }
 
+    // Always immediately persist locally to guarantee zero data loss
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
+
     // Direct Cloudflare D1 SQL write
     try {
       const res = await fetch(`${CRII_CONFIG.API_BASE}/posts`, {
@@ -493,16 +508,15 @@ class CriiApiClient {
         } else {
           posts[0] = postRecord;
         }
+        localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
       } else {
         const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || `Server error ${res.status}`);
+        console.warn("Server returned error when syncing post:", errJson);
       }
     } catch (e) {
       console.warn("Failed to sync post to D1:", e);
-      throw e;
     }
 
-    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
     return postRecord;
   }
 
