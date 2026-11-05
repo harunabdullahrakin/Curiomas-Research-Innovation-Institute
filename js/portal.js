@@ -1526,7 +1526,7 @@ function initInstituteSettings() {
   const emailjsTplInput = document.getElementById('settingEmailjsTemplateId');
   if (emailjsTplInput) {
     emailjsTplInput.value = localStorage.getItem('crii_emailjs_template_id') || 
-      (window.CRII_API.getInstituteSettings()?.emailjsTemplateId) || '';
+      (window.CRII_API.getInstituteSettings()?.emailjsTemplateId) || 'zhelx7y';
   }
 
   const emailjsForm = document.getElementById('emailjsSettingsForm');
@@ -1583,7 +1583,7 @@ function initEmailComposer() {
       const toEmail = (document.getElementById('composerToEmail')?.value || '').trim();
       const toName = (document.getElementById('composerToName')?.value || '').trim();
       const subject = (document.getElementById('composerSubject')?.value || '').trim();
-      const templateId = (document.getElementById('composerTemplateId')?.value || '').trim();
+      const templateId = (document.getElementById('composerTemplateId')?.value || '').trim() || 'zhelx7y';
       const message = (document.getElementById('composerMessage')?.value || '').trim();
 
       if (!toEmail || !message) {
@@ -1670,12 +1670,9 @@ window.openEmailComposer = function(toEmail = '', toName = '', defaultSubject = 
 
   // Prepopulate saved Template ID from localStorage or settings
   const savedTemplateId = localStorage.getItem('crii_emailjs_template_id') || 
-    (window.CRII_API && window.CRII_API.getInstituteSettings()?.emailjsTemplateId) || '';
+    (window.CRII_API && window.CRII_API.getInstituteSettings()?.emailjsTemplateId) || 'zhelx7y';
   if (tplEl) {
     tplEl.value = savedTemplateId;
-    if (!savedTemplateId) {
-      tplEl.placeholder = 'Paste your Template ID (e.g. template_xxxxxxx)';
-    }
   }
 
   modal.classList.add('active');

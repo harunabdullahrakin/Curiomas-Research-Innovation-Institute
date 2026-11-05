@@ -22,7 +22,8 @@ const CRII_CONFIG = {
     ALLOWED_USERS: "crii_allowed_users_v1",
     POSTS: "crii_posts_v2",
     INTERNS: "crii_interns_v2",
-    DATASETS: "crii_datasets_v1"
+    DATASETS: "crii_datasets_v1",
+    EMAILJS_TEMPLATE_ID: "crii_emailjs_template_id"
   }
 };
 
@@ -233,11 +234,23 @@ class CriiApiClient {
     return sanitized;
   }
 
+  getEmailjsTemplateId() {
+    return localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.EMAILJS_TEMPLATE_ID) || "zhelx7y";
+  }
+
+  setEmailjsTemplateId(id) {
+    if (!id || typeof id !== 'string') return;
+    const sanitized = id.trim();
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.EMAILJS_TEMPLATE_ID, sanitized);
+    return sanitized;
+  }
+
   async saveInstituteSettings(settings) {
     if (!settings) return;
     if (settings.name) this.setInstituteName(settings.name);
     if (settings.logo !== undefined) this.setInstituteLogo(settings.logo);
     if (settings.autzAppId) this.setAutzAppId(settings.autzAppId);
+    if (settings.emailjsTemplateId) this.setEmailjsTemplateId(settings.emailjsTemplateId);
 
     try {
       const user = this.getCurrentUser();
