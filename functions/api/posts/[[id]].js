@@ -119,31 +119,46 @@ export async function onRequestPost(context) {
   try {
     const data = await request.json();
     const id = data.id || `crii-paper-${Date.now()}`;
-    const slug = (data.slug || data.title || "paper")
+    const title = (data.title || "Untitled Research Publication").trim();
+    let slug = (data.slug || title || "paper")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
+    if (!slug) slug = `paper-${Date.now().toString(36)}`;
+    const category = data.category || "Space & Astrophysics";
     const date = data.date || new Date().toISOString().split("T")[0];
     const nowIso = new Date().toISOString();
     const updatedAt = nowIso;
     const updatedBy = data.updatedBy || "Institute Fellow";
 
-    const authorsJson = JSON.stringify(Array.isArray(data.authors) ? data.authors : [data.authors || "CRII Fellow"]);
-    const tagsJson = JSON.stringify(Array.isArray(data.tags) ? data.tags : [data.tags || "Research"]);
-    const blocksJson = data.blocks ? JSON.stringify(data.blocks) : null;
+    const authorsJson = JSON.stringify(Array.isArray(data.authors) && data.authors.length > 0 ? data.authors : [data.authors || "CRII Fellow"]);
+    const tagsJson = JSON.stringify(Array.isArray(data.tags) && data.tags.length > 0 ? data.tags : ["Research"]);
+    const blocksJson = data.blocks ? JSON.stringify(data.blocks) : "[]";
     const published = data.published !== false ? 1 : 0;
     const featured = data.featured ? 1 : 0;
-    const downloads = data.downloads || 0;
-    const citations = data.citations || 0;
+    const downloads = Number(data.downloads) || 0;
+    const citations = Number(data.citations) || 0;
     const coverImage = data.coverImage || "";
-    const readingTime = data.readingTime || "10 min read";
+    const readingTime = data.readingTime || "5 min read";
     const doi = data.doi || `10.5281/crii.2026.${Math.floor(1000 + Math.random() * 9000)}`;
-    const summary = data.summary || "";
-    const abstract = data.abstract || "";
-    const content = data.content || "";
+    const summary = data.summary || title;
+    const abstract = data.abstract || summary;
+    const content = data.content || summary;
 
-    // 1. Save to Cloudflare D1 SQL Database
+    // 1. Save to Cloudflare D1 SQL Database with automatic slug deduplication
     if (env && env.DB) {
+      // Check if another article uses this slug
+      let finalSlug = slug;
+      let counter = 1;
+      while (true) {
+        const existing = await env.DB.prepare(
+          "SELECT id FROM posts WHERE slug = ? AND id != ? LIMIT 1"
+        ).bind(finalSlug, id).first();
+        if (!existing) break;
+        finalSlug = `${slug}-${counter++}`;
+      }
+      slug = finalSlug;
+
       const sql = `
         INSERT INTO posts (
           id, slug, title, coverImage, category, authors_json, date,
@@ -171,7 +186,7 @@ export async function onRequestPost(context) {
           featured=excluded.featured;
       `;
       await env.DB.prepare(sql).bind(
-        id, slug, data.title, coverImage, data.category, authorsJson, date,
+        id, slug, title, coverImage, category, authorsJson, date,
         updatedAt, updatedBy, readingTime, doi, summary, abstract,
         content, blocksJson, tagsJson, published, featured, downloads, citations
       ).run();
@@ -181,12 +196,17 @@ export async function onRequestPost(context) {
       ...data,
       id,
       slug,
+      title,
+      category,
       date,
       updatedAt,
       updatedBy,
       coverImage,
       readingTime,
       doi,
+      summary,
+      abstract,
+      content,
       published: Boolean(published),
       featured: Boolean(featured),
       downloads,
@@ -194,11 +214,11 @@ export async function onRequestPost(context) {
     };
 
     return new Response(JSON.stringify(saved), {
-      status: 201,
+      status: 200,
       headers: { "Content-Type": "application/json" }
     });
   } catch (err) {
-    console.error("Failed to create/update post:", err);
+    console.error("Failed to create/update post in D1:", err);
     return new Response(JSON.stringify({ error: err.message || "Failed to process post" }), {
       status: 400,
       headers: { "Content-Type": "application/json" }
@@ -224,5 +244,15 @@ export async function onRequestDelete(context) {
 
   return new Response(JSON.stringify({ success: true, id }), {
     headers: { "Content-Type": "application/json" }
+  });
+}
+
+export async function onRequestOptions() {
+  return new Response(null, {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    }
   });
 }

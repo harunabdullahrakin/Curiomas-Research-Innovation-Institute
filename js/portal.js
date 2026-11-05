@@ -166,6 +166,20 @@ function initBloggerEditor() {
     });
   }
 
+  // Title to slug automatic generator
+  const titleInput = document.getElementById('bloggerTitleInput');
+  const slugInput = document.getElementById('bloggerSlugInput');
+  if (titleInput && slugInput) {
+    titleInput.addEventListener('input', () => {
+      if (!currentEditingPostId || !slugInput.dataset.custom) {
+        slugInput.value = titleInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      }
+    });
+    slugInput.addEventListener('input', () => {
+      slugInput.dataset.custom = 'true';
+    });
+  }
+
   // Cover image input preview listener
   const coverInput = document.getElementById('bloggerCoverInput');
   if (coverInput) {
@@ -240,23 +254,22 @@ function openBloggerEditor(postId) {
     }
   } else {
     // Brand new post
-    document.getElementById('bloggerTitleInput').value = "The Last Dance";
+    document.getElementById('bloggerTitleInput').value = "";
     isCurrentPostPublished = true;
-    document.getElementById('bloggerCoverInput').value = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80";
-    document.getElementById('bloggerSlugInput').value = "the-last-dance";
+    document.getElementById('bloggerCoverInput').value = "";
+    document.getElementById('bloggerSlugInput').value = "";
     document.getElementById('bloggerCategoryInput').value = "Space & Astrophysics";
     const user = window.CRII_API.getCurrentUser();
-    document.getElementById('bloggerAuthorsInput').value = user ? (user.name || "CRII Fellow") : "CRII Fellow";
+    document.getElementById('bloggerAuthorsInput').value = user ? (user.name || user.email || "CRII Fellow") : "CRII Fellow";
     document.getElementById('bloggerDoiInput').value = `10.5281/crii.2026.${Math.floor(1000 + Math.random() * 9000)}`;
-    document.getElementById('bloggerSummaryInput').value = "An open inquiry into celestial mechanics, deep time horizons, and emergent discovery.";
-    document.getElementById('bloggerAbstractInput').value = "This publication documents multi-observer calibrations, synthetic spectral modeling, and open-source data pipelines developed by student researchers.";
-    document.getElementById('bloggerTagsInput').value = "Research, Astrophysics, OpenScience";
-    updateCoverPreview("https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80");
+    document.getElementById('bloggerSummaryInput').value = "";
+    document.getElementById('bloggerAbstractInput').value = "";
+    document.getElementById('bloggerTagsInput').value = "Research";
+    updateCoverPreview("");
 
     currentPostBlocks = [
       { id: `b-${Date.now()}-1`, type: 'heading', content: '1. Introduction & Overview' },
-      { id: `b-${Date.now()}-2`, type: 'text', content: 'The Last Dance was held on 4/9/2026 (4:10pm) with @saad @kinsuk @arian @soron @harun collaborating on astrophysical instrumentation.' },
-      { id: `b-${Date.now()}-3`, type: 'callout', style: 'note', content: 'All raw spectral data and notebook pipelines are fully archived in the CRII Open Datasets repository under CC-BY 4.0.' }
+      { id: `b-${Date.now()}-2`, type: 'text', content: 'Describe research objectives, experimental setups, and discovery outcomes here.' }
     ];
   }
 
@@ -793,31 +806,38 @@ function renderBloggerLiveReaderPreview() {
 
 // Save Post
 async function saveCurrentPost() {
-  const title = document.getElementById('bloggerTitleInput').value.trim();
+  const title = (document.getElementById('bloggerTitleInput')?.value || '').trim();
   if (!title) {
     window.showToast('Please enter an article title', 'error');
+    document.getElementById('bloggerTitleInput')?.focus();
     return;
   }
 
-  const category = document.getElementById('bloggerCategoryInput').value;
-  const coverImage = document.getElementById('bloggerCoverInput').value.trim();
-  const slugInput = document.getElementById('bloggerSlugInput').value.trim();
-  const slug = slugInput || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-  const authorsStr = document.getElementById('bloggerAuthorsInput').value.trim();
-  const doi = document.getElementById('bloggerDoiInput').value.trim() || `10.5281/crii.2026.${Math.floor(1000 + Math.random() * 9000)}`;
-  const summary = document.getElementById('bloggerSummaryInput').value.trim() || title;
-  const abstract = document.getElementById('bloggerAbstractInput').value.trim();
-  const tagsStr = document.getElementById('bloggerTagsInput').value.trim();
+  const category = document.getElementById('bloggerCategoryInput')?.value || "Space & Astrophysics";
+  const coverImage = (document.getElementById('bloggerCoverInput')?.value || '').trim();
+  let slug = (document.getElementById('bloggerSlugInput')?.value || '').trim();
+  if (!slug) {
+    slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  }
+  if (!slug) {
+    slug = `article-${Date.now().toString(36)}`;
+  }
+
+  const authorsStr = (document.getElementById('bloggerAuthorsInput')?.value || '').trim();
+  const doi = (document.getElementById('bloggerDoiInput')?.value || '').trim() || `10.5281/crii.2026.${Math.floor(1000 + Math.random() * 9000)}`;
+  const summary = (document.getElementById('bloggerSummaryInput')?.value || '').trim() || title;
+  const abstract = (document.getElementById('bloggerAbstractInput')?.value || '').trim() || summary;
+  const tagsStr = (document.getElementById('bloggerTagsInput')?.value || '').trim();
   const user = window.CRII_API.getCurrentUser();
-  const editorName = user ? (user.name || user.email) : "Administrator";
+  const editorName = user ? (user.name || user.email || "Administrator") : "Administrator";
 
   let wordCount = 0;
   currentPostBlocks.forEach(b => {
-    if (b.content) wordCount += b.content.split(/\s+/).length;
+    if (b.content) wordCount += String(b.content).split(/\s+/).length;
   });
   const readingTime = `${Math.max(1, Math.ceil(wordCount / 180))} min read`;
 
-  const compiledContent = compileBlocksToContent(currentPostBlocks);
+  const compiledContent = compileBlocksToContent(currentPostBlocks) || summary;
 
   const postPayload = {
     id: currentEditingPostId || `crii-paper-${Date.now()}`,
@@ -825,22 +845,38 @@ async function saveCurrentPost() {
     slug,
     category,
     coverImage,
-    authors: authorsStr ? authorsStr.split(',').map(a => a.trim()) : ["CRII Fellow"],
+    authors: authorsStr ? authorsStr.split(',').map(a => a.trim()).filter(Boolean) : ["CRII Fellow"],
     readingTime,
     doi,
     summary,
     abstract,
     content: compiledContent,
     blocks: currentPostBlocks,
-    tags: tagsStr ? tagsStr.split(',').map(t => t.trim()) : ["Research"],
+    tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ["Research"],
     published: isCurrentPostPublished,
     updatedBy: editorName,
     updatedAt: new Date().toISOString()
   };
 
-  await window.CRII_API.savePost(postPayload);
-  window.showToast(`Publication successfully ${isCurrentPostPublished ? 'published' : 'saved as draft'}!`, 'success');
-  await closeBloggerEditor();
+  const saveBtn = document.getElementById('bloggerSaveBtn');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Saving...';
+  }
+
+  try {
+    await window.CRII_API.savePost(postPayload);
+    window.showToast(`Publication successfully ${isCurrentPostPublished ? 'published' : 'saved as draft'}!`, 'success');
+    await closeBloggerEditor();
+  } catch (err) {
+    console.error('Save publication error:', err);
+    window.showToast(`Failed to save publication: ${err.message}`, 'error');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = isCurrentPostPublished ? 'Save & Publish' : 'Save as Draft';
+    }
+  }
 }
 
 // Render Directory Table

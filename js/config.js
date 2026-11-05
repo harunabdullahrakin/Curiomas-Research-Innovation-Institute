@@ -487,10 +487,19 @@ class CriiApiClient {
       });
       if (res.ok) {
         const savedRemote = await res.json();
-        postRecord = { ...postRecord, ...savedRemote };
+        Object.assign(postRecord, savedRemote);
+        if (existingIndex >= 0) {
+          posts[existingIndex] = postRecord;
+        } else {
+          posts[0] = postRecord;
+        }
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Server error ${res.status}`);
       }
     } catch (e) {
       console.warn("Failed to sync post to D1:", e);
+      throw e;
     }
 
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
