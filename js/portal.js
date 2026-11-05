@@ -1521,6 +1521,36 @@ function initInstituteSettings() {
       setTimeout(() => window.location.reload(), 800);
     });
   }
+
+  // EmailJS Settings Form in Tab 6
+  const emailjsTplInput = document.getElementById('settingEmailjsTemplateId');
+  if (emailjsTplInput) {
+    emailjsTplInput.value = localStorage.getItem('crii_emailjs_template_id') || 
+      (window.CRII_API.getInstituteSettings()?.emailjsTemplateId) || '';
+  }
+
+  const emailjsForm = document.getElementById('emailjsSettingsForm');
+  if (emailjsForm) {
+    emailjsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const val = (document.getElementById('settingEmailjsTemplateId')?.value || '').trim();
+      if (!val) {
+        window.showToast('Please enter your EmailJS Template ID', 'error');
+        return;
+      }
+      localStorage.setItem('crii_emailjs_template_id', val);
+      try {
+        const current = window.CRII_API.getInstituteSettings() || {};
+        await window.CRII_API.saveInstituteSettings({
+          ...current,
+          emailjsTemplateId: val
+        });
+      } catch (err) {
+        console.warn('Institute settings save note:', err);
+      }
+      window.showToast(`EmailJS Template ID saved as "${val}"!`, 'success');
+    });
+  }
 }
 
 function escapeHtml(str) {
@@ -1553,13 +1583,22 @@ function initEmailComposer() {
       const toEmail = (document.getElementById('composerToEmail')?.value || '').trim();
       const toName = (document.getElementById('composerToName')?.value || '').trim();
       const subject = (document.getElementById('composerSubject')?.value || '').trim();
-      const templateId = (document.getElementById('composerTemplateId')?.value || '').trim() || 'template_curiomas';
+      const templateId = (document.getElementById('composerTemplateId')?.value || '').trim();
       const message = (document.getElementById('composerMessage')?.value || '').trim();
 
       if (!toEmail || !message) {
         window.showToast('Please specify a recipient email and message.', 'error');
         return;
       }
+
+      if (!templateId) {
+        window.showToast('Please enter your EmailJS Template ID from dashboard.emailjs.com/admin/templates', 'error', 5000);
+        document.getElementById('composerTemplateId')?.focus();
+        return;
+      }
+
+      // Persist the entered template ID for future dispatches
+      localStorage.setItem('crii_emailjs_template_id', templateId);
 
       sendBtn.disabled = true;
       sendBtn.innerText = 'Dispatching via curiomas...';
@@ -1585,7 +1624,11 @@ function initEmailComposer() {
       } catch (err) {
         console.error('EmailJS dispatch error:', err);
         const errMsg = err?.text || err?.message || 'Email dispatch failed';
-        window.showToast(`Email error: ${errMsg}. Check EmailJS Template ID in modal.`, 'error');
+        if (errMsg.toLowerCase().includes('template') && errMsg.toLowerCase().includes('not found')) {
+          window.showToast(`Template ID '${templateId}' not found. Please visit dashboard.emailjs.com/admin/templates to copy your actual Template ID.`, 'error', 6500);
+        } else {
+          window.showToast(`Email error: ${errMsg}`, 'error', 5000);
+        }
       } finally {
         sendBtn.disabled = false;
         sendBtn.innerHTML = `<span>Send Email via EmailJS</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`;
@@ -1618,11 +1661,22 @@ window.openEmailComposer = function(toEmail = '', toName = '', defaultSubject = 
   const nameEl = document.getElementById('composerToName');
   const subjEl = document.getElementById('composerSubject');
   const msgEl = document.getElementById('composerMessage');
+  const tplEl = document.getElementById('composerTemplateId');
 
   if (toEl) toEl.value = toEmail;
   if (nameEl) nameEl.value = toName;
   if (subjEl && defaultSubject) subjEl.value = defaultSubject;
   if (msgEl && defaultMsg) msgEl.value = defaultMsg;
+
+  // Prepopulate saved Template ID from localStorage or settings
+  const savedTemplateId = localStorage.getItem('crii_emailjs_template_id') || 
+    (window.CRII_API && window.CRII_API.getInstituteSettings()?.emailjsTemplateId) || '';
+  if (tplEl) {
+    tplEl.value = savedTemplateId;
+    if (!savedTemplateId) {
+      tplEl.placeholder = 'Paste your Template ID (e.g. template_xxxxxxx)';
+    }
+  }
 
   modal.classList.add('active');
 };

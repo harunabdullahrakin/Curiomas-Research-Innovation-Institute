@@ -166,20 +166,24 @@ function initApplicationForm() {
         </div>
       `;
 
-      // Dispatch EmailJS alert
+      // Dispatch EmailJS alert if template configured
       if (window.emailjs) {
         try {
-          emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
-          await emailjs.send('curiomas', 'template_curiomas', {
-            to_email: 'curiomas.members@gmail.com',
-            to_name: 'CRII Admissions Board',
-            applicant_name: res.fullName,
-            applicant_email: res.email,
-            applicant_university: res.university,
-            applicant_division: res.preferredDivision,
-            applicant_level: res.academicLevel,
-            message: `New fellowship application received from ${res.fullName} (${res.email}) from ${res.university} for ${res.preferredDivision}.\n\nStatement:\n${res.statement}`
-          }, 'h3x_9dtR8frBq2pCi');
+          const tplId = localStorage.getItem('crii_emailjs_template_id') || 
+            (window.CRII_API && window.CRII_API.getInstituteSettings()?.emailjsTemplateId);
+          if (tplId) {
+            emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
+            await emailjs.send('curiomas', tplId, {
+              to_email: 'curiomas.members@gmail.com',
+              to_name: 'CRII Admissions Board',
+              applicant_name: res.fullName,
+              applicant_email: res.email,
+              applicant_university: res.university,
+              applicant_division: res.preferredDivision,
+              applicant_level: res.academicLevel,
+              message: `New fellowship application received from ${res.fullName} (${res.email}) from ${res.university} for ${res.preferredDivision}.\n\nStatement:\n${res.statement}`
+            }, 'h3x_9dtR8frBq2pCi');
+          }
         } catch (mailErr) {
           console.warn('EmailJS application alert notification note:', mailErr);
         }

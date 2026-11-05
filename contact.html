@@ -296,16 +296,20 @@
 
       if (window.emailjs) {
         try {
-          emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
-          await emailjs.send('curiomas', 'template_curiomas', {
-            to_email: 'curiomas.members@gmail.com',
-            from_name: name,
-            sender_email: email,
-            sender_affiliation: affiliation,
-            subject: `CRII Inquiry [${subject}]: ${name}`,
-            message: `From: ${name} (${email})\nAffiliation: ${affiliation}\nCategory: ${subject}\n\nMessage:\n${message}`,
-            reply_to: email
-          }, 'h3x_9dtR8frBq2pCi');
+          const tplId = localStorage.getItem('crii_emailjs_template_id') || 
+            (window.CRII_API && window.CRII_API.getInstituteSettings()?.emailjsTemplateId);
+          if (tplId) {
+            emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
+            await emailjs.send('curiomas', tplId, {
+              to_email: 'curiomas.members@gmail.com',
+              from_name: name,
+              sender_email: email,
+              sender_affiliation: affiliation,
+              subject: `CRII Inquiry [${subject}]: ${name}`,
+              message: `From: ${name} (${email})\nAffiliation: ${affiliation}\nCategory: ${subject}\n\nMessage:\n${message}`,
+              reply_to: email
+            }, 'h3x_9dtR8frBq2pCi');
+          }
         } catch (mailErr) {
           console.warn('EmailJS contact dispatch note:', mailErr);
         }

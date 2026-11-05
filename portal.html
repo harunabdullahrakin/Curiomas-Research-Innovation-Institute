@@ -795,6 +795,50 @@
               </div>
             </form>
           </div>
+
+          <!-- 3. EmailJS Dispatch Configuration -->
+          <div class="data-table-card" style="padding: 2rem;">
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <span>EmailJS & Mail Dispatches</span>
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+              Set your EmailJS Template ID so you can dispatch emails directly to applicants, fellows, and users.
+            </p>
+
+            <form id="emailjsSettingsForm">
+              <div class="form-group">
+                <label class="form-label">Connected Gmail Account</label>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); padding: 0.5rem 0.75rem; background: var(--bg-surface); border-radius: 6px; border: 1px solid var(--border-color);">
+                  curiomas.members@gmail.com (Service ID: <code>curiomas</code>)
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="settingEmailjsTemplateId" style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>EmailJS Template ID *</span>
+                  <a href="https://dashboard.emailjs.com/admin/templates" target="_blank" rel="noopener" style="font-size: 0.75rem; color: var(--accent-primary); text-decoration: underline;">
+                    Find / Create Template &rarr;
+                  </a>
+                </label>
+                <input type="text" id="settingEmailjsTemplateId" class="form-input" placeholder="e.g. template_xxxxxxx" required>
+                <span style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.35rem; display: block; line-height: 1.4;">
+                  Find your Template ID at <a href="https://dashboard.emailjs.com/admin/templates" target="_blank" style="color:var(--accent-primary); text-decoration:underline;">EmailJS Dashboard &gt; Email Templates</a>. If you haven't created a template yet, click "Create New Template" and copy its ID.
+                </span>
+              </div>
+
+              <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; background: rgba(37,99,235,0.05); padding: 0.75rem; border-radius: 6px; margin-top: 1rem;">
+                <strong>Template Variables in EmailJS:</strong><br>
+                In your EmailJS template content, you can use: <code>{{to_email}}</code>, <code>{{to_name}}</code>, <code>{{subject}}</code>, <code>{{message}}</code>, <code>{{reply_to}}</code>.
+              </div>
+
+              <div style="margin-top: 1.5rem; text-align: right;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+                  Save Template ID
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </main>
@@ -1096,8 +1140,16 @@
               <input type="text" id="composerSubject" class="form-input" required value="CRII Research Fellowship Update">
             </div>
             <div class="form-group">
-              <label class="form-label" for="composerTemplateId">EmailJS Template ID</label>
-              <input type="text" id="composerTemplateId" class="form-input" placeholder="e.g. template_curiomas" value="template_curiomas">
+              <label class="form-label" for="composerTemplateId" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>EmailJS Template ID *</span>
+                <a href="https://dashboard.emailjs.com/admin/templates" target="_blank" rel="noopener" style="font-size:0.75rem; color:var(--accent-primary); text-decoration:underline;">
+                  Find / Create Template &rarr;
+                </a>
+              </label>
+              <input type="text" id="composerTemplateId" class="form-input" placeholder="e.g. template_xxxxxxx" required>
+              <span style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">
+                From <a href="https://dashboard.emailjs.com/admin/templates" target="_blank" rel="noopener" style="color:var(--accent-primary); text-decoration:underline;">EmailJS Dashboard</a> (saved automatically once used).
+              </span>
             </div>
           </div>
 
@@ -1106,8 +1158,9 @@
             <textarea id="composerMessage" class="form-textarea" style="min-height: 150px;" required placeholder="Write your email dispatch to the applicant or team member..."></textarea>
           </div>
 
-          <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; background: rgba(37,99,235,0.05); padding: 0.75rem 1rem; border-radius: 8px;">
-            Connected via EmailJS to <strong>curiomas.members@gmail.com</strong> (Service: <code>curiomas</code>).
+          <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.15); padding: 0.85rem 1rem; border-radius: 8px;">
+            <strong>EmailJS Service:</strong> <code>curiomas</code> (connected to <code>curiomas.members@gmail.com</code>)<br>
+            Supported parameters in your EmailJS template: <code>{{to_email}}</code>, <code>{{to_name}}</code>, <code>{{subject}}</code>, <code>{{message}}</code>, <code>{{reply_to}}</code>.
           </div>
         </div>
         <div class="modal-footer">
