@@ -41,12 +41,19 @@ function renderArticle(post) {
   const authorsEl = document.getElementById('postAuthors');
   if (authorsEl) authorsEl.innerText = (post.authors || []).join(' • ');
 
-  // Updated By & Timestamp
+  // Updated / Created By & Timestamp
   const updatedEl = document.getElementById('postUpdatedText');
   if (updatedEl) {
-    const editor = post.updatedBy || (post.authors && post.authors[0]) || 'Lead Investigator';
-    const dateStr = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : (post.date || '2026-03-14');
-    updatedEl.innerText = `Revised by ${editor} on ${dateStr}`;
+    const isEdited = Boolean(post.isEdited || (post.updatedBy && post.updatedAt));
+    if (isEdited) {
+      const editor = post.updatedBy || (post.authors && post.authors[0]) || 'CRII Researcher';
+      const dateStr = new Date(post.updatedAt || post.date || Date.now()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      updatedEl.innerText = `Last edited by ${editor} on ${dateStr}`;
+    } else {
+      const creator = post.createdBy || (post.authors && post.authors[0]) || 'CRII Researcher';
+      const dateStr = new Date(post.createdAt || post.date || Date.now()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      updatedEl.innerText = `Created by ${creator} on ${dateStr}`;
+    }
   }
 
   // Cover Image

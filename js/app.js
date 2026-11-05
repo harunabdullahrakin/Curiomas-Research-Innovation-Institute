@@ -170,10 +170,11 @@ function initCookieConsent() {
 // 5. Mobile Navigation
 function initMobileNav() {
   const toggleBtn = document.querySelector('.menu-toggle');
-  const navMenu = document.querySelector('.nav-menu');
+  const navMenu = document.querySelector('.mockup-nav-links') || document.querySelector('.nav-menu');
 
   if (toggleBtn && navMenu) {
-    toggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       navMenu.classList.toggle('show');
     });
 
@@ -262,8 +263,32 @@ function formatEditorialReadTime(readingTime) {
   return readingTime;
 }
 
+function getMetaAttributionHtml(post) {
+  const isEdited = Boolean(post.isEdited || (post.updatedBy && post.updatedAt));
+  const editor = post.updatedBy || (post.authors && post.authors[0]) || 'CRII Researcher';
+  const creator = post.createdBy || (post.authors && post.authors[0]) || 'CRII Researcher';
+
+  if (isEdited) {
+    const timeStr = formatEditorialDate(post.updatedAt || post.date);
+    return `
+      <div class="article-meta-attribution">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Last edited by <strong>${editor}</strong> on ${timeStr}</span>
+      </div>
+    `;
+  } else {
+    const timeStr = formatEditorialDate(post.createdAt || post.date);
+    return `
+      <div class="article-meta-attribution">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span>Created by <strong>${creator}</strong> on ${timeStr}</span>
+      </div>
+    `;
+  }
+}
+
 async function initFeaturedArticles() {
-  const container = document.getElementById('featuredArticlesContainer');
+  const container = document.getElementById('fromTheInstituteContainer') || document.getElementById('featuredArticlesContainer');
   if (!container || !window.CRII_API) return;
 
   try {
@@ -273,38 +298,132 @@ async function initFeaturedArticles() {
     if (published.length === 0) return;
 
     const fallbackCovers = [
-      'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=800&q=80', // Forest canopy / nature
-      'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80', // Active youth / group
-      'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?auto=format&fit=crop&w=800&q=80', // Political / journalism
-      'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=80'  // Nutrition / science
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80'
     ];
 
-    container.innerHTML = published.slice(0, 4).map((paper, idx) => {
-      const cover = paper.coverImage || fallbackCovers[idx % fallbackCovers.length];
-      const dateText = formatEditorialDate(paper.date);
-      const readText = formatEditorialReadTime(paper.readingTime);
+    // Priority: An article marked featured: true, or the most recent published article
+    const featuredPost = published.find(p => p.featured === true) || published[0];
+    const subPosts = published.filter(p => p.id !== featuredPost.id).slice(0, 3);
 
-      let tags = [];
-      if (paper.category) tags.push(paper.category);
-      if (Array.isArray(paper.tags)) tags.push(...paper.tags);
-      tags = [...new Set(tags)].filter(Boolean);
-      if (tags.length === 0) tags = ['Research'];
+    const curatedFallbacks = [
+      {
+        category: 'ANCIENT BIOLOGY',
+        title: 'Fossil Calibration in an Open Framework',
+        desc: 'How verifiable fossil records and open divergence datasets are being prepared for the CRII repository.',
+        cover: fallbackCovers[1],
+        link: '/research',
+        linkText: 'Coming soon',
+        attribution: ''
+      },
+      {
+        category: 'AI & COMPUTATIONAL SCIENCE',
+        title: 'Building Reproducible ML Pipelines for Biophysics',
+        desc: 'A look at why open, test-driven computational methods matter when we are developing across biological and physical systems.',
+        cover: fallbackCovers[2],
+        link: '/research',
+        linkText: 'Coming soon',
+        attribution: ''
+      },
+      {
+        category: 'ASTROBIOLOGY',
+        title: 'Life at the Edge of Habitability',
+        desc: "Dispatches from the Astrobiology & Extremophiles division on what Earth's most resilient organisms tell us about life beyond it.",
+        cover: fallbackCovers[3],
+        link: '/research',
+        linkText: 'Coming soon',
+        attribution: ''
+      }
+    ];
 
-      return `
-        <article class="editorial-card">
-          <div class="editorial-card-media">
-            <img src="${cover}" alt="${paper.title}" class="editorial-card-img" loading="lazy">
-            <div class="editorial-date-badge">${dateText} | ${readText}</div>
+    const featuredCover = featuredPost.coverImage || fallbackCovers[0];
+    const featuredCategory = (featuredPost.category || 'FEATURED RESEARCH').toUpperCase();
+
+    // Render Featured Large Card and 3 Sub-Cards
+    let subCardsHtml = '';
+    for (let i = 0; i < 3; i++) {
+      if (i < subPosts.length) {
+        const p = subPosts[i];
+        const pCover = p.coverImage || fallbackCovers[(i + 1) % fallbackCovers.length];
+        const pCategory = (p.category || 'RESEARCH').toUpperCase();
+        subCardsHtml += `
+          <div class="editorial-sub-card">
+            <div class="sub-card-media">
+              <img src="${pCover}" alt="${p.title}" loading="lazy">
+            </div>
+            <div class="sub-card-body">
+              <div class="sub-card-tag">
+                <span class="mockup-tag-dot"></span>
+                <span>${pCategory}</span>
+              </div>
+              <h4 class="sub-card-title">
+                <a href="/article?id=${encodeURIComponent(p.id)}" style="color:inherit; text-decoration:none;">${p.title}</a>
+              </h4>
+              <p class="sub-card-desc">${p.summary || p.abstract || ''}</p>
+              <a href="/article?id=${encodeURIComponent(p.id)}" class="mockup-arrow-link">
+                <span>Read dispatch</span>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+              </a>
+              ${getMetaAttributionHtml(p)}
+            </div>
           </div>
-          <h3 class="editorial-card-title">
-            <a href="/article?id=${encodeURIComponent(paper.id)}">${paper.title}</a>
+        `;
+      } else {
+        const fb = curatedFallbacks[i];
+        subCardsHtml += `
+          <div class="editorial-sub-card">
+            <div class="sub-card-media">
+              <img src="${fb.cover}" alt="${fb.title}" loading="lazy">
+            </div>
+            <div class="sub-card-body">
+              <div class="sub-card-tag">
+                <span class="mockup-tag-dot"></span>
+                <span>${fb.category}</span>
+              </div>
+              <h4 class="sub-card-title">${fb.title}</h4>
+              <p class="sub-card-desc">${fb.desc}</p>
+              <a href="${fb.link}" class="mockup-arrow-link">
+                <span>${fb.linkText}</span>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+              </a>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    container.innerHTML = `
+      <!-- Featured Big Horizontal Card -->
+      <div class="editorial-feature-card">
+        <div class="feature-card-media">
+          <img src="${featuredCover}" alt="${featuredPost.title}" loading="lazy">
+        </div>
+        <div class="feature-card-body">
+          <div class="mockup-section-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>${featuredCategory} • SPOTLIGHT PUBLICATION</span>
+          </div>
+          <h3 class="feature-card-title">
+            <a href="/article?id=${encodeURIComponent(featuredPost.id)}" style="color:inherit; text-decoration:none;">${featuredPost.title}</a>
           </h3>
-          <div class="editorial-tags-list">
-            ${tags.map(t => `<span class="editorial-tag-pill">${t}</span>`).join('')}
-          </div>
-        </article>
-      `;
-    }).join('');
+          <p class="feature-card-desc">
+            ${featuredPost.summary || featuredPost.abstract || ''}
+          </p>
+          <a href="/article?id=${encodeURIComponent(featuredPost.id)}" class="mockup-arrow-link" style="margin-bottom:0.75rem;">
+            <span>Read full publication</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+          ${getMetaAttributionHtml(featuredPost)}
+        </div>
+      </div>
+
+      <!-- 3-Column Sub-Cards -->
+      <div class="editorial-sub-grid">
+        ${subCardsHtml}
+      </div>
+    `;
   } catch (e) {
     console.warn('Featured articles render error:', e);
   }

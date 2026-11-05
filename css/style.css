@@ -1470,8 +1470,30 @@ body {
   font-size: 0.88rem;
   line-height: 1.55;
   color: #5c635d;
-  margin: 0 0 1.25rem 0;
+  margin: 0 0 1rem 0;
   flex-grow: 1;
+}
+
+.article-meta-attribution {
+  font-size: 0.74rem;
+  color: #717d75;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  letter-spacing: 0.01em;
+}
+
+.article-meta-attribution svg {
+  stroke: #8c7355;
+  flex-shrink: 0;
+}
+
+.article-meta-attribution strong {
+  font-weight: 600;
+  color: #17281f;
 }
 
 /* 5. Publications Repository Initializing */
@@ -2028,11 +2050,57 @@ body {
 }
 
 @media (max-width: 640px) {
-  .mockup-hero-title { font-size: 2.3rem; }
-  .mockup-page-hero-title { font-size: 2.2rem; }
-  .mockup-h2 { font-size: 2.1rem; }
-  .mockup-nav-capsule { padding: 0 0.85rem; }
-  .mockup-nav-links { display: none; }
+  .mockup-hero-title { font-size: 2.2rem; }
+  .mockup-page-hero-title { font-size: 2.1rem; }
+  .mockup-h2 { font-size: 2rem; }
+  .mockup-nav-wrapper { margin-bottom: 2.5rem; }
+  .mockup-nav-capsule {
+    padding: 0 0.85rem;
+    position: relative;
+    height: 54px;
+  }
+  .mockup-nav-links {
+    display: none;
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    right: 0;
+    background: rgba(13, 22, 40, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 18px;
+    padding: 1.25rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+  .mockup-nav-links.show {
+    display: flex !important;
+  }
+  .menu-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+  .mockup-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+  .mockup-hero-actions a {
+    text-align: center;
+    justify-content: center;
+    width: 100%;
+  }
+  .feature-card-body {
+    padding: 1.75rem 1.25rem;
+  }
+  .feature-card-title {
+    font-size: 1.5rem;
+  }
   .divisions-cards-grid { grid-template-columns: 1fr; }
   .cohort-cards-grid { grid-template-columns: 1fr; }
   .footer-top-grid { grid-template-columns: 1fr; }

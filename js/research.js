@@ -110,8 +110,15 @@ function renderPapers() {
       </div>
     ` : '';
 
-    const updatedText = paper.updatedBy ? 
-      `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:600; margin-bottom:0.75rem;">● Revised by ${paper.updatedBy} on ${new Date(paper.updatedAt || paper.date).toLocaleDateString()}</div>` : '';
+    const isEdited = Boolean(paper.isEdited || (paper.updatedBy && paper.updatedAt));
+    const editor = paper.updatedBy || (paper.authors && paper.authors[0]) || 'CRII Researcher';
+    const creator = paper.createdBy || (paper.authors && paper.authors[0]) || 'CRII Researcher';
+    const metaDate = isEdited 
+      ? new Date(paper.updatedAt || paper.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+      : new Date(paper.createdAt || paper.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    const attributionHtml = isEdited
+      ? `<div class="article-meta-attribution" style="margin-bottom:0.75rem;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Last edited by <strong>${editor}</strong> on ${metaDate}</span></div>`
+      : `<div class="article-meta-attribution" style="margin-bottom:0.75rem;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Created by <strong>${creator}</strong> on ${metaDate}</span></div>`;
 
     return `
       <article class="card" style="padding:0; overflow:hidden;">
@@ -127,7 +134,7 @@ function renderPapers() {
           <div class="card-authors" style="margin-bottom:0.5rem;">
             ${paper.authors ? paper.authors.join(' • ') : 'CRII Fellows'}
           </div>
-          ${updatedText}
+          ${attributionHtml}
           <p class="card-desc" style="flex:1;">${paper.summary || (paper.abstract ? paper.abstract.slice(0, 150) + '...' : '')}</p>
           <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:1.25rem;">
             ${(paper.tags || []).map(t => `<span class="tag-item">#${t}</span>`).join('')}

@@ -9,17 +9,10 @@
   <link rel="stylesheet" href="css/components.css?v=4.0">
   <link rel="stylesheet" href="css/portal.css?v=4.0">
   <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
-    @font-face {
-      font-family: 'Eyekons';
-      src: url('assets/Eyekons.otf') format('opentype'),
-           url('/assets/Eyekons.otf') format('opentype');
-      font-weight: 100 900;
-      font-style: normal;
-      font-display: swap;
-    }
-    *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label {
-      font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
+    *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label, table, th, td {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
   </style>
 </head>
@@ -373,15 +366,33 @@
                 </div>
               </div>
 
+              <!-- Spotlight Feature Toggle -->
+              <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem; background: rgba(37, 99, 235, 0.08); padding: 0.9rem 1.15rem; border-radius: 10px; border: 1.5px solid rgba(37, 99, 235, 0.25); margin-bottom: 1.5rem;">
+                <input type="checkbox" id="bloggerFeaturedInput" style="width: 20px; height: 20px; accent-color: var(--accent-primary); cursor: pointer;">
+                <div>
+                  <label for="bloggerFeaturedInput" style="font-weight: 700; font-size: 0.94rem; color: var(--text-primary); cursor: pointer; display: block; margin: 0;">
+                    ★ Spotlight as Featured Publication (Shows in Big Card on Homepage)
+                  </label>
+                  <span style="font-size: 0.8rem; color: var(--text-muted);">
+                    When enabled, this publication will take the large spotlight position in the "From the Institute" section on the homepage.
+                  </span>
+                </div>
+              </div>
+
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="bloggerCategoryInput">Scientific Division *</label>
-                  <select id="bloggerCategoryInput" class="form-select">
-                    <option value="Space & Astrophysics">Space & Astrophysics</option>
-                    <option value="Ancient Biology & Paleontology">Ancient Biology & Paleontology</option>
-                    <option value="AI & Computational Science">AI & Computational Science</option>
-                    <option value="Astrobiology & Extremophiles">Astrobiology & Extremophiles</option>
-                  </select>
+                  <label class="form-label" for="bloggerCategoryInput">Scientific Division / Category / Sector *</label>
+                  <input type="text" id="bloggerCategoryInput" list="bloggerCategoryDatalist" class="form-input" placeholder="Select or type new category/sector..." value="Space & Astrophysics">
+                  <datalist id="bloggerCategoryDatalist">
+                    <option value="Space & Astrophysics">
+                    <option value="Ancient Biology & Paleontology">
+                    <option value="AI & Computational Science">
+                    <option value="Astrobiology & Extremophiles">
+                    <option value="Quantum Biophysics">
+                    <option value="Exoplanetary Atmospheres">
+                    <option value="Evolutionary Genomics">
+                    <option value="Open Methods">
+                  </datalist>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="bloggerSlugInput">URL Slug / Permalink</label>
@@ -1041,15 +1052,72 @@
         <button class="modal-close">&times;</button>
       </div>
       <div id="appReviewDetails" class="modal-body"></div>
-      <div class="modal-footer" style="justify-content:space-between;">
+      <div class="modal-footer" style="justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
         <button id="rejectAppBtn" class="btn btn-sm" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.25);">
           Decline
         </button>
-        <div style="display:flex; gap:0.5rem;">
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button id="reviewEmailApplicantBtn" class="btn btn-sm" style="background:#09261c; color:#ffffff; border:1px solid #09261c;">
+            Email Candidate ✉
+          </button>
           <button id="reviewUnderwayBtn" class="btn btn-secondary btn-sm">Mark Under Review</button>
           <button id="acceptAppBtn" class="btn btn-primary btn-sm">Accept & Enroll to Cohort ✓</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- EmailJS Email Composer Modal -->
+  <div id="emailComposerModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display:flex; align-items:center; gap:0.55rem;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          <span>Email Dispatch (curiomas.members@gmail.com)</span>
+        </h3>
+        <button class="modal-close" onclick="closeEmailComposer()">&times;</button>
+      </div>
+      <form id="emailComposerForm">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="composerToEmail">Recipient Email *</label>
+              <input type="email" id="composerToEmail" class="form-input" required placeholder="recipient@university.edu">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="composerToName">Recipient Name</label>
+              <input type="text" id="composerToName" class="form-input" placeholder="e.g. Maya Lin">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="composerSubject">Subject *</label>
+              <input type="text" id="composerSubject" class="form-input" required value="CRII Research Fellowship Update">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="composerTemplateId">EmailJS Template ID</label>
+              <input type="text" id="composerTemplateId" class="form-input" placeholder="e.g. template_curiomas" value="template_curiomas">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="composerMessage">Message *</label>
+            <textarea id="composerMessage" class="form-textarea" style="min-height: 150px;" required placeholder="Write your email dispatch to the applicant or team member..."></textarea>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; background: rgba(37,99,235,0.05); padding: 0.75rem 1rem; border-radius: 8px;">
+            Connected via EmailJS to <strong>curiomas.members@gmail.com</strong> (Service: <code>curiomas</code>).
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeEmailComposer()">Cancel</button>
+          <button type="submit" id="composerSendBtn" class="btn btn-primary btn-sm">
+            <span>Send Email via EmailJS</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

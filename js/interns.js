@@ -44,7 +44,7 @@ async function loadRosters() {
 }
 
 function renderMemberCard(member) {
-  const avatarUrl = member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+  const avatarUrl = member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
   const isTeam = Boolean(member.isTeamMember);
 
   let socialsHtml = '';
@@ -52,7 +52,7 @@ function renderMemberCard(member) {
     const s = member.socials;
     if (s.github) {
       socialsHtml += `
-        <a href="${s.github}" target="_blank" rel="noopener" class="btn btn-sm btn-icon" title="GitHub" style="background:rgba(0,0,0,0.04);">
+        <a href="${s.github}" target="_blank" rel="noopener" class="btn btn-sm btn-icon" title="GitHub" style="background:rgba(0,0,0,0.05); border-radius:50%;">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>
           </svg>
@@ -61,7 +61,7 @@ function renderMemberCard(member) {
     }
     if (s.linkedin) {
       socialsHtml += `
-        <a href="${s.linkedin}" target="_blank" rel="noopener" class="btn btn-sm btn-icon" title="LinkedIn" style="background:rgba(0,0,0,0.04);">
+        <a href="${s.linkedin}" target="_blank" rel="noopener" class="btn btn-sm btn-icon" title="LinkedIn" style="background:rgba(0,0,0,0.05); border-radius:50%;">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>
           </svg>
@@ -70,7 +70,7 @@ function renderMemberCard(member) {
     }
     if (s.email) {
       socialsHtml += `
-        <a href="mailto:${s.email}" class="btn btn-sm btn-icon" title="Email" style="background:rgba(0,0,0,0.04);">
+        <a href="mailto:${s.email}" class="btn btn-sm btn-icon" title="Email" style="background:rgba(0,0,0,0.05); border-radius:50%;">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
           </svg>
@@ -80,37 +80,40 @@ function renderMemberCard(member) {
   }
 
   return `
-    <div class="card">
-      <div style="display:flex; align-items:center; gap:1.15rem; margin-bottom:1.15rem;">
-        <img src="${avatarUrl}" alt="${member.name}" style="width:58px; height:58px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-primary); box-shadow:var(--shadow-sm); flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'">
-        <div>
-          <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin-bottom:0.15rem;">${member.name}</h3>
-          <div style="font-size:0.84rem; color:var(--accent-primary); font-weight:600;">${member.role}</div>
-          <div style="font-size:0.78rem; color:var(--text-muted);">${member.university || 'Curiomas CRII'}</div>
-        </div>
+    <div class="card" style="padding: 1.25rem; border-radius: 16px; border: 1px solid #e5dfd5; display: flex; flex-direction: column;">
+      <!-- Almost Full Div Photo -->
+      <div style="width: 100%; aspect-ratio: 16 / 12; border-radius: 12px; overflow: hidden; background: #000000; margin-bottom: 1.25rem;">
+        <img src="${avatarUrl}" alt="${member.name}" style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease;" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80'">
       </div>
 
-      <div style="display:flex; gap:0.4rem; align-items:center; margin-bottom:0.85rem; flex-wrap:wrap;">
-        <span class="badge badge-indigo">${member.division}</span>
-        ${isTeam ? `<span class="badge badge-blue">★ Principal Leadership</span>` : `<span class="badge badge-blue">Active Fellow</span>`}
+      <!-- Member Details Below Photo -->
+      <div style="margin-bottom: 0.65rem;">
+        <h3 style="font-size: 1.35rem; font-weight: 700; color: #16281e; line-height: 1.25; margin-bottom: 0.25rem;">${member.name}</h3>
+        <div style="font-size: 0.92rem; color: #0284c7; font-weight: 600;">${member.role}</div>
+        <div style="font-size: 0.82rem; color: #78716c;">${member.university || 'Curiomas CRII'}</div>
       </div>
 
-      <p class="card-desc" style="font-size:0.9rem; line-height:1.6; margin-bottom:1.25rem;">
+      <div style="display: flex; gap: 0.4rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+        <span class="badge badge-indigo" style="font-size: 0.74rem;">${member.division}</span>
+        ${isTeam ? `<span class="badge badge-blue" style="font-size: 0.74rem;">★ Principal Leadership</span>` : `<span class="badge badge-blue" style="font-size: 0.74rem;">Active Fellow</span>`}
+      </div>
+
+      <p class="card-desc" style="font-size: 0.92rem; line-height: 1.6; color: #4b5852; margin-bottom: 1.25rem; flex-grow: 1;">
         ${member.bio || 'Contributing to open student-led research.'}
       </p>
 
       ${(member.projects && member.projects.length > 0) ? `
-        <div style="margin-bottom:1.25rem;">
-          <span style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; display:block; margin-bottom:0.35rem;">Research Focus</span>
-          <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
+        <div style="margin-bottom: 1.25rem;">
+          <span style="font-size: 0.7rem; text-transform: uppercase; color: #78716c; font-weight: 700; display: block; margin-bottom: 0.35rem; letter-spacing: 0.05em;">Research Focus</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
             ${member.projects.map(p => `<span class="tag-item">${p}</span>`).join('')}
           </div>
         </div>
       ` : ''}
 
-      <div class="card-footer" style="padding-top:0.75rem; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.76rem; color:var(--text-muted);">Cohort: ${member.cohort || 'Founding'}</span>
-        <div style="display:flex; gap:0.35rem;">
+      <div class="card-footer" style="padding-top: 0.85rem; border-top: 1px solid #e5dfd5; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.78rem; color: #78716c;">Cohort: ${member.cohort || 'Founding'}</span>
+        <div style="display: flex; gap: 0.35rem;">
           ${socialsHtml}
         </div>
       </div>
@@ -162,6 +165,25 @@ function initApplicationForm() {
           </div>
         </div>
       `;
+
+      // Dispatch EmailJS alert
+      if (window.emailjs) {
+        try {
+          emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
+          await emailjs.send('curiomas', 'template_curiomas', {
+            to_email: 'curiomas.members@gmail.com',
+            to_name: 'CRII Admissions Board',
+            applicant_name: res.fullName,
+            applicant_email: res.email,
+            applicant_university: res.university,
+            applicant_division: res.preferredDivision,
+            applicant_level: res.academicLevel,
+            message: `New fellowship application received from ${res.fullName} (${res.email}) from ${res.university} for ${res.preferredDivision}.\n\nStatement:\n${res.statement}`
+          }, 'h3x_9dtR8frBq2pCi');
+        } catch (mailErr) {
+          console.warn('EmailJS application alert notification note:', mailErr);
+        }
+      }
 
       window.showToast('Research application successfully submitted!', 'success');
     } catch (err) {

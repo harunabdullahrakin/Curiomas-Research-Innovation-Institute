@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initApplicationModal();
   initAccessControl();
   initInstituteSettings();
+  initEmailComposer();
 
   await refreshDashboardData();
 });
@@ -77,6 +78,14 @@ function initSidebarNavigation() {
       window.CRII_API.logout();
     });
   }
+
+  // Restore tab from URL parameter on load/reload
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get('tab') || urlParams.get('page');
+  if (initialTab && document.getElementById(`tab-${initialTab}`)) {
+    currentTab = initialTab;
+  }
+  showTab(currentTab);
 }
 
 window.showTab = function(tabName) {
@@ -87,6 +96,13 @@ window.showTab = function(tabName) {
   document.querySelectorAll('.portal-nav-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tabName);
   });
+
+  currentTab = tabName;
+  try {
+    const url = new URL(window.location);
+    url.searchParams.set('tab', tabName);
+    window.history.replaceState({}, '', url);
+  } catch (e) {}
 };
 
 async function refreshDashboardData() {
@@ -238,6 +254,8 @@ function openBloggerEditor(postId) {
     document.getElementById('bloggerCoverInput').value = post.coverImage || "";
     document.getElementById('bloggerSlugInput').value = post.slug || "";
     document.getElementById('bloggerCategoryInput').value = post.category || "Space & Astrophysics";
+    const featEl = document.getElementById('bloggerFeaturedInput');
+    if (featEl) featEl.checked = Boolean(post.featured);
     document.getElementById('bloggerAuthorsInput').value = (post.authors || []).join(', ');
     document.getElementById('bloggerDoiInput').value = post.doi || "";
     document.getElementById('bloggerSummaryInput').value = post.summary || "";
@@ -259,6 +277,8 @@ function openBloggerEditor(postId) {
     document.getElementById('bloggerCoverInput').value = "";
     document.getElementById('bloggerSlugInput').value = "";
     document.getElementById('bloggerCategoryInput').value = "Space & Astrophysics";
+    const featEl = document.getElementById('bloggerFeaturedInput');
+    if (featEl) featEl.checked = false;
     const user = window.CRII_API.getCurrentUser();
     document.getElementById('bloggerAuthorsInput').value = user ? (user.name || user.email || "CRII Fellow") : "CRII Fellow";
     document.getElementById('bloggerDoiInput').value = `10.5281/crii.2026.${Math.floor(1000 + Math.random() * 9000)}`;
@@ -838,6 +858,8 @@ async function saveCurrentPost() {
   const readingTime = `${Math.max(1, Math.ceil(wordCount / 180))} min read`;
 
   const compiledContent = compileBlocksToContent(currentPostBlocks) || summary;
+  const featured = Boolean(document.getElementById('bloggerFeaturedInput')?.checked);
+  const existingPost = currentEditingPostId ? cachedPosts.find(p => p.id === currentEditingPostId) : null;
 
   const postPayload = {
     id: currentEditingPostId || `crii-paper-${Date.now()}`,
@@ -845,7 +867,8 @@ async function saveCurrentPost() {
     slug,
     category,
     coverImage,
-    authors: authorsStr ? authorsStr.split(',').map(a => a.trim()).filter(Boolean) : ["CRII Fellow"],
+    featured,
+    authors: authorsStr ? authorsStr.split(',').map(a => a.trim()).filter(Boolean) : [editorName],
     readingTime,
     doi,
     summary,
@@ -854,8 +877,11 @@ async function saveCurrentPost() {
     blocks: currentPostBlocks,
     tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ["Research"],
     published: isCurrentPostPublished,
-    updatedBy: editorName,
-    updatedAt: new Date().toISOString()
+    createdBy: existingPost ? (existingPost.createdBy || existingPost.authors?.[0] || editorName) : editorName,
+    createdAt: existingPost ? (existingPost.createdAt || existingPost.date || new Date().toISOString()) : new Date().toISOString(),
+    updatedBy: existingPost ? editorName : null,
+    updatedAt: existingPost ? new Date().toISOString() : null,
+    isEdited: Boolean(existingPost)
   };
 
   const saveBtn = document.getElementById('bloggerSaveBtn');
@@ -1097,6 +1123,10 @@ function renderRosterGrid() {
           <button class="btn btn-secondary btn-sm" onclick="openResearcherModal('${m.id}')" style="flex:1;">
             Edit Profile
           </button>
+          ${(m.email || (m.socials && m.socials.email)) ? `
+          <button class="btn btn-sm btn-icon" style="background:rgba(2,132,199,0.1); color:#0284c7;" onclick="openEmailComposer('${escapeHtml(m.email || m.socials.email)}', '${escapeHtml(m.name)}')" title="Send Email">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </button>` : ''}
           <button class="btn btn-sm btn-icon" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="deleteResearcher('${m.id}')" title="Delete">
             ✕
           </button>
@@ -1265,9 +1295,14 @@ function renderApplicationsTable() {
         <td>${a.appliedDate}</td>
         <td><span class="badge badge-${chipClass}">${a.status}</span></td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="reviewApplication('${a.id}')">
-            Review Statement →
-          </button>
+          <div style="display:inline-flex; gap:0.4rem; align-items:center;">
+            <button class="btn btn-secondary btn-sm" onclick="reviewApplication('${a.id}')">
+              Review
+            </button>
+            <button class="btn btn-sm btn-icon" title="Email Candidate via EmailJS" onclick="openEmailComposer('${escapeHtml(a.email)}', '${escapeHtml(a.fullName)}', 'CRII Fellowship Update')" style="background:rgba(37,99,235,0.08); color:var(--accent-primary);">
+              ✉
+            </button>
+          </div>
         </td>
       </tr>
     `;
@@ -1497,3 +1532,102 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+// -----------------------------------------------------------------------------
+// 7. EMAILJS DISPATCH INTEGRATION
+// -----------------------------------------------------------------------------
+function initEmailComposer() {
+  if (window.emailjs) {
+    try {
+      emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
+    } catch (e) {
+      console.warn('EmailJS initialization notice:', e);
+    }
+  }
+
+  const emailForm = document.getElementById('emailComposerForm');
+  if (emailForm) {
+    emailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const sendBtn = document.getElementById('composerSendBtn');
+      const toEmail = (document.getElementById('composerToEmail')?.value || '').trim();
+      const toName = (document.getElementById('composerToName')?.value || '').trim();
+      const subject = (document.getElementById('composerSubject')?.value || '').trim();
+      const templateId = (document.getElementById('composerTemplateId')?.value || '').trim() || 'template_curiomas';
+      const message = (document.getElementById('composerMessage')?.value || '').trim();
+
+      if (!toEmail || !message) {
+        window.showToast('Please specify a recipient email and message.', 'error');
+        return;
+      }
+
+      sendBtn.disabled = true;
+      sendBtn.innerText = 'Dispatching via curiomas...';
+
+      try {
+        if (!window.emailjs) {
+          throw new Error('EmailJS library not loaded');
+        }
+
+        const templateParams = {
+          to_email: toEmail,
+          to_name: toName || toEmail,
+          user_email: toEmail,
+          from_name: 'Curiomas Research & Innovation Institute',
+          subject: subject,
+          message: message,
+          reply_to: 'curiomas.members@gmail.com'
+        };
+
+        await emailjs.send('curiomas', templateId, templateParams, 'h3x_9dtR8frBq2pCi');
+        window.showToast(`Email dispatched successfully to ${toEmail}!`, 'success');
+        closeEmailComposer();
+      } catch (err) {
+        console.error('EmailJS dispatch error:', err);
+        const errMsg = err?.text || err?.message || 'Email dispatch failed';
+        window.showToast(`Email error: ${errMsg}. Check EmailJS Template ID in modal.`, 'error');
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = `<span>Send Email via EmailJS</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`;
+      }
+    });
+  }
+
+  const reviewEmailBtn = document.getElementById('reviewEmailApplicantBtn');
+  if (reviewEmailBtn) {
+    reviewEmailBtn.addEventListener('click', () => {
+      if (activeAppId) {
+        const app = (cachedInternsData.applications || []).find(a => a.id === activeAppId);
+        if (app && app.email) {
+          openEmailComposer(
+            app.email,
+            app.fullName,
+            `CRII Research Fellowship Application - ${app.preferredDivision || 'Admissions'}`,
+            `Dear ${app.fullName},\n\nThank you for applying to the Curiomas Research & Innovation Institute (CRII) Student Fellowship Cohort in ${app.preferredDivision || 'the research stream'}.\n\n`
+          );
+        }
+      }
+    });
+  }
+}
+
+window.openEmailComposer = function(toEmail = '', toName = '', defaultSubject = '', defaultMsg = '') {
+  const modal = document.getElementById('emailComposerModal');
+  if (!modal) return;
+  const toEl = document.getElementById('composerToEmail');
+  const nameEl = document.getElementById('composerToName');
+  const subjEl = document.getElementById('composerSubject');
+  const msgEl = document.getElementById('composerMessage');
+
+  if (toEl) toEl.value = toEmail;
+  if (nameEl) nameEl.value = toName;
+  if (subjEl && defaultSubject) subjEl.value = defaultSubject;
+  if (msgEl && defaultMsg) msgEl.value = defaultMsg;
+
+  modal.classList.add('active');
+};
+
+window.closeEmailComposer = function() {
+  const modal = document.getElementById('emailComposerModal');
+  if (modal) modal.classList.remove('active');
+};

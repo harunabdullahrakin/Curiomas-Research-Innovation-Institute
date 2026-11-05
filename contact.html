@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/style.css?v=4.0">
   <link rel="stylesheet" href="css/components.css?v=4.0">
   <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     @font-face {
       font-family: 'Eyekons';
@@ -285,9 +286,31 @@
       });
     }
 
-    document.getElementById('contactForm').addEventListener('submit', (e) => {
+    document.getElementById('contactForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('contactName').value;
+      const name = document.getElementById('contactName').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const affiliation = document.getElementById('contactAffiliation').value.trim();
+      const subject = document.getElementById('contactSubject').value.trim();
+      const message = document.getElementById('contactMessage').value.trim();
+
+      if (window.emailjs) {
+        try {
+          emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
+          await emailjs.send('curiomas', 'template_curiomas', {
+            to_email: 'curiomas.members@gmail.com',
+            from_name: name,
+            sender_email: email,
+            sender_affiliation: affiliation,
+            subject: `CRII Inquiry [${subject}]: ${name}`,
+            message: `From: ${name} (${email})\nAffiliation: ${affiliation}\nCategory: ${subject}\n\nMessage:\n${message}`,
+            reply_to: email
+          }, 'h3x_9dtR8frBq2pCi');
+        } catch (mailErr) {
+          console.warn('EmailJS contact dispatch note:', mailErr);
+        }
+      }
+
       if (window.showToast) {
         window.showToast(`Thank you, ${name}! Your inquiry has been dispatched to the CRII team.`, 'success');
       } else {

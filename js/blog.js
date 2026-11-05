@@ -43,8 +43,15 @@ function renderArticles() {
       </div>
     ` : '';
 
-    const updatedText = post.updatedBy ? 
-      `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:600; margin-bottom:0.75rem;">● Revised by ${post.updatedBy} on ${new Date(post.updatedAt || post.date).toLocaleDateString()}</div>` : '';
+    const isEdited = Boolean(post.isEdited || (post.updatedBy && post.updatedAt));
+    const editor = post.updatedBy || (post.authors && post.authors[0]) || 'CRII Researcher';
+    const creator = post.createdBy || (post.authors && post.authors[0]) || 'CRII Researcher';
+    const metaDate = isEdited 
+      ? new Date(post.updatedAt || post.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+      : new Date(post.createdAt || post.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    const attributionHtml = isEdited
+      ? `<div class="article-meta-attribution" style="margin-bottom:0.75rem;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Last edited by <strong>${editor}</strong> on ${metaDate}</span></div>`
+      : `<div class="article-meta-attribution" style="margin-bottom:0.75rem;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Created by <strong>${creator}</strong> on ${metaDate}</span></div>`;
 
     return `
       <article class="card" style="padding:0; overflow:hidden;">
@@ -60,7 +67,7 @@ function renderArticles() {
           <div class="card-authors" style="margin-bottom:0.4rem;">
             By ${post.authors ? post.authors.join(', ') : 'CRII Fellow'}
           </div>
-          ${updatedText}
+          ${attributionHtml}
           <p class="card-desc" style="flex:1;">${post.summary || (post.abstract ? post.abstract.slice(0, 180) + '...' : '')}</p>
           <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:1.25rem;">
             ${(post.tags || []).map(t => `<span class="tag-item">#${t}</span>`).join('')}
