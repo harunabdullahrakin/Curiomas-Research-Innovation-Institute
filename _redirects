@@ -2,15 +2,13 @@
 # Cloudflare Pages Clean Route Rewrites and Legacy Redirects
 # ==============================================================================
 
-# 1. Clean route for Team
-/team /interns.html 200
-/interns /interns.html 301
-
-# 2. Canonical 301 redirects for legacy .html extensions
+# Canonical 301 redirects for legacy .html extensions
 /index.html / 301
 /research.html /research 301
 /blog.html /blog 301
+/team.html /team 301
 /interns.html /team 301
+/interns /team 301
 /contact.html /contact 301
 /portal.html /portal 301
 /article.html /article 301

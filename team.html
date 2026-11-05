@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interns & Research Cohorts — Curiomas CRII</title>
+  <meta name="description" content="Meet student researchers and apply for the upcoming research fellowship cohort at Curiomas CRII.">
+  <link rel="stylesheet" href="css/style.css?v=3.4">
+  <link rel="stylesheet" href="css/components.css?v=3.2">
+  <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
+</head>
+<body>
+  <!-- Floating 85% Width Glassy Navbar -->
+  <div class="header-wrapper">
+    <header class="navbar">
+      <a href="/" class="brand-link">
+        <div class="brand-logo-container">
+          <img src="assets/curiomas-no-bg.png" alt="CRII Logo" class="brand-logo-img" style="width:36px; height:36px; object-fit:contain;">
+        </div>
+        <div class="brand-text-block">
+          <span class="brand-title">Curiomas Research & Innovation Institute</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/research" class="nav-link">Research</a></li>
+          <li><a href="/blog" class="nav-link">Dispatches</a></li>
+          <li><a href="/team" class="nav-link active">Team</a></li>
+          <li><a href="/contact" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <!-- Light / Dark Theme Switcher Button -->
+        <button class="theme-toggle-btn" aria-label="Toggle Light and Dark Mode" title="Toggle theme">
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        </button>
+
+        <a href="/portal" class="btn btn-secondary btn-sm nav-portal-btn">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>Portal</span>
+        </a>
+
+        <button class="menu-toggle" aria-label="Toggle Menu">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+  </div>
+
+  <main class="container" style="padding: 4rem 1.5rem 6rem;">
+    <!-- 1. REAL CORE TEAM & PRINCIPAL INVESTIGATORS -->
+    <div class="section-header" style="margin-bottom: 2rem;">
+      <span class="section-pill">Core Leadership</span>
+      <h1 class="section-title">Executive Council & Principal Researchers</h1>
+      <p class="section-desc">
+        Meet the founding investigators, research directors, and student leaders steering the institute's initiatives and research clusters.
+      </p>
+    </div>
+
+    <!-- Core Team Grid -->
+    <div id="coreTeamContainer" class="cards-grid" style="margin-bottom: 4.5rem;"></div>
+
+    <!-- 2. STUDENT RESEARCH FELLOWS & INTERNS -->
+    <div class="section-header" style="margin-bottom: 2rem;">
+      <span class="section-pill">Research Cohort</span>
+      <h2 class="section-title">Student Fellows & Active Researchers</h2>
+      <p class="section-desc">
+        Independent and undergraduate researchers investigating deep time genomics, transit spectroscopy, and extreme environment bioenergetics.
+      </p>
+    </div>
+
+    <!-- Active Fellows Grid -->
+    <div id="fellowsContainer" class="cards-grid" style="margin-bottom: 5rem;"></div>
+
+    <!-- Internship Application Section -->
+    <section id="apply" style="scroll-margin-top: 100px;">
+      <div class="section-header">
+        <span class="section-pill">Admissions</span>
+        <h2 class="section-title">Apply for Student Research Fellowship</h2>
+        <p class="section-desc">
+          Join an active research track. No prior publications required — we value intellectual curiosity, self-drive, and rigor.
+        </p>
+      </div>
+
+      <div id="applicationFormCard" class="card" style="max-width: 740px; margin: 0 auto; padding: 2.5rem; border-radius: 20px;">
+        <form id="internApplicationForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="appFullName">Full Legal Name *</label>
+              <input type="text" id="appFullName" class="form-input" placeholder="e.g. Maya Lin" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="appEmail">Email Address *</label>
+              <input type="email" id="appEmail" class="form-input" placeholder="maya.lin@university.edu" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="appUniversity">University / Institution *</label>
+              <input type="text" id="appUniversity" class="form-input" placeholder="e.g. Institute of Science" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="appFieldOfStudy">Field of Study / Major *</label>
+              <input type="text" id="appFieldOfStudy" class="form-input" placeholder="e.g. Physics, Molecular Biology, CS" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="appDivision">Preferred Research Division *</label>
+              <select id="appDivision" class="form-select" required>
+                <option value="Astrophysics & Space Science">Astrophysics & Space Science</option>
+                <option value="Ancient Biology & Paleontology">Ancient Biology & Paleontology</option>
+                <option value="AI & Computational Sciences">AI & Computational Sciences</option>
+                <option value="Astrobiology & Extremophiles">Astrobiology & Extremophiles</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="appLevel">Academic Level</label>
+              <select id="appLevel" class="form-select">
+                <option value="Undergraduate (1st - 2nd Year)">Undergraduate (1st - 2nd Year)</option>
+                <option value="Undergraduate (3rd - 4th Year)">Undergraduate (3rd - 4th Year)</option>
+                <option value="Postgraduate / Master's">Postgraduate / Master's</option>
+                <option value="Independent Self-Taught">Independent Self-Taught</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="appPortfolio">GitHub Profile, ORCID, or Portfolio Link</label>
+            <input type="url" id="appPortfolio" class="form-input" placeholder="https://github.com/your-username">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="appStatement">Statement of Scientific Curiosity & Research Motivation *</label>
+            <textarea id="appStatement" class="form-textarea" placeholder="Describe the scientific question or domain that obsesses you. What do you want to explore at CRII?..." required></textarea>
+          </div>
+
+          <div style="margin-top: 1.75rem;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.9rem;">
+              Submit Research Fellowship Application
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <div>
+        © 2026 Curiomas Research & Innovation Institute (CRII). "Learning has no bound."
+      </div>
+      <div>
+        <a href="/portal">Admissions Review Portal</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/config.js?v=3.7"></script>
+  <script src="js/app.js?v=3.7"></script>
+  <script src="js/interns.js?v=3.7"></script>
+</body>
+</html>
