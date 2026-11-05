@@ -4,10 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Research Publication — Curiomas CRII</title>
-  <link rel="stylesheet" href="css/style.css?v=3.4">
-  <link rel="stylesheet" href="css/components.css?v=3.2">
+  <link rel="preload" href="assets/Eyekons.otf" as="font" type="font/otf" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <link rel="stylesheet" href="css/components.css?v=4.0">
   <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
   <style>
+    @font-face {
+      font-family: 'Eyekons';
+      src: url('assets/Eyekons.otf') format('opentype'),
+           url('/assets/Eyekons.otf') format('opentype');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label {
+      font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
+    }
     #readProgressBar {
       position: fixed;
       top: 0;

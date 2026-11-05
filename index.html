@@ -4,246 +4,729 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Curiomas Research & Innovation Institute — CRII</title>
-  <meta name="description" content="Curiomas Research & Innovation Institute (CRII) — Autonomous student-driven scientific institute publishing reproducible research and open datasets.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=3.9">
-  <link rel="stylesheet" href="css/components.css?v=3.9">
+  <meta name="description" content="Curiomas Research & Innovation Institute (CRII) — Autonomous, student-driven scientific institute publishing reproducible research and open datasets.">
+  <link rel="preload" href="assets/Eyekons.otf" as="font" type="font/otf" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <link rel="stylesheet" href="css/components.css?v=4.0">
   <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
+  <style>
+    @font-face {
+      font-family: 'Eyekons';
+      src: url('assets/Eyekons.otf') format('opentype'),
+           url('/assets/Eyekons.otf') format('opentype');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label {
+      font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
+    }
+  </style>
 </head>
 <body>
-  <!-- Floating 85% Width Glassy Navbar Separated From Top -->
-  <div class="header-wrapper">
-    <header class="navbar">
-      <a href="/" class="brand-link">
-        <div class="brand-logo-container">
-          <img src="assets/curiomas-no-bg.png" alt="CRII Logo" class="brand-logo-img" style="width:36px; height:36px; object-fit:contain;">
-        </div>
-        <div class="brand-text-block">
-          <span class="brand-title">Curiomas Research & Innovation Institute</span>
-        </div>
-      </a>
 
-      <nav>
-        <ul class="nav-menu">
-          <li><a href="/" class="nav-link active">Home</a></li>
-          <li><a href="/research" class="nav-link">Research</a></li>
-          <li><a href="/blog" class="nav-link">Dispatches</a></li>
-          <li><a href="/team" class="nav-link">Team</a></li>
-          <li><a href="/contact" class="nav-link">Contact</a></li>
-        </ul>
-      </nav>
+  <!-- =========================================================================
+       SECTION 1: DARK COSMOS HERO & FLOATING CAPSULE NAVBAR
+       ========================================================================= -->
+  <section class="mockup-hero-section">
+    <div class="mockup-container">
+      <!-- Floating Pill Navbar -->
+      <div class="mockup-nav-wrapper">
+        <header class="mockup-nav-capsule">
+          <a href="/" class="mockup-brand">
+            <img src="assets/curiomas-no-bg.png" alt="CRII" class="mockup-brand-img">
+            <span class="mockup-brand-text">curiomas</span>
+          </a>
 
-      <div class="nav-actions">
-        <!-- Light / Dark Theme Switcher Button -->
-        <button class="theme-toggle-btn" aria-label="Toggle Light and Dark Mode" title="Toggle theme">
-          <!-- Sun Icon (shown in dark mode) -->
-          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
-          </svg>
-          <!-- Moon Icon (shown in light mode) -->
-          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-          </svg>
-        </button>
+          <nav>
+            <ul class="mockup-nav-links" id="mainNavMenu">
+              <li><a href="/" class="mockup-nav-link active">Home</a></li>
+              <li><a href="/research" class="mockup-nav-link">Research</a></li>
+              <li><a href="/blog" class="mockup-nav-link">Dispatches</a></li>
+              <li><a href="/team" class="mockup-nav-link">Team</a></li>
+              <li><a href="/contact" class="mockup-nav-link">Contact</a></li>
+            </ul>
+          </nav>
 
-        <a href="/portal" class="btn btn-secondary btn-sm nav-portal-btn">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          <span>Portal</span>
-        </a>
+          <div class="mockup-nav-right">
+            <a href="/portal" class="mockup-btn-white" style="padding: 0.45rem 1.1rem; font-size: 0.85rem;">
+              <span>Researcher Portal</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
 
-        <button class="menu-toggle" aria-label="Toggle Menu">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>
-          </svg>
-        </button>
+            <button class="menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu" style="background:none; border:none; color:#ffffff; cursor:pointer; display:none; padding:4px;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
+          </div>
+        </header>
       </div>
-    </header>
+
+      <!-- Hero Main Content -->
+      <div class="mockup-hero-body">
+        <div class="mockup-section-tag light-tag">
+          <span class="mockup-tag-dot amber"></span>
+          <span>OPEN SCIENCE RESEARCH PLATFORM</span>
+        </div>
+
+        <h1 class="mockup-hero-title">
+          Bring structure<br>to your research
+        </h1>
+
+        <p class="mockup-hero-subtitle">
+          A secure platform for developing and sharing reproducible methods across exoplanetary atmospheres, ancient biology and genomic divergence.
+        </p>
+
+        <div class="mockup-hero-actions">
+          <a href="/research" class="mockup-btn-white">
+            <span>Explore Featured Articles</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+          <a href="/team#apply" class="mockup-hero-link">
+            <span>Apply as Student Fellow</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Hero Bottom Ticker -->
+      <div class="mockup-hero-ticker">
+        <span class="ticker-left">AUTONOMOUS. STUDENT-DRIVEN. OPEN BY DESIGN.</span>
+        <span class="ticker-center">Learning has no bound.</span>
+        <span class="ticker-right">FROM DEEP SPACE TO DEEP TIME</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Blue Overlap Intersection Indicator -->
+  <div class="mockup-section-connector">
+    <div class="connector-circle">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ffffff" stroke-width="2.8"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
   </div>
 
-  <!-- Latest News / Featured Research Section -->
-  <section class="section container" style="padding-top: 3.5rem; padding-bottom: 4rem;">
-    <div class="news-section-header">
-      <h2 class="news-section-title">Latest news</h2>
-      <a href="/research" class="news-view-all-btn">
-        <span>View all news</span>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </a>
-    </div>
-
-    <div class="editorial-grid" id="featuredArticlesContainer">
-      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1.5rem; background: var(--bg-surface); border-radius: 16px; border: 1px dashed var(--border-color);">
-        <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem; color: var(--text-muted); opacity: 0.65;">
-          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-          <path d="M6 6h10"/><path d="M6 10h10"/>
-        </svg>
-        <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Publications Repository Initializing</h3>
-        <p style="font-size: 0.92rem; color: var(--text-muted); max-width: 520px; margin: 0 auto 1.5rem; line-height: 1.6;">
-          Peer-reviewed articles, preprints, and open datasets are currently being prepared by the institute research fellows.
-        </p>
-        <a href="/portal" class="btn btn-secondary btn-sm">Research Portal Access</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Open Science & Reproducible Methods Pillars -->
-  <section class="section" style="background: var(--bg-surface); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-pill">Open Science Standards</span>
-        <h2 class="section-title">Built for Rigorous, Verifiable Science</h2>
-        <p class="section-desc">
-          Every preprint, model checkpoint, and calibration dataset is published transparently for global verification and education.
-        </p>
-      </div>
-
-      <div class="cards-grid">
-        <div class="card" style="border-radius: 16px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--accent-primary); display: grid; place-items: center; margin-bottom: 1.25rem;">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/>
-            </svg>
+  <!-- =========================================================================
+       SECTION 2: THE INSTITUTE INTRO
+       ========================================================= -->
+  <section class="mockup-institute-section">
+    <div class="mockup-container">
+      <div class="institute-grid">
+        <div class="institute-left">
+          <div class="mockup-section-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>THE INSTITUTE</span>
           </div>
-          <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-primary);">Preprints & Open Access</h3>
-          <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
-            All papers are authored by undergraduate, postgraduate, and self-directed student researchers with verifiable DOIs under Creative Commons licenses.
-          </p>
+          <div class="institute-big-acronym">CRII</div>
+          <div class="institute-subname">Curiomas Research & Innovation Institute</div>
         </div>
 
-        <div class="card" style="border-radius: 16px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #059669; display: grid; place-items: center; margin-bottom: 1.25rem;">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>
-            </svg>
-          </div>
-          <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-primary);">Curated Datasets</h3>
-          <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
-            Direct access to raw synthetic spectra, fossil calibration trees, and radiation dosimetry tables in open CSV, JSON, and HDF5 formats.
+        <div class="institute-right">
+          <h2 class="institute-heading">
+            A student-driven institute.<br>A shared pursuit of discovery.
+          </h2>
+          <p class="institute-desc">
+            We are an autonomous research institute connecting deep-space exoplanetary atmospheres with ancient biology and genomic divergence. Our work brings verifiable datasets, peer-grade articles and open pipelines into a shared framework for discovery.
           </p>
-        </div>
-
-        <div class="card" style="border-radius: 16px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: #6366f1; display: grid; place-items: center; margin-bottom: 1.25rem;">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
-          <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-primary);">Student Fellowship Cohorts</h3>
-          <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
-            Empowering students worldwide through collaborative research tracks, mentorship, and real publishing opportunities.
-          </p>
+          <a href="/contact" class="mockup-arrow-link">
+            <span>Contact Institute</span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Core Leadership & Research Mentors Showcase -->
-  <section class="section container">
-    <div class="section-header">
-      <span class="section-pill">Principal Leadership</span>
-      <h2 class="section-title">Core Team & Research Mentors</h2>
-      <p class="section-desc">
-        The founding directors, lead student investigators, and research fellows steering Curiomas CRII's open science missions.
-      </p>
-    </div>
-
-    <div class="cards-grid" id="homeTeamContainer">
-      <!-- Dynamically loaded from Database (Top 3 Priority Leadership) -->
-    </div>
-  </section>
-
-  <!-- Join the Institute Banner -->
-  <section class="section container" style="text-align: center;">
-    <div style="max-width: 800px; margin: 0 auto; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 24px; padding: 3.5rem 2rem; box-shadow: var(--shadow-md);">
-      <h2 style="font-size: 2.3rem; margin-bottom: 1rem; color: var(--text-primary);">
-        Ready to Advance Frontier Science?
-      </h2>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">
-        Applications are open for the upcoming research fellowship cohort. 
-        Whether you are analyzing exoplanetary light curves or fossil horizons, your curiosity has a home here.
-      </p>
-      <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-        <a href="/team#apply" class="btn btn-primary" style="padding: 0.85rem 2rem;">
-          <span>Submit Fellowship Application</span>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-          </svg>
+  <!-- =========================================================================
+       SECTION 3: OUR RESEARCH DIVISIONS
+       ========================================================================= -->
+  <section class="mockup-divisions-section">
+    <div class="mockup-container">
+      <div class="divisions-header">
+        <div class="divisions-header-left">
+          <div class="mockup-section-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>OUR RESEARCH DIVISIONS</span>
+          </div>
+          <h2 class="mockup-h2">A wider field of inquiry.</h2>
+        </div>
+        <a href="/research" class="mockup-arrow-link">
+          <span>Explore all research</span>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
         </a>
-        <a href="/contact" class="btn btn-secondary" style="padding: 0.85rem 1.8rem;">
-          <span>Contact Institute Desk</span>
+      </div>
+
+      <div class="divisions-cards-grid">
+        <!-- 01 Space & Astrophysics -->
+        <a href="/research" class="division-card">
+          <div class="division-card-media">
+            <img src="https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80" alt="Space & Astrophysics" loading="lazy">
+          </div>
+          <div class="division-card-tag">
+            <span>01 / RESEARCH DIVISION</span>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </div>
+          <h3 class="division-card-title">Space & Astrophysics</h3>
+          <p class="division-card-desc">Sparking distant atmospheres through exoplanetary spectra and light curves.</p>
+        </a>
+
+        <!-- 02 Ancient Biology & Paleontology -->
+        <a href="/research" class="division-card">
+          <div class="division-card-media">
+            <img src="https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80" alt="Ancient Biology & Paleontology" loading="lazy">
+          </div>
+          <div class="division-card-tag">
+            <span>02 / RESEARCH DIVISION</span>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </div>
+          <h3 class="division-card-title">Ancient Biology & Paleontology</h3>
+          <p class="division-card-desc">Tracing the history of life through fossil records and genomic divergence.</p>
+        </a>
+
+        <!-- 03 AI & Computational Science -->
+        <a href="/research" class="division-card">
+          <div class="division-card-media">
+            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="AI & Computational Science" loading="lazy">
+          </div>
+          <div class="division-card-tag">
+            <span>03 / RESEARCH DIVISION</span>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </div>
+          <h3 class="division-card-title">AI & Computational Science</h3>
+          <p class="division-card-desc">Building open computational methods for complex biological and physical systems.</p>
+        </a>
+
+        <!-- 04 Astrobiology & Extremophiles -->
+        <a href="/research" class="division-card">
+          <div class="division-card-media">
+            <img src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80" alt="Astrobiology & Extremophiles" loading="lazy">
+          </div>
+          <div class="division-card-tag">
+            <span>04 / RESEARCH DIVISION</span>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </div>
+          <h3 class="division-card-title">Astrobiology & Extremophiles</h3>
+          <p class="division-card-desc">Exploring life's resilience at the edges of habitability, on Earth and beyond.</p>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- Site Footer -->
-  <footer class="site-footer">
-    <div class="container footer-grid">
-      <div class="footer-brand">
-        <div class="brand-link" style="margin-bottom: 0.75rem;">
-          <div class="brand-logo-container">
-            <img src="assets/curiomas-no-bg.png" alt="CRII Logo" class="brand-logo-img" style="width: 32px; height: 32px; object-fit: contain;">
+  <!-- =========================================================================
+       SECTION 4: FROM THE INSTITUTE (EDITORIAL DISPATCHES)
+       ========================================================================= -->
+  <section class="mockup-editorial-section">
+    <div class="mockup-container">
+      <div class="editorial-header">
+        <div class="editorial-header-left">
+          <div class="mockup-section-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>OPEN-SOURCE, VERIFIABLE</span>
           </div>
-          <span class="brand-title" style="font-size: 0.95rem;">Curiomas Research & Innovation Institute</span>
+          <h2 class="mockup-h2">From the Institute.</h2>
         </div>
-        <p>
-          An autonomous student research collective. "Learning has no bound."
-        </p>
-        <div style="font-size: 0.8rem; color: var(--text-muted);">
-          Protected with Autz.org SSO • Hosted on Cloudflare Pages.
+        <div class="editorial-header-right">
+          <p>Rigorous, reproducible research and upcoming editorial dispatches across astrophysics, evolutionary paleogenomics and machine-learning biophysics.</p>
         </div>
       </div>
 
-      <div class="footer-col">
-        <h4>Navigation</h4>
-        <ul class="footer-links">
-          <li><a href="/">Home</a></li>
-          <li><a href="/research">Publications & Datasets</a></li>
-          <li><a href="/blog">Dispatches & Blog</a></li>
-          <li><a href="/team">Team</a></li>
-          <li><a href="/contact">Contact Us</a></li>
-        </ul>
+      <!-- Featured Big Horizontal Card -->
+      <div class="editorial-feature-card">
+        <div class="feature-card-media">
+          <img src="https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1200&q=80" alt="Methods in Exoplanetary Spectra" loading="lazy">
+        </div>
+        <div class="feature-card-body">
+          <div class="mockup-section-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>FEATURED EDITORIAL PREVIEW • COMING SOON</span>
+          </div>
+          <h3 class="feature-card-title">Reading Distant Atmospheres: Methods in Exoplanetary Spectra</h3>
+          <p class="feature-card-desc">
+            An editorial overview of the open pipeline approaches being developed within CRII's Space & Astrophysics division — reproducibility, synthetic spectra, and what comes next.
+          </p>
+          <a href="/research" class="mockup-arrow-link">
+            <span>Coming soon</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
       </div>
 
-      <div class="footer-col">
-        <h4>Divisions</h4>
-        <ul class="footer-links">
-          <li><a href="/research?domain=space">Space & Astrophysics</a></li>
-          <li><a href="/research?domain=ancient">Ancient Biology & Paleontology</a></li>
-          <li><a href="/research?domain=ai">AI & Computational Science</a></li>
-          <li><a href="/research?domain=astrobiology">Astrobiology & Extremophiles</a></li>
-        </ul>
-      </div>
+      <!-- 3-Column Sub-Cards -->
+      <div class="editorial-sub-grid">
+        <!-- Subcard 1 -->
+        <div class="editorial-sub-card">
+          <div class="sub-card-media">
+            <img src="https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80" alt="Fossil Calibration" loading="lazy">
+          </div>
+          <div class="sub-card-body">
+            <div class="sub-card-tag">
+              <span class="mockup-tag-dot"></span>
+              <span>ANCIENT BIOLOGY</span>
+            </div>
+            <h4 class="sub-card-title">Fossil Calibration in an Open Framework</h4>
+            <p class="sub-card-desc">How verifiable fossil records and open divergence datasets are being prepared for the CRII repository.</p>
+            <a href="/research" class="mockup-arrow-link">
+              <span>Coming soon</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
 
-      <div class="footer-col">
-        <h4>Management</h4>
-        <ul class="footer-links">
-          <li><a href="/portal">Researcher Portal</a></li>
-          <li><a href="https://autz.org" target="_blank">Autz.org Identity</a></li>
-          <li><a href="/team#apply">Admissions</a></li>
-          <li><a href="/contact">Institutional Collaboration</a></li>
-        </ul>
+        <!-- Subcard 2 -->
+        <div class="editorial-sub-card">
+          <div class="sub-card-media">
+            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="ML Pipelines for Biophysics" loading="lazy">
+          </div>
+          <div class="sub-card-body">
+            <div class="sub-card-tag">
+              <span class="mockup-tag-dot"></span>
+              <span>AI & COMPUTATIONAL SCIENCE</span>
+            </div>
+            <h4 class="sub-card-title">Building Reproducible ML Pipelines for Biophysics</h4>
+            <p class="sub-card-desc">A look at why open, test-driven computational methods matter when we are developing across biological and physical systems.</p>
+            <a href="/research" class="mockup-arrow-link">
+              <span>Coming soon</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Subcard 3 -->
+        <div class="editorial-sub-card">
+          <div class="sub-card-media">
+            <img src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80" alt="Life at the Edge of Habitability" loading="lazy">
+          </div>
+          <div class="sub-card-body">
+            <div class="sub-card-tag">
+              <span class="mockup-tag-dot"></span>
+              <span>ASTROBIOLOGY</span>
+            </div>
+            <h4 class="sub-card-title">Life at the Edge of Habitability</h4>
+            <p class="sub-card-desc">Dispatches from the Astrobiology & Extremophiles division on what Earth's most resilient organisms tell us about life beyond it.</p>
+            <a href="/research" class="mockup-arrow-link">
+              <span>Coming soon</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="container footer-bottom">
-      <div>
-        © 2026 Curiomas Research & Innovation Institute (CRII). All research open under CC-BY 4.0.
+  <!-- =========================================================================
+       SECTION 5: PUBLICATIONS REPOSITORY INITIALIZING
+       ========================================================================= -->
+  <section class="mockup-repo-section">
+    <div class="mockup-container">
+      <div class="repo-main-grid" id="featuredArticlesContainer">
+        <div class="repo-left">
+          <div class="mockup-section-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>OPEN REPOSITORY</span>
+          </div>
+          <h3 class="repo-heading">Publications Repository Initializing</h3>
+          <p class="repo-desc">
+            Peer-reviewed articles, preprints and open datasets are currently being prepared by the institute research fellows. The repository will open to the public as soon as initial peer-review cycles complete.
+          </p>
+          <a href="/portal" class="mockup-btn-outline">
+            <span>RESEARCH PORTAL ACCESS</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+
+        <div class="repo-right">
+          <a href="/research" class="repo-row">
+            <div class="repo-row-content">
+              <div class="repo-row-title">Articles & preprints</div>
+              <div class="repo-row-sub">All our research papers, openly accessible.</div>
+            </div>
+            <div class="repo-row-action">
+              <span>View articles</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </div>
+          </a>
+
+          <a href="/research" class="repo-row">
+            <div class="repo-row-content">
+              <div class="repo-row-title">Methods & open pipelines</div>
+              <div class="repo-row-sub">Reproducible code and step-by-step methods.</div>
+            </div>
+            <div class="repo-row-action">
+              <span>View methods</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </div>
+          </a>
+
+          <a href="/research" class="repo-row">
+            <div class="repo-row-content">
+              <div class="repo-row-title">Research datasets</div>
+              <div class="repo-row-sub">Raw and processed data, published for anyone.</div>
+            </div>
+            <div class="repo-row-action">
+              <span>View datasets</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </div>
+          </a>
+        </div>
       </div>
-      <div>
-        <a href="/portal">Portal Login</a>
+
+      <div class="repo-footer-bar">
+        <span>Curated under Creative Commons Open Research (CC-BY 4.0)</span>
+        <span>Protected by Cloudflare Pages & Workers D1 SQL Backend</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 6: BUILT FOR RIGOROUS, VERIFIABLE SCIENCE (DEEP GREEN)
+       ========================================================================= -->
+  <section class="mockup-emerald-section">
+    <div class="mockup-container">
+      <div class="emerald-header">
+        <div class="emerald-header-left">
+          <div class="mockup-section-tag light-tag">
+            <span class="mockup-tag-dot amber"></span>
+            <span>OPEN SCIENCE STANDARDS</span>
+          </div>
+          <h2 class="emerald-title">Built for Rigorous, Verifiable Science</h2>
+        </div>
+        <div class="emerald-header-right">
+          <p>Our commitments span open access preprints and curated datasets, alongside transparent student fellowship cohorts that power continuous verification.</p>
+        </div>
+      </div>
+
+      <div class="emerald-columns-grid">
+        <!-- 01 Preprints & Open Access -->
+        <div class="emerald-col">
+          <div class="emerald-col-num">01</div>
+          <h3 class="emerald-col-title">Preprints & Open Access</h3>
+          <p class="emerald-col-desc">Crucially open access: all preprints are published in open repository under Creative Commons licenses. Authors retain full copyright, always.</p>
+          <a href="/research" class="emerald-col-link">
+            <span>Learn about our preprint policy</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+
+        <!-- 02 Curated Datasets -->
+        <div class="emerald-col">
+          <div class="emerald-col-num">02</div>
+          <h3 class="emerald-col-title">Curated Datasets</h3>
+          <p class="emerald-col-desc">Public open data, structured and machine-readable. We publish alongside each paper all raw and processed datasets under standard protocols.</p>
+          <a href="/research" class="emerald-col-link">
+            <span>Explore our datasets</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+
+        <!-- 03 Student Fellowship Cohorts -->
+        <div class="emerald-col">
+          <div class="emerald-col-num">03</div>
+          <h3 class="emerald-col-title">Student Fellowship Cohorts</h3>
+          <p class="emerald-col-desc">Organised research cohorts. Participants receive mentoring, collaborate across disciplines and contribute to published outputs under mentorship.</p>
+          <a href="/team#apply" class="emerald-col-link">
+            <span>Fellowship programme details</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 7: CORE TEAM & RESEARCH MENTORS
+       ========================================================================= -->
+  <section class="mockup-mentors-section">
+    <div class="mockup-container">
+      <div class="mentors-grid">
+        <div class="mentors-left">
+          <div class="mentors-image-wrap">
+            <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80" alt="Mentorship notebook and keys" loading="lazy">
+          </div>
+          <div class="mentors-caption">Fellowship cohorts are guided by peer mentors.</div>
+        </div>
+
+        <div class="mentors-right">
+          <div class="mockup-section-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>LEADERSHIP AND RESEARCH</span>
+          </div>
+          <h2 class="mockup-h2">Core Team & Research Mentors</h2>
+          <p class="mentors-desc">
+            Founded by a hands-on core team of student researchers and mentors who pursue discovery together. We bring researchers from astronomy to evolutionary biology into an open, collaborative, and peer-to-peer learning environment.
+          </p>
+          <div class="mentors-meta-pill">
+            STUDENT MENTORS • PEER-TO-PEER RESEARCH • OPEN COMMUNITY
+          </div>
+          <a href="/team" class="mockup-arrow-link">
+            <span>Meet the team</span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 8: READY TO ADVANCE FRONTIER SCIENCE? (WARM SAND)
+       ========================================================================= -->
+  <section class="mockup-sand-cta-section">
+    <div class="mockup-container">
+      <div class="sand-cta-grid">
+        <div class="sand-cta-left">
+          <div class="mockup-section-tag dark-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>ADMISSIONS OPEN • UPCOMING COHORT</span>
+          </div>
+          <h2 class="sand-cta-title">Ready to Advance Frontier Science?</h2>
+        </div>
+
+        <div class="sand-cta-right">
+          <p class="sand-cta-desc">
+            Find a supportive cohort, explore our open publications, or join the next fellowship intake. Applications for the upcoming research intake are now being reviewed on a rolling basis.
+          </p>
+          <div class="sand-cta-actions">
+            <a href="/team#apply" class="mockup-btn-dark-green">
+              <span>Submit Fellowship Application</span>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+            <a href="/contact" class="mockup-arrow-link dark-link">
+              <span>Contact admissions desk</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 9: WHO CAN JOIN US? (COHORT PROFILES)
+       ========================================================================= -->
+  <section class="mockup-cohort-section">
+    <div class="mockup-container">
+      <div class="cohort-header">
+        <div class="cohort-header-left">
+          <div class="mockup-section-tag">
+            <span class="mockup-tag-dot"></span>
+            <span>PROGRAMME ADMISSIONS • WHO SHOULD APPLY</span>
+          </div>
+          <h2 class="mockup-h2">Who can join us?</h2>
+        </div>
+        <div class="cohort-header-right">
+          <p>CRII was built by and for students, regardless of formal institutional affiliation. We welcome curious, committed individuals across disciplines who want to contribute to frontier open science.</p>
+        </div>
+      </div>
+
+      <div class="cohort-cards-grid">
+        <!-- 01 Undergraduates -->
+        <div class="cohort-card">
+          <div class="cohort-card-media">
+            <img src="https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=800&q=80" alt="Undergraduates" loading="lazy">
+          </div>
+          <div class="cohort-card-body">
+            <h3 class="cohort-card-title">Undergraduates</h3>
+            <p class="cohort-card-desc">Early-stage researchers looking to contribute to real-world science beyond coursework, receive mentorship and publish peer-grade research.</p>
+            <a href="/team#apply" class="cohort-card-link">
+              <span>Apply as Fellow</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 02 Postgraduates -->
+        <div class="cohort-card">
+          <div class="cohort-card-media">
+            <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80" alt="Postgraduates" loading="lazy">
+          </div>
+          <div class="cohort-card-body">
+            <h3 class="cohort-card-title">Postgraduates</h3>
+            <p class="cohort-card-desc">Master's and doctoral candidates who want to lead research streams, publish open datasets and mentor promising undergraduates.</p>
+            <a href="/team#apply" class="cohort-card-link">
+              <span>Apply as Fellow</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 03 Self-Directed Researchers -->
+        <div class="cohort-card">
+          <div class="cohort-card-media">
+            <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80" alt="Self-Directed Researchers" loading="lazy">
+          </div>
+          <div class="cohort-card-body">
+            <h3 class="cohort-card-title">Self-Directed Researchers</h3>
+            <p class="cohort-card-desc">Talented, self-taught individuals outside traditional academia who have deep knowledge and an appetite to produce verifiable science.</p>
+            <a href="/team#apply" class="cohort-card-link">
+              <span>Apply as Fellow</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 04 Research Fellows -->
+        <div class="cohort-card">
+          <div class="cohort-card-media">
+            <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80" alt="Research Fellows" loading="lazy">
+          </div>
+          <div class="cohort-card-body">
+            <h3 class="cohort-card-title">Research Fellows</h3>
+            <p class="cohort-card-desc">Experienced researchers and domain experts who contribute time to mentor cohorts and supervise specific research streams.</p>
+            <a href="/team" class="cohort-card-link">
+              <span>Meet team</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cohort Bottom Banner Note -->
+      <div class="cohort-bottom-banner">
+        <div class="cohort-note-text">
+          Applicant Note: All CRII Fellowship positions are remote, open to applicants worldwide, and conducted under open-science principles.
+        </div>
+        <a href="/team#apply" class="mockup-btn-dark-green">
+          <span>Apply for Research Cohort</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 10: HAVE A QUESTION? (DEEP MIDNIGHT NAVY)
+       ========================================================================= -->
+  <section class="mockup-midnight-section">
+    <div class="mockup-container">
+      <div class="mockup-section-tag light-tag">
+        <span class="mockup-tag-dot amber"></span>
+        <span>GET IN TOUCH</span>
+      </div>
+      <h2 class="midnight-title">Have a question? Do not hesitate to reach out.</h2>
+
+      <div class="midnight-columns-grid">
+        <!-- 01 Research & Publications -->
+        <div class="midnight-col">
+          <div class="midnight-col-num">01</div>
+          <h3 class="midnight-col-title">Research & Publications</h3>
+          <p class="midnight-col-desc">For discussions on paper submissions, preprints, methods data and open-source science collaborations.</p>
+          <a href="/contact" class="midnight-col-link">
+            <span>Research Enquiries</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+
+        <!-- 02 Fellowship Enquiries -->
+        <div class="midnight-col">
+          <div class="midnight-col-num">02</div>
+          <h3 class="midnight-col-title">Fellowship Enquiries</h3>
+          <p class="midnight-col-desc">For questions about the application cycle, eligibility, remote cohort participation, or mentorship.</p>
+          <a href="/contact" class="midnight-col-link">
+            <span>Admissions Enquiries</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+
+        <!-- 03 Institutional Collaboration -->
+        <div class="midnight-col">
+          <div class="midnight-col-num">03</div>
+          <h3 class="midnight-col-title">Institutional Collaboration</h3>
+          <p class="midnight-col-desc">Interested in partnering with CRII on datasets, shared research or educational open-source pipelines?</p>
+          <a href="/contact" class="midnight-col-link">
+            <span>Contact the Director</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="midnight-bottom-bar">
+        <span>For all other inquiries, please use the contact form.</span>
+        <a href="/contact" class="mockup-btn-white">
+          <span>Open contact form</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 11: FOREST GREEN FOOTER
+       ========================================================================= -->
+  <footer class="mockup-forest-footer">
+    <div class="mockup-container">
+      <div class="footer-top-grid">
+        <div class="footer-brand-col">
+          <div class="footer-brand-header">
+            <img src="assets/curiomas-no-bg.png" alt="CRII" class="footer-brand-logo">
+            <span class="footer-brand-name">curiomas</span>
+          </div>
+          <div class="footer-brand-sub">Autonomous Research Institute</div>
+          <div class="footer-brand-sub">Founded 2026</div>
+          <p class="footer-brand-tagline">Autonomous. Student-driven. Open by design.</p>
+        </div>
+
+        <div class="footer-links-col">
+          <h4 class="footer-col-header">INSTITUTE</h4>
+          <ul class="footer-links-list">
+            <li><a href="/">About Us</a></li>
+            <li><a href="/research">Research Divisions</a></li>
+            <li><a href="/team">Core Team & Mentors</a></li>
+            <li><a href="/contact">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <h4 class="footer-col-header">DIVISIONS</h4>
+          <ul class="footer-links-list">
+            <li><a href="/research">Space & Astrophysics</a></li>
+            <li><a href="/research">Ancient Biology & Paleontology</a></li>
+            <li><a href="/research">AI & Computational Science</a></li>
+            <li><a href="/research">Astrobiology & Extremophiles</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <h4 class="footer-col-header">RESEARCH</h4>
+          <ul class="footer-links-list">
+            <li><a href="/research">Publications & Preprints</a></li>
+            <li><a href="/research">Datasets & Pipelines</a></li>
+            <li><a href="/portal">Research Repository</a></li>
+            <li><a href="/research">Peer Review Guidelines</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <h4 class="footer-col-header">FELLOWSHIP</h4>
+          <ul class="footer-links-list">
+            <li><a href="/team#apply">Apply as Fellow</a></li>
+            <li><a href="/team">Mentorship</a></li>
+            <li><a href="/team#apply">Admissions FAQ</a></li>
+            <li><a href="/contact">Institutional Partners</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-motto-row">
+        <div class="footer-huge-motto">Learning has no bound.</div>
+        <div class="footer-institute-note">An autonomous student-driven scientific institute.</div>
+      </div>
+
+      <div class="footer-legal-bar">
+        <div>© 2026 Curiomas Research & Innovation Institute. Released under CC-BY 4.0.</div>
+        <div class="footer-sso-note">Single Sign-On powered by Autz.org</div>
       </div>
     </div>
   </footer>
 
-  <script src="js/config.js?v=3.9"></script>
-  <script src="js/app.js?v=3.9"></script>
+  <!-- Scripts -->
+  <script src="js/config.js?v=4.0"></script>
+  <script src="js/app.js?v=4.0"></script>
+  <script>
+    // Mobile menu toggle logic
+    const menuBtn = document.getElementById('menuToggleBtn');
+    const navMenu = document.getElementById('mainNavMenu');
+    if (menuBtn && navMenu) {
+      menuBtn.addEventListener('click', () => {
+        navMenu.classList.toggle('show');
+      });
+    }
+  </script>
 </body>
 </html>

@@ -4,6 +4,19 @@
    Modern, Light/Dark Adaptive, Autz.org Integrated
    ========================================================================== */
 
+@font-face {
+  font-family: 'Eyekons';
+  src: url('../assets/Eyekons.otf') format('opentype'),
+       url('/assets/Eyekons.otf') format('opentype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+*, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, label {
+  font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
+}
+
 .portal-layout {
   display: flex;
   min-height: 100vh;

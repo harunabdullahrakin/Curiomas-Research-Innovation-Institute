@@ -4,7 +4,22 @@
    Default: Light Mode
    ========================================================================== */
 
+/* ==========================================================================
+   GLOBAL TYPOGRAPHY — EYEKONS OTF
+   Applied globally across every page, heading, text, button, card, and footer
+   ========================================================================== */
+@font-face {
+  font-family: 'Eyekons';
+  src: url('../assets/Eyekons.otf') format('opentype'),
+       url('/assets/Eyekons.otf') format('opentype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  --font-main: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif;
+
   /* LIGHT MODE (Default) */
   --bg-primary: #f8fafc;
   --bg-surface: #ffffff;
@@ -87,16 +102,21 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
 }
 
 html {
   scroll-behavior: smooth;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label, code, pre {
+  font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
 }
 
 body {
@@ -806,3 +826,1155 @@ body {
     padding: 1.25rem 1rem;
   }
 }
+
+/* ==========================================================================
+   HOMEPAGE DESIGN ACCORDING TO REFERENCE MOCKUPS
+   11 Dedicated Sections with Eyekons Typography & Editorial Hierarchy
+   ========================================================================== */
+
+/* Shared Section Utilities */
+.mockup-container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+}
+
+.mockup-section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8c7355;
+  margin-bottom: 1.15rem;
+}
+
+.mockup-section-tag.light-tag {
+  color: #a8b3c7;
+}
+
+.mockup-section-tag.dark-tag {
+  color: #5a4a35;
+}
+
+.mockup-tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #d97706;
+  display: inline-block;
+}
+
+.mockup-tag-dot.amber {
+  background-color: #f59e0b;
+}
+
+.mockup-h2 {
+  font-size: 2.75rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #121e2a;
+  margin: 0 0 1rem 0;
+}
+
+.mockup-arrow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a3353;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.mockup-arrow-link:hover {
+  color: #0284c7;
+  transform: translateX(2px);
+}
+
+.mockup-arrow-link.dark-link {
+  color: #18281e;
+}
+
+.mockup-arrow-link.dark-link:hover {
+  color: #059669;
+}
+
+.mockup-btn-white {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  color: #0c1424;
+  padding: 0.75rem 1.6rem;
+  border-radius: 9999px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  transition: all 0.25s ease;
+}
+
+.mockup-btn-white:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+
+.mockup-btn-dark-green {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #09261c;
+  color: #ffffff;
+  padding: 0.75rem 1.6rem;
+  border-radius: 9999px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid #09261c;
+  box-shadow: 0 4px 14px rgba(9, 38, 28, 0.25);
+  transition: all 0.25s ease;
+}
+
+.mockup-btn-dark-green:hover {
+  background: #0e3b2c;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.mockup-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 9999px;
+  border: 1.5px solid #1a2c42;
+  color: #1a2c42;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.mockup-btn-outline:hover {
+  background: #1a2c42;
+  color: #ffffff;
+}
+
+/* 1. Hero Cosmos Section */
+.mockup-hero-section {
+  position: relative;
+  background: #060b16 radial-gradient(circle at 82% 35%, rgba(45, 95, 185, 0.35) 0%, rgba(15, 30, 65, 0.2) 40%, transparent 70%);
+  color: #ffffff;
+  padding-top: 1.5rem;
+  padding-bottom: 3.5rem;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mockup-hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -10%;
+  width: 65vw;
+  height: 65vw;
+  max-width: 900px;
+  max-height: 900px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 40, 90, 0.2) 0%, rgba(5, 12, 28, 0.85) 60%, transparent 70%);
+  border: 1px solid rgba(100, 160, 255, 0.15);
+  box-shadow: inset 0 0 80px rgba(56, 189, 248, 0.18), 0 0 100px rgba(37, 99, 235, 0.15);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mockup-nav-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.mockup-nav-capsule {
+  width: 100%;
+  max-width: 820px;
+  height: 60px;
+  background: rgba(13, 22, 40, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.mockup-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.mockup-brand-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.mockup-brand-text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.mockup-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mockup-nav-link {
+  color: #94a3b8;
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.mockup-nav-link:hover, .mockup-nav-link.active {
+  color: #ffffff;
+}
+
+.mockup-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mockup-hero-body {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+  margin-bottom: 5.5rem;
+}
+
+.mockup-hero-title {
+  font-size: 4.2rem;
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  margin: 0 0 1.5rem 0;
+}
+
+.mockup-hero-subtitle {
+  font-size: 1.18rem;
+  line-height: 1.6;
+  color: #9bb0cb;
+  margin-bottom: 2.25rem;
+  max-width: 600px;
+}
+
+.mockup-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.mockup-hero-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.mockup-hero-link:hover {
+  color: #38bdf8;
+}
+
+.mockup-hero-ticker {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ticker-center {
+  font-size: 1.35rem;
+  font-style: italic;
+  letter-spacing: 0;
+  color: #cbd5e1;
+}
+
+.mockup-section-connector {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: -19px;
+  z-index: 20;
+}
+
+.connector-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #0284c7;
+  border: 4px solid #faf8f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 2. The Institute Section */
+.mockup-institute-section {
+  background: #faf8f5;
+  padding: 5.5rem 0;
+  border-bottom: 1px solid #eae5dc;
+}
+
+.institute-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 4rem;
+  align-items: flex-start;
+}
+
+.institute-big-acronym {
+  font-size: 5.5rem;
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: #162c23;
+  margin-bottom: 0.75rem;
+}
+
+.institute-subname {
+  font-size: 0.88rem;
+  color: #6a6a6a;
+  line-height: 1.4;
+}
+
+.institute-heading {
+  font-size: 2.85rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #172b22;
+  margin: 0 0 1.5rem 0;
+}
+
+.institute-desc {
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: #4b5852;
+  margin-bottom: 2rem;
+  max-width: 680px;
+}
+
+/* 3. Research Divisions Section */
+.mockup-divisions-section {
+  background: #faf8f5;
+  padding: 5rem 0;
+  border-bottom: 1px solid #eae5dc;
+}
+
+.divisions-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.divisions-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.75rem;
+}
+
+.division-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.25s ease;
+}
+
+.division-card:hover {
+  transform: translateY(-4px);
+}
+
+.division-card-media {
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  background: #e2e8f0;
+}
+
+.division-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.division-card:hover .division-card-media img {
+  transform: scale(1.05);
+}
+
+.division-card-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #78716c;
+  margin-bottom: 0.65rem;
+}
+
+.division-card-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #18281e;
+  margin: 0 0 0.5rem 0;
+}
+
+.division-card-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #57534e;
+  margin: 0;
+}
+
+/* 4. Editorial Section (Warm Cream) */
+.mockup-editorial-section {
+  background: #f4efe6;
+  padding: 5rem 0;
+  border-bottom: 1px solid #e5dfd2;
+}
+
+.editorial-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3.5rem;
+  align-items: flex-end;
+}
+
+.editorial-header-right p {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #5c5549;
+  margin: 0;
+}
+
+.editorial-feature-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e7e0d3;
+  margin-bottom: 2.25rem;
+}
+
+.feature-card-media {
+  width: 100%;
+  min-height: 340px;
+  background: #000000;
+}
+
+.feature-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feature-card-body {
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.feature-card-title {
+  font-size: 1.95rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #1a2c22;
+  margin: 0 0 1rem 0;
+}
+
+.feature-card-desc {
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: #555c56;
+  margin: 0 0 1.75rem 0;
+}
+
+.editorial-sub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+}
+
+.editorial-sub-card {
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e7e0d3;
+  display: flex;
+  flex-direction: column;
+}
+
+.sub-card-media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.sub-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sub-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.sub-card-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #8c7355;
+  margin-bottom: 0.75rem;
+}
+
+.sub-card-title {
+  font-size: 1.22rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1a2c22;
+  margin: 0 0 0.65rem 0;
+}
+
+.sub-card-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #5c635d;
+  margin: 0 0 1.25rem 0;
+  flex-grow: 1;
+}
+
+/* 5. Publications Repository Initializing */
+.mockup-repo-section {
+  background: #f4efe6;
+  padding: 4.5rem 0;
+  border-bottom: 1px solid #e5dfd2;
+}
+
+.repo-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  margin-bottom: 3.5rem;
+}
+
+.repo-heading {
+  font-size: 2.2rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #17281f;
+  margin: 0 0 1rem 0;
+}
+
+.repo-desc {
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: #555e58;
+  margin: 0 0 2rem 0;
+  max-width: 500px;
+}
+
+.repo-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.repo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.35rem 0;
+  border-bottom: 1px solid #ded5c5;
+  text-decoration: none;
+  color: inherit;
+  transition: padding-left 0.2s ease;
+}
+
+.repo-row:hover {
+  padding-left: 0.5rem;
+}
+
+.repo-row-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #16281e;
+  margin-bottom: 0.25rem;
+}
+
+.repo-row-sub {
+  font-size: 0.86rem;
+  color: #6a736d;
+}
+
+.repo-row-action {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #16281e;
+}
+
+.repo-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ded5c5;
+  font-size: 0.82rem;
+  color: #79837c;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* 6. Built for Rigorous, Verifiable Science (Deep Green) */
+.mockup-emerald-section {
+  background: #09231a;
+  color: #ffffff;
+  padding: 5.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.emerald-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 4rem;
+  align-items: flex-end;
+}
+
+.emerald-title {
+  font-size: 2.75rem;
+  font-weight: 500;
+  line-height: 1.15;
+  color: #ffffff;
+  margin: 0;
+}
+
+.emerald-header-right p {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #a3c2b4;
+  margin: 0;
+}
+
+.emerald-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+}
+
+.emerald-col-num {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4ade80;
+  margin-bottom: 1.25rem;
+}
+
+.emerald-col-title {
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #ffffff;
+  margin: 0 0 0.85rem 0;
+}
+
+.emerald-col-desc {
+  font-size: 0.94rem;
+  line-height: 1.65;
+  color: #a3c2b4;
+  margin: 0 0 1.5rem 0;
+}
+
+.emerald-col-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.emerald-col-link:hover {
+  color: #4ade80;
+  transform: translateX(2px);
+}
+
+/* 7. Core Team & Research Mentors */
+.mockup-mentors-section {
+  background: #faf8f5;
+  padding: 5.5rem 0;
+  border-bottom: 1px solid #eae5dc;
+}
+
+.mentors-grid {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 4.5rem;
+  align-items: center;
+}
+
+.mentors-image-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  margin-bottom: 0.75rem;
+}
+
+.mentors-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mentors-caption {
+  font-size: 0.82rem;
+  color: #78716c;
+  font-style: italic;
+}
+
+.mentors-desc {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #4c5850;
+  margin: 0 0 1.75rem 0;
+}
+
+.mentors-meta-pill {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #6a6a6a;
+  margin-bottom: 2rem;
+}
+
+/* 8. Ready to Advance Frontier Science? (Warm Sand) */
+.mockup-sand-cta-section {
+  background: #ded3be;
+  padding: 5rem 0;
+  border-bottom: 1px solid #cdbfa7;
+}
+
+.sand-cta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+.sand-cta-title {
+  font-size: 2.85rem;
+  font-weight: 500;
+  line-height: 1.15;
+  color: #17261c;
+  margin: 0;
+}
+
+.sand-cta-desc {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #434c44;
+  margin: 0 0 1.75rem 0;
+}
+
+.sand-cta-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+/* 9. Who can join us? (Cohort Section) */
+.mockup-cohort-section {
+  background: #faf8f5;
+  padding: 5rem 0;
+  border-bottom: 1px solid #eae5dc;
+}
+
+.cohort-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3.5rem;
+  align-items: flex-end;
+}
+
+.cohort-header-right p {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #525c56;
+  margin: 0;
+}
+
+.cohort-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.cohort-card {
+  background: #f1ebe1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2d9cc;
+  display: flex;
+  flex-direction: column;
+}
+
+.cohort-card-media {
+  width: 100%;
+  aspect-ratio: 16 / 11;
+}
+
+.cohort-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cohort-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.cohort-card-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #18281e;
+  margin: 0 0 0.65rem 0;
+}
+
+.cohort-card-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #555f58;
+  margin: 0 0 1.25rem 0;
+  flex-grow: 1;
+}
+
+.cohort-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #18281e;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.cohort-card-link:hover {
+  color: #059669;
+}
+
+.cohort-bottom-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e5ded3;
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.cohort-note-text {
+  font-size: 0.92rem;
+  color: #606b64;
+  max-width: 720px;
+}
+
+/* 10. Have a question? (Deep Midnight Navy) */
+.mockup-midnight-section {
+  background: #07101d;
+  color: #ffffff;
+  padding: 5.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.midnight-title {
+  font-size: 2.85rem;
+  font-weight: 500;
+  line-height: 1.15;
+  color: #ffffff;
+  margin: 0 0 3.5rem 0;
+  max-width: 650px;
+}
+
+.midnight-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+  margin-bottom: 4rem;
+}
+
+.midnight-col-num {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 1.25rem;
+}
+
+.midnight-col-title {
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #ffffff;
+  margin: 0 0 0.85rem 0;
+}
+
+.midnight-col-desc {
+  font-size: 0.94rem;
+  line-height: 1.65;
+  color: #9cb1cb;
+  margin: 0 0 1.5rem 0;
+}
+
+.midnight-col-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.midnight-col-link:hover {
+  color: #38bdf8;
+  transform: translateX(2px);
+}
+
+.midnight-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.95rem;
+  color: #94a3b8;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+/* 11. Forest Green Footer */
+.mockup-forest-footer {
+  background: #071f16;
+  color: #ffffff;
+  padding: 5rem 0 3rem 0;
+}
+
+.footer-top-grid {
+  display: grid;
+  grid-template-columns: 280px repeat(4, 1fr);
+  gap: 2.5rem;
+  margin-bottom: 4.5rem;
+}
+
+.footer-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.footer-brand-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.footer-brand-name {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.footer-brand-sub {
+  font-size: 0.88rem;
+  color: #94b8a7;
+  margin-bottom: 0.2rem;
+}
+
+.footer-brand-tagline {
+  font-size: 0.86rem;
+  color: #94b8a7;
+  margin-top: 0.75rem;
+  line-height: 1.5;
+}
+
+.footer-col-header {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #ffffff;
+  margin: 0 0 1.25rem 0;
+}
+
+.footer-links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-links-list a {
+  color: #a3c2b4;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links-list a:hover {
+  color: #ffffff;
+}
+
+.footer-motto-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 3rem 0 2rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.footer-huge-motto {
+  font-size: 3.5rem;
+  font-style: italic;
+  font-weight: 400;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.footer-institute-note {
+  font-size: 0.88rem;
+  color: #94b8a7;
+}
+
+.footer-legal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+  color: #719584;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .mockup-hero-title { font-size: 3.2rem; }
+  .institute-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .divisions-cards-grid { grid-template-columns: repeat(2, 1fr); }
+  .editorial-header { grid-template-columns: 1fr; gap: 1rem; }
+  .editorial-feature-card { grid-template-columns: 1fr; }
+  .editorial-sub-grid { grid-template-columns: 1fr; }
+  .repo-main-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .emerald-header { grid-template-columns: 1fr; gap: 1rem; }
+  .emerald-columns-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .mentors-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .sand-cta-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .cohort-header { grid-template-columns: 1fr; gap: 1rem; }
+  .cohort-cards-grid { grid-template-columns: repeat(2, 1fr); }
+  .midnight-columns-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .footer-top-grid { grid-template-columns: 1fr 1fr; }
+  .footer-huge-motto { font-size: 2.5rem; }
+}
+
+@media (max-width: 640px) {
+  .mockup-hero-title { font-size: 2.3rem; }
+  .mockup-h2 { font-size: 2.1rem; }
+  .mockup-nav-capsule { padding: 0 0.85rem; }
+  .mockup-nav-links { display: none; }
+  .divisions-cards-grid { grid-template-columns: 1fr; }
+  .cohort-cards-grid { grid-template-columns: 1fr; }
+  .footer-top-grid { grid-template-columns: 1fr; }
+  .footer-huge-motto { font-size: 1.85rem; }
+}
+
