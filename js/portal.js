@@ -44,11 +44,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const userNameEl = document.getElementById('portalUserName');
   const userEmailEl = document.getElementById('portalUserEmail');
   const userRoleEl = document.getElementById('portalUserRole');
+  const userAvatarEl = document.getElementById('portalUserAvatar');
   if (userNameEl) userNameEl.innerText = user.name || "Researcher";
   if (userEmailEl) userEmailEl.innerText = user.email || "";
   if (userRoleEl) userRoleEl.innerText = user.role || "Member";
+  if (userAvatarEl) {
+    const initial = (user.name || user.email || "R").trim().charAt(0).toUpperCase();
+    userAvatarEl.innerText = initial;
+  }
 
   initSidebarNavigation();
+  initSidebarToggle();
   initBloggerEditor();
   initRosterManagement();
   initHeroAppearanceSettings();
@@ -63,6 +69,86 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // -----------------------------------------------------------------------------
 // NAVIGATION & DASHBOARD DATA
+// -----------------------------------------------------------------------------
+function initSidebarToggle() {
+  const sidebar = document.getElementById('portalSidebar');
+  const toggleBtn = document.getElementById('portalSidebarToggleBtn');
+  const dashboardSection = document.getElementById('portalDashboardSection');
+  const mobileMenuBtn = document.getElementById('portalMobileMenuBtn');
+  const backdrop = document.getElementById('portalSidebarBackdrop');
+
+  if (!sidebar) return;
+
+  // Restore saved collapsed state
+  const isCollapsed = localStorage.getItem('crii_sidebar_collapsed') === 'true';
+  if (isCollapsed && window.innerWidth > 992) {
+    sidebar.classList.add('collapsed');
+    if (dashboardSection) dashboardSection.classList.add('sidebar-collapsed');
+  }
+
+  // Toggle button handler
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willCollapse = !sidebar.classList.contains('collapsed');
+      sidebar.classList.toggle('collapsed', willCollapse);
+      if (dashboardSection) {
+        dashboardSection.classList.toggle('sidebar-collapsed', willCollapse);
+      }
+      localStorage.setItem('crii_sidebar_collapsed', willCollapse ? 'true' : 'false');
+    });
+  }
+
+  // Mobile menu button handler
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebar.classList.add('mobile-open');
+      if (backdrop) backdrop.classList.add('active');
+    });
+  }
+
+  // Mobile backdrop click handler
+  if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      sidebar.classList.remove('mobile-open');
+      backdrop.classList.remove('active');
+    });
+  }
+
+  // Close mobile sidebar when nav button clicked
+  document.querySelectorAll('.portal-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (window.innerWidth <= 992) {
+        sidebar.classList.remove('mobile-open');
+        if (backdrop) backdrop.classList.remove('active');
+      }
+    });
+  });
+
+  // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (activeTag === 'input' || activeTag === 'textarea' || (document.activeElement && document.activeElement.isContentEditable)) {
+        return;
+      }
+      e.preventDefault();
+      if (toggleBtn) toggleBtn.click();
+    }
+  });
+
+  // Quick theme toggle buttons in user card & mobile topbar
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const nextTheme = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', nextTheme);
+      localStorage.setItem('crii_theme_mode', nextTheme);
+    });
+  });
+}
 // -----------------------------------------------------------------------------
 function initSidebarNavigation() {
   const buttons = document.querySelectorAll('.portal-nav-btn');
