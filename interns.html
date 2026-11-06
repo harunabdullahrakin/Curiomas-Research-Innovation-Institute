@@ -26,10 +26,13 @@
     body, p, span, a, button, input, select, textarea, label, li, ul, ol, div {
       font-family: var(--font-body);
     }
+    h1, h2, h3, h4, h5, h6,
     .mockup-page-hero-title,
     .institute-heading,
-    .mockup-h2 {
-      font-family: var(--font-display);
+    .mockup-h2,
+    [class*="-title"]:not([class*="-sub"]):not(.quick-tag-label),
+    [class*="-heading"] {
+      font-family: var(--font-display) !important;
     }
   </style>
 </head>

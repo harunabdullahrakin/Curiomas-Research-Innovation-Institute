@@ -12,17 +12,23 @@
   <style>
     :root {
       --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-display: 'Eyekons', 'Playfair Display', Georgia, serif;
       --font-mono: "JetBrains Mono", Consolas, "SF Mono", monospace;
     }
     body, p, span, a, button, input, select, textarea, label, li, ul, ol, div {
       font-family: var(--font-body) !important;
     }
-    h1, h2, h3, h4, h5, h6 {
-      font-family: var(--font-body) !important;
+    h1, h2, h3, h4, h5, h6,
+    .mockup-page-hero-title,
+    .research-card-title,
+    .division-card-title,
+    [class*="-title"]:not([class*="-sub"]):not(.quick-tag-label),
+    [class*="-heading"] {
+      font-family: var(--font-display) !important;
       font-weight: 700;
       letter-spacing: -0.02em;
     }
-    .research-card-title, .research-card-desc, .research-paper-summary {
+    .research-card-desc, .research-paper-summary {
       font-family: var(--font-body) !important;
       line-height: 1.65;
     }

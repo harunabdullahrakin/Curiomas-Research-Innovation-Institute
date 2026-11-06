@@ -1684,6 +1684,94 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   margin-bottom: 0.5rem;
 }
 
+/* ==========================================================================
+   COHORTS MANAGEMENT (WHO CAN JOIN US?)
+   ========================================================================== */
+.cohorts-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.cohort-manage-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.cohort-manage-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.cohort-manage-media {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  background: #000;
+}
+
+.cohort-manage-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.cohort-manage-card:hover .cohort-manage-media img {
+  transform: scale(1.05);
+}
+
+.cohort-manage-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.cohort-manage-title {
+  font-family: 'Eyekons', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.cohort-manage-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  flex-grow: 1;
+}
+
+.cohort-manage-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.cohort-manage-meta code {
+  color: var(--accent-primary);
+  background: rgba(37, 99, 235, 0.08);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.cohort-manage-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
 .division-manage-desc {
   font-size: 0.85rem;
   color: var(--text-secondary);

@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initToastContainer();
   initFeaturedArticles();
   initDivisions();
+  initCohorts();
   initHomeTeam();
   initGoogleTranslateAndLang();
   initSearchOverlay();
@@ -774,5 +775,40 @@ async function initDivisions() {
     }
   } catch (e) {
     console.warn('initDivisions error:', e);
+  }
+}
+
+async function initCohorts() {
+  const container = document.getElementById('cohortCardsContainer');
+  if (!container || !window.CRII_API) return;
+
+  try {
+    const cohorts = await window.CRII_API.getCohorts();
+    if (cohorts && Array.isArray(cohorts) && cohorts.length > 0) {
+      container.innerHTML = cohorts.map(c => `
+        <div class="cohort-card">
+          <div class="cohort-card-media">
+            <img src="${c.image || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80'}" alt="${c.title}" loading="lazy">
+          </div>
+          <div class="cohort-card-body">
+            <h3 class="cohort-card-title">${c.title}</h3>
+            <p class="cohort-card-desc">${c.desc || ''}</p>
+            <a href="${c.link || '/team#apply'}" class="cohort-card-link">
+              <span>${c.linkText || 'Apply as Fellow'}</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            </a>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = `
+        <div class="cohort-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: rgba(0, 0, 0, 0.02); border-radius: 12px; border: 1px dashed #d5cebf; color: #78716c;">
+          <p style="font-size: 1.05rem; font-weight: 600; color: #44403c; margin-bottom: 0.4rem;">Admissions Open Globally</p>
+          <p style="font-size: 0.88rem; color: #78716c; margin: 0;">We welcome self-directed researchers, university students, and fellows. Specific cohort profiles can be configured by institute administrators.</p>
+        </div>
+      `;
+    }
+  } catch (e) {
+    console.warn('initCohorts error:', e);
   }
 }

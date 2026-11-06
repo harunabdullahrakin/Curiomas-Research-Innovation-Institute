@@ -119,6 +119,42 @@ body, button, input, select, textarea, p, span, a, label {
   font-family: var(--font-main);
 }
 
+/* Custom Eyekons Typography for ALL Headlines & Titles across the platform */
+h1, h2, h3, h4, h5, h6,
+.mockup-hero-title,
+.mockup-page-hero-title,
+.mockup-h2,
+.mockup-h3,
+.institute-heading,
+.institute-big-acronym,
+.division-card-title,
+.feature-card-title,
+.sub-card-title,
+.cohort-card-title,
+.repo-heading,
+.repo-row-title,
+.emerald-title,
+.emerald-col-title,
+.sand-cta-title,
+.midnight-title,
+.midnight-col-title,
+.brand-title,
+.hero-title,
+.section-title,
+.card-title,
+.article-title,
+.article-detail-title,
+.editorial-lead-title,
+.division-manage-title,
+.cohort-manage-title,
+.portal-title-block h1,
+.modal-title,
+[class*="-title"]:not([class*="-sub"]):not(.quick-tag-label),
+[class*="-heading"] {
+  font-family: 'Eyekons', var(--font-display) !important;
+  letter-spacing: -0.02em;
+}
+
 body {
   min-height: 100vh;
   position: relative;

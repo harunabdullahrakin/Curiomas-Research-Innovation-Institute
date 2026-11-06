@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
     overlayOpacity: 0.55
   },
   divisions: [],
+  cohorts: [],
   navbar: {
     title: "Curiomas Research & Innovation Institute",
     subtitle: "CRII • Open Science Collective",

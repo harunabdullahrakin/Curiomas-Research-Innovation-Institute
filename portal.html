@@ -12,8 +12,17 @@
   <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
-    *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label, table, th, td {
+    *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, strong, em, b, i, div, li, ul, label, table, th, td {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    }
+    h1, h2, h3, h4, h5, h6,
+    .portal-title-block h1,
+    .modal-title,
+    .division-manage-title,
+    .cohort-manage-title,
+    [class*="-title"]:not([class*="-sub"]):not(.quick-tag-label),
+    [class*="-heading"] {
+      font-family: 'Eyekons', 'Playfair Display', Georgia, serif !important;
     }
   </style>
 </head>
@@ -216,6 +225,13 @@
             </svg>
             <span class="portal-nav-label">Admissions Queue</span>
             <span id="sidebarAppBadge" class="portal-nav-badge">0</span>
+          </button>
+
+          <button class="portal-nav-btn" data-tab="cohorts" data-tooltip="Who Can Join Us">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>
+            </svg>
+            <span class="portal-nav-label">Who Can Join Us?</span>
           </button>
         </div>
 
@@ -593,6 +609,28 @@
         </div>
 
         <div id="portalDivisionsList" class="divisions-manage-grid">
+          <!-- Dynamically populated by portal.js -->
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           TAB: WHO CAN JOIN US? (COHORT ADMISSIONS MANAGEMENT)
+           ===================================================================== -->
+      <div id="tab-cohorts" class="portal-tab-content" style="display:none;">
+        <div class="portal-topbar">
+          <div class="portal-title-block">
+            <h1>Who Can Join Us? (Cohort Admissions)</h1>
+            <p>Create, edit, and organize the admission and cohort profiles displayed on the homepage "Who can join us?" section.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openCohortModal()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>+ Add New Profile</span>
+          </button>
+        </div>
+
+        <div id="portalCohortsList" class="cohorts-manage-grid">
           <!-- Dynamically populated by portal.js -->
         </div>
       </div>
@@ -1393,6 +1431,59 @@
         <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn btn-secondary" onclick="closeDivisionModal()">Cancel</button>
           <button type="submit" class="btn btn-primary" id="saveDivisionBtn">Save Division</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cohort Edit / Create Modal -->
+  <div id="cohortModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 id="cohortModalTitle" class="modal-title">Add Cohort Profile</h3>
+        <button class="modal-close" onclick="closeCohortModal()">&times;</button>
+      </div>
+      <form id="cohortForm" onsubmit="handleSaveCohort(event)">
+        <div class="modal-body" style="padding: 1.5rem;">
+          <input type="hidden" id="cohortIdInput">
+          
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" for="cohortTitleInput">Target Cohort / Title *</label>
+            <input type="text" id="cohortTitleInput" class="form-input" required placeholder="e.g. Undergraduates, Postgraduates, Self-Directed Researchers">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" for="cohortDescInput">Description / Requirements *</label>
+            <textarea id="cohortDescInput" class="form-input" rows="3" required placeholder="Early-stage researchers looking to contribute to real-world science beyond coursework..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" for="cohortImageInput">Card Media / Photo URL *</label>
+            <input type="url" id="cohortImageInput" class="form-input" required placeholder="https://images.unsplash.com/...">
+            <div style="display:flex; gap:0.4rem; margin-top:0.45rem; flex-wrap:wrap; font-size:0.75rem;">
+              <span style="color:var(--text-muted); align-self:center;">Presets:</span>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=800&q=80'">Lab Undergrad</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80'">Postgrad Group</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80'">Independent Research</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80'">Fellows & Mentors</button>
+            </div>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem;">
+            <div class="form-group">
+              <label class="form-label" for="cohortLinkInput">Action Link</label>
+              <input type="text" id="cohortLinkInput" class="form-input" placeholder="/team#apply" value="/team#apply">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cohortLinkTextInput">Button / Link Text</label>
+              <input type="text" id="cohortLinkTextInput" class="form-input" placeholder="Apply as Fellow" value="Apply as Fellow">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeCohortModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveCohortBtn">Save Cohort Profile</button>
         </div>
       </form>
     </div>

@@ -188,6 +188,7 @@ window.showTab = function(tabName) {
 
   currentTab = tabName;
   if (tabName === 'divisions') renderDivisionsTab();
+  if (tabName === 'cohorts') renderCohortsTab();
   try {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
@@ -1952,6 +1953,147 @@ window.deleteDivisionConfirm = async function(id, title) {
     if (window.showToast) window.showToast('Division removed.', 'info');
   } catch (err) {
     alert('Failed to delete division: ' + (err.message || err));
+  }
+};
+
+// --- COHORTS / WHO CAN JOIN US MANAGEMENT ---
+window.renderCohortsTab = async function() {
+  const container = document.getElementById('portalCohortsList');
+  if (!container || !window.CRII_API) return;
+
+  const cohorts = await window.CRII_API.getCohorts();
+  if (!cohorts || !Array.isArray(cohorts) || cohorts.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:3.5rem 1rem; color:var(--text-muted); grid-column: 1 / -1; background: var(--bg-surface); border: 1px dashed var(--border-color); border-radius: 16px;">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-bottom:0.75rem; color:var(--text-muted);"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
+        <p style="margin:0 0 1rem;">No cohort profiles found. Click "Add New Profile" above to create one.</p>
+        <button class="btn btn-primary btn-sm" onclick="openCohortModal()">+ Add New Profile</button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = cohorts.map(c => `
+    <div class="cohort-manage-card">
+      <div class="cohort-manage-media">
+        <img src="${c.image || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80'}" alt="${c.title}" loading="lazy">
+      </div>
+      <div class="cohort-manage-body">
+        <h3 class="cohort-manage-title">${c.title}</h3>
+        <p class="cohort-manage-desc">${c.desc || ''}</p>
+        <div class="cohort-manage-meta">
+          <span>Target: <code>${c.link || '/team#apply'}</code> (${c.linkText || 'Apply as Fellow'})</span>
+        </div>
+        <div class="cohort-manage-actions">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="editCohort('${c.id}')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Edit</span>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="deleteCohortConfirm('${c.id}', '${(c.title || '').replace(/'/g, "\\'")}')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.35rem;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+};
+
+window.openCohortModal = function(id = null) {
+  const modal = document.getElementById('cohortModal');
+  const modalTitle = document.getElementById('cohortModalTitle');
+  const form = document.getElementById('cohortForm');
+  if (!modal) return;
+
+  if (form) form.reset();
+  document.getElementById('cohortIdInput').value = '';
+
+  if (id) {
+    if (modalTitle) modalTitle.innerText = 'Edit Cohort Profile';
+    window.CRII_API.getCohorts().then(cohorts => {
+      const c = cohorts.find(item => String(item.id) === String(id));
+      if (c) {
+        document.getElementById('cohortIdInput').value = c.id;
+        document.getElementById('cohortTitleInput').value = c.title || '';
+        document.getElementById('cohortDescInput').value = c.desc || '';
+        document.getElementById('cohortImageInput').value = c.image || '';
+        document.getElementById('cohortLinkInput').value = c.link || '/team#apply';
+        document.getElementById('cohortLinkTextInput').value = c.linkText || 'Apply as Fellow';
+      }
+    });
+  } else {
+    if (modalTitle) modalTitle.innerText = 'Add Cohort Profile';
+    document.getElementById('cohortLinkInput').value = '/team#apply';
+    document.getElementById('cohortLinkTextInput').value = 'Apply as Fellow';
+  }
+
+  modal.classList.add('active');
+  modal.style.display = 'flex';
+};
+
+window.closeCohortModal = function() {
+  const modal = document.getElementById('cohortModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+};
+
+window.editCohort = function(id) {
+  window.openCohortModal(id);
+};
+
+window.handleSaveCohort = async function(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const id = document.getElementById('cohortIdInput').value.trim();
+  const title = document.getElementById('cohortTitleInput').value.trim();
+  const desc = document.getElementById('cohortDescInput').value.trim();
+  const image = document.getElementById('cohortImageInput').value.trim();
+  const link = document.getElementById('cohortLinkInput').value.trim() || '/team#apply';
+  const linkText = document.getElementById('cohortLinkTextInput').value.trim() || 'Apply as Fellow';
+
+  const cohortData = {
+    id: id || undefined,
+    title,
+    desc,
+    image,
+    link,
+    linkText
+  };
+
+  const saveBtn = document.getElementById('saveCohortBtn');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Saving...';
+  }
+
+  try {
+    await window.CRII_API.saveCohort(cohortData);
+    window.closeCohortModal();
+    await window.renderCohortsTab();
+    if (window.showToast) window.showToast('Cohort profile saved successfully!', 'success');
+  } catch (err) {
+    alert('Failed to save cohort profile: ' + (err.message || err));
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = 'Save Cohort Profile';
+    }
+  }
+};
+
+window.deleteCohortConfirm = async function(id, title) {
+  if (!confirm(`Are you sure you want to delete the profile "${title}"?\nThis will remove it from the homepage "Who can join us?" section.`)) {
+    return;
+  }
+
+  try {
+    await window.CRII_API.deleteCohort(id);
+    await window.renderCohortsTab();
+    if (window.showToast) window.showToast('Cohort profile deleted.', 'info');
+  } catch (err) {
+    alert('Failed to delete cohort profile: ' + (err.message || err));
   }
 };
 

@@ -25,11 +25,19 @@
     body, p, span, a, button, input, select, textarea, label, li, ul, ol, div {
       font-family: var(--font-body);
     }
+    h1, h2, h3, h4, h5, h6,
     .mockup-hero-title,
-    .institute-heading,
+    .mockup-page-hero-title,
     .mockup-h2,
-    .division-card-title {
-      font-family: var(--font-display);
+    .mockup-h3,
+    .institute-heading,
+    .institute-big-acronym,
+    .division-card-title,
+    .cohort-card-title,
+    .editorial-lead-title,
+    [class*="-title"]:not([class*="-sub"]):not(.quick-tag-label),
+    [class*="-heading"] {
+      font-family: var(--font-display) !important;
     }
   </style>
 </head>
@@ -462,66 +470,8 @@
         </div>
       </div>
 
-      <div class="cohort-cards-grid">
-        <!-- 01 Undergraduates -->
-        <div class="cohort-card">
-          <div class="cohort-card-media">
-            <img src="https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=800&q=80" alt="Undergraduates" loading="lazy">
-          </div>
-          <div class="cohort-card-body">
-            <h3 class="cohort-card-title">Undergraduates</h3>
-            <p class="cohort-card-desc">Early-stage researchers looking to contribute to real-world science beyond coursework, receive mentorship and publish peer-grade research.</p>
-            <a href="/team#apply" class="cohort-card-link">
-              <span>Apply as Fellow</span>
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-            </a>
-          </div>
-        </div>
-
-        <!-- 02 Postgraduates -->
-        <div class="cohort-card">
-          <div class="cohort-card-media">
-            <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80" alt="Postgraduates" loading="lazy">
-          </div>
-          <div class="cohort-card-body">
-            <h3 class="cohort-card-title">Postgraduates</h3>
-            <p class="cohort-card-desc">Master's and doctoral candidates who want to lead research streams, publish open datasets and mentor promising undergraduates.</p>
-            <a href="/team#apply" class="cohort-card-link">
-              <span>Apply as Fellow</span>
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-            </a>
-          </div>
-        </div>
-
-        <!-- 03 Self-Directed Researchers -->
-        <div class="cohort-card">
-          <div class="cohort-card-media">
-            <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80" alt="Self-Directed Researchers" loading="lazy">
-          </div>
-          <div class="cohort-card-body">
-            <h3 class="cohort-card-title">Self-Directed Researchers</h3>
-            <p class="cohort-card-desc">Talented, self-taught individuals outside traditional academia who have deep knowledge and an appetite to produce verifiable science.</p>
-            <a href="/team#apply" class="cohort-card-link">
-              <span>Apply as Fellow</span>
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-            </a>
-          </div>
-        </div>
-
-        <!-- 04 Research Fellows -->
-        <div class="cohort-card">
-          <div class="cohort-card-media">
-            <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80" alt="Research Fellows" loading="lazy">
-          </div>
-          <div class="cohort-card-body">
-            <h3 class="cohort-card-title">Research Fellows</h3>
-            <p class="cohort-card-desc">Experienced researchers and domain experts who contribute time to mentor cohorts and supervise specific research streams.</p>
-            <a href="/team" class="cohort-card-link">
-              <span>Meet team</span>
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-            </a>
-          </div>
-        </div>
+      <div class="cohort-cards-grid" id="cohortCardsContainer">
+        <!-- Dynamically rendered by initCohorts() from database/settings API -->
       </div>
 
       <!-- Cohort Bottom Banner Note -->

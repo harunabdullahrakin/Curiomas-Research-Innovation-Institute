@@ -25,6 +25,7 @@ const CRII_CONFIG = {
     DATASETS: "crii_datasets_v1",
     EMAILJS_TEMPLATE_ID: "crii_emailjs_template_id",
     DIVISIONS: "crii_divisions_v1",
+    COHORTS: "crii_cohorts_v1",
     DELETED_POSTS: "crii_deleted_posts_v2",
     POSTS_INITIALIZED: "crii_posts_initialized_v2"
   }
@@ -44,6 +45,17 @@ const CRII_LEGACY_PURGED_DIVISION_IDS = [
   'div-ancient-biology',
   'div-ai-computational-science',
   'div-astrobiology'
+];
+
+const CRII_LEGACY_PURGED_COHORT_IDS = [
+  'cohort-undergraduates',
+  'cohort-postgraduates',
+  'cohort-self-directed',
+  'cohort-fellows',
+  'Undergraduates',
+  'Postgraduates',
+  'Self-Directed Researchers',
+  'Research Fellows'
 ];
 
 const CRII_DEFAULT_DIVISIONS = [];
@@ -620,6 +632,102 @@ class CriiApiClient {
       });
     } catch (e) {
       console.warn("Failed to sync divisions delete to D1:", e);
+    }
+
+    return { success: true, id };
+  }
+
+  // --- WHO CAN JOIN US? / COHORT PROFILES (D1 SQL SYNCED) ---
+  async getCohorts() {
+    try {
+      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.COHORTS);
+      if (raw !== null) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(c => !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.id) && !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.title));
+        }
+      }
+    } catch (e) {}
+
+    // Fallback to fetch from D1 settings
+    try {
+      const res = await fetch(CRII_CONFIG.API_BASE + '/settings');
+      if (res.ok) {
+        const settings = await res.json();
+        if (Array.isArray(settings.cohorts)) {
+          const filtered = settings.cohorts.filter(c => !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.id) && !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.title));
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.COHORTS, JSON.stringify(filtered));
+          return filtered;
+        }
+      }
+    } catch (e) {}
+
+    return [];
+  }
+
+  async saveCohort(cohortData) {
+    let cohorts = await this.getCohorts();
+    const id = cohortData.id || ('cohort-' + Date.now().toString(36));
+    const idx = cohorts.findIndex(c => c.id === id);
+
+    const record = {
+      ...cohortData,
+      id,
+      title: cohortData.title || "Untitled Profile",
+      desc: cohortData.desc || "",
+      image: cohortData.image || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
+      link: cohortData.link || "/team#apply",
+      linkText: cohortData.linkText || "Apply as Fellow"
+    };
+
+    if (idx >= 0) {
+      cohorts[idx] = record;
+    } else {
+      cohorts.push(record);
+    }
+
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.COHORTS, JSON.stringify(cohorts));
+
+    // Direct Cloudflare D1 settings sync
+    try {
+      const user = this.getCurrentUser();
+      const editor = user ? (user.name || user.email) : "Administrator";
+      await fetch(CRII_CONFIG.API_BASE + '/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: "cohorts",
+          value: cohorts,
+          updatedBy: editor
+        })
+      });
+    } catch (e) {
+      console.warn("Failed to sync cohorts to D1:", e);
+    }
+
+    return record;
+  }
+
+  async deleteCohort(id) {
+    let cohorts = await this.getCohorts();
+    cohorts = cohorts.filter(c => c.id !== id);
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.COHORTS, JSON.stringify(cohorts));
+
+    // Direct Cloudflare D1 settings sync
+    try {
+      const user = this.getCurrentUser();
+      const editor = user ? (user.name || user.email) : "Administrator";
+      await fetch(CRII_CONFIG.API_BASE + '/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: "cohorts",
+          value: cohorts,
+          updatedBy: editor
+        })
+      });
+    } catch (e) {
+      console.warn("Failed to sync cohorts delete to D1:", e);
     }
 
     return { success: true, id };
