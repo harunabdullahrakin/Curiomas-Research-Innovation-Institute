@@ -20,6 +20,11 @@ const DEFAULT_SETTINGS = {
   },
   divisions: [],
   cohorts: [],
+  festive: {
+    mode: "auto", // "auto" (activates during Holi dates), "always", or "disabled"
+    theme: "holi", // "holi" (Festival of Colors paint splatters)
+    intensity: 0.70 // 0.20 to 1.00
+  },
   navbar: {
     title: "Curiomas Research & Innovation Institute",
     subtitle: "CRII • Open Science Collective",

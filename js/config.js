@@ -27,7 +27,8 @@ const CRII_CONFIG = {
     DIVISIONS: "crii_divisions_v1",
     COHORTS: "crii_cohorts_v1",
     DELETED_POSTS: "crii_deleted_posts_v2",
-    POSTS_INITIALIZED: "crii_posts_initialized_v2"
+    POSTS_INITIALIZED: "crii_posts_initialized_v2",
+    FESTIVE_SETTINGS: "crii_festive_settings_v1"
   }
 };
 
@@ -211,6 +212,9 @@ class CriiApiClient {
           const cleaned = settings.divisions.filter(d => !CRII_LEGACY_PURGED_DIVISION_IDS.includes(d.id));
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(cleaned));
         }
+        if (settings && settings.festive) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.FESTIVE_SETTINGS, JSON.stringify(settings.festive));
+        }
         if (settings && settings.branding) {
           if (settings.branding.name) localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_NAME, settings.branding.name);
           if (settings.branding.logoUrl) localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_LOGO, settings.branding.logoUrl);
@@ -220,6 +224,47 @@ class CriiApiClient {
         }
       }
     } catch (e) {}
+  }
+
+  // --- FESTIVE THEMES (HOLI COLOR PAINTS & SPLATTERS) ---
+  getFestiveSettings() {
+    try {
+      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.FESTIVE_SETTINGS);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return {
+      mode: "auto",      // "auto", "always", or "disabled"
+      theme: "holi",     // "holi" (Festival of colors vibrant paint splatters)
+      intensity: 0.70    // 0.20 to 1.00
+    };
+  }
+
+  async saveFestiveSettings(settings) {
+    if (!settings) return;
+    const sanitized = {
+      mode: ["auto", "always", "disabled"].includes(settings.mode) ? settings.mode : "auto",
+      theme: settings.theme || "holi",
+      intensity: Math.max(0.1, Math.min(1, Number(settings.intensity) || 0.70))
+    };
+
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.FESTIVE_SETTINGS, JSON.stringify(sanitized));
+
+    try {
+      const user = this.getCurrentUser();
+      await fetch(`${CRII_CONFIG.API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: "festive",
+          value: sanitized,
+          updatedBy: user ? (user.name || user.email) : "Administrator"
+        })
+      });
+    } catch (e) {
+      console.warn("Failed to sync festive settings to D1:", e);
+    }
+
+    return sanitized;
   }
 
   getHeroSettings() {

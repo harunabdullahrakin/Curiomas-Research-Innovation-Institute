@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBrandingAndNavbar();
   initHeroCustomization();
   initScrollRevealEffects();
+  initHoliFestiveTheme();
   initCustomCursor();
   initCookieConsent();
   initMobileNav();
@@ -90,12 +91,284 @@ function initHeroCustomization() {
   document.documentElement.style.setProperty('--hero-overlay-bg', `rgba(10, 15, 30, ${opacity})`);
 }
 
-// Scroll Reveal Animations - Immediate visibility guaranteed
+// =============================================================================
+// SCROLL ANIMATIONS ENGINE (IntersectionObserver with smooth reveals & stagger)
+// =============================================================================
+let criiScrollObserver = null;
+
 function initScrollRevealEffects() {
-  const targets = document.querySelectorAll('.reveal-on-scroll, .feature-card, .research-preview-card, .data-card, .roster-card, .hero-metric-item, .card');
-  targets.forEach(t => {
-    t.classList.add('revealed');
-  });
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.scroll-reveal, .scroll-reveal-scale, .scroll-reveal-left, .scroll-reveal-right')
+      .forEach(el => el.classList.add('is-revealed'));
+    return;
+  }
+
+  const autoSelectors = [
+    '.mockup-section-header',
+    '.divisions-header',
+    '.cohort-header',
+    '.editorial-header',
+    '.editorial-spotlight-card',
+    '.editorial-post-card',
+    '.division-card',
+    '.cohort-card',
+    '.feature-card',
+    '.repo-card',
+    '.mockup-mentor-card',
+    '.mockup-stats-grid > *',
+    '.lead-copy',
+    '.mockup-cta-card',
+    '.footer-top-grid > *'
+  ];
+
+  function tagAndObserve() {
+    autoSelectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach((el) => {
+        if (!el.classList.contains('scroll-reveal') && !el.classList.contains('scroll-reveal-scale')) {
+          el.classList.add('scroll-reveal');
+          // Add stagger if part of a card grid
+          const parent = el.parentElement;
+          if (parent && (
+            parent.classList.contains('divisions-cards-grid') ||
+            parent.classList.contains('cohort-cards-grid') ||
+            parent.classList.contains('editorial-posts-grid') ||
+            parent.classList.contains('mockup-stats-grid')
+          )) {
+            const childIdx = Array.from(parent.children).indexOf(el);
+            el.style.transitionDelay = `${Math.min(childIdx * 0.1, 0.4)}s`;
+          }
+        }
+      });
+    });
+
+    if (!criiScrollObserver) {
+      criiScrollObserver = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, {
+        root: null,
+        rootMargin: '0px 0px -40px 0px',
+        threshold: 0.12
+      });
+    }
+
+    document.querySelectorAll('.scroll-reveal:not(.is-revealed), .scroll-reveal-scale:not(.is-revealed), .scroll-reveal-left:not(.is-revealed), .scroll-reveal-right:not(.is-revealed)')
+      .forEach(el => criiScrollObserver.observe(el));
+  }
+
+  tagAndObserve();
+  window.refreshScrollAnimations = tagAndObserve;
+}
+
+// =============================================================================
+// FESTIVE THEME ENGINE: HOLI COLOR PAINTS & SPLATTERS BEHIND CONTENT
+// =============================================================================
+function initHoliFestiveTheme() {
+  const festiveConfig = (window.CRII_API && window.CRII_API.getFestiveSettings)
+    ? window.CRII_API.getFestiveSettings()
+    : { mode: "auto", theme: "holi", intensity: 0.70 };
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlTheme = urlParams.get('theme') || urlParams.get('festive');
+  const userOverride = localStorage.getItem('crii_festive_override'); // 'holi' | 'off' | null
+
+  // Date check for Holi festival (Spring / late February or March)
+  const now = new Date();
+  const currentMonth = now.getMonth(); // 2 is March (0-indexed)
+  const isHoliSeason = (currentMonth === 1 && now.getDate() >= 20) || currentMonth === 2;
+
+  let isHoliActive = false;
+  if (urlTheme === 'holi' || urlTheme === 'festival') {
+    isHoliActive = true;
+  } else if (urlTheme === 'default' || urlTheme === 'none') {
+    isHoliActive = false;
+  } else if (userOverride === 'holi') {
+    isHoliActive = true;
+  } else if (userOverride === 'off') {
+    isHoliActive = false;
+  } else if (festiveConfig.mode === 'always') {
+    isHoliActive = true;
+  } else if (festiveConfig.mode === 'disabled') {
+    isHoliActive = false;
+  } else if (festiveConfig.mode === 'auto') {
+    isHoliActive = isHoliSeason;
+  }
+
+  // Set intensity variable
+  const intensity = festiveConfig.intensity || 0.72;
+  document.documentElement.style.setProperty('--festive-intensity', intensity);
+
+  function applyHoliMode(active) {
+    if (active) {
+      document.documentElement.classList.add('theme-holi');
+      document.body.classList.add('theme-holi');
+      injectHoliSplatters();
+    } else {
+      document.documentElement.classList.remove('theme-holi');
+      document.body.classList.remove('theme-holi');
+    }
+
+    const pill = document.getElementById('holiPillToggle');
+    if (pill) {
+      pill.classList.toggle('is-active', active);
+      pill.innerHTML = `
+        <span class="holi-pill-icon">🎨</span>
+        <span>${active ? 'Holi Colors: ON' : 'Holi Colors'}</span>
+      `;
+    }
+  }
+
+  function injectHoliSplatters() {
+    // Inject paint splatters behind sections if not already injected
+    const sectionsToDecorate = [
+      { selector: '.mockup-hero-section', variant: 1 },
+      { selector: '.mockup-editorial-section', variant: 3 },
+      { selector: '.mockup-divisions-section', variant: 2 },
+      { selector: '.mockup-cohort-section', variant: 2 },
+      { selector: '.mockup-repo-section', variant: 3 },
+      { selector: '.mockup-institute-section', variant: 1 }
+    ];
+
+    sectionsToDecorate.forEach(secInfo => {
+      const sec = document.querySelector(secInfo.selector);
+      if (sec && !sec.querySelector('.holi-splatter-bg')) {
+        const splatterLayer = createHoliSplatterLayer(secInfo.variant);
+        sec.prepend(splatterLayer);
+      }
+    });
+  }
+
+  function createHoliSplatterLayer(variant) {
+    const layer = document.createElement('div');
+    layer.className = 'holi-splatter-bg';
+    layer.setAttribute('aria-hidden', 'true');
+
+    const defs = `
+      <svg width="0" height="0" style="position:absolute; width:0; height:0;">
+        <defs>
+          <linearGradient id="holiGradPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#9333ea" />
+            <stop offset="100%" stop-color="#6366f1" />
+          </linearGradient>
+          <linearGradient id="holiGradCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f2fe" />
+            <stop offset="100%" stop-color="#06b6d4" />
+          </linearGradient>
+          <linearGradient id="holiGradPink" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff2a85" />
+            <stop offset="100%" stop-color="#ec4899" />
+          </linearGradient>
+          <linearGradient id="holiGradLime" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#10b981" />
+            <stop offset="100%" stop-color="#84cc16" />
+          </linearGradient>
+          <linearGradient id="holiGradAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fbbf24" />
+            <stop offset="100%" stop-color="#f59e0b" />
+          </linearGradient>
+        </defs>
+      </svg>
+    `;
+
+    let blobs = '';
+    if (variant === 1) {
+      blobs = `
+        <div class="holi-blob holi-blob-top-left">
+          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M380,140 C430,190 480,260 450,330 C420,400 340,460 270,480 C200,500 130,470 90,410 C50,350 30,270 70,200 C110,130 190,80 280,70 C330,65 350,90 380,140 Z" fill="url(#holiGradPurple)" fill-opacity="0.85"/>
+            <circle cx="110" cy="110" r="14" fill="url(#holiGradPurple)" fill-opacity="0.9"/>
+            <circle cx="440" cy="150" r="18" fill="url(#holiGradPurple)" fill-opacity="0.8"/>
+            <circle cx="470" cy="420" r="12" fill="url(#holiGradPurple)" fill-opacity="0.85"/>
+            <circle cx="80" cy="380" r="9" fill="url(#holiGradPurple)" fill-opacity="0.9"/>
+          </svg>
+        </div>
+        <div class="holi-blob holi-blob-mid-right">
+          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M360,120 C420,180 470,270 440,340 C410,410 320,450 250,470 C180,490 120,440 80,380 C40,320 50,230 90,170 C130,110 210,60 290,70 C330,75 340,90 360,120 Z" fill="url(#holiGradCyan)" fill-opacity="0.8"/>
+            <circle cx="430" cy="110" r="15" fill="url(#holiGradCyan)" fill-opacity="0.85"/>
+            <circle cx="120" cy="90" r="11" fill="url(#holiGradCyan)" fill-opacity="0.75"/>
+            <circle cx="460" cy="440" r="16" fill="url(#holiGradCyan)" fill-opacity="0.85"/>
+          </svg>
+        </div>
+      `;
+    } else if (variant === 2) {
+      blobs = `
+        <div class="holi-blob holi-blob-bottom-left">
+          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M390,150 C450,220 440,310 400,380 C360,450 280,490 200,480 C120,470 60,400 50,320 C40,240 80,160 140,110 C200,60 300,70 360,100 C380,110 380,130 390,150 Z" fill="url(#holiGradPink)" fill-opacity="0.82"/>
+            <circle cx="420" cy="120" r="16" fill="url(#holiGradPink)" fill-opacity="0.9"/>
+            <circle cx="80" cy="180" r="12" fill="url(#holiGradPink)" fill-opacity="0.85"/>
+            <circle cx="430" cy="450" r="14" fill="url(#holiGradPink)" fill-opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="holi-blob holi-blob-mid-left">
+          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M340,130 C410,190 460,280 430,350 C400,420 310,460 230,470 C150,480 90,420 60,350 C30,280 40,200 80,140 C120,80 200,50 270,60 C310,65 320,90 340,130 Z" fill="url(#holiGradLime)" fill-opacity="0.8"/>
+            <circle cx="430" cy="140" r="14" fill="url(#holiGradLime)" fill-opacity="0.85"/>
+            <circle cx="100" cy="80" r="10" fill="url(#holiGradLime)" fill-opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="holi-blob holi-blob-bottom-right">
+          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M360,140 C430,200 450,290 420,360 C390,430 310,470 230,460 C150,450 80,390 60,320 C40,250 60,170 110,120 C160,70 250,50 310,70 C340,80 350,110 360,140 Z" fill="url(#holiGradAmber)" fill-opacity="0.75"/>
+            <circle cx="440" cy="200" r="15" fill="url(#holiGradAmber)" fill-opacity="0.8"/>
+            <circle cx="90" cy="140" r="12" fill="url(#holiGradAmber)" fill-opacity="0.85"/>
+          </svg>
+        </div>
+      `;
+    } else {
+      blobs = `
+        <div class="holi-blob holi-blob-top-left">
+          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M350,120 C420,180 450,270 420,340 C390,410 310,460 230,470 C150,480 80,420 50,350 C20,280 40,190 90,130 C140,70 220,50 290,60 C320,65 340,90 350,120 Z" fill="url(#holiGradCyan)" fill-opacity="0.8"/>
+            <circle cx="430" cy="130" r="14" fill="url(#holiGradCyan)" fill-opacity="0.85"/>
+          </svg>
+        </div>
+        <div class="holi-blob holi-blob-bottom-right">
+          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M380,150 C440,220 450,310 410,380 C370,450 290,480 210,470 C130,460 70,390 60,320 C50,250 80,170 130,120 C180,70 270,60 330,80 C360,90 370,120 380,150 Z" fill="url(#holiGradPurple)" fill-opacity="0.82"/>
+            <circle cx="100" cy="120" r="12" fill="url(#holiGradPurple)" fill-opacity="0.85"/>
+          </svg>
+        </div>
+      `;
+    }
+
+    layer.innerHTML = defs + blobs;
+    return layer;
+  }
+
+  // Create or attach celebratory pill button
+  if (!document.getElementById('holiPillToggle')) {
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.id = 'holiPillToggle';
+    pill.className = `holi-pill-toggle ${isHoliActive ? 'is-active' : ''}`;
+    pill.title = 'Click to toggle Holi Festival of Colors paint theme';
+    pill.innerHTML = `
+      <span class="holi-pill-icon">🎨</span>
+      <span>${isHoliActive ? 'Holi Colors: ON' : 'Holi Colors'}</span>
+    `;
+
+    pill.addEventListener('click', () => {
+      const nowActive = !document.documentElement.classList.contains('theme-holi');
+      localStorage.setItem('crii_festive_override', nowActive ? 'holi' : 'off');
+      applyHoliMode(nowActive);
+      if (window.showToast) {
+        window.showToast(
+          nowActive ? '🎉 Holi Festival of Colors theme enabled!' : 'Holi theme disabled',
+          nowActive ? 'success' : 'info'
+        );
+      }
+    });
+
+    document.body.appendChild(pill);
+  }
+
+  applyHoliMode(isHoliActive);
 }
 
 // 1. Theme Engine (Default: Light Mode)
@@ -809,6 +1082,7 @@ async function initDivisions() {
           <p class="division-card-desc">${div.desc || ''}</p>
         </a>
       `).join('');
+      if (window.refreshScrollAnimations) window.refreshScrollAnimations();
     } else {
       container.innerHTML = '';
       const section = container.closest('.divisions-section') || container.closest('section');
@@ -841,6 +1115,7 @@ async function initCohorts() {
           </div>
         </div>
       `).join('');
+      if (window.refreshScrollAnimations) window.refreshScrollAnimations();
     } else {
       container.innerHTML = `
         <div class="cohort-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: rgba(0, 0, 0, 0.02); border-radius: 12px; border: 1px dashed #d5cebf; color: #78716c;">

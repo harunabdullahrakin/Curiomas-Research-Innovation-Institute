@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initApplicationModal();
   initAccessControl();
   initInstituteSettings();
+  initFestiveSettings();
   initEmailComposer();
 
   await refreshDashboardData();
@@ -1797,6 +1798,55 @@ function initInstituteSettings() {
         console.warn('Institute settings save note:', err);
       }
       window.showToast(`EmailJS Template ID saved as "${val}"!`, 'success');
+    });
+  }
+}
+
+// -----------------------------------------------------------------------------
+// FESTIVE THEMES & HOLI COLOR PAINTS SETTINGS
+// -----------------------------------------------------------------------------
+function initFestiveSettings() {
+  const festiveConfig = (window.CRII_API && window.CRII_API.getFestiveSettings)
+    ? window.CRII_API.getFestiveSettings()
+    : { mode: "auto", theme: "holi", intensity: 0.70 };
+
+  const modeSelect = document.getElementById('settingFestiveMode');
+  const intensitySlider = document.getElementById('settingFestiveIntensity');
+  const intensityBadge = document.getElementById('festiveIntensityBadge');
+  const previewLayer = document.getElementById('previewSplatterLayer');
+
+  if (modeSelect) modeSelect.value = festiveConfig.mode || "auto";
+  if (intensitySlider) {
+    const val = Math.round((festiveConfig.intensity !== undefined ? festiveConfig.intensity : 0.70) * 100);
+    intensitySlider.value = val;
+    if (intensityBadge) intensityBadge.innerText = `${val}%`;
+  }
+
+  function updatePreview() {
+    const intensity = intensitySlider ? Number(intensitySlider.value) : 70;
+    if (intensityBadge) intensityBadge.innerText = `${intensity}%`;
+    if (previewLayer) {
+      previewLayer.style.opacity = intensity / 100;
+    }
+  }
+
+  if (intensitySlider) intensitySlider.addEventListener('input', updatePreview);
+  updatePreview();
+
+  const form = document.getElementById('festiveSettingsForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mode = modeSelect ? modeSelect.value : 'auto';
+      const intensity = intensitySlider ? Number(intensitySlider.value) / 100 : 0.70;
+
+      await window.CRII_API.saveFestiveSettings({
+        mode,
+        theme: "holi",
+        intensity
+      });
+
+      window.showToast('Festive theme & Holi settings saved to database!', 'success');
     });
   }
 }
