@@ -30,19 +30,17 @@
        ========================================================================= -->
   <section class="mockup-hero-section">
     <div class="mockup-container">
-      <!-- Floating Pill Navbar -->
+            <!-- Floating Pill Navbar -->
       <div class="mockup-nav-wrapper">
         <header class="mockup-nav-capsule">
-          <a href="/" class="mockup-brand" aria-label="Curiomas Research & Innovation Institute" title="Curiomas Research & Innovation Institute">
+          <!-- Left Logo & Expanding Tag on Hover -->
+          <a href="/" class="mockup-brand" aria-label="Curiomas Research & Innovation Institute" title="Curiomas">
             <img src="assets/curiomas-no-bg.png" alt="CRII" class="mockup-brand-img">
-            <span class="mockup-brand-text">
-              <span class="brand-base">Curiomas</span>
-              <span class="brand-suffix">Research &amp; Innovation Institute</span>
-            </span>
+            <span class="mockup-brand-tag">CURIOMAS</span>
           </a>
 
-          <!-- Center Navigation Pill with Search Trigger -->
-          <nav class="nav-center-pill">
+          <!-- Main Nav Links -->
+          <nav class="mockup-nav-center">
             <ul class="mockup-nav-links" id="mainNavMenu">
               <li><a href="/" class="mockup-nav-link active">Home</a></li>
               <li><a href="/research" class="mockup-nav-link">Research</a></li>
@@ -56,17 +54,27 @@
                 </a>
               </li>
             </ul>
-            <button type="button" class="nav-search-trigger" id="navSearchTrigger" aria-label="Search posts" title="Search posts (Ctrl+K)">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </button>
           </nav>
 
+          <!-- Right Action Group -->
           <div class="mockup-nav-right">
-            <!-- Language / Google Translate Dropdown -->
+            <!-- Orange LOGIN Button -->
+            <a href="/portal" class="nav-login-btn">LOGIN</a>
+
+            <!-- RSS Feed Icon Button -->
+            <a href="/blog" class="nav-action-icon-btn nav-rss-link" title="Dispatches RSS Feed" aria-label="Dispatches RSS Feed">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+            </a>
+
+            <!-- Search Icon Button -->
+            <button type="button" class="nav-action-icon-btn nav-search-trigger" id="navSearchTrigger" aria-label="Search posts" title="Search posts (Ctrl+K)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+
+            <!-- Language / Flag Dropdown -->
             <div class="nav-lang-dropdown" id="navLangDropdown">
-              <button type="button" class="nav-lang-btn" id="navLangBtn" aria-expanded="false" aria-label="Select Language">
+              <button type="button" class="nav-action-icon-btn nav-lang-btn" id="navLangBtn" aria-expanded="false" aria-label="Select Language" title="Change Language">
                 <img src="https://flagcdn.com/w40/gb.png" alt="English" class="nav-lang-flag-img" id="navLangFlagImg">
-                <span id="navLangLabel">English</span>
               </button>
               <div class="nav-lang-menu" id="navLangMenu">
                 <button type="button" class="nav-lang-opt active" data-lang="en">
@@ -104,17 +112,9 @@
               </div>
             </div>
 
-            <!-- RSS Feed Link -->
-            <a href="/blog" class="nav-icon-link nav-rss-link" title="Dispatches RSS Feed" aria-label="Dispatches RSS Feed">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
-            </a>
-
-            <!-- Desktop LOGIN Pill Button -->
-            <a href="/portal" class="nav-login-btn">LOGIN</a>
-
             <!-- Mobile Hamburger Toggle -->
-            <button class="menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu" type="button">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            <button class="nav-action-icon-btn menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu" type="button">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
             </button>
           </div>
         </header>
@@ -255,57 +255,7 @@
       </div>
 
       <div class="divisions-cards-grid" id="homeDivisionsContainer">
-        <!-- 01 Space & Astrophysics -->
-        <a href="/research?division=space-astrophysics" class="division-card">
-          <div class="division-card-media">
-            <img src="https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80" alt="Space & Astrophysics" loading="lazy">
-          </div>
-          <div class="division-card-tag">
-            <span>01 / RESEARCH DIVISION</span>
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-          </div>
-          <h3 class="division-card-title">Space & Astrophysics</h3>
-          <p class="division-card-desc">Sparking distant atmospheres through exoplanetary spectra and light curves.</p>
-        </a>
-
-        <!-- 02 Ancient Biology & Paleontology -->
-        <a href="/research?division=ancient-biology" class="division-card">
-          <div class="division-card-media">
-            <img src="https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80" alt="Ancient Biology & Paleontology" loading="lazy">
-          </div>
-          <div class="division-card-tag">
-            <span>02 / RESEARCH DIVISION</span>
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-          </div>
-          <h3 class="division-card-title">Ancient Biology & Paleontology</h3>
-          <p class="division-card-desc">Tracing the history of life through fossil records and genomic divergence.</p>
-        </a>
-
-        <!-- 03 AI & Computational Science -->
-        <a href="/research?division=ai-computational" class="division-card">
-          <div class="division-card-media">
-            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="AI & Computational Science" loading="lazy">
-          </div>
-          <div class="division-card-tag">
-            <span>03 / RESEARCH DIVISION</span>
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-          </div>
-          <h3 class="division-card-title">AI & Computational Science</h3>
-          <p class="division-card-desc">Building open computational methods for complex biological and physical systems.</p>
-        </a>
-
-        <!-- 04 Astrobiology & Extremophiles -->
-        <a href="/research?division=astrobiology" class="division-card">
-          <div class="division-card-media">
-            <img src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80" alt="Astrobiology & Extremophiles" loading="lazy">
-          </div>
-          <div class="division-card-tag">
-            <span>04 / RESEARCH DIVISION</span>
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-          </div>
-          <h3 class="division-card-title">Astrobiology & Extremophiles</h3>
-          <p class="division-card-desc">Exploring life's resilience at the edges of habitability, on Earth and beyond.</p>
-        </a>
+        <!-- Rendered dynamically from CRII API / Portal -->
       </div>
     </div>
   </section>

@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCustomCursor();
   initCookieConsent();
   initMobileNav();
+  initAutoHidingNavbar();
   initUserSessionState();
   initToastContainer();
   initFeaturedArticles();
@@ -157,6 +158,48 @@ function initMobileNav() {
       toggleBtn.setAttribute('aria-expanded', 'false');
     });
   });
+}
+
+// 5b. Auto-hiding Navbar on Scroll Down, Re-appearing on Scroll Up
+function initAutoHidingNavbar() {
+  const navWrapper = document.querySelector('.mockup-nav-wrapper');
+  if (!navWrapper) return;
+
+  let lastScrollY = window.pageYOffset || document.documentElement.scrollTop;
+  let ticking = false;
+  const delta = 6;
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+        if (currentScrollY > 15) {
+          navWrapper.classList.add('nav-scrolled');
+        } else {
+          navWrapper.classList.remove('nav-scrolled');
+        }
+
+        if (currentScrollY <= 40) {
+          navWrapper.classList.remove('nav-hidden');
+        } else if (currentScrollY > lastScrollY + delta) {
+          // Scrolling down -> hide navbar
+          navWrapper.classList.add('nav-hidden');
+          const navMenu = document.getElementById('mainNavMenu');
+          if (navMenu) navMenu.classList.remove('show');
+          const langMenu = document.getElementById('navLangMenu');
+          if (langMenu) langMenu.classList.remove('show');
+        } else if (currentScrollY < lastScrollY - delta) {
+          // Scrolling up -> reappear smoothly
+          navWrapper.classList.remove('nav-hidden');
+        }
+
+        lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
 }
 
 // 6. User Session State in Navbar
@@ -686,20 +729,8 @@ async function initDivisions() {
   if (!container || !window.CRII_API) return;
 
   try {
-    let divisions = await window.CRII_API.getDivisions();
-    if (!divisions || !Array.isArray(divisions) || divisions.length === 0) {
-      divisions = typeof CRII_DEFAULT_DIVISIONS !== 'undefined' ? [...CRII_DEFAULT_DIVISIONS] : [];
-    } else if (typeof CRII_DEFAULT_DIVISIONS !== 'undefined' && divisions.length < 4) {
-      // Ensure all 4 core divisions exist so the 4-column grid layout is always balanced
-      const existing = new Set(divisions.map(d => (d.title || '').toLowerCase().trim()));
-      for (const def of CRII_DEFAULT_DIVISIONS) {
-        if (!existing.has((def.title || '').toLowerCase().trim())) {
-          divisions.push(def);
-        }
-      }
-    }
-
-    if (divisions && divisions.length > 0) {
+    const divisions = await window.CRII_API.getDivisions();
+    if (divisions && Array.isArray(divisions) && divisions.length > 0) {
       container.innerHTML = divisions.map(div => `
         <a href="${div.link || '/research'}" class="division-card">
           <div class="division-card-media">
@@ -713,6 +744,10 @@ async function initDivisions() {
           <p class="division-card-desc">${div.desc || ''}</p>
         </a>
       `).join('');
+    } else {
+      container.innerHTML = '';
+      const section = container.closest('.divisions-section') || container.closest('section');
+      if (section) section.style.display = 'none';
     }
   } catch (e) {
     console.warn('initDivisions error:', e);
