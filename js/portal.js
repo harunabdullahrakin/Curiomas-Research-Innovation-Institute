@@ -301,6 +301,7 @@ function openBloggerEditor(postId) {
 
   updateBloggerStatusUI();
   renderBlockStack();
+  if (window.CRII_WORD) window.CRII_WORD.load(post, () => currentPostBlocks);
   switchBloggerSubtab('write');
 }
 
@@ -739,7 +740,8 @@ function renderBloggerLiveReaderPreview() {
   const editorName = user ? (user.name || user.email) : "Administrator";
 
   let blocksHtml = '';
-  currentPostBlocks.forEach(b => {
+  const __docPrev = !!(window.CRII_WORD && window.CRII_WORD.getMode() === 'doc');
+  (__docPrev ? [] : currentPostBlocks).forEach(b => {
     switch (b.type) {
       case 'heading':
         blocksHtml += `<h2 style="font-size:1.6rem; margin:1.75rem 0 0.75rem; color:var(--text-primary);">${escapeHtml(b.content || '')}</h2>`;
@@ -819,7 +821,7 @@ function renderBloggerLiveReaderPreview() {
     ` : ''}
 
     <div class="preview-content-body">
-      ${blocksHtml}
+      ${__docPrev ? '<div class="crii-doc">' + window.CRII_WORD.getCleanHtml() + '</div>' : blocksHtml}
     </div>
 
     ${tags.length > 0 ? `
@@ -828,6 +830,7 @@ function renderBloggerLiveReaderPreview() {
       </div>
     ` : ''}
   `;
+  if (window.CriiDoc) window.CriiDoc.renderMath(container);
 }
 
 // Save Post
@@ -851,19 +854,25 @@ async function saveCurrentPost() {
 
   const authorsStr = (document.getElementById('bloggerAuthorsInput')?.value || '').trim();
   const doi = (document.getElementById('bloggerDoiInput')?.value || '').trim() || `10.5281/crii.2026.${Math.floor(1000 + Math.random() * 9000)}`;
-  const summary = (document.getElementById('bloggerSummaryInput')?.value || '').trim() || title;
+  const __docMode = !!(window.CRII_WORD && window.CRII_WORD.getMode() === 'doc');
+  const summary = (document.getElementById('bloggerSummaryInput')?.value || '').trim() || (__docMode ? window.CRII_WORD.getExcerpt(220) : '') || title;
   const abstract = (document.getElementById('bloggerAbstractInput')?.value || '').trim() || summary;
   const tagsStr = (document.getElementById('bloggerTagsInput')?.value || '').trim();
   const user = window.CRII_API.getCurrentUser();
   const editorName = user ? (user.name || user.email || "Administrator") : "Administrator";
 
   let wordCount = 0;
-  currentPostBlocks.forEach(b => {
-    if (b.content) wordCount += String(b.content).split(/\s+/).length;
-  });
+  let compiledContent;
+  if (__docMode) {
+    wordCount = window.CRII_WORD.getWordCount();
+    compiledContent = window.CriiDoc.MARK + window.CRII_WORD.getCleanHtml();
+  } else {
+    currentPostBlocks.forEach(b => {
+      if (b.content) wordCount += String(b.content).split(/\s+/).length;
+    });
+    compiledContent = compileBlocksToContent(currentPostBlocks) || summary;
+  }
   const readingTime = `${Math.max(1, Math.ceil(wordCount / 180))} min read`;
-
-  const compiledContent = compileBlocksToContent(currentPostBlocks) || summary;
   const featured = Boolean(document.getElementById('bloggerFeaturedInput')?.checked);
   const existingPost = currentEditingPostId ? cachedPosts.find(p => p.id === currentEditingPostId) : null;
 
@@ -880,7 +889,7 @@ async function saveCurrentPost() {
     summary,
     abstract,
     content: compiledContent,
-    blocks: currentPostBlocks,
+    blocks: __docMode ? [] : currentPostBlocks,
     tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ["Research"],
     published: isCurrentPostPublished,
     createdBy: existingPost ? (existingPost.createdBy || existingPost.authors?.[0] || editorName) : editorName,
@@ -898,6 +907,7 @@ async function saveCurrentPost() {
 
   try {
     await window.CRII_API.savePost(postPayload);
+    if (window.CRII_WORD) window.CRII_WORD.clearDraft();
     window.showToast(`Publication successfully ${isCurrentPostPublished ? 'published' : 'saved as draft'}!`, 'success');
     try {
       await closeBloggerEditor();
@@ -1765,7 +1775,7 @@ window.openDivisionModal = function(id = null) {
   if (id) {
     if (modalTitle) modalTitle.innerText = 'Edit Research Division';
     window.CRII_API.getDivisions().then(divisions => {
-      const div = divisions.find(d => d.id === id);
+      const div = divisions.find(d => String(d.id) === String(id));
       if (div) {
         document.getElementById('divisionIdInput').value = div.id;
         document.getElementById('divisionTitleInput').value = div.title || '';

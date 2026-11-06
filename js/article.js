@@ -84,7 +84,12 @@ function renderArticle(post) {
   // Content
   const contentEl = document.getElementById('postContent');
   if (contentEl) {
-    contentEl.innerHTML = parseMarkdownContent(post.content || '');
+    if (window.CriiDoc && window.CriiDoc.isDoc(post.content)) {
+      contentEl.innerHTML = '<div class="crii-doc">' + window.CriiDoc.sanitize(post.content.slice(window.CriiDoc.MARK.length)) + '</div>';
+      window.CriiDoc.renderMath(contentEl);
+    } else {
+      contentEl.innerHTML = parseMarkdownContent(post.content || '');
+    }
   }
 
   // Tags
