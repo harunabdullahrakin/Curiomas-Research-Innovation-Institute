@@ -24,7 +24,9 @@ const CRII_CONFIG = {
     INTERNS: "crii_interns_v2",
     DATASETS: "crii_datasets_v1",
     EMAILJS_TEMPLATE_ID: "crii_emailjs_template_id",
-    DIVISIONS: "crii_divisions_v1"
+    DIVISIONS: "crii_divisions_v1",
+    DELETED_POSTS: "crii_deleted_posts_v2",
+    POSTS_INITIALIZED: "crii_posts_initialized_v2"
   }
 };
 
@@ -754,6 +756,15 @@ class CriiApiClient {
 
   // --- POSTS & RESEARCH ARTICLES (D1 SQL SYNCED) ---
   async getPosts(options = {}) {
+    let deletedIds = new Set();
+    try {
+      const delRaw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DELETED_POSTS);
+      if (delRaw) {
+        const arr = JSON.parse(delRaw);
+        if (Array.isArray(arr)) deletedIds = new Set(arr);
+      }
+    } catch (e) {}
+
     let localPosts = [];
     try {
       const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS);
@@ -762,6 +773,9 @@ class CriiApiClient {
     } catch (e) {
       localPosts = [];
     }
+    localPosts = localPosts.filter(p => p && !deletedIds.has(p.id));
+
+    const isInitialized = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS_INITIALIZED) === 'true';
 
     // 1. Fetch directly from Cloudflare D1 SQL backend
     try {
@@ -770,29 +784,19 @@ class CriiApiClient {
       if (res.ok) {
         const remote = await res.json();
         if (Array.isArray(remote)) {
-          if (remote.length > 0) {
-            // Merge remote with locally created posts that might not be in remote yet
-            const remoteIds = new Set(remote.map(r => r.id));
-            const pendingLocal = localPosts.filter(p => !remoteIds.has(p.id));
-            const merged = [...remote, ...pendingLocal];
-            const mergedIds = new Set(merged.map(p => p.id));
-            CRII_DEFAULT_ARTICLES.forEach(art => {
-              if (!mergedIds.has(art.id)) merged.push(art);
-            });
-            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(merged));
-            return options.includeDrafts ? merged : merged.filter(p => p.published !== false);
-          } else if (localPosts.length > 0) {
-            // Remote returned empty (e.g. fresh DB or offline), preserve local articles!
-            const localIds = new Set(localPosts.map(p => p.id));
-            CRII_DEFAULT_ARTICLES.forEach(art => {
-              if (!localIds.has(art.id)) localPosts.push(art);
-            });
-            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(localPosts));
-            return options.includeDrafts ? localPosts : localPosts.filter(p => p.published !== false);
-          } else {
-            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(CRII_DEFAULT_ARTICLES));
-            return CRII_DEFAULT_ARTICLES;
+          const validRemote = remote.filter(r => r && !deletedIds.has(r.id));
+          const remoteIds = new Set(validRemote.map(r => r.id));
+          const pendingLocal = localPosts.filter(p => !remoteIds.has(p.id) && !deletedIds.has(p.id));
+          let merged = [...validRemote, ...pendingLocal];
+
+          // Only seed if brand new, never initialized before, and no deleted tombstones
+          if (!isInitialized && merged.length === 0 && deletedIds.size === 0) {
+            merged = [...CRII_DEFAULT_ARTICLES];
+            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS_INITIALIZED, 'true');
           }
+
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(merged));
+          return options.includeDrafts ? merged : merged.filter(p => p.published !== false);
         }
       }
     } catch (e) {
@@ -902,12 +906,43 @@ class CriiApiClient {
   }
 
   async deletePost(id) {
-    const posts = await this.getPosts({ includeDrafts: true });
-    const filtered = posts.filter(p => p.id !== id);
-    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(filtered));
+    if (!id) return true;
 
+    // 1. Record in tombstone
+    let deletedList = [];
     try {
-      await fetch(`${CRII_CONFIG.API_BASE}/posts/${id}`, { method: 'DELETE' });
+      const delRaw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DELETED_POSTS);
+      if (delRaw) {
+        const parsed = JSON.parse(delRaw);
+        if (Array.isArray(parsed)) deletedList = parsed;
+      }
+    } catch (e) {}
+
+    if (!deletedList.includes(id)) {
+      deletedList.push(id);
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DELETED_POSTS, JSON.stringify(deletedList));
+    }
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS_INITIALIZED, 'true');
+
+    // 2. Remove from local store immediately
+    let localPosts = [];
+    try {
+      const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.POSTS);
+      localPosts = local ? JSON.parse(local) : [];
+      if (Array.isArray(localPosts)) {
+        localPosts = localPosts.filter(p => p.id !== id);
+        localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(localPosts));
+      }
+    } catch (e) {}
+
+    // 3. Remove draft key if any
+    try {
+      localStorage.removeItem('crii_doc_draft_' + id);
+    } catch (e) {}
+
+    // 4. Send DELETE to D1 backend
+    try {
+      await fetch(`${CRII_CONFIG.API_BASE}/posts/${encodeURIComponent(id)}`, { method: 'DELETE' });
     } catch (e) {
       console.warn("Failed to delete post from D1:", e);
     }
@@ -924,6 +959,8 @@ class CriiApiClient {
       target.updatedAt = new Date().toISOString();
       target.updatedBy = user ? (user.name || user.email) : "Administrator";
 
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
+
       try {
         await fetch(`${CRII_CONFIG.API_BASE}/posts`, {
           method: 'POST',
@@ -934,7 +971,6 @@ class CriiApiClient {
         console.warn("Failed to sync publish state to D1:", e);
       }
 
-      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.POSTS, JSON.stringify(posts));
       return target;
     }
     return null;

@@ -130,21 +130,33 @@ function initCookieConsent() {
 
 // 5. Mobile Navigation
 function initMobileNav() {
-  const toggleBtn = document.querySelector('.menu-toggle');
-  const navMenu = document.querySelector('.mockup-nav-links') || document.querySelector('.nav-menu');
+  const toggleBtns = document.querySelectorAll('.menu-toggle, #menuToggleBtn');
+  const navMenus = document.querySelectorAll('.mockup-nav-links, .nav-menu');
 
-  if (toggleBtn && navMenu) {
-    toggleBtn.addEventListener('click', (e) => {
+  toggleBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      navMenu.classList.toggle('show');
+      navMenus.forEach(menu => {
+        menu.classList.toggle('show');
+      });
     });
+  });
 
-    document.addEventListener('click', (e) => {
-      if (!toggleBtn.contains(e.target) && !navMenu.contains(e.target)) {
-        navMenu.classList.remove('show');
-      }
+  document.addEventListener('click', (e) => {
+    const isClickInside = Array.from(toggleBtns).some(b => b.contains(e.target)) ||
+                          Array.from(navMenus).some(m => m.contains(e.target));
+    if (!isClickInside) {
+      navMenus.forEach(menu => menu.classList.remove('show'));
+    }
+  });
+
+  navMenus.forEach(menu => {
+    menu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        menu.classList.remove('show');
+      });
     });
-  }
+  });
 }
 
 // 6. User Session State in Navbar

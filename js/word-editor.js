@@ -1105,6 +1105,7 @@
     scheduleAutosave();
     clearTimeout(statusTimer); statusTimer = setTimeout(updateStatus, 180);
     clearTimeout(navTimer); navTimer = setTimeout(updateNav, 500);
+    clearTimeout(snapDebounceTimer); snapDebounceTimer = setTimeout(() => takeSnapshot('edit'), 800);
     const st = statusEl && statusEl.querySelector('.we-saved'); if (st) st.textContent = '';
   }
   function scheduleAutosave() {
@@ -1494,6 +1495,260 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Reversible Conversion: HTML Document → Modular Blocks             */
+  /* ------------------------------------------------------------------ */
+  function htmlToBlocks(html) {
+    if (!html || !html.trim()) return [];
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const blocks = [];
+    let counter = Date.now();
+
+    function uid() {
+      return `b-${Date.now()}-${(counter++).toString(36)}`;
+    }
+
+    const children = Array.from(div.children);
+    if (children.length === 0 && div.textContent.trim()) {
+      return [{ id: uid(), type: 'text', content: div.textContent.trim() }];
+    }
+
+    children.forEach(el => {
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'h1' || tag === 'h2') {
+        blocks.push({ id: uid(), type: 'heading', content: el.innerText.trim() });
+      } else if (tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6') {
+        blocks.push({ id: uid(), type: 'subheading', content: el.innerText.trim() });
+      } else if (tag === 'figure' || el.classList.contains('doc-figure') || tag === 'img') {
+        const img = tag === 'img' ? el : el.querySelector('img');
+        const cap = el.querySelector('figcaption') || el.querySelector('.doc-caption');
+        if (img && img.src) {
+          blocks.push({
+            id: uid(),
+            type: 'image',
+            url: img.src,
+            caption: cap ? cap.innerText.trim() : (img.alt || '')
+          });
+        }
+      } else if (tag === 'blockquote') {
+        const foot = el.querySelector('footer');
+        const author = foot ? foot.innerText.replace(/^—\s*/, '').trim() : '';
+        const clone = el.cloneNode(true);
+        const fInClone = clone.querySelector('footer');
+        if (fInClone) fInClone.remove();
+        blocks.push({
+          id: uid(),
+          type: 'quote',
+          content: clone.innerText.trim(),
+          author
+        });
+      } else if (el.classList.contains('doc-callout')) {
+        const style = el.getAttribute('data-callout') || 'note';
+        const clone = el.cloneNode(true);
+        const p1 = clone.querySelector('p');
+        if (p1 && clone.children.length > 1) p1.remove();
+        blocks.push({
+          id: uid(),
+          type: 'callout',
+          style,
+          content: clone.innerText.trim()
+        });
+      } else if (tag === 'pre' || el.classList.contains('doc-code')) {
+        const code = el.querySelector('code') || el;
+        blocks.push({
+          id: uid(),
+          type: 'code',
+          content: code.innerText.trim(),
+          language: 'python'
+        });
+      } else if (tag === 'ul' || tag === 'ol') {
+        const items = Array.from(el.querySelectorAll('li')).map(li => li.innerText.trim()).filter(Boolean);
+        blocks.push({
+          id: uid(),
+          type: 'list',
+          content: items.map(x => '- ' + x).join('\n')
+        });
+      } else if (tag === 'table' || el.classList.contains('table-wrapper')) {
+        const tbl = tag === 'table' ? el : el.querySelector('table');
+        if (tbl) {
+          const rows = Array.from(tbl.querySelectorAll('tr')).map(r => {
+            return Array.from(r.querySelectorAll('th, td')).map(c => c.innerText.trim()).join(' | ');
+          });
+          blocks.push({
+            id: uid(),
+            type: 'table',
+            content: rows.join('\n')
+          });
+        }
+      } else if (tag === 'hr') {
+        blocks.push({ id: uid(), type: 'divider' });
+      } else if (el.classList.contains('doc-timeline')) {
+        const str = el.querySelector('strong');
+        const p = el.querySelector('p');
+        blocks.push({
+          id: uid(),
+          type: 'timeline',
+          date: str ? str.innerText.trim() : '',
+          content: p ? p.innerText.trim() : el.innerText.trim()
+        });
+      } else if (el.classList.contains('doc-video')) {
+        const ifr = el.querySelector('iframe');
+        blocks.push({
+          id: uid(),
+          type: 'video',
+          url: ifr ? ifr.src : ''
+        });
+      } else if (el.classList.contains('doc-audio')) {
+        const aud = el.querySelector('audio');
+        const tit = el.querySelector('strong');
+        blocks.push({
+          id: uid(),
+          type: 'music',
+          url: aud ? aud.src : '',
+          content: tit ? tit.innerText.trim() : 'Audio'
+        });
+      } else {
+        const text = el.innerText.trim();
+        if (text) {
+          blocks.push({ id: uid(), type: 'text', content: text });
+        }
+      }
+    });
+
+    return blocks.length > 0 ? blocks : [{ id: uid(), type: 'text', content: '' }];
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Undo / Redo History Stack (Document & Conversion Operations)      */
+  /* ------------------------------------------------------------------ */
+  const historyStack = [];
+  let historyIndex = -1;
+  const MAX_HISTORY = 40;
+  let isRestoringHistory = false;
+  let snapDebounceTimer = null;
+
+  function takeSnapshot(source = 'edit') {
+    if (isRestoringHistory || !mounted) return;
+    const currentHtml = getCleanHtml();
+    const currentBlocks = window.getEditorBlocks ? window.getEditorBlocks() : [];
+    const snapshot = {
+      source,
+      mode,
+      html: currentHtml,
+      blocks: JSON.parse(JSON.stringify(currentBlocks))
+    };
+
+    if (historyIndex >= 0) {
+      const top = historyStack[historyIndex];
+      if (top.mode === snapshot.mode && top.html === snapshot.html && JSON.stringify(top.blocks) === JSON.stringify(snapshot.blocks)) {
+        return;
+      }
+    }
+
+    if (historyIndex < historyStack.length - 1) {
+      historyStack.splice(historyIndex + 1);
+    }
+    historyStack.push(snapshot);
+    if (historyStack.length > MAX_HISTORY) {
+      historyStack.shift();
+    }
+    historyIndex = historyStack.length - 1;
+    updateUndoRedoUI();
+  }
+
+  function undoHistory() {
+    if (historyIndex > 0) {
+      historyIndex--;
+      restoreSnapshot(historyStack[historyIndex]);
+    } else {
+      document.execCommand('undo');
+      afterChange();
+    }
+    updateUndoRedoUI();
+  }
+
+  function redoHistory() {
+    if (historyIndex < historyStack.length - 1) {
+      historyIndex++;
+      restoreSnapshot(historyStack[historyIndex]);
+    } else {
+      document.execCommand('redo');
+      afterChange();
+    }
+    updateUndoRedoUI();
+  }
+
+  function restoreSnapshot(snap) {
+    if (!snap) return;
+    isRestoringHistory = true;
+    try {
+      if (snap.mode === 'blocks') {
+        if (window.setEditorBlocks) {
+          window.setEditorBlocks(snap.blocks || []);
+        }
+        setMode('blocks');
+        toast('Restored previous block builder state', 'info');
+      } else {
+        setHtml(snap.html || '');
+        setMode('doc');
+        toast('Restored previous document state', 'info');
+      }
+      afterChange();
+    } finally {
+      isRestoringHistory = false;
+    }
+  }
+
+  function updateUndoRedoUI() {
+    if (!modeBar) return;
+    const undoBtn = modeBar.querySelector('.we-undo-btn');
+    const redoBtn = modeBar.querySelector('.we-redo-btn');
+    if (undoBtn) {
+      const canUndo = historyIndex > 0;
+      undoBtn.disabled = !canUndo;
+      undoBtn.style.opacity = canUndo ? '1' : '0.45';
+      undoBtn.style.cursor = canUndo ? 'pointer' : 'not-allowed';
+    }
+    if (redoBtn) {
+      const canRedo = historyIndex < historyStack.length - 1;
+      redoBtn.disabled = !canRedo;
+      redoBtn.style.opacity = canRedo ? '1' : '0.45';
+      redoBtn.style.cursor = canRedo ? 'pointer' : 'not-allowed';
+    }
+  }
+
+  function convertBlocksToDoc() {
+    takeSnapshot('before_convert_to_doc');
+    const blocks = window.getEditorBlocks ? window.getEditorBlocks() : (blocksProvider ? blocksProvider() : []);
+    if (!blocks || blocks.length === 0) {
+      toast('No blocks found to convert', 'info');
+      return;
+    }
+    const html = blocksToHtml(blocks);
+    setHtml(html);
+    setMode('doc');
+    takeSnapshot('converted_to_doc');
+    afterChange();
+    toast('Blocks converted to Word document! (Click Undo to revert)', 'success');
+  }
+
+  function convertDocToBlocks() {
+    takeSnapshot('before_convert_to_blocks');
+    const html = getCleanHtml();
+    if (!html || !html.trim() || isEmpty()) {
+      toast('Document is empty', 'info');
+      return;
+    }
+    const blocks = htmlToBlocks(html);
+    if (window.setEditorBlocks) {
+      window.setEditorBlocks(blocks);
+    }
+    setMode('blocks');
+    takeSnapshot('converted_to_blocks');
+    toast('Document converted into modular blocks! (Click Undo to revert)', 'success');
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Mode bar & mounting                                                 */
   /* ------------------------------------------------------------------ */
   function setMode(m) {
@@ -1504,43 +1759,111 @@
     const add = document.getElementById('bloggerOpenAddBlockBtn');
     if (stack) stack.style.display = m === 'blocks' ? '' : 'none';
     if (add) add.style.display = m === 'blocks' ? '' : 'none';
+
     modeBar.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
-    modeBar.querySelector('.we-convert').style.display = m === 'blocks' ? '' : 'none';
+
+    // Show appropriate conversion button
+    const toDocBtn = modeBar.querySelector('.we-convert-blocks-btn');
+    const toBlocksBtn = modeBar.querySelector('.we-convert-doc-btn');
+    if (toDocBtn) toDocBtn.style.display = m === 'blocks' ? 'inline-flex' : 'none';
+    if (toBlocksBtn) toBlocksBtn.style.display = m === 'doc' ? 'inline-flex' : 'none';
+
     modeBar.querySelector('.we-modehint').textContent = m === 'doc'
-      ? 'Write like in Microsoft Word — formatting, colors, tables, pictures, equations and more. Everything saves automatically as a draft.'
-      : 'Block builder: stack structured blocks (heading, text, image, code, table, video...). Switch to Document for a Word-style editor.';
+      ? 'Document mode: Word-style ribbon, tables, pictures, LaTeX and custom formatting. Auto-saves continuously.'
+      : 'Block mode: Modular structured cards. Use "Convert blocks to document" anytime to switch to Word editor.';
+
     if (m === 'doc') { updateStatus(); updateNav(); }
     else { const badge = document.getElementById('bloggerReadTimeBadge'); if (badge && typeof updateEstimatedReadingTime === 'function') { try { updateEstimatedReadingTime(); } catch (e) { /* ignore */ } } }
+    updateUndoRedoUI();
   }
+
   function mount() {
     if (mounted) return;
     const pane = document.getElementById('bloggerPaneWrite');
     if (!pane) return;
     build();
-    modeBar = el('div', 'we-modebar',
-      '<div class="we-modeswitch"><button type="button" data-mode="doc">' + ic('word', 15) + ' Document editor</button><button type="button" data-mode="blocks">' + ic('table', 15) + ' Block builder</button></div>' +
-      '<span class="we-modehint"></span><button type="button" class="btn btn-secondary btn-sm we-convert" style="display:none">Convert blocks to document</button>');
+
+    modeBar = el('div', 'we-modebar');
+    modeBar.innerHTML = `
+      <div class="we-modeswitch">
+        <button type="button" data-mode="doc" title="Microsoft Word document style editor">
+          ${ic('word', 15)} <span>Document editor</span>
+        </button>
+        <button type="button" data-mode="blocks" title="Modular block builder mode">
+          ${ic('table', 15)} <span>Block builder</span>
+        </button>
+      </div>
+
+      <div class="we-mode-actions">
+        <!-- Reversible Conversions -->
+        <button type="button" class="btn btn-secondary btn-sm we-convert-blocks-btn" title="Convert all modular blocks into a rich Word document">
+          ⚡ Convert blocks to document
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm we-convert-doc-btn" style="display:none;" title="Convert the Word document into modular blocks">
+          ⚡ Convert document into blocks
+        </button>
+
+        <!-- Undo & Redo Controls -->
+        <div class="we-history-group">
+          <button type="button" class="btn btn-secondary btn-sm we-undo-btn" title="Undo (Ctrl+Z)" disabled>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+            <span>Undo</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm we-redo-btn" title="Redo (Ctrl+Y)" disabled>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/></svg>
+            <span>Redo</span>
+          </button>
+        </div>
+      </div>
+
+      <span class="we-modehint"></span>
+    `;
+
     pane.prepend(wrap);
     pane.prepend(modeBar);
     mounted = true;
+
     modeBar.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
       const target = b.dataset.mode;
       if (target === mode) return;
       if (target === 'doc' && isEmpty()) {
-        const blocks = blocksProvider() || [];
-        if (blocks.some(x => x && (x.content || x.url)) && confirm('Convert your existing blocks into the document editor?\n\nOK = convert, Cancel = start with an empty document.')) setHtml(blocksToHtml(blocks));
+        const blocks = (window.getEditorBlocks ? window.getEditorBlocks() : blocksProvider()) || [];
+        if (blocks.some(x => x && (x.content || x.url)) && confirm('Convert your existing blocks into the document editor?\n\nOK = convert, Cancel = start with an empty document.')) {
+          setHtml(blocksToHtml(blocks));
+        }
       }
       setMode(target);
     }));
-    modeBar.querySelector('.we-convert').addEventListener('click', () => {
-      const blocks = blocksProvider() || [];
-      if (!isEmpty() && !confirm('Replace the current document with your converted blocks?')) return;
-      setHtml(blocksToHtml(blocks));
-      setMode('doc');
-      afterChange();
-      toast('Blocks converted to document', 'success');
+
+    // Bind Conversion Buttons
+    modeBar.querySelector('.we-convert-blocks-btn').addEventListener('click', convertBlocksToDoc);
+    modeBar.querySelector('.we-convert-doc-btn').addEventListener('click', convertDocToBlocks);
+
+    // Bind Undo / Redo Buttons
+    modeBar.querySelector('.we-undo-btn').addEventListener('click', undoHistory);
+    modeBar.querySelector('.we-redo-btn').addEventListener('click', redoHistory);
+
+    // Global keyboard shortcut for Undo / Redo in both modes
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redoHistory();
+        } else if (mode === 'blocks') {
+          e.preventDefault();
+          undoHistory();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        if (mode === 'blocks') {
+          e.preventDefault();
+          redoHistory();
+        }
+      }
     });
+
     setZoom(100);
+    // Take initial snapshot
+    setTimeout(() => takeSnapshot('initial'), 300);
   }
 
   function restoreDraft(force) {

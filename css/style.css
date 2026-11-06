@@ -18,7 +18,8 @@
 }
 
 :root {
-  --font-main: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif;
+  --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: 'Eyekons', Georgia, serif;
 
   /* LIGHT MODE (Default) */
   --bg-primary: #f8fafc;
@@ -2040,20 +2041,37 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     top: calc(100% + 12px);
     left: 0;
     right: 0;
-    background: rgba(13, 22, 40, 0.96);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(13, 22, 40, 0.98);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 18px;
-    padding: 1.25rem;
+    padding: 1.25rem 1rem;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
-    z-index: 999;
+    align-items: stretch;
+    gap: 0.5rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    z-index: 99999;
   }
   .mockup-nav-links.show {
     display: flex !important;
+    animation: mobileNavFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .mockup-nav-link {
+    display: block;
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+  }
+  .mockup-nav-link:hover, .mockup-nav-link.active {
+    background: rgba(37, 99, 235, 0.2);
+    color: #38bdf8;
+  }
+  @keyframes mobileNavFade {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   .menu-toggle {
     display: inline-flex !important;

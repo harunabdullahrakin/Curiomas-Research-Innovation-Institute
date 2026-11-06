@@ -522,6 +522,15 @@ function convertContentToInitialBlocks(content) {
   return blocks.length > 0 ? blocks : [{ id: `b-${Date.now()}`, type: 'text', content: '' }];
 }
 
+// Global getters/setters for Word editor bridge
+window.getEditorBlocks = function() {
+  return currentPostBlocks || [];
+};
+window.setEditorBlocks = function(newBlocks) {
+  currentPostBlocks = newBlocks || [];
+  renderBlockStack();
+};
+
 // Render Block Cards
 function renderBlockStack() {
   const stack = document.getElementById('bloggerBlockStack');

@@ -154,19 +154,65 @@ export async function onRequestGet(context) {
   // 1. Cloudflare D1 SQL implementation
   if (env && env.DB) {
     try {
+      // Load tombstone of deleted post IDs
+      let deletedIds = new Set();
+      try {
+        const delRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'deleted_posts'").first();
+        if (delRow && delRow.value_json) {
+          const arr = JSON.parse(delRow.value_json);
+          if (Array.isArray(arr)) deletedIds = new Set(arr);
+        }
+      } catch (e) {}
+
+      // One-time initialization of seed posts into SQL database
+      let isInitialized = false;
+      try {
+        const initRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'posts_initialized'").first();
+        if (initRow) isInitialized = true;
+      } catch (e) {}
+
+      if (!isInitialized) {
+        try {
+          const countRow = await env.DB.prepare("SELECT COUNT(*) as count FROM posts").first();
+          if (!countRow || countRow.count === 0) {
+            for (const sp of SEED_POSTS) {
+              if (deletedIds.has(sp.id)) continue;
+              await env.DB.prepare(`
+                INSERT OR IGNORE INTO posts (id, slug, title, category, coverImage, authors_json, tags_json, readingTime, doi, date, summary, abstract, content, published, featured)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `).bind(
+                sp.id, sp.slug, sp.title, sp.category, sp.coverImage || "",
+                JSON.stringify(sp.authors || []), JSON.stringify(sp.tags || []),
+                sp.readingTime || "5 min read", sp.doi || "", sp.date || new Date().toISOString().split("T")[0],
+                sp.summary || "", sp.abstract || "", sp.content || "",
+                sp.published !== false ? 1 : 0, sp.featured ? 1 : 0
+              ).run();
+            }
+          }
+          await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value_json, updatedAt, updatedBy) VALUES ('posts_initialized', 'true', datetime('now'), 'system')").run();
+          isInitialized = true;
+        } catch (e) {}
+      }
+
       if (idOrSlug) {
+        if (deletedIds.has(idOrSlug)) {
+          return new Response(JSON.stringify({ error: "Post deleted" }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
         const stmt = env.DB.prepare(
           "SELECT * FROM posts WHERE id = ? OR slug = ? LIMIT 1"
         );
         const row = await stmt.bind(idOrSlug, idOrSlug).first();
         if (row) {
+          if (deletedIds.has(row.id)) {
+            return new Response(JSON.stringify({ error: "Post deleted" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
           return new Response(JSON.stringify(formatSqlRow(row)), {
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-        const seedMatch = SEED_POSTS.find(p => p.id === idOrSlug || p.slug === idOrSlug);
-        if (seedMatch) {
-          return new Response(JSON.stringify(seedMatch), {
             headers: { "Content-Type": "application/json" }
           });
         }
@@ -200,23 +246,13 @@ export async function onRequestGet(context) {
 
       const stmt = env.DB.prepare(query);
       const { results } = binds.length > 0 ? await stmt.bind(...binds).all() : await stmt.all();
-      let formatted = (results || []).map(formatSqlRow);
-      if (formatted.length === 0) {
-        let seedList = SEED_POSTS;
-        if (category) {
-          seedList = seedList.filter(p => p.category.toLowerCase().includes(category.toLowerCase()));
-        }
-        if (!includeDrafts) {
-          seedList = seedList.filter(p => p.published !== false);
-        }
-        formatted = seedList;
-      }
+      let formatted = (results || []).map(formatSqlRow).filter(p => !deletedIds.has(p.id));
+
       return new Response(JSON.stringify(formatted), {
         headers: { "Content-Type": "application/json" }
       });
     } catch (err) {
       console.error("D1 SQL Error:", err);
-      // fallback to memory below
     }
   }
 
@@ -378,6 +414,22 @@ export async function onRequestDelete(context) {
 
   if (env && env.DB) {
     try {
+      // Record in tombstone
+      let deletedList = [];
+      try {
+        const delRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'deleted_posts'").first();
+        if (delRow && delRow.value_json) {
+          deletedList = JSON.parse(delRow.value_json);
+          if (!Array.isArray(deletedList)) deletedList = [];
+        }
+      } catch (e) {}
+
+      if (!deletedList.includes(id)) {
+        deletedList.push(id);
+        await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value_json, updatedAt, updatedBy) VALUES ('deleted_posts', ?, datetime('now'), 'system')").bind(JSON.stringify(deletedList)).run();
+      }
+
+      await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value_json, updatedAt, updatedBy) VALUES ('posts_initialized', 'true', datetime('now'), 'system')").run();
       await env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(id).run();
     } catch (e) {
       console.error("D1 delete error:", e);
