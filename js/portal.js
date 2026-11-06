@@ -1781,15 +1781,13 @@ window.openDivisionModal = function(id = null) {
     document.getElementById('divisionLinkInput').value = '/research';
   }
 
-  modal.classList.add('show');
-  modal.style.display = 'flex';
+  modal.classList.add('active');
 };
 
 window.closeDivisionModal = function() {
   const modal = document.getElementById('divisionModal');
   if (modal) {
-    modal.classList.remove('show');
-    modal.style.display = 'none';
+    modal.classList.remove('active');
   }
 };
 
