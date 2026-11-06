@@ -18,8 +18,12 @@
       font-style: normal;
       font-display: swap;
     }
-    *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label {
-      font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
+    :root {
+      --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-display: 'Eyekons', 'Playfair Display', Georgia, serif;
+    }
+    body, p, span, a, button, input, select, textarea, label, li, ul, ol, div {
+      font-family: var(--font-body);
     }
     .login-showcase-pane {
       transition: background-image 0.8s ease-in-out;

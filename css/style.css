@@ -103,12 +103,11 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
 }
 
 html {
   scroll-behavior: smooth;
-  font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
+  font-family: var(--font-main);
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -116,8 +115,8 @@ html {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label, code, pre {
-  font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
+body, button, input, select, textarea, p, span, a, label {
+  font-family: var(--font-main);
 }
 
 body {
@@ -954,7 +953,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   position: relative;
   background: #060b16 radial-gradient(circle at 82% 35%, rgba(45, 95, 185, 0.35) 0%, rgba(15, 30, 65, 0.2) 40%, transparent 70%);
   color: #ffffff;
-  padding-top: 5.5rem;
+  padding-top: 6.5rem;
   padding-bottom: 3.5rem;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -1526,10 +1525,11 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   position: relative;
   z-index: 2;
   max-width: 720px;
-  margin-bottom: 5.5rem;
+  margin-bottom: 5rem;
 }
 
 .mockup-hero-title {
+  font-family: 'Eyekons', 'Playfair Display', Georgia, serif;
   font-size: 4.2rem;
   font-weight: 500;
   line-height: 1.08;
@@ -1539,6 +1539,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .mockup-hero-subtitle {
+  font-family: var(--font-main);
   font-size: 1.18rem;
   line-height: 1.6;
   color: #9bb0cb;
@@ -1558,6 +1559,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   align-items: center;
   gap: 0.4rem;
   color: #ffffff;
+  font-family: var(--font-main);
   font-size: 0.95rem;
   font-weight: 500;
   text-decoration: none;
@@ -1576,6 +1578,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   justify-content: space-between;
   padding-top: 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-main);
   font-size: 0.78rem;
   letter-spacing: 0.1em;
   color: #64748b;
@@ -1583,7 +1586,15 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   gap: 1rem;
 }
 
+.ticker-left, .ticker-right {
+  font-family: var(--font-main);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
 .ticker-center {
+  font-family: 'Playfair Display', Georgia, serif;
   font-size: 1.35rem;
   font-style: italic;
   letter-spacing: 0;
