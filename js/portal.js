@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const dashboardSection = document.getElementById('portalDashboardSection');
 
   if (!user) {
-    if (authSection) authSection.style.display = 'flex';
+    if (authSection) authSection.style.display = 'grid';
     if (dashboardSection) dashboardSection.style.display = 'none';
     return;
   }
@@ -98,6 +98,7 @@ window.showTab = function(tabName) {
   });
 
   currentTab = tabName;
+  if (tabName === 'divisions') renderDivisionsTab();
   try {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
@@ -128,6 +129,7 @@ async function refreshDashboardData() {
   renderRosterGrid();
   renderApplicationsTable();
   renderDatasetsTable();
+  renderDivisionsTab();
   renderAllowedUsersTable();
 }
 
@@ -1698,4 +1700,150 @@ window.openEmailComposer = function(toEmail = '', toName = '', defaultSubject = 
 window.closeEmailComposer = function() {
   const modal = document.getElementById('emailComposerModal');
   if (modal) modal.classList.remove('active');
+};
+
+
+// -----------------------------------------------------------------------------
+// RESEARCH DIVISIONS CRUD MANAGEMENT
+// -----------------------------------------------------------------------------
+window.renderDivisionsTab = async function() {
+  const container = document.getElementById('portalDivisionsList');
+  if (!container || !window.CRII_API) return;
+
+  const divisions = await window.CRII_API.getDivisions();
+  if (!divisions || !Array.isArray(divisions) || divisions.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:3.5rem 1rem; color:var(--text-muted); grid-column: 1 / -1; background: var(--bg-surface); border: 1px dashed var(--border-color); border-radius: 16px;">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-bottom:0.75rem; color:var(--text-muted);"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>
+        <p style="margin:0 0 1rem;">No research divisions found. Click "Add New Division" above to create one.</p>
+        <button class="btn btn-primary btn-sm" onclick="openDivisionModal()">+ Add New Division</button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = divisions.map(div => `
+    <div class="division-manage-card">
+      <div class="division-manage-media">
+        <img src="${div.image || 'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80'}" alt="${div.title}" loading="lazy">
+        <span class="division-manage-badge">${div.tag || (div.number ? div.number + ' / RESEARCH DIVISION' : 'RESEARCH DIVISION')}</span>
+      </div>
+      <div class="division-manage-body">
+        <h3 class="division-manage-title">${div.title}</h3>
+        <p class="division-manage-desc">${div.desc || ''}</p>
+        <div class="division-manage-meta">
+          <span>Route: <code>${div.link || '/research'}</code></span>
+        </div>
+        <div class="division-manage-actions">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="editDivision('${div.id}')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Edit</span>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="deleteDivisionConfirm('${div.id}', '${div.title.replace(/'/g, "\\'")}')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:0.35rem;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+};
+
+window.openDivisionModal = function(id = null) {
+  const modal = document.getElementById('divisionModal');
+  const modalTitle = document.getElementById('divisionModalTitle');
+  const form = document.getElementById('divisionForm');
+  if (!modal || !form) return;
+
+  form.reset();
+  document.getElementById('divisionIdInput').value = '';
+
+  if (id) {
+    if (modalTitle) modalTitle.innerText = 'Edit Research Division';
+    window.CRII_API.getDivisions().then(divisions => {
+      const div = divisions.find(d => d.id === id);
+      if (div) {
+        document.getElementById('divisionIdInput').value = div.id;
+        document.getElementById('divisionTitleInput').value = div.title || '';
+        document.getElementById('divisionNumberInput').value = div.number || '';
+        document.getElementById('divisionTagInput').value = div.tag || '';
+        document.getElementById('divisionDescInput').value = div.desc || '';
+        document.getElementById('divisionImageInput').value = div.image || '';
+        document.getElementById('divisionLinkInput').value = div.link || '/research';
+      }
+    });
+  } else {
+    if (modalTitle) modalTitle.innerText = 'Add Research Division';
+    document.getElementById('divisionLinkInput').value = '/research';
+  }
+
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+};
+
+window.closeDivisionModal = function() {
+  const modal = document.getElementById('divisionModal');
+  if (modal) {
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+  }
+};
+
+window.editDivision = function(id) {
+  window.openDivisionModal(id);
+};
+
+window.handleSaveDivision = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('divisionIdInput').value.trim();
+  const title = document.getElementById('divisionTitleInput').value.trim();
+  const number = document.getElementById('divisionNumberInput').value.trim();
+  const tag = document.getElementById('divisionTagInput').value.trim() || (number ? `${number} / RESEARCH DIVISION` : 'RESEARCH DIVISION');
+  const desc = document.getElementById('divisionDescInput').value.trim();
+  const image = document.getElementById('divisionImageInput').value.trim();
+  const link = document.getElementById('divisionLinkInput').value.trim() || '/research';
+
+  const divisionData = {
+    id: id || undefined,
+    number: number || '01',
+    tag,
+    title,
+    desc,
+    image,
+    link
+  };
+
+  const saveBtn = document.getElementById('saveDivisionBtn');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Saving...';
+  }
+
+  try {
+    await window.CRII_API.saveDivision(divisionData);
+    window.closeDivisionModal();
+    await window.renderDivisionsTab();
+    if (window.showToast) window.showToast('Research division saved successfully!', 'success');
+  } catch (err) {
+    alert('Failed to save division: ' + (err.message || err));
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = 'Save Division';
+    }
+  }
+};
+
+window.deleteDivisionConfirm = async function(id, title) {
+  if (!confirm(`Are you sure you want to delete the division "${title}"?\nThis will remove it from the homepage and research catalog.`)) {
+    return;
+  }
+
+  try {
+    await window.CRII_API.deleteDivision(id);
+    await window.renderDivisionsTab();
+    if (window.showToast) window.showToast('Division removed.', 'info');
+  } catch (err) {
+    alert('Failed to delete division: ' + (err.message || err));
+  }
 };

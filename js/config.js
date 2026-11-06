@@ -23,7 +23,8 @@ const CRII_CONFIG = {
     POSTS: "crii_posts_v2",
     INTERNS: "crii_interns_v2",
     DATASETS: "crii_datasets_v1",
-    EMAILJS_TEMPLATE_ID: "crii_emailjs_template_id"
+    EMAILJS_TEMPLATE_ID: "crii_emailjs_template_id",
+    DIVISIONS: "crii_divisions_v1"
   }
 };
 
@@ -150,6 +151,49 @@ const CRII_DEFAULT_ARTICLES = [
   }
 ];
 
+const CRII_DEFAULT_DIVISIONS = [
+  {
+    id: "div-space-astrophysics",
+    number: "01",
+    tag: "01 / RESEARCH DIVISION",
+    title: "Space & Astrophysics",
+    desc: "Sparking distant atmospheres through exoplanetary spectra and light curves.",
+    image: "https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80",
+    link: "/research?division=space-astrophysics",
+    orderIndex: 1
+  },
+  {
+    id: "div-ancient-biology",
+    number: "02",
+    tag: "02 / RESEARCH DIVISION",
+    title: "Ancient Biology & Paleontology",
+    desc: "Tracing the history of life through fossil records and genomic divergence.",
+    image: "https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80",
+    link: "/research?division=ancient-biology",
+    orderIndex: 2
+  },
+  {
+    id: "div-ai-computational-science",
+    number: "03",
+    tag: "03 / RESEARCH DIVISION",
+    title: "AI & Computational Science",
+    desc: "Building open computational methods for complex biological and physical systems.",
+    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+    link: "/research?division=ai-computational",
+    orderIndex: 3
+  },
+  {
+    id: "div-astrobiology",
+    number: "04",
+    tag: "04 / RESEARCH DIVISION",
+    title: "Astrobiology & Extremophiles",
+    desc: "Exploring life's resilience at the edges of habitability, on Earth and beyond.",
+    image: "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80",
+    link: "/research?division=astrobiology",
+    orderIndex: 4
+  }
+];
+
 class CriiApiClient {
   constructor() {
     this.initStore();
@@ -256,6 +300,15 @@ class CriiApiClient {
       }));
     }
 
+        // 6. Initial Seed Research Divisions
+    try {
+      const storedDivs = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS);
+      if (!storedDivs) {
+        localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(CRII_DEFAULT_DIVISIONS));
+      }
+    } catch (e) {
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(CRII_DEFAULT_DIVISIONS));
+    }
     // 5. Background sync settings and allowed users from Cloudflare D1
     this.syncSettingsFromDb().catch(() => {});
     this.syncAllowedUsersFromDb().catch(() => {});
@@ -269,6 +322,9 @@ class CriiApiClient {
         const settings = await res.json();
         if (settings && settings.hero) {
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.HERO_SETTINGS, JSON.stringify(settings.hero));
+        }
+                if (settings && Array.isArray(settings.divisions) && settings.divisions.length > 0) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(settings.divisions));
         }
         if (settings && settings.branding) {
           if (settings.branding.name) localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_NAME, settings.branding.name);
@@ -413,7 +469,7 @@ class CriiApiClient {
   // --- AUTZ.ORG OAUTH & STRICT WHITELIST AUTHENTICATION ---
   async exchangeAutzCode(code) {
     if (!code) {
-      return { success: false, error: "Missing authorization code from Autz.org" };
+      return { success: false, error: "Missing authorization code from Single Sign-On" };
     }
 
     try {
@@ -610,6 +666,90 @@ class CriiApiClient {
     }
 
     return { success: true };
+  }
+
+
+  // --- RESEARCH DIVISIONS MANAGEMENT (D1 SYNCED) ---
+  async getDivisions() {
+    try {
+      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return [...CRII_DEFAULT_DIVISIONS];
+  }
+
+  async saveDivision(divisionData) {
+    let divisions = await this.getDivisions();
+    const id = divisionData.id || ('div-' + Date.now().toString(36));
+    const idx = divisions.findIndex(d => d.id === id);
+
+    const record = {
+      ...divisionData,
+      id,
+      number: divisionData.number || String(idx >= 0 ? idx + 1 : divisions.length + 1).padStart(2, '0'),
+      tag: divisionData.tag || ((divisionData.number || '01') + ' / RESEARCH DIVISION'),
+      title: divisionData.title || "Untitled Division",
+      desc: divisionData.desc || "",
+      image: divisionData.image || "https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80",
+      link: divisionData.link || "/research"
+    };
+
+    if (idx >= 0) {
+      divisions[idx] = record;
+    } else {
+      divisions.push(record);
+    }
+
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(divisions));
+
+    // Direct Cloudflare D1 settings sync
+    try {
+      const user = this.getCurrentUser();
+      const editor = user ? (user.name || user.email) : "Administrator";
+      await fetch(CRII_CONFIG.API_BASE + '/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: "divisions",
+          value: divisions,
+          updatedBy: editor
+        })
+      });
+    } catch (e) {
+      console.warn("Failed to sync divisions to D1:", e);
+    }
+
+    return record;
+  }
+
+  async deleteDivision(id) {
+    let divisions = await this.getDivisions();
+    divisions = divisions.filter(d => d.id !== id);
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(divisions));
+
+    // Direct Cloudflare D1 settings sync
+    try {
+      const user = this.getCurrentUser();
+      const editor = user ? (user.name || user.email) : "Administrator";
+      await fetch(CRII_CONFIG.API_BASE + '/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: "divisions",
+          value: divisions,
+          updatedBy: editor
+        })
+      });
+    } catch (e) {
+      console.warn("Failed to sync divisions delete to D1:", e);
+    }
+
+    return { success: true, id };
   }
 
   // --- POSTS & RESEARCH ARTICLES (D1 SQL SYNCED) ---

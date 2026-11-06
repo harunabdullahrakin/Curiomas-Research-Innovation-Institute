@@ -810,3 +810,418 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   }
 }
 
+
+
+/* =============================================================================
+   REAL SPLIT-SCREEN LOGIN PAGE
+   ============================================================================= */
+.login-split-page {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  background-color: var(--bg-primary);
+  margin: 0;
+  padding: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.login-showcase-pane {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3.5rem 3.5rem;
+  background: #060b18 url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1600&q=85') center/cover no-repeat;
+  color: #ffffff;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-showcase-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(6, 11, 24, 0.94) 0%, rgba(13, 27, 42, 0.85) 55%, rgba(6, 14, 28, 0.96) 100%);
+  backdrop-filter: blur(3px);
+  z-index: 1;
+}
+
+.login-showcase-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.login-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.login-brand-header img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.login-brand-name {
+  font-family: 'Eyekons', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.login-brand-sub {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.login-hero-center {
+  margin: 3.5rem 0;
+  max-width: 540px;
+}
+
+.login-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #93c5fd;
+  margin-bottom: 1.5rem;
+}
+
+.login-hero-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8;
+}
+
+.login-hero-title {
+  font-family: 'Eyekons', Georgia, serif;
+  font-size: 2.85rem;
+  line-height: 1.15;
+  font-weight: 700;
+  margin-bottom: 1.35rem;
+  color: #ffffff;
+}
+
+.login-hero-desc {
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 2.25rem;
+}
+
+.login-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.login-feature-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.login-feature-pill svg {
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+.login-showcase-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.login-showcase-motto {
+  font-family: 'Eyekons', Georgia, serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.login-showcase-note {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Right Panel: Clean Authentication Form */
+.login-form-pane {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3.5rem 3.5rem;
+  background: var(--bg-surface);
+  position: relative;
+  min-height: 100vh;
+}
+
+.login-form-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.login-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.login-back-link:hover {
+  color: var(--accent-primary);
+}
+
+.login-form-center {
+  margin: auto 0;
+  width: 100%;
+  max-width: 440px;
+  align-self: center;
+  padding: 1.5rem 0;
+}
+
+.login-form-crest {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 1.5rem;
+}
+
+.login-form-crest img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.login-form-title {
+  font-family: 'Eyekons', Georgia, serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.65rem;
+  color: var(--text-primary);
+}
+
+.login-form-subtitle {
+  font-size: 0.94rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 2rem;
+}
+
+.login-primary-btn {
+  width: 100%;
+  padding: 1.05rem 1.5rem;
+  background: linear-gradient(135deg, #0f281e 0%, #173f30 100%);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(15, 40, 30, 0.25);
+  transition: all 0.25s ease;
+  font-family: inherit;
+}
+
+[data-theme="dark"] .login-primary-btn {
+  background: linear-gradient(135deg, #1b4d3e 0%, #256a55 100%);
+  box-shadow: 0 4px 20px rgba(27, 77, 62, 0.4);
+}
+
+.login-primary-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 6px 24px rgba(15, 40, 30, 0.35);
+}
+
+.login-restriction-card {
+  margin-top: 1.75rem;
+  padding: 1rem 1.15rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.login-restriction-icon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.login-restriction-text {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.login-restriction-text strong {
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.login-form-footer {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Mobile Responsiveness for Login */
+@media (max-width: 960px) {
+  .login-split-page {
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+  }
+  .login-showcase-pane {
+    padding: 2.5rem 1.75rem;
+    min-height: auto;
+  }
+  .login-hero-center {
+    margin: 1.5rem 0;
+  }
+  .login-hero-title {
+    font-size: 2rem;
+  }
+  .login-form-pane {
+    padding: 2.5rem 1.75rem;
+    min-height: auto;
+  }
+}
+
+/* =============================================================================
+   DIVISIONS MANAGEMENT IN PORTAL
+   ============================================================================= */
+.divisions-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.division-manage-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.division-manage-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.division-manage-media {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  background: #000;
+}
+
+.division-manage-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.division-manage-card:hover .division-manage-media img {
+  transform: scale(1.05);
+}
+
+.division-manage-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(10, 15, 29, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+}
+
+.division-manage-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.division-manage-title {
+  font-family: 'Eyekons', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.division-manage-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 1rem;
+  flex-grow: 1;
+}
+
+.division-manage-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.division-manage-actions {
+  display: flex;
+  gap: 0.65rem;
+}

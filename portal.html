@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRII Portal — Autz.org Authentication & Research Management</title>
+  <title>CRII Portal — Institute Authentication & Research Management</title>
   <link rel="preload" href="assets/Eyekons.otf" as="font" type="font/otf" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=4.0">
   <link rel="stylesheet" href="css/components.css?v=4.0">
@@ -18,40 +18,100 @@
 </head>
 <body style="background-color: var(--bg-primary);">
   <!-- ==========================================================================
-       AUTZ.ORG LOGIN SCREEN (Shown when not authenticated)
+       INSTITUTE LOGIN SCREEN (Shown when not authenticated)
        ========================================================================== -->
-  <section id="portalAuthSection" class="auth-wrapper" style="display:none;">
-    <div class="auth-box">
-      <div class="auth-crest" style="background: transparent; border: none; width: 68px; height: 68px; margin: 0 auto 1.25rem;">
-        <img src="assets/curiomas-no-bg.png" alt="CRII Logo" style="width: 68px; height: 68px; object-fit: contain;">
+  <section id="portalAuthSection" class="login-split-page" style="display:none;">
+    <!-- LEFT PANEL: Visual Showcase & Mission -->
+    <div class="login-showcase-pane">
+      <div class="login-showcase-overlay"></div>
+      
+      <div class="login-showcase-content">
+        <div class="login-brand-header">
+          <img src="assets/curiomas-no-bg.png" alt="CRII Emblem" loading="eager">
+          <div>
+            <div class="login-brand-name">Curiomas Institute</div>
+            <div class="login-brand-sub">Research & Innovation</div>
+          </div>
+        </div>
+
+        <div class="login-hero-center">
+          <div class="login-hero-tag">
+            <span class="login-hero-tag-dot"></span>
+            <span>OPEN-SCIENCE RESEARCH PLATFORM</span>
+          </div>
+
+          <h1 class="login-hero-title">Bring structure to your research.</h1>
+          
+          <p class="login-hero-desc">
+            An autonomous, student-driven research collective unifying deep-space atmospheres, ancient paleogenomics, and biophysical machine learning into open, reproducible frameworks.
+          </p>
+
+          <div class="login-features-list">
+            <div class="login-feature-pill">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <span>Autonomous & Student-Driven Research Inquiries</span>
+            </div>
+            <div class="login-feature-pill">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span>100% Verifiable Datasets, Synthetic Spectra & Open Code</span>
+            </div>
+            <div class="login-feature-pill">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>Student Fellowship Cohorts & Frontier Divisions</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="login-showcase-footer">
+          <div class="login-showcase-motto">Learning has no bound.</div>
+          <div class="login-showcase-note">Autonomous by Design • CC-BY 4.0</div>
+        </div>
       </div>
+    </div>
 
-      <h2 class="auth-title">Institute Portal</h2>
-      <p class="auth-desc">
-        Sign in with your verified <strong>Autz.org</strong> account. Access is restricted to whitelisted institute directors, research fellows, and intern coordinators.
-      </p>
-
-      <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
-        <!-- Primary Autz.org Login Button -->
-        <a id="loginWithAutzBtn" class="autz-login-btn" href="https://autz.org/onboarding/gqiqh6qia?callback_url=https%3A%2F%2Fwww.curiomas.zone.id%2Fportal.html" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
-          <span class="autz-logo-badge">Autz.org</span>
-          <span>Sign In with Autz.org</span>
+    <!-- RIGHT PANEL: Authentication Panel -->
+    <div class="login-form-pane">
+      <div class="login-form-top-nav">
+        <a href="/" class="login-back-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span>Return to Institute Website</span>
         </a>
-
-        <div id="loginStatus" style="display:none; text-align: center; padding: 0.85rem; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: var(--accent-primary);"></div>
-
-        <div id="loginError" style="display:none; text-align: left; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 0.85rem; border-radius: 10px; font-size: 0.84rem; line-height: 1.5;"></div>
       </div>
 
-      <div class="security-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-        </svg>
-        <span>Parameterized access control & anti-SQL injection verified</span>
+      <div class="login-form-center">
+        <div class="login-form-crest">
+          <img src="assets/curiomas-no-bg.png" alt="CRII Crest">
+        </div>
+
+        <h2 class="login-form-title">Institute Sign In</h2>
+        <p class="login-form-subtitle">
+          Welcome back. Access the verified researcher dashboard, editorial suite, and publication repositories.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <a id="loginWithAutzBtn" class="login-primary-btn" href="#" style="text-decoration:none;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Login with your account</span>
+          </a>
+
+          <div id="loginStatus" style="display:none; text-align: center; padding: 0.9rem; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: var(--accent-primary);"></div>
+
+          <div id="loginError" style="display:none; text-align: left; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 0.9rem; border-radius: 12px; font-size: 0.85rem; line-height: 1.5;"></div>
+        </div>
+
+        <div class="login-restriction-card">
+          <div class="login-restriction-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <div class="login-restriction-text">
+            <strong>Restricted Academic Access</strong>
+            Access is reserved for whitelisted institute directors, research fellows, and intern coordinators. Authorization is managed by the Executive Council.
+          </div>
+        </div>
       </div>
 
-      <div style="margin-top: 1.5rem;">
-        <a href="/" style="font-size: 0.86rem; color: var(--text-muted);">← Return to Public Website</a>
+      <div class="login-form-footer">
+        Single Sign-On • Protected by parameterized institute access control
       </div>
     </div>
   </section>
@@ -68,7 +128,7 @@
         </div>
         <div>
           <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); line-height: 1.2;">CRII PORTAL</div>
-          <div style="font-size: 0.65rem; color: var(--accent-primary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Autz.org Verified</div>
+          <div style="font-size: 0.65rem; color: var(--accent-primary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Institute Verified</div>
         </div>
       </div>
 
@@ -85,6 +145,13 @@
             <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
           </svg>
           <span>Publications & Blog</span>
+        </button>
+
+        <button class="portal-nav-btn" data-tab="divisions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="12" y1="9" x2="12" y2="3"/><line x1="12" y1="15" x2="12" y2="21"/><line x1="9" y1="12" x2="3" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/>
+          </svg>
+          <span>Research Divisions</span>
         </button>
 
         <button class="portal-nav-btn" data-tab="roster">
@@ -113,7 +180,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/>
           </svg>
-          <span>Access Control (Autz)</span>
+          <span>Access Control (Permissions)</span>
         </button>
 
         <button class="portal-nav-btn" data-tab="settings">
@@ -211,13 +278,13 @@
         <div class="card" style="padding: 2rem;">
           <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-primary);">Security & Edge Operations Status</h3>
           <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem;">
-            CRII runs with Autz.org SSO protection. Only verified emails configured in your 
+            CRII runs with Single Sign-On protection. Only verified emails configured in your 
             <a href="#" onclick="showTab('permissions'); return false;" style="font-weight: 600;">Access Control Whitelist</a> can authenticate.
             All client requests are strictly sanitized to prevent injection attacks and preserve reproducible data.
           </p>
           <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
             <button class="btn btn-secondary btn-sm" onclick="showTab('interns')">Review Intern Applications →</button>
-            <button class="btn btn-secondary btn-sm" onclick="showTab('permissions')">Manage Autz Whitelist →</button>
+            <button class="btn btn-secondary btn-sm" onclick="showTab('permissions')">Manage Authorized Roster →</button>
             <button class="btn btn-glass btn-sm" onclick="showTab('settings')">Institute & Navbar Settings</button>
           </div>
         </div>
@@ -602,8 +669,8 @@
       <div id="tab-permissions" class="portal-tab-content" style="display:none;">
         <div class="portal-topbar">
           <div class="portal-title-block">
-            <h1>Autz.org Access Control & Permissions</h1>
-            <p>Strictly control which Gmail and Autz accounts have permission to access the management portal.</p>
+            <h1>Institute Access Control & Permissions</h1>
+            <p>Strictly control which verified email accounts have permission to access the management portal.</p>
           </div>
         </div>
 
@@ -611,13 +678,13 @@
         <div class="data-table-card" style="padding: 2rem; margin-bottom: 2rem;">
           <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-primary);">Authorize New Account</h3>
           <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
-            When this user signs in via Autz.org with their email, they will be granted portal access with the specified role.
+            When this user signs in with their email, they will be granted portal access with the specified role.
           </p>
 
           <form id="addAllowedUserForm">
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="newAllowedEmail">Autz.org Verified Gmail / Email *</label>
+                <label class="form-label" for="newAllowedEmail">Verified Gmail / Email *</label>
                 <input type="email" id="newAllowedEmail" class="form-input" placeholder="colleague@gmail.com" required>
               </div>
               <div class="form-group">
@@ -685,7 +752,7 @@
         <div class="portal-topbar">
           <div class="portal-title-block">
             <h1>Institute & Appearance Settings</h1>
-            <p>Configure the homepage hero video, backdrop blur, overlay darkness, navbar title, and Autz.org application ID.</p>
+            <p>Configure the homepage hero video, backdrop blur, overlay darkness, navbar title, and single sign-on settings.</p>
           </div>
         </div>
 
@@ -760,7 +827,7 @@
           <div class="data-table-card" style="padding: 2rem;">
             <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-primary);">Branding & Navbar</h3>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
-              Customize title text, logo emblem, and Autz.org single sign-on app credentials.
+              Customize title text, logo emblem, and single sign-on app credentials.
             </p>
 
             <form id="instituteSettingsForm">
@@ -781,10 +848,10 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="settingAutzAppId">Autz.org App ID</label>
+                <label class="form-label" for="settingAutzAppId">Single Sign-On App ID</label>
                 <input type="text" id="settingAutzAppId" class="form-input" placeholder="gqiqh6qia">
                 <span style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
-                  Your application ID from <a href="https://autz.org/my-apps" target="_blank">autz.org/my-apps</a>.
+                  Registered application identifier for institute Single Sign-On.
                 </span>
               </div>
 
@@ -1178,5 +1245,64 @@
   <script src="js/app.js?v=3.8"></script>
   <script src="js/auth.js?v=3.8"></script>
   <script src="js/portal.js?v=3.8"></script>
+
+  <!-- Division Edit / Create Modal -->
+  <div id="divisionModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 id="divisionModalTitle" class="modal-title">Add Research Division</h3>
+        <button class="modal-close" onclick="closeDivisionModal()">&times;</button>
+      </div>
+      <form id="divisionForm" onsubmit="handleSaveDivision(event)">
+        <div class="modal-body" style="padding: 1.5rem;">
+          <input type="hidden" id="divisionIdInput">
+          
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" for="divisionTitleInput">Division Name / Title *</label>
+            <input type="text" id="divisionTitleInput" class="form-input" required placeholder="e.g. Quantum Computing & Condensed Matter">
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+              <label class="form-label" for="divisionNumberInput">Division Number</label>
+              <input type="text" id="divisionNumberInput" class="form-input" placeholder="e.g. 05">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="divisionTagInput">Card Tag Header</label>
+              <input type="text" id="divisionTagInput" class="form-input" placeholder="e.g. 05 / RESEARCH DIVISION">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" for="divisionDescInput">Summary & Research Scope *</label>
+            <textarea id="divisionDescInput" class="form-input" rows="3" required placeholder="Exploring macroscopic entanglement, topological quantum matter, and verifiable quantum simulations..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" for="divisionImageInput">Cover Image URL *</label>
+            <input type="url" id="divisionImageInput" class="form-input" required placeholder="https://images.unsplash.com/...">
+            <div style="display:flex; gap:0.4rem; margin-top:0.45rem; flex-wrap:wrap; font-size:0.75rem;">
+              <span style="color:var(--text-muted); align-self:center;">Image Presets:</span>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80'">Quantum</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=800&q=80'">Cosmology</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80'">Laboratory</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=800&q=80'">Genomics</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.5rem;">
+            <label class="form-label" for="divisionLinkInput">Target Link / Route</label>
+            <input type="text" id="divisionLinkInput" class="form-input" placeholder="/research" value="/research">
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeDivisionModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveDivisionBtn">Save Division</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>

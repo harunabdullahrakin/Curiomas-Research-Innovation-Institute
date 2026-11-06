@@ -9,6 +9,44 @@ const DEFAULT_SETTINGS = {
     blurPx: 12,
     overlayOpacity: 0.55
   },
+  divisions: [
+    {
+      id: "div-space-astrophysics",
+      number: "01",
+      tag: "01 / RESEARCH DIVISION",
+      title: "Space & Astrophysics",
+      desc: "Sparking distant atmospheres through exoplanetary spectra and light curves.",
+      image: "https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80",
+      link: "/research?division=space-astrophysics"
+    },
+    {
+      id: "div-ancient-biology",
+      number: "02",
+      tag: "02 / RESEARCH DIVISION",
+      title: "Ancient Biology & Paleontology",
+      desc: "Tracing the history of life through fossil records and genomic divergence.",
+      image: "https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80",
+      link: "/research?division=ancient-biology"
+    },
+    {
+      id: "div-ai-computational-science",
+      number: "03",
+      tag: "03 / RESEARCH DIVISION",
+      title: "AI & Computational Science",
+      desc: "Building open computational methods for complex biological and physical systems.",
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+      link: "/research?division=ai-computational"
+    },
+    {
+      id: "div-astrobiology",
+      number: "04",
+      tag: "04 / RESEARCH DIVISION",
+      title: "Astrobiology & Extremophiles",
+      desc: "Exploring life's resilience at the edges of habitability, on Earth and beyond.",
+      image: "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80",
+      link: "/research?division=astrobiology"
+    }
+  ],
   navbar: {
     title: "Curiomas Research & Innovation Institute",
     subtitle: "CRII • Open Science Collective",

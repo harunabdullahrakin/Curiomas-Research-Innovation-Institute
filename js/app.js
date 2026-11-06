@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUserSessionState();
   initToastContainer();
   initFeaturedArticles();
+  initDivisions();
   initHomeTeam();
 });
 
@@ -461,5 +462,32 @@ async function initHomeTeam() {
     }).join('');
   } catch (e) {
     console.warn('Failed to load home team:', e);
+  }
+}
+
+
+async function initDivisions() {
+  const container = document.getElementById('homeDivisionsContainer') || document.querySelector('.divisions-cards-grid');
+  if (!container || !window.CRII_API) return;
+
+  try {
+    const divisions = await window.CRII_API.getDivisions();
+    if (divisions && Array.isArray(divisions) && divisions.length > 0) {
+      container.innerHTML = divisions.map(div => `
+        <a href="${div.link || '/research'}" class="division-card">
+          <div class="division-card-media">
+            <img src="${div.image || 'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80'}" alt="${div.title}" loading="lazy">
+          </div>
+          <div class="division-card-tag">
+            <span>${div.tag || (div.number ? div.number + ' / RESEARCH DIVISION' : 'RESEARCH DIVISION')}</span>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </div>
+          <h3 class="division-card-title">${div.title}</h3>
+          <p class="division-card-desc">${div.desc || ''}</p>
+        </a>
+      `).join('');
+    }
+  } catch (e) {
+    console.warn('initDivisions error:', e);
   }
 }
