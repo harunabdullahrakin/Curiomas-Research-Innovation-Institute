@@ -2716,11 +2716,34 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
    Controlled globally by Administrators in the Dashboard
    ========================================================================== */
 
+/* Completely hide small section/category tags across the platform */
+.mockup-section-tag,
+.sub-card-tag,
+.mockup-tag-dot {
+  display: none !important;
+}
+
 :root {
   --festive-intensity: 0.72;
 }
 
 /* Background Splatters & Particle Container Behind Content */
+/* Global festive ambient layer for pages */
+.festive-global-bg-layer {
+  display: none;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: calc(var(--festive-intensity, 0.72) * 0.7);
+  transition: opacity 0.5s ease;
+}
+
+.theme-festive-active .festive-global-bg-layer {
+  display: block;
+}
+
 .festive-bg-layer,
 .holi-splatter-bg {
   display: none;
@@ -2749,7 +2772,12 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-mentors-section,
 .mockup-sand-cta-section,
 .mockup-cohort-section,
-.mockup-midnight-section {
+.mockup-midnight-section,
+.mockup-page-hero,
+.mockup-page-content,
+.research-layout,
+.blog-layout,
+.contact-section {
   position: relative;
   overflow: hidden;
 }
@@ -2917,9 +2945,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .christmas-glow-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(40px);
   pointer-events: none;
-  animation: festiveGlowPulse 12s ease-in-out infinite alternate;
+  transform: translate3d(0, 0, 0);
+  will-change: opacity;
+  animation: festiveGlowPulse 10s ease-in-out infinite alternate;
 }
 
 /* 3. CHERRY BLOSSOM THEME (Sakura Petals & Spring Rose Aura) */
@@ -2948,7 +2977,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   }
 }
 
-/* 4. EID THEME (Crescent Moon, Geometric Stars & Emerald Gold Aura) */
+/* 4. EID THEME (Crescent Moon, Geometric Stars & Emerald Gold Aura) - Zero Lag GPU Accelerated */
 .festive-eid-crescent {
   position: absolute;
   top: 25px;
@@ -2956,27 +2985,32 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   font-size: 3.5rem;
   line-height: 1;
   color: #fbbf24;
-  filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.65)) drop-shadow(0 0 40px rgba(16, 185, 129, 0.35));
+  text-shadow: 0 0 16px rgba(251, 191, 36, 0.75), 0 0 32px rgba(16, 185, 129, 0.35);
   animation: crescentBreathe 8s ease-in-out infinite alternate;
   pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 @keyframes crescentBreathe {
-  0% { transform: scale(1) rotate(-8deg); filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.5)); }
-  100% { transform: scale(1.08) rotate(-4deg); filter: drop-shadow(0 0 28px rgba(251, 191, 36, 0.85)); }
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(-8deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1.06) rotate(-4deg); }
 }
 
 .festive-star {
   position: absolute;
   color: #fbbf24;
   pointer-events: none;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.75);
+  will-change: transform, opacity;
   animation: starTwinkle ease-in-out infinite alternate;
+  transform: translate3d(0, 0, 0);
 }
 
 @keyframes starTwinkle {
-  0% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
-  50% { opacity: 1; transform: scale(1.2) rotate(45deg); filter: drop-shadow(0 0 10px #fbbf24); }
-  100% { opacity: 0.3; transform: scale(0.8) rotate(90deg); }
+  0% { opacity: 0.15; transform: translate3d(0, 0, 0) scale(0.7); }
+  50% { opacity: 0.95; transform: translate3d(0, 0, 0) scale(1.15); }
+  100% { opacity: 0.25; transform: translate3d(0, 0, 0) scale(0.85); }
 }
 
 /* 5. FESTIVAL / CARNIVAL THEME (Celebratory Confetti & Ribbons) */
@@ -3001,9 +3035,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 @keyframes festiveGlowPulse {
-  0% { transform: scale(1); opacity: 0.45; }
-  50% { transform: scale(1.15); opacity: 0.75; }
-  100% { transform: scale(0.95); opacity: 0.5; }
+  0% { opacity: 0.35; }
+  50% { opacity: 0.75; }
+  100% { opacity: 0.35; }
 }
 
 @media (max-width: 768px) {

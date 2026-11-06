@@ -168,6 +168,11 @@ function initScrollRevealEffects() {
 // FESTIVE THEMES ENGINE (Admin Controlled: Holi, Christmas, Cherry Blossom, Eid, Festival)
 // =============================================================================
 function initFestiveSeasonalTheme() {
+  // STRICTLY DO NOT RUN FESTIVE EFFECTS ON ADMIN DASHBOARD OR LOGIN
+  const curPath = (window.location.pathname || '').toLowerCase();
+  if (curPath.includes('portal') || curPath.includes('login') || document.body.classList.contains('portal-body') || document.querySelector('.portal-sidebar')) {
+    return;
+  }
   const festiveConfig = (window.CRII_API && window.CRII_API.getFestiveSettings)
     ? window.CRII_API.getFestiveSettings()
     : { mode: "always", theme: "holi", intensity: 0.70 };
@@ -250,7 +255,13 @@ function initFestiveSeasonalTheme() {
       { sel: '.mockup-divisions-section', variant: 3 },
       { sel: '.mockup-cohort-section', variant: 2 },
       { sel: '.mockup-repo-section', variant: 1 },
-      { sel: '.mockup-institute-section', variant: 3 }
+      { sel: '.mockup-institute-section', variant: 3 },
+      // Inner page sections
+      { sel: '.mockup-page-hero', variant: 1 },
+      { sel: '.mockup-page-content', variant: 2 },
+      { sel: '.research-layout', variant: 2 },
+      { sel: '.blog-layout', variant: 2 },
+      { sel: '.contact-section', variant: 3 }
     ];
 
     sections.forEach(s => {
@@ -260,6 +271,14 @@ function initFestiveSeasonalTheme() {
         el.prepend(layer);
       }
     });
+
+    // Ambient background layer for continuous festive atmosphere across all pages
+    if (!document.getElementById('globalFestiveBgLayer')) {
+      const globalLayer = createFestiveLayer(theme, 1);
+      globalLayer.id = 'globalFestiveBgLayer';
+      globalLayer.className = 'festive-global-bg-layer';
+      document.body.prepend(globalLayer);
+    }
   }
 
   function createFestiveLayer(theme, variant) {
@@ -381,16 +400,16 @@ function initFestiveSeasonalTheme() {
   function buildEidHtml(variant) {
     let items = `
       <div class="festive-eid-crescent">🌙</div>
-      <div class="christmas-glow-orb" style="top:-40px; right:15%; width:480px; height:480px; background:radial-gradient(circle, rgba(16,185,129,0.24) 0%, transparent 70%);"></div>
-      <div class="christmas-glow-orb" style="bottom:-60px; left:8%; width:450px; height:450px; background:radial-gradient(circle, rgba(245,158,11,0.20) 0%, transparent 70%);"></div>
+      <div class="christmas-glow-orb" style="top:-30px; right:15%; width:360px; height:360px; background:radial-gradient(circle, rgba(16,185,129,0.22) 0%, transparent 70%);"></div>
+      <div class="christmas-glow-orb" style="bottom:-40px; left:8%; width:340px; height:340px; background:radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%);"></div>
     `;
     const stars = ['✨', '⭐', '✦', '★'];
-    for (let i = 0; i < 18; i++) {
-      const top = Math.round(5 + Math.random() * 85);
-      const left = Math.round(3 + Math.random() * 92);
-      const dur = (2 + Math.random() * 3).toFixed(1);
-      const delay = (Math.random() * 4).toFixed(1);
-      const size = (0.7 + Math.random() * 0.8).toFixed(2);
+    for (let i = 0; i < 8; i++) {
+      const top = Math.round(8 + (i * 11) + (Math.random() * 5));
+      const left = Math.round(5 + (i * 12) + (Math.random() * 5));
+      const dur = (2.2 + (i % 3) * 0.8).toFixed(1);
+      const delay = (i * 0.35).toFixed(1);
+      const size = (0.75 + (i % 3) * 0.25).toFixed(2);
       const s = stars[i % stars.length];
       items += `<span class="festive-star" style="top:${top}%; left:${left}%; font-size:${size}rem; animation-duration:${dur}s; animation-delay:${delay}s;">${s}</span>`;
     }
@@ -984,10 +1003,6 @@ async function initFeaturedArticles() {
           <img src="${featuredCover}" alt="${featuredPost.title}" loading="lazy">
         </div>
         <div class="feature-card-body">
-          <div class="mockup-section-tag">
-            <span class="mockup-tag-dot"></span>
-            <span>${featuredCategory} • SPOTLIGHT PUBLICATION</span>
-          </div>
           <h3 class="feature-card-title">
             <a href="/article?id=${encodeURIComponent(featuredPost.id)}" style="color:inherit; text-decoration:none;">${featuredPost.title}</a>
           </h3>
@@ -1016,10 +1031,6 @@ async function initFeaturedArticles() {
               <img src="${pCover}" alt="${p.title}" loading="lazy">
             </div>
             <div class="sub-card-body">
-              <div class="sub-card-tag">
-                <span class="mockup-tag-dot"></span>
-                <span>${pCategory}</span>
-              </div>
               <h4 class="sub-card-title">
                 <a href="/article?id=${encodeURIComponent(p.id)}" style="color:inherit; text-decoration:none;">${p.title}</a>
               </h4>
