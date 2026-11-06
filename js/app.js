@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBrandingAndNavbar();
   initHeroCustomization();
   initScrollRevealEffects();
-  initHoliFestiveTheme();
+  initFestiveSeasonalTheme();
   initCustomCursor();
   initCookieConsent();
   initMobileNav();
@@ -165,210 +165,256 @@ function initScrollRevealEffects() {
 }
 
 // =============================================================================
-// FESTIVE THEME ENGINE: HOLI COLOR PAINTS & SPLATTERS BEHIND CONTENT
+// FESTIVE THEMES ENGINE (Admin Controlled: Holi, Christmas, Cherry Blossom, Eid, Festival)
 // =============================================================================
-function initHoliFestiveTheme() {
+function initFestiveSeasonalTheme() {
   const festiveConfig = (window.CRII_API && window.CRII_API.getFestiveSettings)
     ? window.CRII_API.getFestiveSettings()
-    : { mode: "auto", theme: "holi", intensity: 0.70 };
+    : { mode: "always", theme: "holi", intensity: 0.70 };
 
   const urlParams = new URLSearchParams(window.location.search);
   const urlTheme = urlParams.get('theme') || urlParams.get('festive');
-  const userOverride = localStorage.getItem('crii_festive_override'); // 'holi' | 'off' | null
 
-  // Date check for Holi festival (Spring / late February or March)
+  // Calendar dates calculation for auto-detect
   const now = new Date();
-  const currentMonth = now.getMonth(); // 2 is March (0-indexed)
-  const isHoliSeason = (currentMonth === 1 && now.getDate() >= 20) || currentMonth === 2;
+  const month = now.getMonth(); // 0: Jan, 1: Feb, 2: Mar, 3: Apr, 4: May, ..., 11: Dec
+  const day = now.getDate();
 
-  let isHoliActive = false;
-  if (urlTheme === 'holi' || urlTheme === 'festival') {
-    isHoliActive = true;
-  } else if (urlTheme === 'default' || urlTheme === 'none') {
-    isHoliActive = false;
-  } else if (userOverride === 'holi') {
-    isHoliActive = true;
-  } else if (userOverride === 'off') {
-    isHoliActive = false;
-  } else if (festiveConfig.mode === 'always') {
-    isHoliActive = true;
-  } else if (festiveConfig.mode === 'disabled') {
-    isHoliActive = false;
-  } else if (festiveConfig.mode === 'auto') {
-    isHoliActive = isHoliSeason;
+  let detectedTheme = 'holi';
+  let isSeasonalActive = false;
+
+  if (month === 11 || (month === 0 && day <= 10)) {
+    // December or early January -> Christmas
+    detectedTheme = 'christmas';
+    isSeasonalActive = true;
+  } else if ((month === 1 && day >= 15) || month === 2) {
+    // Late February or March -> Holi / Spring
+    detectedTheme = 'holi';
+    isSeasonalActive = true;
+  } else if (month === 3 || month === 4) {
+    // April or May -> Cherry Blossom (Sakura)
+    detectedTheme = 'cherry-blossom';
+    isSeasonalActive = true;
   }
 
-  // Set intensity variable
+  // Target Theme Resolution
+  let activeTheme = festiveConfig.theme || 'holi';
+  let isFestiveActive = false;
+
+  if (urlTheme) {
+    if (urlTheme === 'none' || urlTheme === 'disabled') {
+      isFestiveActive = false;
+    } else {
+      isFestiveActive = true;
+      activeTheme = urlTheme;
+    }
+  } else if (festiveConfig.mode === 'always') {
+    isFestiveActive = true;
+    activeTheme = festiveConfig.theme || 'holi';
+  } else if (festiveConfig.mode === 'disabled') {
+    isFestiveActive = false;
+  } else if (festiveConfig.mode === 'auto') {
+    isFestiveActive = isSeasonalActive;
+    activeTheme = detectedTheme;
+  }
+
   const intensity = festiveConfig.intensity || 0.72;
   document.documentElement.style.setProperty('--festive-intensity', intensity);
 
-  function applyHoliMode(active) {
-    if (active) {
-      document.documentElement.classList.add('theme-holi');
-      document.body.classList.add('theme-holi');
-      injectHoliSplatters();
-    } else {
-      document.documentElement.classList.remove('theme-holi');
-      document.body.classList.remove('theme-holi');
-    }
+  // Clean previous theme classes
+  ['theme-festive-active', 'theme-holi', 'theme-christmas', 'theme-cherry-blossom', 'theme-eid', 'theme-festival']
+    .forEach(cls => {
+      document.documentElement.classList.remove(cls);
+      document.body.classList.remove(cls);
+    });
 
-    const pill = document.getElementById('holiPillToggle');
-    if (pill) {
-      pill.classList.toggle('is-active', active);
-      pill.innerHTML = `
-        <span class="holi-pill-icon">🎨</span>
-        <span>${active ? 'Holi Colors: ON' : 'Holi Colors'}</span>
-      `;
-    }
+  // Remove any obsolete legacy floating pill
+  const oldPill = document.getElementById('holiPillToggle');
+  if (oldPill) oldPill.remove();
+
+  if (!isFestiveActive) {
+    document.querySelectorAll('.festive-bg-layer, .holi-splatter-bg').forEach(el => el.remove());
+    return;
   }
 
-  function injectHoliSplatters() {
-    // Inject paint splatters behind sections if not already injected
-    const sectionsToDecorate = [
-      { selector: '.mockup-hero-section', variant: 1 },
-      { selector: '.mockup-editorial-section', variant: 3 },
-      { selector: '.mockup-divisions-section', variant: 2 },
-      { selector: '.mockup-cohort-section', variant: 2 },
-      { selector: '.mockup-repo-section', variant: 3 },
-      { selector: '.mockup-institute-section', variant: 1 }
+  // Activate theme classes
+  document.documentElement.classList.add('theme-festive-active', `theme-${activeTheme}`);
+  document.body.classList.add('theme-festive-active', `theme-${activeTheme}`);
+
+  injectFestiveElements(activeTheme);
+
+  function injectFestiveElements(theme) {
+    const sections = [
+      { sel: '.mockup-hero-section', variant: 1 },
+      { sel: '.mockup-editorial-section', variant: 2 },
+      { sel: '.mockup-divisions-section', variant: 3 },
+      { sel: '.mockup-cohort-section', variant: 2 },
+      { sel: '.mockup-repo-section', variant: 1 },
+      { sel: '.mockup-institute-section', variant: 3 }
     ];
 
-    sectionsToDecorate.forEach(secInfo => {
-      const sec = document.querySelector(secInfo.selector);
-      if (sec && !sec.querySelector('.holi-splatter-bg')) {
-        const splatterLayer = createHoliSplatterLayer(secInfo.variant);
-        sec.prepend(splatterLayer);
+    sections.forEach(s => {
+      const el = document.querySelector(s.sel);
+      if (el && !el.querySelector('.festive-bg-layer')) {
+        const layer = createFestiveLayer(theme, s.variant);
+        el.prepend(layer);
       }
     });
   }
 
-  function createHoliSplatterLayer(variant) {
+  function createFestiveLayer(theme, variant) {
     const layer = document.createElement('div');
-    layer.className = 'holi-splatter-bg';
+    layer.className = 'festive-bg-layer';
     layer.setAttribute('aria-hidden', 'true');
 
+    if (theme === 'holi') {
+      layer.innerHTML = buildHoliSplattersHtml(variant);
+    } else if (theme === 'christmas') {
+      layer.innerHTML = buildChristmasSnowHtml();
+    } else if (theme === 'cherry-blossom') {
+      layer.innerHTML = buildCherryBlossomHtml();
+    } else if (theme === 'eid') {
+      layer.innerHTML = buildEidHtml(variant);
+    } else {
+      layer.innerHTML = buildFestivalConfettiHtml();
+    }
+    return layer;
+  }
+
+  function buildHoliSplattersHtml(variant) {
     const defs = `
       <svg width="0" height="0" style="position:absolute; width:0; height:0;">
         <defs>
           <linearGradient id="holiGradPurple" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#9333ea" />
-            <stop offset="100%" stop-color="#6366f1" />
+            <stop offset="0%" stop-color="#9333ea" /><stop offset="100%" stop-color="#6366f1" />
           </linearGradient>
           <linearGradient id="holiGradCyan" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#00f2fe" />
-            <stop offset="100%" stop-color="#06b6d4" />
+            <stop offset="0%" stop-color="#00f2fe" /><stop offset="100%" stop-color="#06b6d4" />
           </linearGradient>
           <linearGradient id="holiGradPink" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ff2a85" />
-            <stop offset="100%" stop-color="#ec4899" />
+            <stop offset="0%" stop-color="#ff2a85" /><stop offset="100%" stop-color="#ec4899" />
           </linearGradient>
           <linearGradient id="holiGradLime" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#10b981" />
-            <stop offset="100%" stop-color="#84cc16" />
+            <stop offset="0%" stop-color="#10b981" /><stop offset="100%" stop-color="#84cc16" />
           </linearGradient>
           <linearGradient id="holiGradAmber" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fbbf24" />
-            <stop offset="100%" stop-color="#f59e0b" />
+            <stop offset="0%" stop-color="#fbbf24" /><stop offset="100%" stop-color="#f59e0b" />
+          </linearGradient>
+          <linearGradient id="holiGradBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563eb" /><stop offset="100%" stop-color="#38bdf8" />
+          </linearGradient>
+          <linearGradient id="holiGradOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff6b35" /><stop offset="100%" stop-color="#f59e0b" />
           </linearGradient>
         </defs>
       </svg>
     `;
 
-    let blobs = '';
     if (variant === 1) {
-      blobs = `
+      return defs + `
         <div class="holi-blob holi-blob-top-left">
-          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M380,140 C430,190 480,260 450,330 C420,400 340,460 270,480 C200,500 130,470 90,410 C50,350 30,270 70,200 C110,130 190,80 280,70 C330,65 350,90 380,140 Z" fill="url(#holiGradPurple)" fill-opacity="0.85"/>
-            <circle cx="110" cy="110" r="14" fill="url(#holiGradPurple)" fill-opacity="0.9"/>
-            <circle cx="440" cy="150" r="18" fill="url(#holiGradPurple)" fill-opacity="0.8"/>
-            <circle cx="470" cy="420" r="12" fill="url(#holiGradPurple)" fill-opacity="0.85"/>
-            <circle cx="80" cy="380" r="9" fill="url(#holiGradPurple)" fill-opacity="0.9"/>
-          </svg>
+          <svg viewBox="0 0 500 500" fill="none"><path d="M380,140 C430,190 480,260 450,330 C420,400 340,460 270,480 C200,500 130,470 90,410 C50,350 30,270 70,200 C110,130 190,80 280,70 C330,65 350,90 380,140 Z" fill="url(#holiGradPurple)" fill-opacity="0.85"/><circle cx="110" cy="110" r="14" fill="url(#holiGradPurple)"/><circle cx="440" cy="150" r="18" fill="url(#holiGradPurple)"/><circle cx="470" cy="420" r="12" fill="url(#holiGradPurple)"/></svg>
         </div>
         <div class="holi-blob holi-blob-mid-right">
-          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M360,120 C420,180 470,270 440,340 C410,410 320,450 250,470 C180,490 120,440 80,380 C40,320 50,230 90,170 C130,110 210,60 290,70 C330,75 340,90 360,120 Z" fill="url(#holiGradCyan)" fill-opacity="0.8"/>
-            <circle cx="430" cy="110" r="15" fill="url(#holiGradCyan)" fill-opacity="0.85"/>
-            <circle cx="120" cy="90" r="11" fill="url(#holiGradCyan)" fill-opacity="0.75"/>
-            <circle cx="460" cy="440" r="16" fill="url(#holiGradCyan)" fill-opacity="0.85"/>
-          </svg>
+          <svg viewBox="0 0 500 500" fill="none"><path d="M360,120 C420,180 470,270 440,340 C410,410 320,450 250,470 C180,490 120,440 80,380 C40,320 50,230 90,170 C130,110 210,60 290,70 C330,75 340,90 360,120 Z" fill="url(#holiGradCyan)" fill-opacity="0.85"/><circle cx="430" cy="110" r="15" fill="url(#holiGradCyan)"/><circle cx="120" cy="90" r="11" fill="url(#holiGradCyan)"/><circle cx="460" cy="440" r="16" fill="url(#holiGradCyan)"/></svg>
         </div>
       `;
     } else if (variant === 2) {
-      blobs = `
+      return defs + `
         <div class="holi-blob holi-blob-bottom-left">
-          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M390,150 C450,220 440,310 400,380 C360,450 280,490 200,480 C120,470 60,400 50,320 C40,240 80,160 140,110 C200,60 300,70 360,100 C380,110 380,130 390,150 Z" fill="url(#holiGradPink)" fill-opacity="0.82"/>
-            <circle cx="420" cy="120" r="16" fill="url(#holiGradPink)" fill-opacity="0.9"/>
-            <circle cx="80" cy="180" r="12" fill="url(#holiGradPink)" fill-opacity="0.85"/>
-            <circle cx="430" cy="450" r="14" fill="url(#holiGradPink)" fill-opacity="0.8"/>
-          </svg>
+          <svg viewBox="0 0 500 500" fill="none"><path d="M390,150 C450,220 440,310 400,380 C360,450 280,490 200,480 C120,470 60,400 50,320 C40,240 80,160 140,110 C200,60 300,70 360,100 C380,110 380,130 390,150 Z" fill="url(#holiGradPink)" fill-opacity="0.85"/><circle cx="420" cy="120" r="16" fill="url(#holiGradPink)"/><circle cx="80" cy="180" r="12" fill="url(#holiGradPink)"/><circle cx="430" cy="450" r="14" fill="url(#holiGradPink)"/></svg>
         </div>
         <div class="holi-blob holi-blob-mid-left">
-          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M340,130 C410,190 460,280 430,350 C400,420 310,460 230,470 C150,480 90,420 60,350 C30,280 40,200 80,140 C120,80 200,50 270,60 C310,65 320,90 340,130 Z" fill="url(#holiGradLime)" fill-opacity="0.8"/>
-            <circle cx="430" cy="140" r="14" fill="url(#holiGradLime)" fill-opacity="0.85"/>
-            <circle cx="100" cy="80" r="10" fill="url(#holiGradLime)" fill-opacity="0.8"/>
-          </svg>
+          <svg viewBox="0 0 500 500" fill="none"><path d="M340,130 C410,190 460,280 430,350 C400,420 310,460 230,470 C150,480 90,420 60,350 C30,280 40,200 80,140 C120,80 200,50 270,60 C310,65 320,90 340,130 Z" fill="url(#holiGradLime)" fill-opacity="0.85"/><circle cx="430" cy="140" r="14" fill="url(#holiGradLime)"/><circle cx="100" cy="80" r="10" fill="url(#holiGradLime)"/></svg>
         </div>
         <div class="holi-blob holi-blob-bottom-right">
-          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M360,140 C430,200 450,290 420,360 C390,430 310,470 230,460 C150,450 80,390 60,320 C40,250 60,170 110,120 C160,70 250,50 310,70 C340,80 350,110 360,140 Z" fill="url(#holiGradAmber)" fill-opacity="0.75"/>
-            <circle cx="440" cy="200" r="15" fill="url(#holiGradAmber)" fill-opacity="0.8"/>
-            <circle cx="90" cy="140" r="12" fill="url(#holiGradAmber)" fill-opacity="0.85"/>
-          </svg>
+          <svg viewBox="0 0 500 500" fill="none"><path d="M360,140 C430,200 450,290 420,360 C390,430 310,470 230,460 C150,450 80,390 60,320 C40,250 60,170 110,120 C160,70 250,50 310,70 C340,80 350,110 360,140 Z" fill="url(#holiGradOrange)" fill-opacity="0.8"/><circle cx="440" cy="200" r="15" fill="url(#holiGradOrange)"/><circle cx="90" cy="140" r="12" fill="url(#holiGradOrange)"/></svg>
         </div>
       `;
     } else {
-      blobs = `
+      return defs + `
         <div class="holi-blob holi-blob-top-left">
-          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M350,120 C420,180 450,270 420,340 C390,410 310,460 230,470 C150,480 80,420 50,350 C20,280 40,190 90,130 C140,70 220,50 290,60 C320,65 340,90 350,120 Z" fill="url(#holiGradCyan)" fill-opacity="0.8"/>
-            <circle cx="430" cy="130" r="14" fill="url(#holiGradCyan)" fill-opacity="0.85"/>
-          </svg>
+          <svg viewBox="0 0 500 500" fill="none"><path d="M350,120 C420,180 450,270 420,340 C390,410 310,460 230,470 C150,480 80,420 50,350 C20,280 40,190 90,130 C140,70 220,50 290,60 C320,65 340,90 350,120 Z" fill="url(#holiGradBlue)" fill-opacity="0.85"/><circle cx="430" cy="130" r="14" fill="url(#holiGradBlue)"/><circle cx="90" cy="100" r="10" fill="url(#holiGradBlue)"/></svg>
         </div>
         <div class="holi-blob holi-blob-bottom-right">
-          <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M380,150 C440,220 450,310 410,380 C370,450 290,480 210,470 C130,460 70,390 60,320 C50,250 80,170 130,120 C180,70 270,60 330,80 C360,90 370,120 380,150 Z" fill="url(#holiGradPurple)" fill-opacity="0.82"/>
-            <circle cx="100" cy="120" r="12" fill="url(#holiGradPurple)" fill-opacity="0.85"/>
-          </svg>
+          <svg viewBox="0 0 500 500" fill="none"><path d="M380,150 C440,220 450,310 410,380 C370,450 290,480 210,470 C130,460 70,390 60,320 C50,250 80,170 130,120 C180,70 270,60 330,80 C360,90 370,120 380,150 Z" fill="url(#holiGradAmber)" fill-opacity="0.82"/><circle cx="100" cy="120" r="12" fill="url(#holiGradAmber)"/><circle cx="440" cy="180" r="15" fill="url(#holiGradAmber)"/></svg>
         </div>
       `;
     }
-
-    layer.innerHTML = defs + blobs;
-    return layer;
   }
 
-  // Create or attach celebratory pill button
-  if (!document.getElementById('holiPillToggle')) {
-    const pill = document.createElement('button');
-    pill.type = 'button';
-    pill.id = 'holiPillToggle';
-    pill.className = `holi-pill-toggle ${isHoliActive ? 'is-active' : ''}`;
-    pill.title = 'Click to toggle Holi Festival of Colors paint theme';
-    pill.innerHTML = `
-      <span class="holi-pill-icon">🎨</span>
-      <span>${isHoliActive ? 'Holi Colors: ON' : 'Holi Colors'}</span>
+  function buildChristmasSnowHtml() {
+    let items = `
+      <div class="christmas-glow-orb" style="top:-60px; right:10%; width:380px; height:380px; background:radial-gradient(circle, rgba(5,150,105,0.22) 0%, transparent 70%);"></div>
+      <div class="christmas-glow-orb" style="bottom:-80px; left:5%; width:420px; height:420px; background:radial-gradient(circle, rgba(220,38,38,0.18) 0%, transparent 70%);"></div>
+      <div class="christmas-glow-orb" style="top:40%; left:30%; width:300px; height:300px; background:radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%);"></div>
     `;
-
-    pill.addEventListener('click', () => {
-      const nowActive = !document.documentElement.classList.contains('theme-holi');
-      localStorage.setItem('crii_festive_override', nowActive ? 'holi' : 'off');
-      applyHoliMode(nowActive);
-      if (window.showToast) {
-        window.showToast(
-          nowActive ? '🎉 Holi Festival of Colors theme enabled!' : 'Holi theme disabled',
-          nowActive ? 'success' : 'info'
-        );
-      }
-    });
-
-    document.body.appendChild(pill);
+    const snowflakes = ['❄', '❅', '✻', '•', '❆', '❄'];
+    for (let i = 0; i < 22; i++) {
+      const left = Math.round(Math.random() * 96);
+      const dur = (7 + Math.random() * 9).toFixed(1);
+      const delay = (Math.random() * 8).toFixed(1);
+      const size = (0.75 + Math.random() * 0.95).toFixed(2);
+      const flake = snowflakes[i % snowflakes.length];
+      items += `<span class="festive-snow-item" style="left:${left}%; font-size:${size}rem; animation-duration:${dur}s; animation-delay:${delay}s;">${flake}</span>`;
+    }
+    return items;
   }
 
-  applyHoliMode(isHoliActive);
+  function buildCherryBlossomHtml() {
+    let items = `
+      <div class="christmas-glow-orb" style="top:-50px; left:10%; width:440px; height:440px; background:radial-gradient(circle, rgba(244,63,94,0.22) 0%, transparent 70%);"></div>
+      <div class="christmas-glow-orb" style="bottom:-60px; right:8%; width:460px; height:460px; background:radial-gradient(circle, rgba(251,113,133,0.20) 0%, transparent 70%);"></div>
+    `;
+    const petals = ['🌸', '🌸', '💮'];
+    for (let i = 0; i < 18; i++) {
+      const left = Math.round(Math.random() * 94);
+      const dur = (8 + Math.random() * 8).toFixed(1);
+      const delay = (Math.random() * 7).toFixed(1);
+      const size = (0.85 + Math.random() * 0.7).toFixed(2);
+      const p = petals[i % petals.length];
+      items += `<span class="festive-sakura-petal" style="left:${left}%; font-size:${size}rem; animation-duration:${dur}s; animation-delay:${delay}s;">${p}</span>`;
+    }
+    return items;
+  }
+
+  function buildEidHtml(variant) {
+    let items = `
+      <div class="festive-eid-crescent">🌙</div>
+      <div class="christmas-glow-orb" style="top:-40px; right:15%; width:480px; height:480px; background:radial-gradient(circle, rgba(16,185,129,0.24) 0%, transparent 70%);"></div>
+      <div class="christmas-glow-orb" style="bottom:-60px; left:8%; width:450px; height:450px; background:radial-gradient(circle, rgba(245,158,11,0.20) 0%, transparent 70%);"></div>
+    `;
+    const stars = ['✨', '⭐', '✦', '★'];
+    for (let i = 0; i < 18; i++) {
+      const top = Math.round(5 + Math.random() * 85);
+      const left = Math.round(3 + Math.random() * 92);
+      const dur = (2 + Math.random() * 3).toFixed(1);
+      const delay = (Math.random() * 4).toFixed(1);
+      const size = (0.7 + Math.random() * 0.8).toFixed(2);
+      const s = stars[i % stars.length];
+      items += `<span class="festive-star" style="top:${top}%; left:${left}%; font-size:${size}rem; animation-duration:${dur}s; animation-delay:${delay}s;">${s}</span>`;
+    }
+    return items;
+  }
+
+  function buildFestivalConfettiHtml() {
+    let items = `
+      <div class="christmas-glow-orb" style="top:10%; left:20%; width:400px; height:400px; background:radial-gradient(circle, rgba(236,72,153,0.18) 0%, transparent 70%);"></div>
+      <div class="christmas-glow-orb" style="bottom:10%; right:15%; width:420px; height:420px; background:radial-gradient(circle, rgba(6,182,212,0.18) 0%, transparent 70%);"></div>
+    `;
+    const colors = ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#3b82f6', '#f43f5e'];
+    for (let i = 0; i < 28; i++) {
+      const left = Math.round(Math.random() * 95);
+      const dur = (5 + Math.random() * 7).toFixed(1);
+      const delay = (Math.random() * 6).toFixed(1);
+      const w = Math.round(8 + Math.random() * 10);
+      const h = Math.round(12 + Math.random() * 12);
+      const col = colors[i % colors.length];
+      const rad = Math.random() > 0.5 ? '2px' : '50%';
+      items += `<div class="festive-confetti-piece" style="left:${left}%; width:${w}px; height:${h}px; background:${col}; border-radius:${rad}; animation-duration:${dur}s; animation-delay:${delay}s;"></div>`;
+    }
+    return items;
+  }
 }
 
 // 1. Theme Engine (Default: Light Mode)

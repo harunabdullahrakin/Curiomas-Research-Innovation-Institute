@@ -1787,6 +1787,9 @@ function initInstituteSettings() {
       }
       localStorage.setItem('crii_emailjs_template_id', val);
       try {
+        if (window.CRII_API && typeof window.CRII_API.saveEmailjsTemplateId === 'function') {
+          await window.CRII_API.saveEmailjsTemplateId(val);
+        }
         const current = (window.CRII_API && typeof window.CRII_API.getInstituteSettings === 'function') ? window.CRII_API.getInstituteSettings() : {};
         if (window.CRII_API && typeof window.CRII_API.saveInstituteSettings === 'function') {
           await window.CRII_API.saveInstituteSettings({
@@ -1803,19 +1806,23 @@ function initInstituteSettings() {
 }
 
 // -----------------------------------------------------------------------------
-// FESTIVE THEMES & HOLI COLOR PAINTS SETTINGS
+// FESTIVE THEMES & GLOBAL SEASONAL EFFECTS SETTINGS
 // -----------------------------------------------------------------------------
 function initFestiveSettings() {
   const festiveConfig = (window.CRII_API && window.CRII_API.getFestiveSettings)
     ? window.CRII_API.getFestiveSettings()
-    : { mode: "auto", theme: "holi", intensity: 0.70 };
+    : { mode: "always", theme: "holi", intensity: 0.70 };
 
+  const themeSelect = document.getElementById('settingFestiveTheme');
   const modeSelect = document.getElementById('settingFestiveMode');
   const intensitySlider = document.getElementById('settingFestiveIntensity');
   const intensityBadge = document.getElementById('festiveIntensityBadge');
   const previewLayer = document.getElementById('previewSplatterLayer');
+  const cardTitle = document.getElementById('previewCardTitle');
+  const cardDesc = document.getElementById('previewCardDesc');
 
-  if (modeSelect) modeSelect.value = festiveConfig.mode || "auto";
+  if (themeSelect) themeSelect.value = festiveConfig.theme || "holi";
+  if (modeSelect) modeSelect.value = festiveConfig.mode || "always";
   if (intensitySlider) {
     const val = Math.round((festiveConfig.intensity !== undefined ? festiveConfig.intensity : 0.70) * 100);
     intensitySlider.value = val;
@@ -1823,13 +1830,66 @@ function initFestiveSettings() {
   }
 
   function updatePreview() {
+    const selectedTheme = themeSelect ? themeSelect.value : 'holi';
     const intensity = intensitySlider ? Number(intensitySlider.value) : 70;
     if (intensityBadge) intensityBadge.innerText = `${intensity}%`;
     if (previewLayer) {
       previewLayer.style.opacity = intensity / 100;
+
+      if (selectedTheme === 'holi') {
+        if (cardTitle) cardTitle.innerText = "🎨 Festival of Colors";
+        if (cardDesc) cardDesc.innerText = "Vibrant multi-color paint splashes & fluid splatters.";
+        previewLayer.innerHTML = `
+          <div style="position: absolute; top: -20px; left: -20px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, #9333ea 0%, rgba(99, 102, 241, 0) 70%); filter: blur(10px);"></div>
+          <div style="position: absolute; bottom: -20px; right: -20px; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, #00f2fe 0%, rgba(6, 182, 212, 0) 70%); filter: blur(10px);"></div>
+          <div style="position: absolute; top: 10px; right: 20px; width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle, #ff2a85 0%, rgba(236, 72, 153, 0) 70%); filter: blur(10px);"></div>
+          <div style="position: absolute; bottom: 0; left: 20px; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #10b981 0%, rgba(132, 204, 22, 0) 70%); filter: blur(10px);"></div>
+        `;
+      } else if (selectedTheme === 'christmas') {
+        if (cardTitle) cardTitle.innerText = "❄️ Christmas Holiday";
+        if (cardDesc) cardDesc.innerText = "Gentle falling snowflakes, winter frost & pine glow.";
+        previewLayer.innerHTML = `
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.25) 0%, transparent 60%), radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.25) 0%, transparent 60%);"></div>
+          <div style="position: absolute; top: 15px; left: 25px; font-size: 1.4rem; color: #fff; text-shadow: 0 0 10px #fff;">❄</div>
+          <div style="position: absolute; top: 40px; right: 35px; font-size: 1.1rem; color: #fff;">❅</div>
+          <div style="position: absolute; bottom: 20px; left: 70px; font-size: 1.3rem; color: #fff;">❄</div>
+          <div style="position: absolute; bottom: 30px; right: 20px; font-size: 1.5rem; color: #fbbf24;">✨</div>
+        `;
+      } else if (selectedTheme === 'cherry-blossom') {
+        if (cardTitle) cardTitle.innerText = "🌸 Cherry Blossom (Sakura)";
+        if (cardDesc) cardDesc.innerText = "Floating soft pink sakura petals & spring rose aura.";
+        previewLayer.innerHTML = `
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.25) 0%, transparent 70%);"></div>
+          <div style="position: absolute; top: 15px; left: 30px; font-size: 1.4rem;">🌸</div>
+          <div style="position: absolute; top: 35px; right: 30px; font-size: 1.1rem;">🌸</div>
+          <div style="position: absolute; bottom: 20px; left: 45%; font-size: 1.3rem;">🌸</div>
+        `;
+      } else if (selectedTheme === 'eid') {
+        if (cardTitle) cardTitle.innerText = "🌙 Eid Mubarak";
+        if (cardDesc) cardDesc.innerText = "Crescent moon, geometric stars & emerald aura.";
+        previewLayer.innerHTML = `
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle at 75% 20%, rgba(16, 185, 129, 0.35) 0%, transparent 65%), radial-gradient(circle at 25% 75%, rgba(245, 158, 11, 0.25) 0%, transparent 60%);"></div>
+          <div style="position: absolute; top: 15px; right: 30px; font-size: 2.2rem; color: #fbbf24; text-shadow: 0 0 20px #fbbf24;">🌙</div>
+          <div style="position: absolute; top: 25px; left: 35px; font-size: 1.2rem; color: #fbbf24;">✨</div>
+          <div style="position: absolute; bottom: 25px; left: 60px; font-size: 1.1rem; color: #fbbf24;">⭐</div>
+          <div style="position: absolute; bottom: 20px; right: 50px; font-size: 1.3rem; color: #fbbf24;">✨</div>
+        `;
+      } else {
+        if (cardTitle) cardTitle.innerText = "🎉 Festival / Carnival";
+        if (cardDesc) cardDesc.innerText = "Celebratory ribbons, multi-color confetti & sparkles.";
+        previewLayer.innerHTML = `
+          <div style="position: absolute; top: 20px; left: 25px; width: 10px; height: 16px; background: #ec4899; transform: rotate(25deg);"></div>
+          <div style="position: absolute; top: 40px; right: 40px; width: 14px; height: 10px; background: #06b6d4; transform: rotate(-35deg);"></div>
+          <div style="position: absolute; bottom: 25px; left: 50px; width: 12px; height: 12px; background: #fbbf24; transform: rotate(15deg);"></div>
+          <div style="position: absolute; bottom: 35px; right: 30px; width: 8px; height: 18px; background: #10b981; transform: rotate(45deg);"></div>
+          <div style="position: absolute; top: 15px; right: 80px; font-size: 1.3rem;">✨</div>
+        `;
+      }
     }
   }
 
+  if (themeSelect) themeSelect.addEventListener('change', updatePreview);
+  if (modeSelect) modeSelect.addEventListener('change', updatePreview);
   if (intensitySlider) intensitySlider.addEventListener('input', updatePreview);
   updatePreview();
 
@@ -1837,16 +1897,17 @@ function initFestiveSettings() {
   if (form) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const mode = modeSelect ? modeSelect.value : 'auto';
+      const theme = themeSelect ? themeSelect.value : 'holi';
+      const mode = modeSelect ? modeSelect.value : 'always';
       const intensity = intensitySlider ? Number(intensitySlider.value) / 100 : 0.70;
 
       await window.CRII_API.saveFestiveSettings({
         mode,
-        theme: "holi",
+        theme,
         intensity
       });
 
-      window.showToast('Festive theme & Holi settings saved to database!', 'success');
+      window.showToast('Global festive theme updated! Effects will display for all visitors.', 'success');
     });
   }
 }

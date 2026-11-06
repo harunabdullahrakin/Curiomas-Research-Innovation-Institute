@@ -2711,29 +2711,17 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 /* ==========================================================================
-   FESTIVE & SEASONAL THEMES ENGINE (HOLI COLOR PAINTS & SPLATTERS)
-   Inspired by festive, vibrant organic paint splashes behind content cards
+   FESTIVE & SEASONAL THEMES ENGINE
+   Themes: Holi (Color Paints), Christmas (Snow), Cherry Blossom (Sakura), Eid, Festival/Carnival
+   Controlled globally by Administrators in the Dashboard
    ========================================================================== */
 
 :root {
   --festive-intensity: 0.72;
 }
 
-/* Holi Mode Global Variables */
-.theme-holi {
-  --holi-purple: #8b5cf6;
-  --holi-purple-glow: rgba(139, 92, 246, 0.45);
-  --holi-cyan: #06b6d4;
-  --holi-cyan-glow: rgba(6, 182, 212, 0.45);
-  --holi-pink: #ec4899;
-  --holi-pink-glow: rgba(236, 72, 153, 0.45);
-  --holi-lime: #10b981;
-  --holi-lime-glow: rgba(16, 185, 129, 0.45);
-  --holi-amber: #f59e0b;
-  --holi-amber-glow: rgba(245, 158, 11, 0.45);
-}
-
-/* Background Splatters Container Behind Content */
+/* Background Splatters & Particle Container Behind Content */
+.festive-bg-layer,
 .holi-splatter-bg {
   display: none;
   position: absolute;
@@ -2745,11 +2733,13 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   transition: opacity 0.5s ease;
 }
 
+.theme-festive-active .festive-bg-layer,
+.theme-festive-active .holi-splatter-bg,
 .theme-holi .holi-splatter-bg {
   display: block;
 }
 
-/* Ensure sections contain the splatters properly */
+/* Ensure sections contain the festive effects properly */
 .mockup-hero-section,
 .mockup-editorial-section,
 .mockup-institute-section,
@@ -2764,13 +2754,68 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   overflow: hidden;
 }
 
-/* Elevate main container above the splatters */
 .mockup-container {
   position: relative;
   z-index: 2;
 }
 
-/* Organic Paint Splatter Blobs & Drips */
+/* Card Glassmorphism across all festive themes */
+.theme-festive-active .division-card,
+.theme-festive-active .cohort-card,
+.theme-festive-active .editorial-post-card,
+.theme-festive-active .editorial-spotlight-card,
+.theme-festive-active .feature-card,
+.theme-festive-active .repo-card,
+.theme-festive-active .mockup-mentor-card,
+.theme-festive-active .data-table-card,
+.theme-holi .division-card,
+.theme-holi .cohort-card,
+.theme-holi .editorial-post-card,
+.theme-holi .editorial-spotlight-card,
+.theme-holi .feature-card,
+.theme-holi .repo-card,
+.theme-holi .mockup-mentor-card,
+.theme-holi .data-table-card {
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.2s ease !important;
+}
+
+[data-theme="dark"].theme-festive-active .division-card,
+[data-theme="dark"].theme-festive-active .cohort-card,
+[data-theme="dark"].theme-festive-active .editorial-post-card,
+[data-theme="dark"].theme-festive-active .feature-card,
+[data-theme="dark"].theme-festive-active .repo-card,
+[data-theme="dark"].theme-festive-active .data-table-card,
+[data-theme="dark"].theme-holi .division-card,
+[data-theme="dark"].theme-holi .cohort-card,
+[data-theme="dark"].theme-holi .editorial-post-card,
+[data-theme="dark"].theme-holi .feature-card,
+[data-theme="dark"].theme-holi .repo-card,
+[data-theme="dark"].theme-holi .data-table-card {
+  background: rgba(14, 20, 36, 0.72) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.5) !important;
+}
+
+.theme-festive-active:not([data-theme="dark"]) .division-card,
+.theme-festive-active:not([data-theme="dark"]) .cohort-card,
+.theme-festive-active:not([data-theme="dark"]) .editorial-post-card,
+.theme-festive-active:not([data-theme="dark"]) .feature-card,
+.theme-festive-active:not([data-theme="dark"]) .repo-card,
+.theme-festive-active:not([data-theme="dark"]) .data-table-card,
+.theme-holi:not([data-theme="dark"]) .division-card,
+.theme-holi:not([data-theme="dark"]) .cohort-card,
+.theme-holi:not([data-theme="dark"]) .editorial-post-card,
+.theme-holi:not([data-theme="dark"]) .feature-card,
+.theme-holi:not([data-theme="dark"]) .repo-card,
+.theme-holi:not([data-theme="dark"]) .data-table-card {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(226, 232, 240, 0.85) !important;
+  box-shadow: 0 14px 30px -8px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 1. HOLI THEME STYLES (Paint Blobs & Sprays) */
 .holi-blob {
   position: absolute;
   pointer-events: none;
@@ -2784,7 +2829,6 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   height: 100%;
 }
 
-/* Position Variants */
 .holi-blob-top-left {
   top: -80px;
   left: -80px;
@@ -2825,7 +2869,6 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   animation: holiFloat1 16s ease-in-out infinite alternate;
 }
 
-/* Splatter Keyframe Animations for Floating & Gentle Pulse */
 @keyframes holiFloat1 {
   0% { transform: translate(0, 0) rotate(0deg) scale(1); }
   50% { transform: translate(25px, -18px) rotate(4deg) scale(1.05); }
@@ -2844,100 +2887,130 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   100% { transform: translate(-20px, -20px) rotate(-4deg) scale(1.06); }
 }
 
-/* Card Glassmorphism in Holi Mode (colors glow softly behind frosted cards) */
-.theme-holi .division-card,
-.theme-holi .cohort-card,
-.theme-holi .editorial-post-card,
-.theme-holi .editorial-spotlight-card,
-.theme-holi .feature-card,
-.theme-holi .repo-card,
-.theme-holi .mockup-mentor-card,
-.theme-holi .data-table-card {
-  backdrop-filter: blur(16px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.2s ease !important;
-}
-
-[data-theme="dark"].theme-holi .division-card,
-[data-theme="dark"].theme-holi .cohort-card,
-[data-theme="dark"].theme-holi .editorial-post-card,
-[data-theme="dark"].theme-holi .feature-card,
-[data-theme="dark"].theme-holi .repo-card,
-[data-theme="dark"].theme-holi .data-table-card {
-  background: rgba(14, 20, 36, 0.72) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.08) !important;
-}
-
-.theme-holi:not([data-theme="dark"]) .division-card,
-.theme-holi:not([data-theme="dark"]) .cohort-card,
-.theme-holi:not([data-theme="dark"]) .editorial-post-card,
-.theme-holi:not([data-theme="dark"]) .feature-card,
-.theme-holi:not([data-theme="dark"]) .repo-card,
-.theme-holi:not([data-theme="dark"]) .data-table-card {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-color: rgba(226, 232, 240, 0.85) !important;
-  box-shadow: 0 14px 30px -8px rgba(0, 0, 0, 0.08), 0 0 16px rgba(236, 72, 153, 0.06) !important;
-}
-
-/* Floating Celebratory Holi Theme Pill */
-.holi-pill-toggle {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 1rem;
-  background: rgba(14, 20, 36, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* 2. CHRISTMAS THEME (Falling Snowflakes & Winter Aurora) */
+.festive-snow-item {
+  position: absolute;
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 9999px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 12px rgba(236, 72, 153, 0.35);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   user-select: none;
+  pointer-events: none;
+  animation: snowFall linear infinite;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 16px rgba(56, 189, 248, 0.4);
 }
 
-.holi-pill-toggle:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4), 0 0 18px rgba(6, 182, 212, 0.5);
-  border-color: rgba(255, 255, 255, 0.3);
+@keyframes snowFall {
+  0% {
+    transform: translateY(-20px) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(105vh) translateX(40px) rotate(360deg);
+    opacity: 0;
+  }
 }
 
-.holi-pill-toggle.is-active {
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.9) 0%, rgba(139, 92, 246, 0.9) 50%, rgba(6, 182, 212, 0.9) 100%);
-  border-color: rgba(255, 255, 255, 0.4);
+.christmas-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+  animation: festiveGlowPulse 12s ease-in-out infinite alternate;
 }
 
-.holi-pill-icon {
-  font-size: 1.05rem;
-  display: inline-block;
-  animation: holiIconSpin 8s linear infinite;
+/* 3. CHERRY BLOSSOM THEME (Sakura Petals & Spring Rose Aura) */
+.festive-sakura-petal {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  animation: sakuraDrift linear infinite;
+  filter: drop-shadow(0 4px 6px rgba(244, 63, 94, 0.25));
 }
 
-@keyframes holiIconSpin {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(15deg); }
-  75% { transform: rotate(-15deg); }
-  100% { transform: rotate(0deg); }
+@keyframes sakuraDrift {
+  0% {
+    transform: translateY(-30px) translateX(0) rotate(0deg) scale(0.9);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.95;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(105vh) translateX(90px) rotate(420deg) scale(1.05);
+    opacity: 0;
+  }
+}
+
+/* 4. EID THEME (Crescent Moon, Geometric Stars & Emerald Gold Aura) */
+.festive-eid-crescent {
+  position: absolute;
+  top: 25px;
+  right: 5%;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: #fbbf24;
+  filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.65)) drop-shadow(0 0 40px rgba(16, 185, 129, 0.35));
+  animation: crescentBreathe 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes crescentBreathe {
+  0% { transform: scale(1) rotate(-8deg); filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.5)); }
+  100% { transform: scale(1.08) rotate(-4deg); filter: drop-shadow(0 0 28px rgba(251, 191, 36, 0.85)); }
+}
+
+.festive-star {
+  position: absolute;
+  color: #fbbf24;
+  pointer-events: none;
+  animation: starTwinkle ease-in-out infinite alternate;
+}
+
+@keyframes starTwinkle {
+  0% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(45deg); filter: drop-shadow(0 0 10px #fbbf24); }
+  100% { opacity: 0.3; transform: scale(0.8) rotate(90deg); }
+}
+
+/* 5. FESTIVAL / CARNIVAL THEME (Celebratory Confetti & Ribbons) */
+.festive-confetti-piece {
+  position: absolute;
+  pointer-events: none;
+  animation: confettiFall linear infinite;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotateX(0deg) rotateY(0deg) rotate(0deg);
+    opacity: 0;
+  }
+  10% { opacity: 1; }
+  90% { opacity: 0.9; }
+  100% {
+    transform: translateY(105vh) rotateX(720deg) rotateY(540deg) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes festiveGlowPulse {
+  0% { transform: scale(1); opacity: 0.45; }
+  50% { transform: scale(1.15); opacity: 0.75; }
+  100% { transform: scale(0.95); opacity: 0.5; }
 }
 
 @media (max-width: 768px) {
   .holi-blob-top-left { width: 300px; height: 300px; top: -50px; left: -50px; }
   .holi-blob-mid-right { width: 320px; height: 320px; right: -60px; }
   .holi-blob-bottom-left { width: 280px; height: 280px; bottom: -50px; }
-  .holi-pill-toggle {
-    bottom: 18px;
-    right: 18px;
-    padding: 0.45rem 0.85rem;
-    font-size: 0.76rem;
-  }
+  .festive-eid-crescent { font-size: 2.25rem; right: 4%; top: 15px; }
 }
 
 /* ==========================================================================

@@ -21,9 +21,18 @@ const DEFAULT_SETTINGS = {
   divisions: [],
   cohorts: [],
   festive: {
-    mode: "auto", // "auto" (activates during Holi dates), "always", or "disabled"
-    theme: "holi", // "holi" (Festival of Colors paint splatters)
+    mode: "auto", // "auto", "always", or "disabled"
+    theme: "holi", // "holi", "christmas", "cherry-blossom", "eid", "festival"
     intensity: 0.70 // 0.20 to 1.00
+  },
+  emailjs: {
+    templateId: "zhelx7y"
+  },
+  branding: {
+    name: "Curiomas Research & Innovation Institute",
+    logoUrl: "",
+    autzAppId: "",
+    emailjsTemplateId: "zhelx7y"
   },
   navbar: {
     title: "Curiomas Research & Innovation Institute",

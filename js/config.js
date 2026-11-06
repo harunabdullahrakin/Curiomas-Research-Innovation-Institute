@@ -215,11 +215,17 @@ class CriiApiClient {
         if (settings && settings.festive) {
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.FESTIVE_SETTINGS, JSON.stringify(settings.festive));
         }
+        if (settings && settings.emailjs && settings.emailjs.templateId) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.EMAILJS_TEMPLATE_ID, settings.emailjs.templateId);
+        }
         if (settings && settings.branding) {
           if (settings.branding.name) localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_NAME, settings.branding.name);
           if (settings.branding.logoUrl) localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_LOGO, settings.branding.logoUrl);
           if (settings.branding.autzAppId && settings.branding.autzAppId !== "t0i7jkia") {
             localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID, settings.branding.autzAppId);
+          }
+          if (settings.branding.emailjsTemplateId) {
+            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.EMAILJS_TEMPLATE_ID, settings.branding.emailjsTemplateId);
           }
         }
       }
@@ -372,6 +378,26 @@ class CriiApiClient {
     return sanitized;
   }
 
+  async saveEmailjsTemplateId(id) {
+    if (!id || typeof id !== 'string') return;
+    const sanitized = this.setEmailjsTemplateId(id);
+    try {
+      const user = this.getCurrentUser();
+      await fetch(`${CRII_CONFIG.API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: "emailjs",
+          value: { templateId: sanitized },
+          updatedBy: user ? (user.name || user.email) : "Administrator"
+        })
+      });
+    } catch (e) {
+      console.warn("Failed to sync emailjs settings to D1:", e);
+    }
+    return sanitized;
+  }
+
   getInstituteSettings() {
     return {
       name: this.getInstituteName(),
@@ -398,11 +424,17 @@ class CriiApiClient {
           value: {
             name: this.getInstituteName(),
             logoUrl: this.getInstituteLogo(),
-            autzAppId: this.getAutzAppId()
+            autzAppId: this.getAutzAppId(),
+            emailjsTemplateId: this.getEmailjsTemplateId()
           },
           updatedBy: user ? (user.name || user.email) : "Administrator"
         })
       });
+
+      // Also persist direct emailjs key
+      if (settings.emailjsTemplateId) {
+        await this.saveEmailjsTemplateId(settings.emailjsTemplateId);
+      }
     } catch (e) {
       console.warn("Failed to sync branding settings to D1:", e);
     }

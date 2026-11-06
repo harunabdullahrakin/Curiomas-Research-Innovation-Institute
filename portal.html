@@ -1058,64 +1058,75 @@
             </form>
           </div>
 
-          <!-- 3. Festive Themes & Holi Color Paints Engine -->
+          <!-- 3. Festive Themes & Seasonal Effects Engine -->
           <div class="data-table-card" style="padding: 2rem;">
             <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
               <span>🎨</span>
-              <span>Festive Themes & Holi Color Paints</span>
+              <span>Festive Themes & Global Seasonal Effects</span>
             </h3>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
-              Enable celebratory, vibrant organic paint splatters behind sections and cards during festivals like Holi.
+              Enable celebratory, vibrant themes behind website content sections. Managed exclusively by administrators to effect all visitors globally.
             </p>
 
             <form id="festiveSettingsForm">
               <div class="form-group" style="margin-bottom: 1.25rem;">
-                <label class="form-label" for="settingFestiveMode">Festive Mode</label>
+                <label class="form-label" for="settingFestiveTheme">Active Festive Theme</label>
+                <select id="settingFestiveTheme" class="form-input">
+                  <option value="holi">🎨 Holi (Festival of Colors & Multi-Color Paint Splatters)</option>
+                  <option value="christmas">❄️ Christmas (Winter Snowfall, Frost & Pine Gold Glow)</option>
+                  <option value="cherry-blossom">🌸 Cherry Blossom (Sakura Petals & Spring Rose Aura)</option>
+                  <option value="eid">🌙 Eid (Crescent Moon, Golden Stars & Emerald Aurora)</option>
+                  <option value="festival">🎉 Festival / Carnival (Celebratory Confetti & Ribbons)</option>
+                </select>
+                <span style="font-size: 0.74rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">
+                  Choose the visual experience rendered behind cards and content across the website.
+                </span>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label" for="settingFestiveMode">Festive Status Mode</label>
                 <select id="settingFestiveMode" class="form-input">
-                  <option value="auto">Auto-Detect (Active during Holi / Festival period)</option>
-                  <option value="always">Always Active (Force ON year-round)</option>
+                  <option value="always">Always Active (Force ON for all visitors)</option>
+                  <option value="auto">Auto-Detect (Active dynamically during festival dates)</option>
                   <option value="disabled">Disabled (Clean scientific default)</option>
                 </select>
                 <span style="font-size: 0.74rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">
-                  When active, vibrant fluid paint splashes peek out from behind content cards with smooth animations.
+                  "Always Active" enables the selected theme year-round. "Auto-Detect" turns it on during seasonal dates.
                 </span>
               </div>
 
               <div class="form-group" style="margin-bottom: 1.25rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                  <label class="form-label" for="settingFestiveIntensity" style="margin: 0;">Paint Splatter Intensity</label>
+                  <label class="form-label" for="settingFestiveIntensity" style="margin: 0;">Effect Vibrancy & Intensity</label>
                   <span id="festiveIntensityBadge" style="font-weight: 700; color: var(--accent-primary); font-size: 0.88rem;">70%</span>
                 </div>
                 <input type="range" id="settingFestiveIntensity" min="20" max="100" step="5" value="70" style="width: 100%; accent-color: var(--accent-primary);">
                 <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted);">
-                  <span>20% (Subtle Tints)</span>
+                  <span>20% (Subtle Glow)</span>
                   <span>70% (Balanced Vibrancy)</span>
                   <span>100% (Maximum Richness)</span>
                 </div>
               </div>
 
-              <!-- Live Preview of Holi Frosted Card on Paint Splatter -->
+              <!-- Live Preview of Frosted Card on Festive Theme -->
               <div style="margin-top: 1.5rem;">
-                <label class="form-label">Live Splatter & Card Preview</label>
-                <div id="festiveLivePreviewStage" style="position: relative; overflow: hidden; min-height: 140px; border-radius: 8px; background: #070a13; padding: 1.25rem; display: flex; align-items: center; justify-content: center;">
-                  <!-- Preview paint blobs -->
+                <label class="form-label">Live Appearance Preview</label>
+                <div id="festiveLivePreviewStage" style="position: relative; overflow: hidden; min-height: 145px; border-radius: 8px; background: #070a13; padding: 1.25rem; display: flex; align-items: center; justify-content: center;">
+                  <!-- Dynamic Preview Layer -->
                   <div id="previewSplatterLayer" style="position: absolute; inset: 0; pointer-events: none; opacity: 0.7; overflow: hidden;">
-                    <div style="position: absolute; top: -30px; left: -30px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, #9333ea 0%, rgba(99, 102, 241, 0) 70%); filter: blur(10px);"></div>
-                    <div style="position: absolute; bottom: -30px; right: -20px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, #00f2fe 0%, rgba(6, 182, 212, 0) 70%); filter: blur(10px);"></div>
-                    <div style="position: absolute; top: 10px; right: 20px; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #ff2a85 0%, rgba(236, 72, 153, 0) 70%); filter: blur(10px);"></div>
-                    <div style="position: absolute; bottom: 0; left: 30px; width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle, #10b981 0%, rgba(132, 204, 22, 0) 70%); filter: blur(10px);"></div>
+                    <!-- Rendered via JS based on selected theme -->
                   </div>
                   <!-- Frosted Sample Card -->
-                  <div style="position: relative; z-index: 2; background: rgba(14, 20, 36, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 10px; padding: 1rem 1.5rem; text-align: center; max-width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #ffffff;">Festival of Colors</div>
-                    <div style="font-size: 0.72rem; color: #cbd5e1; margin-top: 0.2rem;">Vibrant paint splatters glow smoothly behind cards.</div>
+                  <div style="position: relative; z-index: 2; background: rgba(14, 20, 36, 0.75); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 10px; padding: 1rem 1.5rem; text-align: center; max-width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+                    <div id="previewCardTitle" style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">Festival of Colors</div>
+                    <div id="previewCardDesc" style="font-size: 0.74rem; color: #cbd5e1; margin-top: 0.2rem;">Vibrant paint splatters and particles glow behind cards.</div>
                   </div>
                 </div>
               </div>
 
               <div style="margin-top: 1.5rem; text-align: right;">
                 <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
-                  Save Festive Theme
+                  Save Festive Settings
                 </button>
               </div>
             </form>
