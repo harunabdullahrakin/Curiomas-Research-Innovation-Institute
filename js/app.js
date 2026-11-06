@@ -132,31 +132,29 @@ function initCookieConsent() {
 
 // 5. Mobile Navigation
 function initMobileNav() {
-  const toggleBtns = document.querySelectorAll('.menu-toggle, #menuToggleBtn');
-  const navMenus = document.querySelectorAll('.mockup-nav-links, .nav-menu');
+  const toggleBtn = document.getElementById('menuToggleBtn') || document.querySelector('.menu-toggle');
+  const navMenu = document.getElementById('mainNavMenu') || document.querySelector('.mockup-nav-links');
+  if (!toggleBtn || !navMenu) return;
 
-  toggleBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      navMenus.forEach(menu => {
-        menu.classList.toggle('show');
-      });
-    });
+  toggleBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const willShow = !navMenu.classList.contains('show');
+    navMenu.classList.toggle('show', willShow);
+    toggleBtn.setAttribute('aria-expanded', String(willShow));
   });
 
   document.addEventListener('click', (e) => {
-    const isClickInside = Array.from(toggleBtns).some(b => b.contains(e.target)) ||
-                          Array.from(navMenus).some(m => m.contains(e.target));
-    if (!isClickInside) {
-      navMenus.forEach(menu => menu.classList.remove('show'));
+    if (!toggleBtn.contains(e.target) && !navMenu.contains(e.target)) {
+      navMenu.classList.remove('show');
+      toggleBtn.setAttribute('aria-expanded', 'false');
     }
   });
 
-  navMenus.forEach(menu => {
-    menu.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        menu.classList.remove('show');
-      });
+  navMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      navMenu.classList.remove('show');
+      toggleBtn.setAttribute('aria-expanded', 'false');
     });
   });
 }
@@ -164,7 +162,7 @@ function initMobileNav() {
 // 6. User Session State in Navbar
 function initUserSessionState() {
   const user = window.CRII_API ? window.CRII_API.getCurrentUser() : null;
-  const loginBtns = document.querySelectorAll('.nav-login-btn, .nav-portal-btn');
+  const loginBtns = document.querySelectorAll('.nav-login-btn, .nav-portal-btn, .mobile-login-link');
 
   if (loginBtns.length && user) {
     loginBtns.forEach(btn => {
@@ -183,14 +181,14 @@ function initUserSessionState() {
 
 // 6b. Google Translate & Language Selector (Persisted in localStorage)
 const CRII_LANG_CONFIG = {
-  'en': 'English',
-  'zh-CN': '中文 (简体)',
-  'es': 'Español',
-  'fr': 'Français',
-  'de': 'Deutsch',
-  'bn': 'বাংলা',
-  'ja': '日本語',
-  'ar': 'العربية'
+  'en': { name: 'English', flag: 'https://flagcdn.com/w40/gb.png' },
+  'zh-CN': { name: '中文 (简体)', flag: 'https://flagcdn.com/w40/cn.png' },
+  'es': { name: 'Español', flag: 'https://flagcdn.com/w40/es.png' },
+  'fr': { name: 'Français', flag: 'https://flagcdn.com/w40/fr.png' },
+  'de': { name: 'Deutsch', flag: 'https://flagcdn.com/w40/de.png' },
+  'bn': { name: 'বাংলা', flag: 'https://flagcdn.com/w40/bd.png' },
+  'ja': { name: '日本語', flag: 'https://flagcdn.com/w40/jp.png' },
+  'ar': { name: 'العربية', flag: 'https://flagcdn.com/w40/sa.png' }
 };
 
 function initGoogleTranslateAndLang() {
@@ -214,8 +212,15 @@ function initGoogleTranslateAndLang() {
 
   function updateLangUI(lang) {
     const labelEl = document.getElementById('navLangLabel');
+    const flagEl = document.getElementById('navLangFlagImg');
+    const info = CRII_LANG_CONFIG[lang] || CRII_LANG_CONFIG['en'];
+
     if (labelEl) {
-      labelEl.textContent = CRII_LANG_CONFIG[lang] || 'English';
+      labelEl.textContent = info.name;
+    }
+    if (flagEl) {
+      flagEl.src = info.flag;
+      flagEl.alt = info.name;
     }
     document.querySelectorAll('.nav-lang-opt').forEach(opt => {
       if (opt.getAttribute('data-lang') === lang) {

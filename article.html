@@ -74,6 +74,12 @@
               <li><a href="/blog" class="mockup-nav-link">Dispatches</a></li>
               <li><a href="/team" class="mockup-nav-link">Team</a></li>
               <li><a href="/contact" class="mockup-nav-link">Contact</a></li>
+              <li class="mobile-nav-login-item">
+                <a href="/portal" class="mockup-nav-link mobile-login-link">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                  <span>LOGIN</span>
+                </a>
+              </li>
             </ul>
             <button type="button" class="nav-search-trigger" id="navSearchTrigger" aria-label="Search posts" title="Search posts (Ctrl+K)">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -81,26 +87,45 @@
           </nav>
 
           <div class="mockup-nav-right">
-            <!-- Mobile Search Icon -->
-            <button type="button" class="nav-search-trigger mobile-search-btn" id="mobileSearchTrigger" aria-label="Search posts" title="Search (Ctrl+K)">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </button>
-
             <!-- Language / Google Translate Dropdown -->
             <div class="nav-lang-dropdown" id="navLangDropdown">
               <button type="button" class="nav-lang-btn" id="navLangBtn" aria-expanded="false" aria-label="Select Language">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="nav-lang-icon"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+                <img src="https://flagcdn.com/w40/gb.png" alt="English" class="nav-lang-flag-img" id="navLangFlagImg">
                 <span id="navLangLabel">English</span>
               </button>
               <div class="nav-lang-menu" id="navLangMenu">
-                <button type="button" class="nav-lang-opt active" data-lang="en">English</button>
-                <button type="button" class="nav-lang-opt" data-lang="zh-CN">中文 (简体)</button>
-                <button type="button" class="nav-lang-opt" data-lang="es">Español</button>
-                <button type="button" class="nav-lang-opt" data-lang="fr">Français</button>
-                <button type="button" class="nav-lang-opt" data-lang="de">Deutsch</button>
-                <button type="button" class="nav-lang-opt" data-lang="bn">বাংলা</button>
-                <button type="button" class="nav-lang-opt" data-lang="ja">日本語</button>
-                <button type="button" class="nav-lang-opt" data-lang="ar">العربية</button>
+                <button type="button" class="nav-lang-opt active" data-lang="en">
+                  <img src="https://flagcdn.com/w40/gb.png" class="opt-flag" alt="GB">
+                  <span>English</span>
+                </button>
+                <button type="button" class="nav-lang-opt" data-lang="zh-CN">
+                  <img src="https://flagcdn.com/w40/cn.png" class="opt-flag" alt="CN">
+                  <span>中文 (简体)</span>
+                </button>
+                <button type="button" class="nav-lang-opt" data-lang="es">
+                  <img src="https://flagcdn.com/w40/es.png" class="opt-flag" alt="ES">
+                  <span>Español</span>
+                </button>
+                <button type="button" class="nav-lang-opt" data-lang="fr">
+                  <img src="https://flagcdn.com/w40/fr.png" class="opt-flag" alt="FR">
+                  <span>Français</span>
+                </button>
+                <button type="button" class="nav-lang-opt" data-lang="de">
+                  <img src="https://flagcdn.com/w40/de.png" class="opt-flag" alt="DE">
+                  <span>Deutsch</span>
+                </button>
+                <button type="button" class="nav-lang-opt" data-lang="bn">
+                  <img src="https://flagcdn.com/w40/bd.png" class="opt-flag" alt="BD">
+                  <span>বাংলা</span>
+                </button>
+                <button type="button" class="nav-lang-opt" data-lang="ja">
+                  <img src="https://flagcdn.com/w40/jp.png" class="opt-flag" alt="JP">
+                  <span>日本語</span>
+                </button>
+                <button type="button" class="nav-lang-opt" data-lang="ar">
+                  <img src="https://flagcdn.com/w40/sa.png" class="opt-flag" alt="SA">
+                  <span>العربية</span>
+                </button>
               </div>
             </div>
 
@@ -109,7 +134,7 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
             </a>
 
-            <!-- LOGIN Pill Button -->
+            <!-- Desktop LOGIN Pill Button -->
             <a href="/portal" class="nav-login-btn">LOGIN</a>
 
             <!-- Mobile Hamburger Toggle -->
@@ -288,14 +313,5 @@
   <script src="js/app.js?v=4.0"></script>
   <script src="js/doc-sanitize.js?v=1.0"></script>
   <script src="js/article.js?v=4.1"></script>
-  <script>
-    const menuBtn = document.getElementById('menuToggleBtn');
-    const navMenu = document.getElementById('mainNavMenu');
-    if (menuBtn && navMenu) {
-      menuBtn.addEventListener('click', () => {
-        navMenu.classList.toggle('show');
-      });
-    }
-  </script>
 </body>
 </html>
