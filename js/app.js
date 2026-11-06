@@ -521,7 +521,15 @@ async function initFeaturedArticles() {
     const posts = await window.CRII_API.getPosts({ preferNetwork: true });
     const published = (posts || []).filter(p => p.published !== false && !p.id.startsWith('crii-paper-2026-00'));
 
-    if (published.length === 0) return;
+    if (published.length === 0) {
+      container.innerHTML = `
+        <div class="editorial-empty-notice" style="text-align:center; padding:3.5rem 1.5rem; background:rgba(0,0,0,0.02); border-radius:14px; border:1px dashed #d5cebf; color:#78716c;">
+          <p style="font-size:1.05rem; font-weight:600; color:#44403c; margin-bottom:0.4rem;">No publications currently published</p>
+          <p style="font-size:0.88rem; color:#78716c; margin:0;">New peer-reviewed articles, synthetic spectra, and research dispatches will appear here once released by the institute.</p>
+        </div>
+      `;
+      return;
+    }
 
     const fallbackCovers = [
       'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1200&q=80',
@@ -534,106 +542,11 @@ async function initFeaturedArticles() {
     const featuredPost = published.find(p => p.featured === true) || published[0];
     const subPosts = published.filter(p => p.id !== featuredPost.id).slice(0, 3);
 
-    const curatedFallbacks = [
-      {
-        id: 'crii-article-fossil-calibration',
-        category: 'ANCIENT BIOLOGY',
-        title: 'Fossil Calibration in an Open Framework',
-        desc: 'How verifiable fossil records and open divergence datasets are being prepared for the CRII repository.',
-        cover: fallbackCovers[1],
-        link: '/article?id=crii-article-fossil-calibration',
-        linkText: 'Read dispatch',
-        attribution: 'CRII Paleogenomics Council',
-        date: '2026-10-22'
-      },
-      {
-        id: 'crii-article-ml-biophysics',
-        category: 'AI & COMPUTATIONAL SCIENCE',
-        title: 'Building Reproducible ML Pipelines for Biophysics',
-        desc: 'A look at why open, test-driven computational methods matter when we are developing across biological and physical systems.',
-        cover: fallbackCovers[2],
-        link: '/article?id=crii-article-ml-biophysics',
-        linkText: 'Read dispatch',
-        attribution: 'CRII Computational Core',
-        date: '2026-10-29'
-      },
-      {
-        id: 'crii-article-edge-of-habitability',
-        category: 'ASTROBIOLOGY',
-        title: 'Life at the Edge of Habitability',
-        desc: "Dispatches from the Astrobiology & Extremophiles division on what Earth's most resilient organisms tell us about life beyond it.",
-        cover: fallbackCovers[3],
-        link: '/article?id=crii-article-edge-of-habitability',
-        linkText: 'Read dispatch',
-        attribution: 'Astrobiology & Extremophiles Division',
-        date: '2026-11-02'
-      }
-    ];
-
     const featuredCover = featuredPost.coverImage || fallbackCovers[0];
-    const featuredCategory = (featuredPost.category || 'FEATURED RESEARCH').toUpperCase();
+    const featuredCategory = (featuredPost.category || featuredPost.division || 'FEATURED RESEARCH').toUpperCase();
 
-    // Render Featured Large Card and 3 Sub-Cards
-    let subCardsHtml = '';
-    for (let i = 0; i < 3; i++) {
-      if (i < subPosts.length) {
-        const p = subPosts[i];
-        const pCover = p.coverImage || fallbackCovers[(i + 1) % fallbackCovers.length];
-        const pCategory = (p.category || 'RESEARCH').toUpperCase();
-        subCardsHtml += `
-          <div class="editorial-sub-card">
-            <div class="sub-card-media">
-              <img src="${pCover}" alt="${p.title}" loading="lazy">
-            </div>
-            <div class="sub-card-body">
-              <div class="sub-card-tag">
-                <span class="mockup-tag-dot"></span>
-                <span>${pCategory}</span>
-              </div>
-              <h4 class="sub-card-title">
-                <a href="/article?id=${encodeURIComponent(p.id)}" style="color:inherit; text-decoration:none;">${p.title}</a>
-              </h4>
-              <p class="sub-card-desc">${p.summary || p.abstract || ''}</p>
-              <a href="/article?id=${encodeURIComponent(p.id)}" class="mockup-arrow-link">
-                <span>Read dispatch</span>
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-              </a>
-              ${getMetaAttributionHtml(p)}
-            </div>
-          </div>
-        `;
-      } else {
-        const fb = curatedFallbacks[i];
-        subCardsHtml += `
-          <div class="editorial-sub-card">
-            <div class="sub-card-media">
-              <img src="${fb.cover}" alt="${fb.title}" loading="lazy">
-            </div>
-            <div class="sub-card-body">
-              <div class="sub-card-tag">
-                <span class="mockup-tag-dot"></span>
-                <span>${fb.category}</span>
-              </div>
-              <h4 class="sub-card-title">
-                <a href="${fb.link}" style="color:inherit; text-decoration:none;">${fb.title}</a>
-              </h4>
-              <p class="sub-card-desc">${fb.desc}</p>
-              <a href="${fb.link}" class="mockup-arrow-link">
-                <span>${fb.linkText}</span>
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-              </a>
-              <div class="article-meta-attribution">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                <span>Created by <strong>${fb.attribution}</strong> on ${formatEditorialDate(fb.date)}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    container.innerHTML = `
-      <!-- Featured Big Horizontal Card -->
+    // Render Featured Large Card
+    let featureCardHtml = `
       <div class="editorial-feature-card">
         <div class="feature-card-media">
           <img src="${featuredCover}" alt="${featuredPost.title}" loading="lazy">
@@ -647,7 +560,7 @@ async function initFeaturedArticles() {
             <a href="/article?id=${encodeURIComponent(featuredPost.id)}" style="color:inherit; text-decoration:none;">${featuredPost.title}</a>
           </h3>
           <p class="feature-card-desc">
-            ${featuredPost.summary || featuredPost.abstract || ''}
+            ${featuredPost.summary || featuredPost.abstract || featuredPost.excerpt || ''}
           </p>
           <a href="/article?id=${encodeURIComponent(featuredPost.id)}" class="mockup-arrow-link" style="margin-bottom:0.75rem;">
             <span>Read full publication</span>
@@ -656,11 +569,43 @@ async function initFeaturedArticles() {
           ${getMetaAttributionHtml(featuredPost)}
         </div>
       </div>
+    `;
 
-      <!-- 3-Column Sub-Cards -->
-      <div class="editorial-sub-grid">
-        ${subCardsHtml}
-      </div>
+    // Render Sub-Cards ONLY for actual published articles (no hardcoded fallbacks)
+    let subCardsHtml = '';
+    if (subPosts.length > 0) {
+      for (let i = 0; i < subPosts.length; i++) {
+        const p = subPosts[i];
+        const pCover = p.coverImage || fallbackCovers[(i + 1) % fallbackCovers.length];
+        const pCategory = (p.category || p.division || 'RESEARCH').toUpperCase();
+        subCardsHtml += `
+          <div class="editorial-sub-card">
+            <div class="sub-card-media">
+              <img src="${pCover}" alt="${p.title}" loading="lazy">
+            </div>
+            <div class="sub-card-body">
+              <div class="sub-card-tag">
+                <span class="mockup-tag-dot"></span>
+                <span>${pCategory}</span>
+              </div>
+              <h4 class="sub-card-title">
+                <a href="/article?id=${encodeURIComponent(p.id)}" style="color:inherit; text-decoration:none;">${p.title}</a>
+              </h4>
+              <p class="sub-card-desc">${p.summary || p.abstract || p.excerpt || ''}</p>
+              <a href="/article?id=${encodeURIComponent(p.id)}" class="mockup-arrow-link">
+                <span>Read dispatch</span>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+              </a>
+              ${getMetaAttributionHtml(p)}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    container.innerHTML = `
+      ${featureCardHtml}
+      ${subCardsHtml ? `<div class="editorial-sub-grid">${subCardsHtml}</div>` : ''}
     `;
   } catch (e) {
     console.warn('Featured articles render error:', e);
@@ -736,8 +681,20 @@ async function initDivisions() {
   if (!container || !window.CRII_API) return;
 
   try {
-    const divisions = await window.CRII_API.getDivisions();
-    if (divisions && Array.isArray(divisions) && divisions.length > 0) {
+    let divisions = await window.CRII_API.getDivisions();
+    if (!divisions || !Array.isArray(divisions) || divisions.length === 0) {
+      divisions = typeof CRII_DEFAULT_DIVISIONS !== 'undefined' ? [...CRII_DEFAULT_DIVISIONS] : [];
+    } else if (typeof CRII_DEFAULT_DIVISIONS !== 'undefined' && divisions.length < 4) {
+      // Ensure all 4 core divisions exist so the 4-column grid layout is always balanced
+      const existing = new Set(divisions.map(d => (d.title || '').toLowerCase().trim()));
+      for (const def of CRII_DEFAULT_DIVISIONS) {
+        if (!existing.has((def.title || '').toLowerCase().trim())) {
+          divisions.push(def);
+        }
+      }
+    }
+
+    if (divisions && divisions.length > 0) {
       container.innerHTML = divisions.map(div => `
         <a href="${div.link || '/research'}" class="division-card">
           <div class="division-card-media">
