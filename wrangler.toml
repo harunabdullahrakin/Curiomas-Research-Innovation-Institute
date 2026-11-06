@@ -9,7 +9,7 @@ pages_build_output_dir = "."
 [vars]
 INSTITUTE_NAME = "Curiomas Research & Innovation Institute"
 ACRONYM = "CRII"
-MOTTO = "Learning has no bound"
+MOTTO = "Turning Curiosity into Action"
 ADMIN_EMAIL = "harunabdullahrakin@gmail.com"
 AUTZ_APP_ID = "gqiqh6qia"
 

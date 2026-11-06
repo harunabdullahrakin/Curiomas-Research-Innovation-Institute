@@ -29,7 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const dashboardSection = document.getElementById('portalDashboardSection');
 
   if (!user) {
-    if (authSection) authSection.style.display = 'grid';
+    if (authSection) {
+      authSection.style.display = 'grid';
+      loadRandomScientificBackground();
+    }
     if (dashboardSection) dashboardSection.style.display = 'none';
     return;
   }
@@ -129,6 +132,7 @@ async function refreshDashboardData() {
   renderRosterGrid();
   renderApplicationsTable();
   renderDatasetsTable();
+  await renderDivisionsTab();
   renderDivisionsTab();
   renderAllowedUsersTable();
 }
@@ -1847,3 +1851,44 @@ window.deleteDivisionConfirm = async function(id, title) {
     alert('Failed to delete division: ' + (err.message || err));
   }
 };
+
+
+async function loadRandomScientificBackground() {
+  const pane = document.querySelector('.login-showcase-pane');
+  if (!pane) return;
+
+  const topics = ['galaxy', 'nebula', 'deep+space', 'telescope', 'hubble', 'astrophysics', 'supernova'];
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+
+  const curatedScienceImages = [
+    'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1600&q=85',
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1600&q=85',
+    'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1600&q=85',
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=85',
+    'https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=1600&q=85'
+  ];
+
+  try {
+    const res = await fetch('https://images-api.nasa.gov/search?q=' + topic + '&media_type=image');
+    if (res.ok) {
+      const data = await res.json();
+      const items = (data?.collection?.items || []).filter(it => it.links && it.links.length > 0 && it.links[0].href);
+      if (items.length > 0) {
+        const randomItem = items[Math.floor(Math.random() * Math.min(items.length, 25))];
+        const rawHref = randomItem.links[0].href;
+        const imgUrl = rawHref.replace(/~thumb\.jpg$/, '~large.jpg').replace(/~small\.jpg$/, '~large.jpg');
+        const img = new Image();
+        img.onload = () => {
+          pane.style.backgroundImage = 'url("' + imgUrl + '")';
+        };
+        img.src = imgUrl;
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('NASA image API notice:', e);
+  }
+
+  const fallback = curatedScienceImages[Math.floor(Math.random() * curatedScienceImages.length)];
+  pane.style.backgroundImage = 'url("' + fallback + '")';
+}

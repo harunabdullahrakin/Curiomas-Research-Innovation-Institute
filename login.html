@@ -21,13 +21,16 @@
     *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, strong, em, b, i, div, li, ul, label {
       font-family: 'Eyekons', Georgia, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif !important;
     }
+    .login-showcase-pane {
+      transition: background-image 0.8s ease-in-out;
+    }
   </style>
 </head>
 <body style="margin:0; padding:0; background: var(--bg-primary);">
 
   <main class="login-split-page">
-    <!-- LEFT PANEL: Visual Showcase & Mission -->
-    <div class="login-showcase-pane">
+    <!-- LEFT PANEL: Visual Showcase with Random Scientific Image API -->
+    <div class="login-showcase-pane" id="loginShowcasePane">
       <div class="login-showcase-overlay"></div>
       
       <div class="login-showcase-content">
@@ -40,38 +43,18 @@
           </div>
         </div>
 
-        <!-- Center Showcase -->
+        <!-- Center Showcase (Cleaned without removed bullet points/tags) -->
         <div class="login-hero-center">
-          <div class="login-hero-tag">
-            <span class="login-hero-tag-dot"></span>
-            <span>OPEN-SCIENCE RESEARCH PLATFORM</span>
-          </div>
-
           <h1 class="login-hero-title">Bring structure to your research.</h1>
           
           <p class="login-hero-desc">
             An autonomous, student-driven research collective unifying deep-space atmospheres, ancient paleogenomics, and biophysical machine learning into open, reproducible frameworks.
           </p>
-
-          <div class="login-features-list">
-            <div class="login-feature-pill">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              <span>Autonomous & Student-Driven Research Inquiries</span>
-            </div>
-            <div class="login-feature-pill">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <span>100% Verifiable Datasets, Synthetic Spectra & Open Code</span>
-            </div>
-            <div class="login-feature-pill">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <span>Student Fellowship Cohorts & Frontier Divisions</span>
-            </div>
-          </div>
         </div>
 
-        <!-- Bottom Footer -->
+        <!-- Bottom Footer with Slogan -->
         <div class="login-showcase-footer">
-          <div class="login-showcase-motto">Learning has no bound.</div>
+          <div class="login-showcase-motto">Turning Curiosity into Action.</div>
           <div class="login-showcase-note">Autonomous by Design • CC-BY 4.0</div>
         </div>
       </div>
@@ -115,22 +98,11 @@
 
           <div id="loginError" style="display:none; text-align: left; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 0.9rem; border-radius: 12px; font-size: 0.85rem; line-height: 1.5;"></div>
         </div>
-
-        <!-- Academic Access Restriction Notice -->
-        <div class="login-restriction-card">
-          <div class="login-restriction-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-          </div>
-          <div class="login-restriction-text">
-            <strong>Restricted Academic Access</strong>
-            Access is reserved for whitelisted institute directors, research fellows, and intern coordinators. Authorization is managed by the Executive Council.
-          </div>
-        </div>
       </div>
 
       <!-- Bottom Security Tag -->
       <div class="login-form-footer">
-        Single Sign-On • Protected by parameterized institute access control
+        Protected by parameterized institute access control
       </div>
     </div>
   </main>
@@ -139,6 +111,52 @@
   <script src="js/config.js?v=4.0"></script>
   <script src="js/auth.js?v=4.0"></script>
   <script>
+    // Scientific Image API Loader
+    async function loadRandomScientificBackground() {
+      const pane = document.getElementById('loginShowcasePane');
+      if (!pane) return;
+
+      const topics = ['galaxy', 'nebula', 'deep+space', 'telescope', 'hubble', 'astrophysics', 'supernova'];
+      const topic = topics[Math.floor(Math.random() * topics.length)];
+
+      const curatedScienceImages = [
+        'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1600&q=85',
+        'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1600&q=85',
+        'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1600&q=85',
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=85',
+        'https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=1600&q=85',
+        'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?auto=format&fit=crop&w=1600&q=85',
+        'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1600&q=85'
+      ];
+
+      try {
+        const res = await fetch('https://images-api.nasa.gov/search?q=' + topic + '&media_type=image');
+        if (res.ok) {
+          const data = await res.json();
+          const items = (data?.collection?.items || []).filter(it => it.links && it.links.length > 0 && it.links[0].href);
+          if (items.length > 0) {
+            const randomItem = items[Math.floor(Math.random() * Math.min(items.length, 25))];
+            const rawHref = randomItem.links[0].href;
+            const imgUrl = rawHref.replace(/~thumb\.jpg$/, '~large.jpg').replace(/~small\.jpg$/, '~large.jpg');
+            const img = new Image();
+            img.onload = () => {
+              pane.style.backgroundImage = 'url("' + imgUrl + '")';
+            };
+            img.src = imgUrl;
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('NASA image API notice:', e);
+      }
+
+      // Curated fallback
+      const fallback = curatedScienceImages[Math.floor(Math.random() * curatedScienceImages.length)];
+      pane.style.backgroundImage = 'url("' + fallback + '")';
+    }
+
+    document.addEventListener('DOMContentLoaded', loadRandomScientificBackground);
+
     // Theme toggle handling
     const toggleBtn = document.getElementById('themeToggleBtn');
     if (toggleBtn) {

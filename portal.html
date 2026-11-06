@@ -35,10 +35,7 @@
         </div>
 
         <div class="login-hero-center">
-          <div class="login-hero-tag">
-            <span class="login-hero-tag-dot"></span>
-            <span>OPEN-SCIENCE RESEARCH PLATFORM</span>
-          </div>
+          
 
           <h1 class="login-hero-title">Bring structure to your research.</h1>
           
@@ -46,24 +43,11 @@
             An autonomous, student-driven research collective unifying deep-space atmospheres, ancient paleogenomics, and biophysical machine learning into open, reproducible frameworks.
           </p>
 
-          <div class="login-features-list">
-            <div class="login-feature-pill">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              <span>Autonomous & Student-Driven Research Inquiries</span>
-            </div>
-            <div class="login-feature-pill">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <span>100% Verifiable Datasets, Synthetic Spectra & Open Code</span>
-            </div>
-            <div class="login-feature-pill">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <span>Student Fellowship Cohorts & Frontier Divisions</span>
-            </div>
           </div>
         </div>
 
         <div class="login-showcase-footer">
-          <div class="login-showcase-motto">Learning has no bound.</div>
+          <div class="login-showcase-motto">Turning Curiosity into Action.</div>
           <div class="login-showcase-note">Autonomous by Design • CC-BY 4.0</div>
         </div>
       </div>
@@ -99,20 +83,10 @@
           <div id="loginError" style="display:none; text-align: left; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 0.9rem; border-radius: 12px; font-size: 0.85rem; line-height: 1.5;"></div>
         </div>
 
-        <div class="login-restriction-card">
-          <div class="login-restriction-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-          </div>
-          <div class="login-restriction-text">
-            <strong>Restricted Academic Access</strong>
-            Access is reserved for whitelisted institute directors, research fellows, and intern coordinators. Authorization is managed by the Executive Council.
-          </div>
         </div>
       </div>
 
-      <div class="login-form-footer">
-        Single Sign-On • Protected by parameterized institute access control
-      </div>
+      <div class="login-form-footer">Protected by parameterized institute access control</div>
     </div>
   </section>
 
@@ -501,6 +475,29 @@
           </div>
         </div>
 
+      </div>
+
+      
+      <!-- =====================================================================
+           TAB: RESEARCH DIVISIONS MANAGEMENT
+           ===================================================================== -->
+      <div id="tab-divisions" class="portal-tab-content" style="display:none;">
+        <div class="portal-topbar">
+          <div class="portal-title-block">
+            <h1>Research Divisions Management</h1>
+            <p>Create, edit, and organize the scientific research divisions displayed on the homepage and across the research repository.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openDivisionModal()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>+ Add New Division</span>
+          </button>
+        </div>
+
+        <div id="portalDivisionsList" class="divisions-manage-grid">
+          <!-- Dynamically populated by portal.js -->
+        </div>
       </div>
 
       <!-- ====================================================================

@@ -7,7 +7,7 @@
 const CRII_CONFIG = {
   DEFAULT_INSTITUTE_NAME: "Curiomas Research & Innovation Institute",
   ACRONYM: "CRII",
-  MOTTO: "Learning has no bound",
+  MOTTO: "Turning Curiosity into Action",
   DEFAULT_AUTZ_APP_ID: "gqiqh6qia",
   API_BASE: "/api",
   STORAGE_KEYS: {
