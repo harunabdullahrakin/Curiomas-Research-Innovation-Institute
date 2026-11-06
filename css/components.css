@@ -4,6 +4,19 @@
    Light & Dark adaptive with Zero Unicode Emojis (SVG icons)
    ========================================================================== */
 
+/* Custom Cursoji Distorted Face Cursor across entire platform */
+html, body, div, p, span, h1, h2, h3, h4, h5, h6, input, textarea, select, table, th, td, section, header, footer, main, nav, ul, li {
+  cursor: url("https://cdn.custom-cursor.com/db/27342/32/cursoji-distorted-face-cursor.png"), auto !important;
+}
+
+/* Hover and Pointer States */
+a, button, input[type="button"], input[type="submit"], input[type="checkbox"], input[type="radio"], select, 
+.btn, .card, .clickable, .mockup-arrow-link, .mockup-nav-link, .category-pill, 
+[role="button"], label, summary, .division-card, .editorial-sub-card, .editorial-feature-card, 
+.portal-nav-btn, .portal-action-btn, a *, button *, .menu-toggle, .menu-toggle * {
+  cursor: url("https://cdn.custom-cursor.com/db/27341/32/cursoji-distorted-face-pointer.png"), pointer !important;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;

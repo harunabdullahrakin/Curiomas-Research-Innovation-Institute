@@ -7,6 +7,12 @@
 
 *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6, label, table, th, td {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  cursor: url("https://cdn.custom-cursor.com/db/27342/32/cursoji-distorted-face-cursor.png"), auto !important;
+}
+
+a, button, input[type="button"], input[type="submit"], input[type="checkbox"], input[type="radio"], select, 
+.btn, .card, .clickable, .portal-nav-btn, .portal-action-btn, [role="button"], label, a *, button * {
+  cursor: url("https://cdn.custom-cursor.com/db/27341/32/cursoji-distorted-face-pointer.png"), pointer !important;
 }
 
 .portal-layout {

@@ -88,50 +88,10 @@ function initBrandingAndNavbar() {
   }
 }
 
-// 3. Custom Scientific Interactive Cursor
+// 3. Custom Scientific Interactive Cursor (Cursoji Distorted Face)
 function initCustomCursor() {
-  // Do not initialize on touch devices
-  if (window.matchMedia('(pointer: coarse)').matches) return;
-
-  const dot = document.createElement('div');
-  dot.className = 'custom-cursor-dot';
-
-  const ring = document.createElement('div');
-  ring.className = 'custom-cursor-ring';
-
-  document.body.appendChild(dot);
-  document.body.appendChild(ring);
-
-  let mouseX = -100, mouseY = -100;
-  let ringX = -100, ringY = -100;
-
-  window.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    dot.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
-  });
-
-  function renderRing() {
-    ringX += (mouseX - ringX) * 0.18;
-    ringY += (mouseY - ringY) * 0.18;
-    ring.style.transform = `translate(${ringX}px, ${ringY}px)`;
-    requestAnimationFrame(renderRing);
-  }
-  renderRing();
-
-  // Hover states
-  const interactives = 'a, button, input, select, textarea, .card, .category-pill';
-  document.addEventListener('mouseover', (e) => {
-    if (e.target.closest(interactives)) {
-      ring.classList.add('active');
-    }
-  });
-
-  document.addEventListener('mouseout', (e) => {
-    if (e.target.closest(interactives)) {
-      ring.classList.remove('active');
-    }
-  });
+  // Remove any legacy dot/ring cursor elements if present
+  document.querySelectorAll('.custom-cursor-dot, .custom-cursor-ring').forEach(el => el.remove());
 }
 
 // 4. Cookie Consent Banner
@@ -310,31 +270,37 @@ async function initFeaturedArticles() {
 
     const curatedFallbacks = [
       {
+        id: 'crii-article-fossil-calibration',
         category: 'ANCIENT BIOLOGY',
         title: 'Fossil Calibration in an Open Framework',
         desc: 'How verifiable fossil records and open divergence datasets are being prepared for the CRII repository.',
         cover: fallbackCovers[1],
-        link: '/research',
-        linkText: 'Coming soon',
-        attribution: ''
+        link: '/article?id=crii-article-fossil-calibration',
+        linkText: 'Read dispatch',
+        attribution: 'CRII Paleogenomics Council',
+        date: '2026-10-22'
       },
       {
+        id: 'crii-article-ml-biophysics',
         category: 'AI & COMPUTATIONAL SCIENCE',
         title: 'Building Reproducible ML Pipelines for Biophysics',
         desc: 'A look at why open, test-driven computational methods matter when we are developing across biological and physical systems.',
         cover: fallbackCovers[2],
-        link: '/research',
-        linkText: 'Coming soon',
-        attribution: ''
+        link: '/article?id=crii-article-ml-biophysics',
+        linkText: 'Read dispatch',
+        attribution: 'CRII Computational Core',
+        date: '2026-10-29'
       },
       {
+        id: 'crii-article-edge-of-habitability',
         category: 'ASTROBIOLOGY',
         title: 'Life at the Edge of Habitability',
         desc: "Dispatches from the Astrobiology & Extremophiles division on what Earth's most resilient organisms tell us about life beyond it.",
         cover: fallbackCovers[3],
-        link: '/research',
-        linkText: 'Coming soon',
-        attribution: ''
+        link: '/article?id=crii-article-edge-of-habitability',
+        linkText: 'Read dispatch',
+        attribution: 'Astrobiology & Extremophiles Division',
+        date: '2026-11-02'
       }
     ];
 
@@ -382,12 +348,18 @@ async function initFeaturedArticles() {
                 <span class="mockup-tag-dot"></span>
                 <span>${fb.category}</span>
               </div>
-              <h4 class="sub-card-title">${fb.title}</h4>
+              <h4 class="sub-card-title">
+                <a href="${fb.link}" style="color:inherit; text-decoration:none;">${fb.title}</a>
+              </h4>
               <p class="sub-card-desc">${fb.desc}</p>
               <a href="${fb.link}" class="mockup-arrow-link">
                 <span>${fb.linkText}</span>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
               </a>
+              <div class="article-meta-attribution">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span>Created by <strong>${fb.attribution}</strong> on ${formatEditorialDate(fb.date)}</span>
+              </div>
             </div>
           </div>
         `;
