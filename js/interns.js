@@ -121,10 +121,99 @@ function renderMemberCard(member) {
   `;
 }
 
-function initApplicationForm() {
+async function initApplicationForm() {
   const form = document.getElementById('internApplicationForm');
   if (!form) return;
 
+  // 1. Sync latest database settings for divisions, cohorts, and form configuration
+  if (window.CRII_API && window.CRII_API.syncSettingsFromDb) {
+    try { await window.CRII_API.syncSettingsFromDb(); } catch(e){}
+  }
+
+  // 2. Populate Real Divisions into Preferred Division dropdown
+  const divSelect = document.getElementById('appDivision');
+  if (divSelect && window.CRII_API) {
+    const realDivisions = window.CRII_API.getDivisions() || [];
+    if (realDivisions.length > 0) {
+      divSelect.innerHTML = realDivisions.map(d => `<option value="${escapeHtml(d.title)}">${escapeHtml(d.title)}</option>`).join('');
+    }
+  }
+
+  // 3. Populate Real Cohorts & Grades into Academic Level dropdown
+  const levelSelect = document.getElementById('appLevel');
+  if (levelSelect && window.CRII_API) {
+    const realCohorts = window.CRII_API.getCohorts() || [];
+    if (realCohorts.length > 0) {
+      levelSelect.innerHTML = realCohorts.map(c => {
+        const gradeText = c.grade || c.academicLevel ? ` (${c.grade || c.academicLevel})` : '';
+        return `<option value="${escapeHtml(c.title + gradeText)}">${escapeHtml(c.title + gradeText)}</option>`;
+      }).join('');
+    }
+  }
+
+  // 4. Apply Application Form Settings (Visibility, Required status, Custom fields)
+  if (window.CRII_API && window.CRII_API.getApplicationFormConfig) {
+    const formConfig = window.CRII_API.getApplicationFormConfig();
+    if (formConfig && formConfig.fields) {
+      const f = formConfig.fields;
+      const applyFieldConfig = (id, fieldKey) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        const group = input.closest('.form-group');
+        const cfg = f[fieldKey];
+        if (!cfg) return;
+        if (group && cfg.visible === false) {
+          group.style.display = 'none';
+          input.required = false;
+        } else {
+          if (group) group.style.display = '';
+          input.required = cfg.required === true;
+        }
+      };
+
+      applyFieldConfig('appUniversity', 'university');
+      applyFieldConfig('appFieldOfStudy', 'fieldOfStudy');
+      applyFieldConfig('appDivision', 'division');
+      applyFieldConfig('appLevel', 'academicLevel');
+      applyFieldConfig('appPortfolio', 'portfolio');
+      applyFieldConfig('appStatement', 'statement');
+    }
+
+    // Render Custom Fields
+    const customContainer = document.getElementById('appCustomFieldsContainer');
+    if (customContainer && Array.isArray(formConfig.customFields) && formConfig.customFields.length > 0) {
+      customContainer.innerHTML = formConfig.customFields.map((cf, idx) => {
+        const inputId = `appCustom_${idx}`;
+        let inputHtml = '';
+        if (cf.type === 'textarea') {
+          inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}"></textarea>`;
+        } else if (cf.type === 'select') {
+          const opts = Array.isArray(cf.options) ? cf.options : [];
+          inputHtml = `
+            <select id="${inputId}" class="form-select" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''}>
+              <option value="">Select option...</option>
+              ${opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}
+            </select>
+          `;
+        } else if (cf.type === 'number') {
+          inputHtml = `<input type="number" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
+        } else {
+          inputHtml = `<input type="text" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
+        }
+
+        return `
+          <div class="form-group" style="margin-bottom:1.25rem;">
+            <label class="form-label" for="${inputId}" style="font-weight:600;">
+              ${escapeHtml(cf.label)} ${cf.required ? '*' : ''}
+            </label>
+            ${inputHtml}
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 5. Submission Handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -132,13 +221,23 @@ function initApplicationForm() {
     submitBtn.disabled = true;
     submitBtn.innerHTML = `Submitting Application...`;
 
+    // Extract custom fields
+    const customFields = {};
+    document.querySelectorAll('#appCustomFieldsContainer [data-custom-key]').forEach(el => {
+      const key = el.getAttribute('data-custom-key');
+      if (key) customFields[key] = el.value.trim();
+    });
+
     const formData = {
-      fullName: document.getElementById('appFullName').value.trim(),
-      email: document.getElementById('appEmail').value.trim(),
-      university: document.getElementById('appUniversity').value.trim(),
-      fieldOfStudy: document.getElementById('appFieldOfStudy').value.trim(),
-      preferredDivision: document.getElementById('appDivision').value,
-      statement: document.getElementById('appStatement').value.trim()
+      fullName: document.getElementById('appFullName')?.value.trim() || 'Fellow Applicant',
+      email: document.getElementById('appEmail')?.value.trim() || '',
+      university: document.getElementById('appUniversity')?.value.trim() || '',
+      fieldOfStudy: document.getElementById('appFieldOfStudy')?.value.trim() || '',
+      preferredDivision: document.getElementById('appDivision')?.value || 'General Science',
+      academicLevel: document.getElementById('appLevel')?.value || '',
+      portfolioUrl: document.getElementById('appPortfolio')?.value.trim() || '',
+      statement: document.getElementById('appStatement')?.value.trim() || '',
+      customFields
     };
 
     try {
@@ -154,14 +253,14 @@ function initApplicationForm() {
           </div>
           <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:var(--text-primary);">Application Received</h2>
           <p style="color:var(--text-secondary); max-width:540px; margin:0 auto 1.5rem; line-height:1.6;">
-            Thank you, <strong>${res.fullName}</strong>. Your research application for the 
-            <span style="color:var(--accent-primary); font-weight:600;">${res.preferredDivision}</span> track has been submitted to the admissions review board.
+            Thank you, <strong>${escapeHtml(res.fullName)}</strong>. Your research application for the 
+            <span style="color:var(--accent-primary); font-weight:600;">${escapeHtml(res.preferredDivision)}</span> track has been submitted to the admissions review board.
           </p>
           <div style="background:var(--bg-primary); padding:0.85rem 1.25rem; border-radius:10px; border:1px solid var(--border-color); display:inline-block; font-family:monospace; font-size:0.88rem; color:var(--accent-primary); margin-bottom:2rem;">
             Application Reference: ${res.id}
           </div>
           <div>
-            <a href="research.html" class="btn btn-secondary">Explore Research Papers</a>
+            <a href="/research" class="btn btn-secondary">Explore Research Papers</a>
           </div>
         </div>
       `;
@@ -169,8 +268,9 @@ function initApplicationForm() {
       // Dispatch EmailJS alert if template configured
       if (window.emailjs) {
         try {
-          const tplId = localStorage.getItem('crii_emailjs_template_id') || 
-            (window.CRII_API && typeof window.CRII_API.getEmailjsTemplateId === 'function' ? window.CRII_API.getEmailjsTemplateId() : null) || 'zhelx7y';
+          const tplId = (window.CRII_API && typeof window.CRII_API.getEmailjsTemplateId === 'function')
+            ? window.CRII_API.getEmailjsTemplateId()
+            : (localStorage.getItem('crii_emailjs_template_id') || '');
           if (tplId) {
             emailjs.init({ publicKey: 'h3x_9dtR8frBq2pCi' });
             await emailjs.send('curiomas', tplId, {
@@ -181,19 +281,20 @@ function initApplicationForm() {
               applicant_university: res.university,
               applicant_division: res.preferredDivision,
               applicant_level: res.academicLevel,
-              message: `New fellowship application received from ${res.fullName} (${res.email}) from ${res.university} for ${res.preferredDivision}.\n\nStatement:\n${res.statement}`
+              message: `New fellowship application received from ${res.fullName} (${res.email}) from ${res.university} for track: ${res.preferredDivision} (${res.academicLevel}).\n\nPortfolio: ${res.portfolioUrl || 'None'}\n\nStatement:\n${res.statement}`
             }, 'h3x_9dtR8frBq2pCi');
           }
         } catch (mailErr) {
           console.warn('EmailJS application alert notification note:', mailErr);
         }
       }
-
-      window.showToast('Research application successfully submitted!', 'success');
     } catch (err) {
-      window.showToast('Failed to submit application. Please try again.', 'error');
+      console.error('Error submitting application:', err);
       submitBtn.disabled = false;
-      submitBtn.innerHTML = `Submit Application`;
+      submitBtn.innerHTML = 'Submit Research Application';
+      alert('There was an issue submitting your application. Please check your connection and try again.');
     }
   });
 }
+
+

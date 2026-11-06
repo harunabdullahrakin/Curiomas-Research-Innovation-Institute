@@ -42,6 +42,31 @@ function safeJsonParse(str, fallback) {
   }
 }
 
+async function ensureAppTable(db) {
+  if (!db) return;
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS applications (
+      id TEXT PRIMARY KEY,
+      fullName TEXT NOT NULL,
+      email TEXT NOT NULL,
+      university TEXT,
+      fieldOfStudy TEXT,
+      preferredDivision TEXT,
+      academicLevel TEXT,
+      portfolioUrl TEXT,
+      customFields_json TEXT,
+      status TEXT NOT NULL DEFAULT 'Under Review',
+      appliedDate TEXT NOT NULL,
+      statement TEXT,
+      reviewedBy TEXT,
+      reviewedAt TEXT
+    )
+  `).run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN academicLevel TEXT").run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN portfolioUrl TEXT").run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN customFields_json TEXT").run().catch(() => {});
+}
+
 export async function onRequestGet(context) {
   const { env, request } = context;
   const url = new URL(request.url);
@@ -49,6 +74,7 @@ export async function onRequestGet(context) {
 
   if (env && env.DB) {
     try {
+      await ensureAppTable(env.DB);
       let query = "SELECT * FROM interns";
       if (teamOnly) {
         query += " WHERE isTeamMember = 1";
@@ -56,15 +82,26 @@ export async function onRequestGet(context) {
       query += " ORDER BY isTeamMember DESC, orderIndex ASC, name ASC";
       const { results: interns } = await env.DB.prepare(query).all();
 
-      const { results: applications } = await env.DB.prepare(
-        "SELECT * FROM applications ORDER BY appliedDate DESC"
-      ).all();
+      let applications = [];
+      try {
+        const appRes = await env.DB.prepare("SELECT * FROM applications ORDER BY appliedDate DESC").all();
+        applications = appRes.results || [];
+      } catch (e) {
+        // Fallback to settings store if needed
+        try {
+          const row = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'applications_store'").first();
+          if (row && row.value_json) applications = JSON.parse(row.value_json);
+        } catch(err){}
+      }
 
       return new Response(JSON.stringify({
         activeInterns: (interns || []).map(formatInternRow),
         applications: applications || []
       }), {
-        headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=30" }
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate"
+        }
       });
     } catch (e) {
       console.error("D1 Interns error:", e);
@@ -82,7 +119,8 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { request, env, params } = context;
-  const isApply = params.id && params.id[0] === "apply";
+  const url = new URL(request.url);
+  const isApply = (params.id && params.id[0] === "apply") || url.pathname.endsWith("/apply");
 
   try {
     const data = await request.json();
@@ -90,31 +128,69 @@ export async function onRequestPost(context) {
     // Application submission
     if (isApply) {
       const app = {
-        id: `app-${Date.now()}`,
-        fullName: data.fullName || "Anonymous Applicant",
-        email: data.email || "",
-        university: data.university || "",
-        fieldOfStudy: data.fieldOfStudy || "",
-        preferredDivision: data.preferredDivision || "General Science",
-        status: "Under Review",
-        appliedDate: new Date().toISOString().split("T")[0],
-        statement: data.statement || ""
+        id: data.id || `app-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+        fullName: (data.fullName || "Anonymous Applicant").trim(),
+        email: (data.email || "").trim(),
+        university: (data.university || "").trim(),
+        fieldOfStudy: (data.fieldOfStudy || "").trim(),
+        preferredDivision: (data.preferredDivision || "General Science").trim(),
+        academicLevel: (data.academicLevel || data.appLevel || "").trim(),
+        portfolioUrl: (data.portfolioUrl || data.portfolio || "").trim(),
+        customFields_json: JSON.stringify(data.customFields || {}),
+        status: data.status || "Under Review",
+        appliedDate: data.appliedDate || new Date().toISOString().split("T")[0],
+        statement: (data.statement || "").trim()
       };
 
       if (env && env.DB) {
+        await ensureAppTable(env.DB);
         await env.DB.prepare(`
-          INSERT INTO applications (id, fullName, email, university, fieldOfStudy, preferredDivision, status, appliedDate, statement)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO applications (
+            id, fullName, email, university, fieldOfStudy, preferredDivision,
+            academicLevel, portfolioUrl, customFields_json, status, appliedDate, statement
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            fullName=excluded.fullName,
+            email=excluded.email,
+            university=excluded.university,
+            fieldOfStudy=excluded.fieldOfStudy,
+            preferredDivision=excluded.preferredDivision,
+            academicLevel=excluded.academicLevel,
+            portfolioUrl=excluded.portfolioUrl,
+            customFields_json=excluded.customFields_json,
+            status=excluded.status,
+            statement=excluded.statement;
         `).bind(
           app.id, app.fullName, app.email, app.university,
-          app.fieldOfStudy, app.preferredDivision, app.status,
+          app.fieldOfStudy, app.preferredDivision, app.academicLevel,
+          app.portfolioUrl, app.customFields_json, app.status,
           app.appliedDate, app.statement
         ).run();
+
+        // Backup in settings table
+        try {
+          const storeRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'applications_store'").first();
+          let list = [];
+          if (storeRow && storeRow.value_json) {
+            try { list = JSON.parse(storeRow.value_json); } catch(e){}
+          }
+          if (!Array.isArray(list)) list = [];
+          list = list.filter(item => item.id !== app.id);
+          list.unshift(app);
+          await env.DB.prepare(`
+            INSERT INTO settings (key, value_json, updatedAt, updatedBy)
+            VALUES ('applications_store', ?, ?, 'System')
+            ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updatedAt=excluded.updatedAt;
+          `).bind(JSON.stringify(list.slice(0, 500)), new Date().toISOString()).run();
+        } catch(e){}
       }
 
       return new Response(JSON.stringify({ success: true, application: app }), {
         status: 201,
-        headers: { "Content-Type": "application/json" }
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate"
+        }
       });
     }
 

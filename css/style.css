@@ -3118,3 +3118,100 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 
+
+
+/* === ANIMATED ORGANIC CURVES & WAVY DIVIDERS === */
+.mockup-curve-divider {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mockup-curve-svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 52px;
+}
+
+.mockup-curve-svg path.curve-path-1 {
+  fill: currentColor;
+  opacity: 0.85;
+  animation: curveWaveMotion 14s ease-in-out infinite alternate;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.mockup-curve-svg path.curve-path-2 {
+  fill: currentColor;
+  opacity: 0.45;
+  animation: curveWaveMotion2 18s ease-in-out infinite alternate;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+@keyframes curveWaveMotion {
+  0% { transform: translate3d(0, 0, 0) scaleY(1); }
+  50% { transform: translate3d(-15px, 2px, 0) scaleY(1.06); }
+  100% { transform: translate3d(15px, -2px, 0) scaleY(0.95); }
+}
+
+@keyframes curveWaveMotion2 {
+  0% { transform: translate3d(0, 0, 0) scaleY(1); }
+  50% { transform: translate3d(18px, -3px, 0) scaleY(1.1); }
+  100% { transform: translate3d(-16px, 2px, 0) scaleY(0.92); }
+}
+
+/* Wavy Decorative Accent Underlines */
+.wavy-title-line {
+  display: block;
+  width: 110px;
+  height: 12px;
+  margin: 0.4rem 0 1rem 0;
+  overflow: visible;
+}
+
+.wavy-title-line path {
+  stroke: var(--accent-primary, #38bdf8);
+  stroke-width: 3;
+  stroke-linecap: round;
+  fill: none;
+  animation: wavyLineBreathe 6s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes wavyLineBreathe {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
+
+/* Whimsical animated doodle curves matching reference design */
+.doodle-curve-accent {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  opacity: 0.75;
+  animation: doodleFloat 9s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes doodleFloat {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(8px, -6px, 0) rotate(4deg); }
+  100% { transform: translate3d(-6px, 6px, 0) rotate(-3deg); }
+}
+
+/* Soft curved borders for primary cards */
+.editorial-feature-card,
+.editorial-sub-card,
+.division-card,
+.cohort-card,
+.repo-card,
+.data-table-card {
+  border-radius: 20px !important;
+}

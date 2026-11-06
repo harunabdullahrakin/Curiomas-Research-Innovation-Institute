@@ -1,6 +1,6 @@
 /**
  * Cloudflare Pages Function: /api/settings
- * Relational SQL storage for hero appearance, video background, blur, and navbar settings
+ * Relational SQL storage for hero appearance, branding, festive themes, emailjs, and dynamic application form config
  */
 
 const DEFAULT_SETTINGS = {
@@ -21,23 +21,37 @@ const DEFAULT_SETTINGS = {
   divisions: [],
   cohorts: [],
   festive: {
-    mode: "auto", // "auto", "always", or "disabled"
-    theme: "holi", // "holi", "christmas", "cherry-blossom", "eid", "festival"
-    intensity: 0.70 // 0.20 to 1.00
+    mode: "auto",
+    theme: "holi",
+    intensity: 0.70
   },
   emailjs: {
-    templateId: "zhelx7y"
+    templateId: ""
   },
   branding: {
     name: "Curiomas Research & Innovation Institute",
     logoUrl: "",
     autzAppId: "",
-    emailjsTemplateId: "zhelx7y"
+    emailjsTemplateId: ""
   },
   navbar: {
     title: "Curiomas Research & Innovation Institute",
     subtitle: "CRII • Open Science Collective",
     logoUrl: ""
+  },
+  app_form_config: {
+    fields: {
+      fullName: { label: "Full Legal Name", required: true, visible: true },
+      email: { label: "Email Address", required: true, visible: true },
+      university: { label: "University / Institution", required: true, visible: true },
+      fieldOfStudy: { label: "Field of Study / Major", required: true, visible: true },
+      division: { label: "Preferred Research Division", required: true, visible: true },
+      academicLevel: { label: "Academic Level / Cohort", required: false, visible: true },
+      portfolio: { label: "GitHub, ORCID, or Portfolio Link", required: false, visible: true },
+      phone: { label: "Contact Phone / WhatsApp", required: false, visible: false },
+      statement: { label: "Statement of Intent & Research Interests", required: true, visible: true }
+    },
+    customFields: []
   }
 };
 
@@ -46,8 +60,18 @@ export async function onRequestGet(context) {
 
   if (env && env.DB) {
     try {
+      // Ensure settings table exists
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY,
+          value_json TEXT NOT NULL,
+          updatedAt TEXT,
+          updatedBy TEXT
+        )
+      `).run().catch(() => {});
+
       const { results } = await env.DB.prepare("SELECT * FROM settings").all();
-      const settings = { ...DEFAULT_SETTINGS };
+      const settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 
       for (const row of (results || [])) {
         try {
@@ -57,8 +81,21 @@ export async function onRequestGet(context) {
         }
       }
 
+      // Synchronize EmailJS Template ID across both emailjs and branding keys
+      const savedTplId = (settings.emailjs && settings.emailjs.templateId) ||
+                         (settings.branding && settings.branding.emailjsTemplateId) || "";
+      if (savedTplId) {
+        if (!settings.emailjs) settings.emailjs = {};
+        settings.emailjs.templateId = savedTplId;
+        if (!settings.branding) settings.branding = {};
+        settings.branding.emailjsTemplateId = savedTplId;
+      }
+
       return new Response(JSON.stringify(settings), {
-        headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=15" }
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate"
+        }
       });
     } catch (e) {
       console.error("D1 Settings read error:", e);
@@ -66,7 +103,10 @@ export async function onRequestGet(context) {
   }
 
   return new Response(JSON.stringify(DEFAULT_SETTINGS), {
-    headers: { "Content-Type": "application/json" }
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate"
+    }
   });
 }
 
@@ -74,13 +114,23 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
-    const payload = await request.json(); // e.g. { key: "hero", value: { videoUrl, blurPx, overlayOpacity }, updatedBy }
+    const payload = await request.json();
     const key = payload.key || "hero";
     const valueJson = JSON.stringify(payload.value || {});
     const updatedBy = payload.updatedBy || "Administrator";
     const updatedAt = new Date().toISOString();
 
     if (env && env.DB) {
+      // Ensure settings table exists
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY,
+          value_json TEXT NOT NULL,
+          updatedAt TEXT,
+          updatedBy TEXT
+        )
+      `).run().catch(() => {});
+
       await env.DB.prepare(`
         INSERT INTO settings (key, value_json, updatedAt, updatedBy)
         VALUES (?, ?, ?, ?)
@@ -89,11 +139,32 @@ export async function onRequestPost(context) {
           updatedAt=excluded.updatedAt,
           updatedBy=excluded.updatedBy;
       `).bind(key, valueJson, updatedAt, updatedBy).run();
+
+      // If emailjs template is updated, also ensure branding key stores it
+      if (key === "emailjs" && payload.value && payload.value.templateId) {
+        const tpl = payload.value.templateId.trim();
+        const brandingRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'branding'").first();
+        let brandingObj = {};
+        if (brandingRow && brandingRow.value_json) {
+          try { brandingObj = JSON.parse(brandingRow.value_json); } catch(e){}
+        }
+        brandingObj.emailjsTemplateId = tpl;
+        await env.DB.prepare(`
+          INSERT INTO settings (key, value_json, updatedAt, updatedBy)
+          VALUES ('branding', ?, ?, ?)
+          ON CONFLICT(key) DO UPDATE SET
+            value_json=excluded.value_json,
+            updatedAt=excluded.updatedAt;
+        `).bind(JSON.stringify(brandingObj), updatedAt, updatedBy).run().catch(() => {});
+      }
     }
 
     return new Response(JSON.stringify({ success: true, key, value: payload.value }), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
     });
   } catch (err) {
     console.error("D1 Settings write error:", err);
@@ -102,4 +173,14 @@ export async function onRequestPost(context) {
       headers: { "Content-Type": "application/json" }
     });
   }
+}
+
+export async function onRequestOptions() {
+  return new Response(null, {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    }
+  });
 }

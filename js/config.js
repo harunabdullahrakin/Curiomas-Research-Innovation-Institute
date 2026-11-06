@@ -28,7 +28,8 @@ const CRII_CONFIG = {
     COHORTS: "crii_cohorts_v1",
     DELETED_POSTS: "crii_deleted_posts_v2",
     POSTS_INITIALIZED: "crii_posts_initialized_v2",
-    FESTIVE_SETTINGS: "crii_festive_settings_v1"
+    FESTIVE_SETTINGS: "crii_festive_settings_v1",
+    APP_FORM_CONFIG: "crii_app_form_config_v1"
   }
 };
 
@@ -202,7 +203,7 @@ class CriiApiClient {
   // --- HERO & BRANDING CONFIGURATION (D1 SYNCED) ---
   async syncSettingsFromDb() {
     try {
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/settings`);
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/settings`, { cache: 'no-store' });
       if (res.ok) {
         const settings = await res.json();
         if (settings && settings.hero) {
@@ -212,11 +213,20 @@ class CriiApiClient {
           const cleaned = settings.divisions.filter(d => !CRII_LEGACY_PURGED_DIVISION_IDS.includes(d.id));
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(cleaned));
         }
+        if (settings && Array.isArray(settings.cohorts)) {
+          const cleanedCohorts = settings.cohorts.filter(c => !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.id) && !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.title));
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.COHORTS, JSON.stringify(cleanedCohorts));
+        }
         if (settings && settings.festive) {
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.FESTIVE_SETTINGS, JSON.stringify(settings.festive));
         }
-        if (settings && settings.emailjs && settings.emailjs.templateId) {
-          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.EMAILJS_TEMPLATE_ID, settings.emailjs.templateId);
+        const tplId = (settings && settings.emailjs && settings.emailjs.templateId) || 
+                      (settings && settings.branding && settings.branding.emailjsTemplateId) || "";
+        if (tplId) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.EMAILJS_TEMPLATE_ID, tplId);
+        }
+        if (settings && settings.app_form_config) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.APP_FORM_CONFIG, JSON.stringify(settings.app_form_config));
         }
         if (settings && settings.branding) {
           if (settings.branding.name) localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INSTITUTE_NAME, settings.branding.name);
@@ -224,12 +234,63 @@ class CriiApiClient {
           if (settings.branding.autzAppId && settings.branding.autzAppId !== "t0i7jkia") {
             localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.AUTZ_APP_ID, settings.branding.autzAppId);
           }
-          if (settings.branding.emailjsTemplateId) {
-            localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.EMAILJS_TEMPLATE_ID, settings.branding.emailjsTemplateId);
-          }
         }
       }
     } catch (e) {}
+  }
+
+
+  // --- DYNAMIC APPLICATION FORM CONFIGURATION ---
+  getApplicationFormConfig() {
+    const defaultConfig = {
+      fields: {
+        fullName: { label: "Full Legal Name", required: true, visible: true },
+        email: { label: "Email Address", required: true, visible: true },
+        university: { label: "University / Institution", required: true, visible: true },
+        fieldOfStudy: { label: "Field of Study / Major", required: true, visible: true },
+        division: { label: "Preferred Research Division", required: true, visible: true },
+        academicLevel: { label: "Academic Level / Grade", required: false, visible: true },
+        portfolio: { label: "GitHub, ORCID, or Portfolio Link", required: false, visible: true },
+        phone: { label: "Contact Phone / WhatsApp", required: false, visible: false },
+        statement: { label: "Statement of Intent & Research Interests", required: true, visible: true }
+      },
+      customFields: []
+    };
+
+    try {
+      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.APP_FORM_CONFIG);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            fields: { ...defaultConfig.fields, ...(parsed.fields || {}) },
+            customFields: Array.isArray(parsed.customFields) ? parsed.customFields : []
+          };
+        }
+      }
+    } catch (e) {}
+
+    return defaultConfig;
+  }
+
+  async saveApplicationFormConfig(config) {
+    if (!config || typeof config !== 'object') return;
+    try {
+      localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.APP_FORM_CONFIG, JSON.stringify(config));
+      const user = this.getCurrentUser();
+      await fetch(`${CRII_CONFIG.API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: "app_form_config",
+          value: config,
+          updatedBy: user ? (user.name || user.email) : "Administrator"
+        })
+      });
+    } catch (e) {
+      console.warn("Failed to sync app_form_config to D1:", e);
+    }
+    return config;
   }
 
   // --- FESTIVE THEMES (HOLI COLOR PAINTS & SPLATTERS) ---
@@ -763,6 +824,9 @@ class CriiApiClient {
       ...cohortData,
       id,
       title: cohortData.title || "Untitled Profile",
+      grade: cohortData.grade || cohortData.academicLevel || "Undergraduate / Graduate",
+      academicLevel: cohortData.academicLevel || cohortData.grade || "Undergraduate",
+      divisionScope: cohortData.divisionScope || "All Research Tracks",
       desc: cohortData.desc || "",
       image: cohortData.image || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
       link: cohortData.link || "/team#apply",
@@ -1150,21 +1214,33 @@ class CriiApiClient {
     const data = await this.getInternsData();
     const newApp = {
       ...formData,
-      id: `app-2026-${Math.floor(100 + Math.random() * 900)}`,
+      id: formData.id || `app-2026-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
       appliedDate: new Date().toISOString().split('T')[0],
-      status: 'Pending'
+      status: 'Under Review'
     };
+    if (!Array.isArray(data.applications)) data.applications = [];
+    data.applications = data.applications.filter(a => a.id !== newApp.id);
     data.applications.unshift(newApp);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
 
+    // Dual-route sync for 100% guarantee across Cloudflare workers
     try {
-      await fetch(`${CRII_CONFIG.API_BASE}/interns/apply`, {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/applications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newApp)
       });
+      if (!res.ok) throw new Error('applications endpoint status ' + res.status);
     } catch (e) {
-      console.warn("Failed to sync application to D1:", e);
+      try {
+        await fetch(`${CRII_CONFIG.API_BASE}/interns/apply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newApp)
+        });
+      } catch (err) {
+        console.warn("Failed to sync application to D1 endpoints:", err);
+      }
     }
 
     return newApp;

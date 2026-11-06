@@ -189,7 +189,7 @@ window.showTab = function(tabName) {
 
   currentTab = tabName;
   if (tabName === 'divisions') renderDivisionsTab();
-  if (tabName === 'cohorts') renderCohortsTab();
+  if (tabName === 'cohorts') { renderCohortsTab(); initApplicationFormBuilder(); }
   try {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
@@ -1596,15 +1596,47 @@ window.reviewApplication = function(appId) {
   const details = document.getElementById('appReviewDetails');
   if (!modal || !details) return;
 
+  let parsedCustomFields = {};
+  if (app.customFields) parsedCustomFields = app.customFields;
+  else if (typeof app.customFields_json === 'string') {
+    try { parsedCustomFields = JSON.parse(app.customFields_json); } catch(e){}
+  }
+  const customEntries = Object.entries(parsedCustomFields);
+
   details.innerHTML = `
     <div style="margin-bottom:1.5rem;">
       <h2 style="font-size:1.4rem; color:var(--text-primary); margin-bottom:0.25rem;">${escapeHtml(app.fullName)}</h2>
-      <div style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(app.email)} • ${escapeHtml(app.university)}</div>
+      <div style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(app.email)} • ${escapeHtml(app.university || 'Independent')} • ${escapeHtml(app.fieldOfStudy || 'General Science')}</div>
     </div>
+    
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.75rem; margin-bottom:1.25rem;">
+      <div style="background:var(--bg-primary); padding:0.85rem 1rem; border-radius:8px; border:1px solid var(--border-color);">
+        <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.2rem;">Preferred Division</div>
+        <div style="font-weight:600; color:var(--accent-primary);">${escapeHtml(app.preferredDivision || 'Any Track')}</div>
+      </div>
+      ${app.academicLevel ? `
+      <div style="background:var(--bg-primary); padding:0.85rem 1rem; border-radius:8px; border:1px solid var(--border-color);">
+        <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.2rem;">Academic Level / Grade</div>
+        <div style="font-weight:600; color:var(--text-primary);">${escapeHtml(app.academicLevel)}</div>
+      </div>` : ''}
+      ${app.portfolioUrl ? `
+      <div style="background:var(--bg-primary); padding:0.85rem 1rem; border-radius:8px; border:1px solid var(--border-color);">
+        <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.2rem;">Portfolio / GitHub</div>
+        <div><a href="${escapeHtml(app.portfolioUrl)}" target="_blank" rel="noopener" style="color:var(--accent-primary); word-break:break-all; font-weight:500;">View Profile &rarr;</a></div>
+      </div>` : ''}
+    </div>
+
+    ${customEntries.length > 0 ? `
     <div style="background:var(--bg-primary); padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.25rem; border:1px solid var(--border-color);">
-      <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.25rem;">Research Division Preference</div>
-      <div style="font-weight:600; color:var(--accent-primary);">${escapeHtml(app.preferredDivision)}</div>
-    </div>
+      <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.5rem;">Additional Custom Questions</div>
+      ${customEntries.map(([k, v]) => `
+        <div style="margin-bottom:0.4rem; font-size:0.85rem;">
+          <strong style="color:var(--text-muted);">${escapeHtml(k)}:</strong>
+          <span style="color:var(--text-primary); margin-left:0.35rem;">${escapeHtml(String(v))}</span>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
     <div>
       <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.5rem;">Research Statement</div>
       <p style="font-size:0.95rem; line-height:1.7; color:var(--text-secondary); background:var(--bg-primary); padding:1.25rem; border-radius:10px; border:1px solid var(--border-color); white-space:pre-wrap;">${escapeHtml(app.statement || 'No statement submitted.')}</p>
@@ -1772,8 +1804,19 @@ function initInstituteSettings() {
   // EmailJS Settings Form in Tab 6
   const emailjsTplInput = document.getElementById('settingEmailjsTemplateId');
   if (emailjsTplInput) {
-    emailjsTplInput.value = localStorage.getItem('crii_emailjs_template_id') || 
-      (window.CRII_API && typeof window.CRII_API.getEmailjsTemplateId === 'function' ? window.CRII_API.getEmailjsTemplateId() : null) || 'zhelx7y';
+    const localTpl = localStorage.getItem('crii_emailjs_template_id') || 
+      (window.CRII_API && typeof window.CRII_API.getEmailjsTemplateId === 'function' ? window.CRII_API.getEmailjsTemplateId() : null) || '';
+    if (localTpl) emailjsTplInput.value = localTpl;
+
+    // Asynchronously verify with D1 backend so cache-clear never shows old default
+    if (window.CRII_API && window.CRII_API.syncSettingsFromDb) {
+      window.CRII_API.syncSettingsFromDb().then(() => {
+        const liveTpl = window.CRII_API.getEmailjsTemplateId();
+        if (liveTpl && emailjsTplInput) {
+          emailjsTplInput.value = liveTpl;
+        }
+      }).catch(() => {});
+    }
   }
 
   const emailjsForm = document.getElementById('emailjsSettingsForm');
@@ -2209,7 +2252,11 @@ window.renderCohortsTab = async function() {
         <img src="${c.image || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80'}" alt="${c.title}" loading="lazy">
       </div>
       <div class="cohort-manage-body">
-        <h3 class="cohort-manage-title">${c.title}</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem; flex-wrap:wrap; gap:0.35rem;">
+          <h3 class="cohort-manage-title" style="margin:0;">${c.title}</h3>
+          <span class="badge badge-blue" style="font-size:0.75rem;">${c.grade || c.academicLevel || 'All Grades'}</span>
+        </div>
+        <div style="font-size:0.76rem; color:var(--text-muted); margin-bottom:0.5rem;">Track: <strong>${c.divisionScope || 'All Research Tracks'}</strong></div>
         <p class="cohort-manage-desc">${c.desc || ''}</p>
         <div class="cohort-manage-meta">
           <span>Target: <code>${c.link || '/team#apply'}</code> (${c.linkText || 'Apply as Fellow'})</span>
@@ -2238,6 +2285,16 @@ window.openCohortModal = function(id = null) {
   if (form) form.reset();
   document.getElementById('cohortIdInput').value = '';
 
+  // Populate dynamic division options into cohortDivisionInput
+  const divSelect = document.getElementById('cohortDivisionInput');
+  if (divSelect && window.CRII_API) {
+    divSelect.innerHTML = '<option value="All Research Tracks">All Research Tracks</option>';
+    const divisions = window.CRII_API.getDivisions() || [];
+    divisions.forEach(d => {
+      divSelect.innerHTML += `<option value="${d.title}">${d.title}</option>`;
+    });
+  }
+
   if (id) {
     if (modalTitle) modalTitle.innerText = 'Edit Cohort Profile';
     window.CRII_API.getCohorts().then(cohorts => {
@@ -2245,6 +2302,12 @@ window.openCohortModal = function(id = null) {
       if (c) {
         document.getElementById('cohortIdInput').value = c.id;
         document.getElementById('cohortTitleInput').value = c.title || '';
+        if (document.getElementById('cohortGradeInput')) {
+          document.getElementById('cohortGradeInput').value = c.grade || c.academicLevel || '';
+        }
+        if (divSelect && c.divisionScope) {
+          divSelect.value = c.divisionScope;
+        }
         document.getElementById('cohortDescInput').value = c.desc || '';
         document.getElementById('cohortImageInput').value = c.image || '';
         document.getElementById('cohortLinkInput').value = c.link || '/team#apply';
@@ -2253,6 +2316,7 @@ window.openCohortModal = function(id = null) {
     });
   } else {
     if (modalTitle) modalTitle.innerText = 'Add Cohort Profile';
+    if (document.getElementById('cohortGradeInput')) document.getElementById('cohortGradeInput').value = 'Undergraduate (1st - 4th Year)';
     document.getElementById('cohortLinkInput').value = '/team#apply';
     document.getElementById('cohortLinkTextInput').value = 'Apply as Fellow';
   }
@@ -2283,9 +2347,15 @@ window.handleSaveCohort = async function(e) {
   const link = document.getElementById('cohortLinkInput').value.trim() || '/team#apply';
   const linkText = document.getElementById('cohortLinkTextInput').value.trim() || 'Apply as Fellow';
 
+  const grade = (document.getElementById('cohortGradeInput')?.value || '').trim() || 'Undergraduate';
+  const divisionScope = document.getElementById('cohortDivisionInput')?.value || 'All Research Tracks';
+
   const cohortData = {
     id: id || undefined,
     title,
+    grade,
+    academicLevel: grade,
+    divisionScope,
     desc,
     image,
     link,
@@ -2367,3 +2437,113 @@ async function loadRandomScientificBackground() {
   const fallback = curatedScienceImages[Math.floor(Math.random() * curatedScienceImages.length)];
   pane.style.backgroundImage = 'url("' + fallback + '")';
 }
+
+
+// -----------------------------------------------------------------------------
+// APPLICATION FORM SETTINGS & CUSTOM FIELDS BUILDER
+// -----------------------------------------------------------------------------
+let currentAppFormConfig = null;
+
+window.initApplicationFormBuilder = function() {
+  if (!window.CRII_API || !window.CRII_API.getApplicationFormConfig) return;
+  currentAppFormConfig = window.CRII_API.getApplicationFormConfig();
+  if (!currentAppFormConfig) return;
+
+  const fields = currentAppFormConfig.fields || {};
+  Object.keys(fields).forEach(key => {
+    const visEl = document.getElementById('fieldVis_' + key);
+    const reqEl = document.getElementById('fieldReq_' + key);
+    if (visEl) visEl.checked = fields[key].visible !== false;
+    if (reqEl) reqEl.checked = fields[key].required === true;
+  });
+
+  renderCustomFieldsBuilder();
+};
+
+window.renderCustomFieldsBuilder = function() {
+  const container = document.getElementById('customFieldsBuilderList');
+  if (!container || !currentAppFormConfig) return;
+
+  const customFields = currentAppFormConfig.customFields || [];
+  if (customFields.length === 0) {
+    container.innerHTML = `<div style="font-size:0.85rem; color:var(--text-muted); padding:0.75rem 0; font-style:italic;">No custom fields added yet. Click "+ Add Custom Question" to create one.</div>`;
+    return;
+  }
+
+  container.innerHTML = customFields.map((cf, idx) => `
+    <div style="background:var(--bg-secondary); padding:0.85rem 1rem; border-radius:8px; border:1px solid var(--border-color); display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+      <div style="flex:2; min-width:180px;">
+        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">Question / Label</label>
+        <input type="text" class="form-input" style="padding:0.35rem 0.65rem; font-size:0.85rem;" value="${escapeHtml(cf.label || '')}" onchange="updateCustomFieldProp(${idx}, 'label', this.value)" placeholder="e.g. Graduation Year">
+      </div>
+      <div style="flex:1; min-width:120px;">
+        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">Type</label>
+        <select class="form-select" style="padding:0.35rem 0.65rem; font-size:0.85rem;" onchange="updateCustomFieldProp(${idx}, 'type', this.value)">
+          <option value="text" ${cf.type === 'text' ? 'selected' : ''}>Text (Single line)</option>
+          <option value="textarea" ${cf.type === 'textarea' ? 'selected' : ''}>Long Text</option>
+          <option value="number" ${cf.type === 'number' ? 'selected' : ''}>Number</option>
+          <option value="select" ${cf.type === 'select' ? 'selected' : ''}>Dropdown Select</option>
+        </select>
+      </div>
+      ${cf.type === 'select' ? `
+      <div style="flex:2; min-width:180px;">
+        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">Options (comma-separated)</label>
+        <input type="text" class="form-input" style="padding:0.35rem 0.65rem; font-size:0.85rem;" value="${escapeHtml((cf.options || []).join(', '))}" onchange="updateCustomFieldProp(${idx}, 'options', this.value.split(',').map(s=>s.trim()).filter(Boolean))" placeholder="Option 1, Option 2, Option 3">
+      </div>` : ''}
+      <div style="display:flex; align-items:center; gap:0.5rem; margin-top:1.2rem;">
+        <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; cursor:pointer;">
+          <input type="checkbox" ${cf.required ? 'checked' : ''} onchange="updateCustomFieldProp(${idx}, 'required', this.checked)"> Required
+        </label>
+        <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.55rem; font-size:0.75rem;" onclick="removeCustomFormFieldRow(${idx})">&times; Remove</button>
+      </div>
+    </div>
+  `).join('');
+};
+
+window.updateCustomFieldProp = function(idx, prop, val) {
+  if (!currentAppFormConfig || !currentAppFormConfig.customFields[idx]) return;
+  currentAppFormConfig.customFields[idx][prop] = val;
+  if (prop === 'type') renderCustomFieldsBuilder();
+};
+
+window.addCustomFormFieldRow = function() {
+  if (!currentAppFormConfig) currentAppFormConfig = { fields: {}, customFields: [] };
+  if (!Array.isArray(currentAppFormConfig.customFields)) currentAppFormConfig.customFields = [];
+  currentAppFormConfig.customFields.push({
+    id: 'cf_' + Date.now().toString(36),
+    label: 'New Question',
+    type: 'text',
+    placeholder: '',
+    required: false
+  });
+  renderCustomFieldsBuilder();
+};
+
+window.removeCustomFormFieldRow = function(idx) {
+  if (!currentAppFormConfig || !Array.isArray(currentAppFormConfig.customFields)) return;
+  currentAppFormConfig.customFields.splice(idx, 1);
+  renderCustomFieldsBuilder();
+};
+
+window.handleSaveAppFormSettings = async function(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!window.CRII_API || !window.CRII_API.saveApplicationFormConfig) return;
+
+  const config = currentAppFormConfig || window.CRII_API.getApplicationFormConfig();
+  if (!config.fields) config.fields = {};
+
+  ['university', 'fieldOfStudy', 'division', 'academicLevel', 'portfolio', 'statement'].forEach(k => {
+    const vis = document.getElementById('fieldVis_' + k)?.checked !== false;
+    const req = document.getElementById('fieldReq_' + k)?.checked === true;
+    config.fields[k] = {
+      label: config.fields[k]?.label || k,
+      visible: vis,
+      required: req
+    };
+  });
+
+  await window.CRII_API.saveApplicationFormConfig(config);
+  if (window.showToast) {
+    window.showToast('Application form settings & custom questions saved to database!', 'success');
+  }
+};
