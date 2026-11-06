@@ -225,13 +225,7 @@ function initUserSessionState() {
 // 6b. Google Translate & Language Selector (Persisted in localStorage)
 const CRII_LANG_CONFIG = {
   'en': { name: 'English', flag: 'https://flagcdn.com/w40/gb.png' },
-  'zh-CN': { name: '中文 (简体)', flag: 'https://flagcdn.com/w40/cn.png' },
-  'es': { name: 'Español', flag: 'https://flagcdn.com/w40/es.png' },
-  'fr': { name: 'Français', flag: 'https://flagcdn.com/w40/fr.png' },
-  'de': { name: 'Deutsch', flag: 'https://flagcdn.com/w40/de.png' },
-  'bn': { name: 'বাংলা', flag: 'https://flagcdn.com/w40/bd.png' },
-  'ja': { name: '日本語', flag: 'https://flagcdn.com/w40/jp.png' },
-  'ar': { name: 'العربية', flag: 'https://flagcdn.com/w40/sa.png' }
+  'bn': { name: 'বাংলা', flag: 'https://flagcdn.com/w40/bd.png' }
 };
 
 function initGoogleTranslateAndLang() {
@@ -335,7 +329,7 @@ function initGoogleTranslateAndLang() {
     try {
       new google.translate.TranslateElement({
         pageLanguage: 'en',
-        includedLanguages: 'en,zh-CN,es,fr,de,bn,ja,ar,ru,hi,pt,it,ko',
+        includedLanguages: 'en,bn',
         autoDisplay: false
       }, 'google_translate_element');
     } catch (err) {
@@ -362,6 +356,7 @@ function initSearchOverlay() {
   const escBtn = document.getElementById('criiSearchEsc');
   const input = document.getElementById('siteSearchInput');
   const resultsContainer = document.getElementById('criiSearchResults');
+  const quickTagsContainer = document.getElementById('criiSearchQuickTags');
 
   if (!overlay || !input) return;
 
@@ -390,6 +385,19 @@ function initSearchOverlay() {
   if (backdrop) backdrop.addEventListener('click', closeSearch);
   if (escBtn) escBtn.addEventListener('click', closeSearch);
 
+  // Quick Tags Click
+  if (quickTagsContainer) {
+    quickTagsContainer.querySelectorAll('.quick-tag-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const q = btn.getAttribute('data-query') || btn.innerText.trim();
+        input.value = q;
+        input.focus();
+        renderSearchResults(q);
+      });
+    });
+  }
+
   // Keyboard navigation: Ctrl+K / Cmd+K opens, Escape closes
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -417,11 +425,22 @@ function initSearchOverlay() {
     if (!resultsContainer) return;
 
     if (!query) {
-      resultsContainer.innerHTML = '<div class="crii-search-empty">Type to search...</div>';
+      resultsContainer.innerHTML = `
+        <div class="crii-search-empty">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-bottom:0.75rem; color:#38bdf8; opacity:0.8;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <p style="margin:0 0 0.4rem; font-weight:600; color:#f1f5f9;">Search the CRII Open Knowledge Base</p>
+          <span style="font-size:0.84rem; color:#94a3b8;">Type keywords or click one of the suggested topics above.</span>
+        </div>
+      `;
       return;
     }
 
-    resultsContainer.innerHTML = '<div class="crii-search-empty">Searching dispatches...</div>';
+    resultsContainer.innerHTML = `
+      <div class="crii-search-empty">
+        <span class="crii-search-spinner"></span>
+        <p style="margin-top:0.6rem; color:#94a3b8;">Searching publications & dispatches...</p>
+      </div>
+    `;
 
     let posts = [];
     if (window.CRII_API && typeof window.CRII_API.getPosts === 'function') {
@@ -437,7 +456,7 @@ function initSearchOverlay() {
       const title = (p.title || '').toLowerCase();
       const excerpt = (p.excerpt || p.abstract || '').toLowerCase();
       const division = (p.division || '').toLowerCase();
-      const author = (p.author || p.authors?.join(' ') || '').toLowerCase();
+      const author = (p.author || (Array.isArray(p.authors) ? p.authors.join(' ') : '')).toLowerCase();
       const tags = Array.isArray(p.tags) ? p.tags.join(' ').toLowerCase() : '';
       return title.includes(q) || excerpt.includes(q) || division.includes(q) || author.includes(q) || tags.includes(q);
     });
@@ -445,7 +464,9 @@ function initSearchOverlay() {
     if (matched.length === 0) {
       resultsContainer.innerHTML = `
         <div class="crii-search-empty">
-          No dispatches found matching "<strong>${escapeHtmlApp(query)}</strong>"
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-bottom:0.5rem; color:#64748b;"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+          <p style="margin:0 0 0.35rem; color:#e2e8f0; font-weight:600;">No matching publications found</p>
+          <span style="font-size:0.84rem; color:#64748b;">No results found for "<strong>${escapeHtmlApp(query)}</strong>". Try broader keywords.</span>
         </div>
       `;
       return;
@@ -454,14 +475,16 @@ function initSearchOverlay() {
     resultsContainer.innerHTML = matched.slice(0, 8).map(post => {
       const postUrl = `/article?id=${encodeURIComponent(post.id)}`;
       const division = post.division || 'Research';
-      const excerpt = post.excerpt || post.abstract || 'Explore the complete research dispatch and open dataset.';
+      const author = post.author || (Array.isArray(post.authors) && post.authors[0]) || 'CRII Research Core';
+      const excerpt = post.excerpt || post.abstract || 'Explore the complete research dispatch, datasets, and code.';
       return `
         <a href="${postUrl}" class="crii-search-result-item">
-          <div class="crii-search-result-title">
-            <span>${escapeHtmlApp(post.title)}</span>
+          <div class="crii-search-result-top">
             <span class="crii-search-result-badge">${escapeHtmlApp(division)}</span>
+            <span class="crii-search-result-meta">${escapeHtmlApp(author)}</span>
           </div>
-          <div class="crii-search-result-snippet">${escapeHtmlApp(excerpt)}</div>
+          <h4 class="crii-search-result-title">${escapeHtmlApp(post.title)}</h4>
+          <p class="crii-search-result-snippet">${escapeHtmlApp(excerpt)}</p>
         </a>
       `;
     }).join('');

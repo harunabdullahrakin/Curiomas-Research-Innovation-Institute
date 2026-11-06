@@ -978,48 +978,49 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 /* ==========================================================================
-   AMAREVENTS BD STYLE SLEEK CAPSULE NAVBAR (AUTO-HIDE SCROLL & ORANGE ACCENTS)
+   CRII HIGH-TECH CYBER-COSMOS NAVBAR (ATTACHED TO TOP & CYAN/BLUE THEME)
    ========================================================================== */
 .mockup-nav-wrapper {
   position: fixed;
-  top: 14px;
+  top: 0;
   left: 0;
   right: 0;
+  width: 100%;
   z-index: 99999;
   display: flex;
   justify-content: center;
-  padding: 0 1rem;
   pointer-events: none;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
 
 .mockup-nav-wrapper.nav-hidden {
-  transform: translateY(-140%);
+  transform: translateY(-110%);
 }
 
 .mockup-nav-capsule {
   pointer-events: auto;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1140px;
   height: 52px;
-  background: rgba(13, 15, 20, 0.94);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  padding: 0 0.65rem 0 0.75rem;
+  background: rgba(8, 12, 22, 0.95);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  padding: 0 0.85rem 0 0.95rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: 0 14px 35px -8px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.08);
   position: relative;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .mockup-nav-wrapper.nav-scrolled .mockup-nav-capsule {
-  background: rgba(8, 10, 14, 0.98);
-  box-shadow: 0 20px 45px -8px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 120, 31, 0.12);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(6, 9, 16, 0.98);
+  box-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.9), 0 0 25px rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.28);
 }
 
 /* Brand & Expanding Logo Tag */
@@ -1029,7 +1030,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   text-decoration: none;
   flex-shrink: 0;
   cursor: pointer;
-  padding: 3px 5px;
+  padding: 2px 4px;
   border-radius: 8px;
   transition: all 0.25s ease;
 }
@@ -1040,8 +1041,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   border-radius: 7px;
   object-fit: contain;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 120, 31, 0.35);
-  box-shadow: 0 0 10px rgba(255, 120, 31, 0.25);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
   flex-shrink: 0;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
@@ -1054,8 +1055,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   opacity: 0;
   overflow: hidden;
   white-space: nowrap;
-  background: #ff781f;
-  color: #0b0c10 !important;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  color: #040812 !important;
   font-family: inherit;
   font-weight: 800;
   font-size: 0.74rem;
@@ -1071,7 +1072,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
               padding 0.35s ease,
               margin-left 0.35s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 0 12px rgba(255, 120, 31, 0.4);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
 }
 
 /* On hover over the whole navbar capsule OR the logo, expand brand tag */
@@ -1087,7 +1088,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-nav-capsule:hover .mockup-brand-img,
 .mockup-brand:hover .mockup-brand-img {
   transform: scale(1.05);
-  box-shadow: 0 0 14px rgba(255, 120, 31, 0.55);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
 }
 
 /* Navigation Links Center */
@@ -1110,7 +1111,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   align-items: center;
   justify-content: center;
   position: relative;
-  color: #f1f5f9;
+  color: #e2e8f0;
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 700;
@@ -1124,13 +1125,13 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .mockup-nav-link:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
 .mockup-nav-link.active {
-  background: rgba(255, 120, 31, 0.12);
-  color: #ff781f;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
   font-weight: 800;
 }
 
@@ -1141,9 +1142,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   left: 12px;
   right: 12px;
   height: 2px;
-  background: #ff781f;
+  background: #38bdf8;
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(255, 120, 31, 0.65);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
 }
 
 /* Right Section & Action Buttons */
@@ -1154,32 +1155,31 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   flex-shrink: 0;
 }
 
-/* Vibrant Orange LOGIN Pill Button */
+/* Theme Cyan/Royal-Blue LOGIN Button */
 .nav-login-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #ff781f;
-  color: #0b0c10 !important;
+  background: linear-gradient(135deg, #2563eb 0%, #0284c7 60%, #38bdf8 100%);
+  color: #ffffff !important;
   font-family: inherit;
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
-  padding: 0.48rem 1.25rem;
+  padding: 0.48rem 1.3rem;
   border-radius: 9999px;
   white-space: nowrap;
-  box-shadow: 0 2px 10px rgba(255, 120, 31, 0.35);
+  box-shadow: 0 2px 14px rgba(56, 189, 248, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
 }
 
 .nav-login-btn:hover {
-  background: #ff8833;
-  box-shadow: 0 0 18px rgba(255, 120, 31, 0.65);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.65), 0 0 35px rgba(37, 99, 235, 0.4);
   transform: translateY(-1px);
-  color: #000000 !important;
+  color: #ffffff !important;
 }
 
 /* Dark Rounded Action Buttons (Search, Lang Flag, RSS) */
@@ -1187,9 +1187,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #d1d5db;
+  color: #cbd5e1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1201,9 +1201,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .nav-action-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
+  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
   transform: translateY(-1px);
 }
 
@@ -1211,7 +1211,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   display: none;
 }
 
-/* Language Dropdown & Flag */
+/* Language Dropdown & Flag (English & Bangla only) */
 .nav-lang-dropdown {
   position: relative;
 }
@@ -1229,12 +1229,12 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: rgba(13, 15, 20, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 14, 24, 0.98);
+  border: 1px solid rgba(56, 189, 248, 0.22);
   border-radius: 14px;
   padding: 6px;
-  min-width: 170px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 120, 31, 0.15);
+  min-width: 150px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.15);
   display: none;
   flex-direction: column;
   gap: 3px;
@@ -1255,10 +1255,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   background: none;
   border: none;
   text-align: left;
-  padding: 0.5rem 0.85rem;
+  padding: 0.55rem 0.85rem;
   border-radius: 8px;
   color: #e2e8f0;
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s ease;
@@ -1271,9 +1271,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .nav-lang-opt.active {
-  color: #ff781f;
+  color: #38bdf8;
   font-weight: 700;
-  background: rgba(255, 120, 31, 0.12);
+  background: rgba(56, 189, 248, 0.14);
 }
 
 .opt-flag {
@@ -1290,9 +1290,236 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   display: none;
 }
 
+/* ==========================================================================
+   ENHANCED CRII SPOTLIGHT SEARCH POPUP
+   ========================================================================== */
+.crii-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+}
+
+.crii-search-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 7, 14, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.crii-search-modal {
+  position: relative;
+  width: 92%;
+  max-width: 620px;
+  background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 65%), #080c16;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.16);
+  overflow: hidden;
+  animation: searchModalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @keyframes searchModalIn {
-  from { opacity: 0; transform: scale(0.96) translateY(-8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.crii-search-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.15rem 1.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.crii-search-icon {
+  color: #38bdf8;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
+}
+
+.crii-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #ffffff;
+  font-family: inherit;
+  caret-color: #38bdf8;
+}
+
+.crii-search-input::placeholder {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.crii-search-esc {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.crii-search-esc:hover {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.crii-search-quick-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.35rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+}
+
+.quick-tag-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 0.25rem;
+}
+
+.quick-tag-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #cbd5e1;
+  font-size: 0.76rem;
+  font-weight: 500;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.quick-tag-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.crii-search-body {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 0.65rem;
+}
+
+.crii-search-empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.crii-search-result-item {
+  display: block;
+  padding: 0.85rem 1.15rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.18s ease;
+  margin-bottom: 0.35rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+}
+
+.crii-search-result-item:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  border-left-color: #38bdf8;
+  transform: translateX(3px);
+}
+
+.crii-search-result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.crii-search-result-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.crii-search-result-meta {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.crii-search-result-title {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem 0;
+  line-height: 1.35;
+}
+
+.crii-search-result-snippet {
+  color: #94a3b8;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.crii-search-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  padding: 0.65rem 1.35rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.crii-search-footer kbd {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-family: inherit;
 }
 
 .mockup-hero-body {
@@ -2273,12 +2500,13 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 @media (max-width: 880px) {
   .mockup-nav-wrapper {
-    top: 10px;
-    padding: 0 0.75rem;
+    top: 0;
+    padding: 0;
   }
   .mockup-nav-capsule {
     height: 48px;
-    padding: 0 0.5rem 0 0.65rem;
+    padding: 0 0.65rem;
+    border-radius: 0 0 14px 14px;
   }
   .mockup-brand-tag {
     display: none !important;
@@ -2301,19 +2529,19 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   .mockup-nav-links {
     display: none;
     position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    background: rgba(13, 15, 20, 0.98);
+    top: calc(100% + 6px);
+    left: 8px;
+    right: 8px;
+    background: rgba(9, 13, 22, 0.98);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(56, 189, 248, 0.22);
     border-radius: 14px;
     padding: 0.85rem;
     flex-direction: column;
     align-items: stretch;
     gap: 0.35rem;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 120, 31, 0.15);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.15);
     z-index: 9999999 !important;
   }
   .mockup-nav-links.show {
@@ -2329,8 +2557,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     font-size: 0.92rem;
   }
   .mockup-nav-link:hover, .mockup-nav-link.active {
-    background: rgba(255, 120, 31, 0.14);
-    color: #ff781f;
+    background: rgba(56, 189, 248, 0.14);
+    color: #38bdf8;
   }
   .mockup-nav-link.active::after {
     display: none;
@@ -2346,9 +2574,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     align-items: center !important;
     justify-content: center !important;
     gap: 0.5rem !important;
-    background: #ff781f !important;
+    background: linear-gradient(135deg, #2563eb 0%, #0284c7 60%, #38bdf8 100%) !important;
     border: none !important;
-    color: #0b0c10 !important;
+    color: #ffffff !important;
     font-weight: 800 !important;
     letter-spacing: 0.08em !important;
     border-radius: 10px !important;
@@ -2357,11 +2585,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     text-transform: uppercase !important;
     font-size: 0.85rem !important;
     width: 100% !important;
-    box-shadow: 0 4px 14px rgba(255, 120, 31, 0.4) !important;
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35) !important;
   }
   .mobile-login-link:hover {
-    background: #ff8833 !important;
-    color: #000000 !important;
+    box-shadow: 0 4px 18px rgba(56, 189, 248, 0.55) !important;
   }
 }
 @media (max-width: 640px) {
