@@ -39,7 +39,8 @@
             <span class="mockup-brand-text">curiomas</span>
           </a>
 
-          <nav>
+          <!-- Center Navigation Pill with Search Trigger -->
+          <nav class="nav-center-pill">
             <ul class="mockup-nav-links" id="mainNavMenu">
               <li><a href="/" class="mockup-nav-link">Home</a></li>
               <li><a href="/research" class="mockup-nav-link">Research</a></li>
@@ -47,19 +48,66 @@
               <li><a href="/team" class="mockup-nav-link">Team</a></li>
               <li><a href="/contact" class="mockup-nav-link active">Contact</a></li>
             </ul>
+            <button type="button" class="nav-search-trigger" id="navSearchTrigger" aria-label="Search posts" title="Search posts (Ctrl+K)">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
           </nav>
 
           <div class="mockup-nav-right">
-            <a href="/portal" class="mockup-btn-white" style="padding: 0.45rem 1.1rem; font-size: 0.85rem;">
-              <span>Researcher Portal</span>
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+            <!-- Mobile Search Icon -->
+            <button type="button" class="nav-search-trigger mobile-search-btn" id="mobileSearchTrigger" aria-label="Search posts" title="Search (Ctrl+K)">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+
+            <!-- Language / Google Translate Dropdown -->
+            <div class="nav-lang-dropdown" id="navLangDropdown">
+              <button type="button" class="nav-lang-btn" id="navLangBtn" aria-expanded="false" aria-label="Select Language">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="nav-lang-icon"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+                <span id="navLangLabel">English</span>
+              </button>
+              <div class="nav-lang-menu" id="navLangMenu">
+                <button type="button" class="nav-lang-opt active" data-lang="en">English</button>
+                <button type="button" class="nav-lang-opt" data-lang="zh-CN">中文 (简体)</button>
+                <button type="button" class="nav-lang-opt" data-lang="es">Español</button>
+                <button type="button" class="nav-lang-opt" data-lang="fr">Français</button>
+                <button type="button" class="nav-lang-opt" data-lang="de">Deutsch</button>
+                <button type="button" class="nav-lang-opt" data-lang="bn">বাংলা</button>
+                <button type="button" class="nav-lang-opt" data-lang="ja">日本語</button>
+                <button type="button" class="nav-lang-opt" data-lang="ar">العربية</button>
+              </div>
+            </div>
+
+            <!-- RSS Feed Link -->
+            <a href="/blog" class="nav-icon-link nav-rss-link" title="Dispatches RSS Feed" aria-label="Dispatches RSS Feed">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
             </a>
 
-            <button class="menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu" style="background:none; border:none; color:#ffffff; cursor:pointer; display:none; padding:4px;">
+            <!-- LOGIN Pill Button -->
+            <a href="/portal" class="nav-login-btn">LOGIN</a>
+
+            <!-- Mobile Hamburger Toggle -->
+            <button class="menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu" type="button">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
             </button>
           </div>
         </header>
+      </div>
+
+      <!-- Google Translate Mount & Search Modal -->
+      <div id="google_translate_element" style="display:none!important;"></div>
+
+      <div class="crii-search-overlay" id="criiSearchOverlay" aria-hidden="true" style="display:none;">
+        <div class="crii-search-backdrop" id="criiSearchBackdrop"></div>
+        <div class="crii-search-modal">
+          <div class="crii-search-header">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="crii-search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="siteSearchInput" class="crii-search-input" placeholder="Search posts..." autocomplete="off" spellcheck="false">
+            <kbd class="crii-search-esc" id="criiSearchEsc">ESC</kbd>
+          </div>
+          <div class="crii-search-body" id="criiSearchResults">
+            <div class="crii-search-empty">Type to search...</div>
+          </div>
+        </div>
       </div>
 
       <!-- Hero Header Text -->

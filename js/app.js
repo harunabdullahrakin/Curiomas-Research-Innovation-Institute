@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initFeaturedArticles();
   initDivisions();
   initHomeTeam();
+  initGoogleTranslateAndLang();
+  initSearchOverlay();
 });
 
 // Hero Appearance & Video Customization
@@ -162,16 +164,267 @@ function initMobileNav() {
 // 6. User Session State in Navbar
 function initUserSessionState() {
   const user = window.CRII_API ? window.CRII_API.getCurrentUser() : null;
-  const portalBtn = document.querySelector('.nav-portal-btn');
+  const loginBtns = document.querySelectorAll('.nav-login-btn, .nav-portal-btn');
 
-  if (portalBtn && user) {
-    portalBtn.innerHTML = `
-      <span style="display:inline-flex; align-items:center; gap:0.4rem;">
-        <span style="width:7px; height:7px; background:#10b981; border-radius:50%;"></span>
-        ${user.name.split(' ')[0]} (Portal)
-      </span>
-    `;
-    portalBtn.href = "/portal";
+  if (loginBtns.length && user) {
+    loginBtns.forEach(btn => {
+      const firstName = (user.name || 'User').split(' ')[0];
+      btn.innerHTML = `
+        <span style="display:inline-flex; align-items:center; gap:0.4rem;">
+          <span style="width:6px; height:6px; background:#10b981; border-radius:50%; box-shadow:0 0 6px #10b981;"></span>
+          ${firstName.toUpperCase()}
+        </span>
+      `;
+      btn.href = "/portal";
+      btn.title = `Signed in as ${user.name} (${user.role || 'Member'})`;
+    });
+  }
+}
+
+// 6b. Google Translate & Language Selector (Persisted in localStorage)
+const CRII_LANG_CONFIG = {
+  'en': 'English',
+  'zh-CN': '中文 (简体)',
+  'es': 'Español',
+  'fr': 'Français',
+  'de': 'Deutsch',
+  'bn': 'বাংলা',
+  'ja': '日本語',
+  'ar': 'العربية'
+};
+
+function initGoogleTranslateAndLang() {
+  const langKey = 'crii_site_language';
+  const savedLang = localStorage.getItem(langKey) || 'en';
+
+  function setTranslateCookie(lang) {
+    const val = (lang && lang !== 'en') ? `/en/${lang}` : '';
+    const host = window.location.hostname;
+    const expires = (lang === 'en' || !lang) ? 'expires=Thu, 01 Jan 1970 00:00:00 UTC;' : 'max-age=31536000;';
+
+    document.cookie = `googtrans=${val}; path=/; ${expires}`;
+    if (host) {
+      document.cookie = `googtrans=${val}; path=/; domain=${host}; ${expires}`;
+      const parts = host.split('.');
+      if (parts.length > 2) {
+        document.cookie = `googtrans=${val}; path=/; domain=.${parts.slice(-2).join('.')}; ${expires}`;
+      }
+    }
+  }
+
+  function updateLangUI(lang) {
+    const labelEl = document.getElementById('navLangLabel');
+    if (labelEl) {
+      labelEl.textContent = CRII_LANG_CONFIG[lang] || 'English';
+    }
+    document.querySelectorAll('.nav-lang-opt').forEach(opt => {
+      if (opt.getAttribute('data-lang') === lang) {
+        opt.classList.add('active');
+      } else {
+        opt.classList.remove('active');
+      }
+    });
+  }
+
+  // Pre-sync cookie if user previously picked a language
+  if (savedLang !== 'en') {
+    setTranslateCookie(savedLang);
+  }
+  updateLangUI(savedLang);
+
+  // Dropdown UI toggle
+  const langBtn = document.getElementById('navLangBtn');
+  const langMenu = document.getElementById('navLangMenu');
+
+  if (langBtn && langMenu) {
+    langBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = langMenu.classList.contains('show');
+      langMenu.classList.toggle('show', !isOpen);
+      langBtn.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!langMenu.contains(e.target) && !langBtn.contains(e.target)) {
+        langMenu.classList.remove('show');
+        langBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Selecting a language option
+    langMenu.querySelectorAll('.nav-lang-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const targetLang = opt.getAttribute('data-lang') || 'en';
+        const currentLang = localStorage.getItem(langKey) || 'en';
+        if (targetLang === currentLang) {
+          langMenu.classList.remove('show');
+          return;
+        }
+
+        localStorage.setItem(langKey, targetLang);
+        setTranslateCookie(targetLang);
+        updateLangUI(targetLang);
+        langMenu.classList.remove('show');
+        langBtn.setAttribute('aria-expanded', 'false');
+
+        // Trigger Google Translate engine combo if present
+        const combo = document.querySelector('.goog-te-combo');
+        if (combo) {
+          combo.value = targetLang;
+          combo.dispatchEvent(new Event('change'));
+        }
+        
+        // Reload page to let Google Translate cleanly render the target language
+        setTimeout(() => {
+          window.location.reload();
+        }, 120);
+      });
+    });
+  }
+
+  // Global Google Translate init callback
+  window.googleTranslateElementInit = function() {
+    try {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,zh-CN,es,fr,de,bn,ja,ar,ru,hi,pt,it,ko',
+        autoDisplay: false
+      }, 'google_translate_element');
+    } catch (err) {
+      console.warn('Google Translate init deferred:', err);
+    }
+  };
+
+  // Load Google Translate script if not present
+  if (!document.getElementById('google-translate-api-script')) {
+    const s = document.createElement('script');
+    s.id = 'google-translate-api-script';
+    s.type = 'text/javascript';
+    s.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+}
+
+// 6c. Search Modal Overlay (Posts & Dispatches)
+function initSearchOverlay() {
+  const triggers = document.querySelectorAll('#navSearchTrigger, #mobileSearchTrigger, .nav-search-trigger');
+  const overlay = document.getElementById('criiSearchOverlay');
+  const backdrop = document.getElementById('criiSearchBackdrop');
+  const escBtn = document.getElementById('criiSearchEsc');
+  const input = document.getElementById('siteSearchInput');
+  const resultsContainer = document.getElementById('criiSearchResults');
+
+  if (!overlay || !input) return;
+
+  function openSearch() {
+    overlay.style.display = 'flex';
+    overlay.setAttribute('aria-hidden', 'false');
+    input.value = '';
+    renderSearchResults('');
+    setTimeout(() => input.focus(), 60);
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSearch() {
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  triggers.forEach(t => {
+    t.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSearch();
+    });
+  });
+
+  if (backdrop) backdrop.addEventListener('click', closeSearch);
+  if (escBtn) escBtn.addEventListener('click', closeSearch);
+
+  // Keyboard navigation: Ctrl+K / Cmd+K opens, Escape closes
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (overlay.style.display === 'flex') {
+        closeSearch();
+      } else {
+        openSearch();
+      }
+    } else if (e.key === 'Escape' && overlay.style.display === 'flex') {
+      closeSearch();
+    }
+  });
+
+  // Search input typing
+  let searchDebounce = null;
+  input.addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      renderSearchResults(input.value.trim());
+    }, 120);
+  });
+
+  async function renderSearchResults(query) {
+    if (!resultsContainer) return;
+
+    if (!query) {
+      resultsContainer.innerHTML = '<div class="crii-search-empty">Type to search...</div>';
+      return;
+    }
+
+    resultsContainer.innerHTML = '<div class="crii-search-empty">Searching dispatches...</div>';
+
+    let posts = [];
+    if (window.CRII_API && typeof window.CRII_API.getPosts === 'function') {
+      try {
+        posts = await window.CRII_API.getPosts();
+      } catch (e) {
+        posts = [];
+      }
+    }
+
+    const q = query.toLowerCase();
+    const matched = posts.filter(p => {
+      const title = (p.title || '').toLowerCase();
+      const excerpt = (p.excerpt || p.abstract || '').toLowerCase();
+      const division = (p.division || '').toLowerCase();
+      const author = (p.author || p.authors?.join(' ') || '').toLowerCase();
+      const tags = Array.isArray(p.tags) ? p.tags.join(' ').toLowerCase() : '';
+      return title.includes(q) || excerpt.includes(q) || division.includes(q) || author.includes(q) || tags.includes(q);
+    });
+
+    if (matched.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="crii-search-empty">
+          No dispatches found matching "<strong>${escapeHtmlApp(query)}</strong>"
+        </div>
+      `;
+      return;
+    }
+
+    resultsContainer.innerHTML = matched.slice(0, 8).map(post => {
+      const postUrl = `/article?id=${encodeURIComponent(post.id)}`;
+      const division = post.division || 'Research';
+      const excerpt = post.excerpt || post.abstract || 'Explore the complete research dispatch and open dataset.';
+      return `
+        <a href="${postUrl}" class="crii-search-result-item">
+          <div class="crii-search-result-title">
+            <span>${escapeHtmlApp(post.title)}</span>
+            <span class="crii-search-result-badge">${escapeHtmlApp(division)}</span>
+          </div>
+          <div class="crii-search-result-snippet">${escapeHtmlApp(excerpt)}</div>
+        </a>
+      `;
+    }).join('');
+  }
+
+  function escapeHtmlApp(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 }
 
