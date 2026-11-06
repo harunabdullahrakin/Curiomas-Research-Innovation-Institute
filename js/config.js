@@ -230,7 +230,16 @@ class CriiApiClient {
     return {
       videoUrl: "assets/hero-bg.mp4",
       blurPx: 12,
-      overlayOpacity: 0.55
+      overlayOpacity: 0.55,
+      fontFamily: "Eyekons",
+      backgroundImages: [
+        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85",
+        "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85",
+        "https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1920&q=85",
+        "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85",
+        "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=85"
+      ],
+      imageOpacity: 0.40
     };
   }
 
@@ -239,7 +248,10 @@ class CriiApiClient {
     const sanitized = {
       videoUrl: settings.videoUrl || "assets/hero-bg.mp4",
       blurPx: Math.max(0, Math.min(40, Number(settings.blurPx) || 0)),
-      overlayOpacity: Math.max(0, Math.min(1, Number(settings.overlayOpacity) || 0.55))
+      overlayOpacity: Math.max(0, Math.min(1, Number(settings.overlayOpacity) || 0.55)),
+      fontFamily: settings.fontFamily || "Eyekons",
+      backgroundImages: Array.isArray(settings.backgroundImages) ? settings.backgroundImages.filter(url => typeof url === 'string' && url.trim().length > 0) : [],
+      imageOpacity: Math.max(0.05, Math.min(1, Number(settings.imageOpacity) || 0.40))
     };
 
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.HERO_SETTINGS, JSON.stringify(sanitized));

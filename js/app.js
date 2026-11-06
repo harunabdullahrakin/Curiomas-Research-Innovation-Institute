@@ -27,12 +27,53 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearchOverlay();
 });
 
-// Hero Appearance & Video Customization
+// Hero Appearance & Dynamic Multi-Image / Font Customization
 function initHeroCustomization() {
   if (!window.CRII_API) return;
   const settings = window.CRII_API.getHeroSettings();
   if (!settings) return;
 
+  // 1. Dynamic Random Background Image Selection on Load
+  const bgLayer = document.getElementById('heroBgImageLayer');
+  if (bgLayer) {
+    const defaultImages = [
+      'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85',
+      'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85',
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1920&q=85',
+      'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85',
+      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=85'
+    ];
+
+    const imagePool = (Array.isArray(settings.backgroundImages) && settings.backgroundImages.length > 0)
+      ? settings.backgroundImages
+      : defaultImages;
+
+    const pickedImage = imagePool[Math.floor(Math.random() * imagePool.length)];
+    const imgLoader = new Image();
+    imgLoader.onload = () => {
+      bgLayer.style.backgroundImage = `url('${pickedImage}')`;
+      bgLayer.style.opacity = settings.imageOpacity !== undefined ? settings.imageOpacity : '0.40';
+    };
+    imgLoader.src = pickedImage;
+  }
+
+  // 2. Dynamic Hero Title Font Family
+  const heroTitle = document.querySelector('.mockup-hero-title');
+  if (heroTitle && settings.fontFamily) {
+    const fontMap = {
+      'Eyekons': "'Eyekons', Georgia, serif",
+      'Playfair Display': "'Playfair Display', Georgia, serif",
+      'Cinzel Decorative': "'Cinzel Decorative', 'Cinzel', Georgia, serif",
+      'Space Grotesk': "'Space Grotesk', -apple-system, sans-serif",
+      'Syne': "'Syne', -apple-system, sans-serif",
+      'Outfit': "'Outfit', -apple-system, sans-serif",
+      'System Sans': "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    };
+    const resolvedFont = fontMap[settings.fontFamily] || settings.fontFamily;
+    heroTitle.style.setProperty('font-family', resolvedFont, 'important');
+  }
+
+  // 3. Optional Hero Video fallback
   const video = document.getElementById('heroVideo');
   if (video && settings.videoUrl) {
     const currentSrc = video.querySelector('source')?.getAttribute('src');

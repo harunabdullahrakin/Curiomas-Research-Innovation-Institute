@@ -1318,52 +1318,171 @@ window.deleteResearcher = async function(id) {
 };
 
 // -----------------------------------------------------------------------------
-// 3. CONFIGURABLE HERO VIDEO & BACKDROP BLUR SETTINGS
+// 3. CONFIGURABLE HERO VIDEO, MULTI-IMAGE & TYPOGRAPHY SETTINGS
 // -----------------------------------------------------------------------------
+let activeHeroBackgroundImages = [];
+
 function initHeroAppearanceSettings() {
   const settings = window.CRII_API.getHeroSettings();
+  const fontSelect = document.getElementById('settingHeroFontFamily');
+  const imageOpacitySlider = document.getElementById('settingHeroImageOpacity');
+  const imageOpacityBadge = document.getElementById('heroImageOpacityValueBadge');
+  const previewStage = document.getElementById('heroLivePreviewStage');
+  const previewOverlay = document.getElementById('heroLivePreviewOverlay');
+  const previewTitle = document.getElementById('heroLivePreviewTitle');
+
   const videoInput = document.getElementById('settingHeroVideoUrl');
   const blurSlider = document.getElementById('settingHeroBlur');
   const overlaySlider = document.getElementById('settingHeroOverlay');
   const blurBadge = document.getElementById('heroBlurValueBadge');
   const overlayBadge = document.getElementById('heroOverlayValueBadge');
-  const previewOverlay = document.getElementById('heroLivePreviewOverlay');
 
+  // Populate font
+  if (fontSelect && settings.fontFamily) {
+    fontSelect.value = settings.fontFamily;
+  }
+
+  // Populate background images
+  activeHeroBackgroundImages = Array.isArray(settings.backgroundImages) && settings.backgroundImages.length > 0
+    ? [...settings.backgroundImages]
+    : [
+        "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85",
+        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85",
+        "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=85",
+        "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85"
+      ];
+
+  // Populate image opacity
+  if (imageOpacitySlider) {
+    const op = settings.imageOpacity !== undefined ? Math.round(settings.imageOpacity * 100) : 40;
+    imageOpacitySlider.value = op;
+    if (imageOpacityBadge) imageOpacityBadge.innerText = `${op}%`;
+  }
+
+  // Video and legacy blur fields
   if (videoInput) videoInput.value = settings.videoUrl || "assets/hero-bg.mp4";
   if (blurSlider) blurSlider.value = settings.blurPx !== undefined ? settings.blurPx : 12;
   if (overlaySlider) overlaySlider.value = Math.round((settings.overlayOpacity !== undefined ? settings.overlayOpacity : 0.55) * 100);
 
   function updateHeroPreview() {
+    const selectedFont = fontSelect ? fontSelect.value : 'Eyekons';
+    const imgOpacity = imageOpacitySlider ? Number(imageOpacitySlider.value) / 100 : 0.40;
     const blur = blurSlider ? blurSlider.value : 12;
     const overlay = overlaySlider ? overlaySlider.value : 55;
+
+    if (imageOpacityBadge && imageOpacitySlider) {
+      imageOpacityBadge.innerText = `${imageOpacitySlider.value}%`;
+    }
     if (blurBadge) blurBadge.innerText = `${blur}px`;
     if (overlayBadge) overlayBadge.innerText = `${overlay}%`;
+
+    if (previewTitle) {
+      previewTitle.style.fontFamily = `"${selectedFont}", sans-serif`;
+    }
+
     if (previewOverlay) {
-      previewOverlay.style.backdropFilter = `blur(${blur}px)`;
-      previewOverlay.style.webkitBackdropFilter = `blur(${blur}px)`;
-      previewOverlay.style.background = `rgba(10, 15, 30, ${overlay / 100})`;
+      // Reflect background darkness & glass blur
+      previewOverlay.style.background = `rgba(5, 7, 15, ${1 - imgOpacity * 0.5})`;
+    }
+
+    if (previewStage && activeHeroBackgroundImages.length > 0) {
+      previewStage.style.backgroundImage = `url('${activeHeroBackgroundImages[0]}')`;
     }
   }
 
+  function renderHeroImagesList() {
+    const container = document.getElementById('heroImagesListContainer');
+    const badge = document.getElementById('heroImagesCountBadge');
+    if (badge) {
+      badge.innerText = `${activeHeroBackgroundImages.length} Image${activeHeroBackgroundImages.length === 1 ? '' : 's'}`;
+    }
+    if (!container) return;
+
+    if (activeHeroBackgroundImages.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 1.25rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; border: 1px dashed var(--border-color); border-radius: 6px;">
+          No images in background pool. Please add an image or preset below.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = activeHeroBackgroundImages.map((url, idx) => `
+      <div class="hero-image-chip" title="${escapeHtml(url)}">
+        <img src="${escapeHtml(url)}" alt="Hero BG ${idx + 1}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=400&q=60';">
+        <button type="button" class="hero-image-chip-delete" onclick="removeHeroImage(${idx})" title="Remove image">&times;</button>
+        <span class="hero-image-badge-active">#${idx + 1}</span>
+      </div>
+    `).join('');
+
+    updateHeroPreview();
+  }
+
+  window.removeHeroImage = function(idx) {
+    if (idx >= 0 && idx < activeHeroBackgroundImages.length) {
+      activeHeroBackgroundImages.splice(idx, 1);
+      renderHeroImagesList();
+      window.showToast('Image removed from pool', 'info');
+    }
+  };
+
+  window.addHeroImageFromInput = function() {
+    const input = document.getElementById('newHeroImageUrl');
+    if (!input) return;
+    const url = input.value.trim();
+    if (!url) {
+      window.showToast('Please enter an image URL', 'error');
+      return;
+    }
+    if (activeHeroBackgroundImages.includes(url)) {
+      window.showToast('Image already exists in pool', 'warning');
+      return;
+    }
+    activeHeroBackgroundImages.push(url);
+    input.value = '';
+    renderHeroImagesList();
+    window.showToast('Image added to hero background pool!', 'success');
+  };
+
+  window.addHeroImagePreset = function(url) {
+    if (!url) return;
+    if (activeHeroBackgroundImages.includes(url)) {
+      window.showToast('Preset already added to pool', 'info');
+      return;
+    }
+    activeHeroBackgroundImages.push(url);
+    renderHeroImagesList();
+    window.showToast('Preset added to hero pool!', 'success');
+  };
+
+  if (fontSelect) fontSelect.addEventListener('change', updateHeroPreview);
+  if (imageOpacitySlider) imageOpacitySlider.addEventListener('input', updateHeroPreview);
   if (blurSlider) blurSlider.addEventListener('input', updateHeroPreview);
   if (overlaySlider) overlaySlider.addEventListener('input', updateHeroPreview);
+
+  renderHeroImagesList();
   updateHeroPreview();
 
   const heroForm = document.getElementById('heroAppearanceForm');
   if (heroForm) {
     heroForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const fontFamily = fontSelect ? fontSelect.value : 'Eyekons';
+      const imageOpacity = imageOpacitySlider ? Number(imageOpacitySlider.value) / 100 : 0.40;
       const videoUrl = videoInput ? videoInput.value.trim() : "assets/hero-bg.mp4";
       const blurPx = blurSlider ? Number(blurSlider.value) : 12;
       const overlayOpacity = overlaySlider ? Number(overlaySlider.value) / 100 : 0.55;
 
       await window.CRII_API.saveHeroSettings({
+        fontFamily,
+        backgroundImages: [...activeHeroBackgroundImages],
+        imageOpacity,
         videoUrl,
         blurPx,
         overlayOpacity
       });
 
-      window.showToast('Hero section appearance updated!', 'success');
+      window.showToast('Hero section typography & multi-image settings saved!', 'success');
     });
   }
 }

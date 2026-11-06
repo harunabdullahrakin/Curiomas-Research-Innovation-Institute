@@ -987,12 +987,49 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 /* 1. Hero Cosmos Section */
 .mockup-hero-section {
   position: relative;
-  background: #060b16 radial-gradient(circle at 82% 35%, rgba(45, 95, 185, 0.35) 0%, rgba(15, 30, 65, 0.2) 40%, transparent 70%);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  background-color: #060b16;
+  background-image: radial-gradient(circle at 82% 35%, rgba(45, 95, 185, 0.35) 0%, rgba(15, 30, 65, 0.2) 40%, transparent 70%);
   color: #ffffff;
-  padding-top: 6.5rem;
-  padding-bottom: 3.5rem;
+  padding-top: 5.5rem;
+  padding-bottom: 2rem;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mockup-hero-bg-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.40;
+  transition: opacity 1.2s ease-in-out;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.mockup-hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(6, 11, 22, 0.25) 0%, rgba(6, 11, 22, 0.75) 65%, #060b16 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mockup-hero-section .mockup-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+  width: 100%;
+  position: relative;
+  z-index: 2;
 }
 
 .mockup-hero-section::before {
@@ -1560,8 +1597,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-hero-body {
   position: relative;
   z-index: 2;
-  max-width: 720px;
-  margin-bottom: 5rem;
+  max-width: 740px;
+  margin-top: auto;
+  margin-bottom: auto;
+  padding: 3.5rem 0;
 }
 
 .mockup-hero-title {

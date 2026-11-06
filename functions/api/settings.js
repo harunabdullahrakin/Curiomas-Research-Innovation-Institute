@@ -7,7 +7,16 @@ const DEFAULT_SETTINGS = {
   hero: {
     videoUrl: "assets/hero-bg.mp4",
     blurPx: 12,
-    overlayOpacity: 0.55
+    overlayOpacity: 0.55,
+    fontFamily: "Eyekons",
+    backgroundImages: [
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85",
+      "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85",
+      "https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1920&q=85",
+      "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85",
+      "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=85"
+    ],
+    imageOpacity: 0.40
   },
   divisions: [],
   cohorts: [],
