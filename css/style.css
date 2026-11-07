@@ -1092,18 +1092,19 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   max-width: 1140px;
   height: 62px;
   min-height: 62px;
-  background: rgba(6, 11, 22, 0.92);
-  background-image: linear-gradient(135deg, rgba(14, 165, 233, 0.10) 0%, rgba(6, 11, 22, 0.95) 50%, rgba(16, 185, 129, 0.08) 100%);
+  background: rgba(10, 14, 23, 0.94);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(10, 14, 23, 0.96) 100%);
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1.5px solid rgba(56, 189, 248, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-top: none;
+  border-bottom: 2px solid #0284c7;
   border-radius: 0 0 18px 18px;
   padding: 0 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.88), 0 0 28px rgba(2, 132, 199, 0.18);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.92), 0 0 25px rgba(2, 132, 199, 0.20);
   position: relative;
   z-index: 2147483641 !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1114,10 +1115,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .mockup-nav-wrapper.nav-scrolled .mockup-nav-capsule {
-  background: rgba(4, 8, 16, 0.98);
-  background-image: linear-gradient(135deg, rgba(14, 165, 233, 0.14) 0%, rgba(4, 8, 16, 0.98) 50%, rgba(16, 185, 129, 0.10) 100%);
-  box-shadow: 0 20px 50px -8px rgba(0, 0, 0, 0.94), 0 0 32px rgba(56, 189, 248, 0.24);
-  border-color: rgba(56, 189, 248, 0.40);
+  background: rgba(6, 9, 16, 0.98);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(6, 9, 16, 0.99) 100%);
+  box-shadow: 0 20px 50px -8px rgba(0, 0, 0, 0.96), 0 0 32px rgba(2, 132, 199, 0.30);
+  border-bottom-color: #38bdf8;
 }
 
 /* Brand & Expanding Logo Tag */
@@ -1670,58 +1671,89 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   color: #38bdf8;
 }
 
-/* Hero Sound / Audio Toggle Button */
-.hero-sound-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  background: rgba(8, 14, 28, 0.72);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  color: #e2e8f0;
-  padding: 0.62rem 1.15rem;
-  border-radius: 9999px;
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.14);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: auto !important;
-  user-select: none;
-}
-
-.hero-sound-btn:hover {
-  background: rgba(14, 24, 48, 0.92);
-  border-color: rgba(56, 189, 248, 0.70);
-  color: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), 0 0 22px rgba(56, 189, 248, 0.38);
-}
-
-.hero-sound-btn.is-playing {
-  background: rgba(6, 32, 24, 0.88);
-  border-color: rgba(16, 185, 129, 0.60);
-  color: #34d399;
-  box-shadow: 0 0 22px rgba(16, 185, 129, 0.30);
-}
-
-.hero-sound-icon {
+/* Floating Hero Audio Play/Pause Button (Top Right Side, Compact Icon Only) */
+.hero-sound-floating-btn {
+  position: absolute;
+  top: 76px;
+  right: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(8, 14, 28, 0.85);
+  border: 1.5px solid rgba(56, 189, 248, 0.40);
+  color: #38bdf8;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.25);
+  z-index: 2147483630 !important;
+  pointer-events: auto !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
 }
 
-.hero-sound-icon svg {
-  width: 18px;
-  height: 18px;
+.hero-sound-floating-btn:hover {
+  background: rgba(14, 24, 48, 0.98);
+  border-color: rgba(56, 189, 248, 0.85);
+  color: #ffffff;
+  transform: scale(1.12);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75), 0 0 26px rgba(56, 189, 248, 0.50);
+}
+
+.hero-sound-floating-btn.is-muted {
+  background: rgba(15, 20, 32, 0.80);
+  border-color: rgba(148, 163, 184, 0.30);
+  color: #94a3b8;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  animation: none;
+}
+
+.hero-sound-floating-btn.is-playing {
+  background: rgba(6, 32, 24, 0.90);
+  border-color: rgba(16, 185, 129, 0.65);
+  color: #34d399;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.65), 0 0 20px rgba(16, 185, 129, 0.35);
+  animation: heroSoundPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes heroSoundPulse {
+  0%, 100% {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.65), 0 0 15px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.65), 0 0 28px rgba(16, 185, 129, 0.60);
+  }
+}
+
+.hero-sound-floating-btn .hero-sound-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.hero-sound-floating-btn .hero-sound-icon svg {
+  width: 20px;
+  height: 20px;
   display: block;
+}
+
+@media (max-width: 880px) {
+  .hero-sound-floating-btn {
+    top: 68px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+  }
+  .hero-sound-floating-btn .hero-sound-icon svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .mockup-hero-ticker {

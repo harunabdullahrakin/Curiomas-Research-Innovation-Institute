@@ -296,59 +296,90 @@ function initHeroSound(video, settings) {
   if (!video) return;
   const soundBtn = document.getElementById('heroSoundToggle');
   const soundIcon = document.getElementById('heroSoundIcon');
-  const soundLabel = document.getElementById('heroSoundLabel');
 
-  const speakerOffIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
-  const speakerOnIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+  const speakerOffIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+  const speakerOnIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
 
-  function updateSoundUi(isUnmuted) {
+  function updateSoundUi(isAudioOn) {
     if (soundBtn) {
-      if (isUnmuted) {
+      if (isAudioOn) {
+        soundBtn.classList.remove('is-muted');
         soundBtn.classList.add('is-playing');
+        soundBtn.setAttribute('title', 'Mute Sound');
+        soundBtn.setAttribute('aria-label', 'Mute Sound');
         if (soundIcon) soundIcon.innerHTML = speakerOnIcon;
-        if (soundLabel) soundLabel.textContent = 'Audio ON';
       } else {
         soundBtn.classList.remove('is-playing');
+        soundBtn.classList.add('is-muted');
+        soundBtn.setAttribute('title', 'Unmute Sound');
+        soundBtn.setAttribute('aria-label', 'Unmute Sound');
         if (soundIcon) soundIcon.innerHTML = speakerOffIcon;
-        if (soundLabel) soundLabel.textContent = 'Audio Muted';
       }
     }
   }
 
-  // Check saved preference or dashboard setting
-  const storedPref = localStorage.getItem('crii_hero_sound');
-  const shouldPlayAudio = settings.soundEnabled !== false && (storedPref === '1' || storedPref === null);
+  // DEFAULT: Sound should auto start by default
+  const userExplicitlyMuted = localStorage.getItem('crii_hero_sound_muted') === '1';
 
   if (soundBtn) {
     soundBtn.style.display = 'inline-flex';
-    updateSoundUi(!video.muted);
+    updateSoundUi(!userExplicitlyMuted);
 
     soundBtn.onclick = (e) => {
       e.preventDefault();
-      video.muted = !video.muted;
-      if (!video.muted) {
-        video.volume = 0.85;
-        video.play().catch(() => {});
-      }
-      localStorage.setItem('crii_hero_sound', video.muted ? '0' : '1');
-      updateSoundUi(!video.muted);
-    };
-  }
-
-  if (shouldPlayAudio) {
-    const onFirstGesture = () => {
-      if (video && video.style.display !== 'none') {
+      e.stopPropagation();
+      if (!video.muted && video.volume > 0) {
+        // User turns sound off
+        video.muted = true;
+        localStorage.setItem('crii_hero_sound_muted', '1');
+        updateSoundUi(false);
+      } else {
+        // User turns sound on
         video.muted = false;
         video.volume = 0.85;
         video.play().catch(() => {});
+        localStorage.removeItem('crii_hero_sound_muted');
         updateSoundUi(true);
-        localStorage.setItem('crii_hero_sound', '1');
       }
-      window.removeEventListener('pointerdown', onFirstGesture);
-      window.removeEventListener('keydown', onFirstGesture);
     };
-    window.addEventListener('pointerdown', onFirstGesture, { once: true });
-    window.addEventListener('keydown', onFirstGesture, { once: true });
+  }
+
+  if (!userExplicitlyMuted) {
+    // Attempt auto-start with audio unmuted
+    video.muted = false;
+    video.volume = 0.85;
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        // Audio is successfully playing automatically!
+        updateSoundUi(true);
+      }).catch(() => {
+        // Browser autoplay restriction: mute temporarily so video starts playing immediately,
+        // and unmute on the very first user interaction anywhere on the page
+        video.muted = true;
+        video.play().catch(() => {});
+        updateSoundUi(true);
+
+        const autoUnmuteOnFirstInteraction = () => {
+          if (video && localStorage.getItem('crii_hero_sound_muted') !== '1') {
+            video.muted = false;
+            video.volume = 0.85;
+            video.play().catch(() => {});
+            updateSoundUi(true);
+          }
+          ['click', 'pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+            window.removeEventListener(evt, autoUnmuteOnFirstInteraction, { capture: true });
+          });
+        };
+
+        ['click', 'pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+          window.addEventListener(evt, autoUnmuteOnFirstInteraction, { capture: true, once: true });
+        });
+      });
+    }
+  } else {
+    video.muted = true;
+    updateSoundUi(false);
   }
 }
 
