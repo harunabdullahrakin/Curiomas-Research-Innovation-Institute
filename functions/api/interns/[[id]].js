@@ -272,19 +272,55 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestDelete(context) {
-  const { params, env } = context;
-  const id = params.id ? params.id[0] : null;
+  const { params, request, env } = context;
+  
+  let id = null;
+  if (params && params.id) {
+    id = Array.isArray(params.id) ? params.id.join('/') : String(params.id);
+  }
+  if (!id) {
+    const url = new URL(request.url);
+    id = url.searchParams.get("id");
+  }
+  if (!id) {
+    try {
+      const body = await request.json();
+      id = body.id;
+    } catch (e) {}
+  }
 
   if (!id) {
-    return new Response(JSON.stringify({ error: "Missing ID" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "Missing fellow or intern ID" }), { 
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 
   if (env && env.DB) {
     try {
+      // Find candidate email first to revoke from allowed_users if granted
+      let targetEmail = null;
+      try {
+        const row = await env.DB.prepare("SELECT email FROM interns WHERE id = ?").bind(id).first();
+        if (row && row.email) targetEmail = row.email;
+      } catch (e) {}
+
+      // Delete from interns and applications tables
       await env.DB.prepare("DELETE FROM interns WHERE id = ?").bind(id).run();
       await env.DB.prepare("DELETE FROM applications WHERE id = ?").bind(id).run();
+
+      // Revoke login permission if email existed
+      if (targetEmail) {
+        try {
+          await env.DB.prepare("DELETE FROM allowed_users WHERE email = ?").bind(targetEmail).run();
+        } catch (e) {}
+      }
     } catch (e) {
       console.error("D1 delete error:", e);
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
     }
   }
 

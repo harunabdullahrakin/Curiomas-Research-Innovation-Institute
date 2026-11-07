@@ -6,9 +6,14 @@
 let allArticles = [];
 let activeTag = 'all';
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initBlogFeed() {
   await loadArticles();
   initTagFilter();
+}
+window.initBlogFeed = initBlogFeed;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initBlogFeed();
 });
 
 async function loadArticles() {

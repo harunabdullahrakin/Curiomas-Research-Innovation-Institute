@@ -1336,9 +1336,12 @@ window.closeResearcherModal = function() {
 };
 
 window.deleteResearcher = async function(id) {
-  if (window.confirm('Delete this researcher from the institute roster?')) {
+  if (window.confirm('Delete this researcher from the institute roster? This also revokes their portal login permissions.')) {
     await window.CRII_API.deleteIntern(id);
-    window.showToast('Researcher profile removed', 'info');
+    cachedInternsData.activeInterns = (cachedInternsData.activeInterns || []).filter(m => m.id !== id);
+    renderRosterGrid();
+    renderResearchersTable();
+    window.showToast('Researcher profile and portal access removed', 'info');
     await refreshDashboardData();
   }
 };
@@ -1817,12 +1820,24 @@ function renderApplicationsTable() {
             <button class="btn btn-sm btn-icon" title="Email Candidate via EmailJS" onclick="openEmailComposer('${escapeHtml(a.email)}', '${escapeHtml(a.fullName)}', 'CRII Fellowship Update')" style="background:rgba(37,99,235,0.08); color:var(--accent-primary);">
               ✉
             </button>
+            <button class="btn btn-sm btn-icon" title="Delete Application Record" onclick="deleteApplicationRow('${a.id}')" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
           </div>
         </td>
       </tr>
     `;
   }).join('');
 }
+
+window.deleteApplicationRow = async function(id) {
+  if (window.confirm('Are you sure you want to permanently delete this application record?')) {
+    await window.CRII_API.deleteApplication(id);
+    cachedInternsData.applications = (cachedInternsData.applications || []).filter(a => a.id !== id);
+    renderApplicationsTable();
+    window.showToast('Application record deleted successfully', 'info');
+  }
+};
 
 let activeAppId = null;
 function initApplicationModal() {
@@ -2441,6 +2456,39 @@ function initEmailComposer() {
   }
 }
 
+window.applyComposerPreset = function(presetKey) {
+  const subjEl = document.getElementById('composerSubject');
+  const msgEl = document.getElementById('composerMessage');
+  const name = document.getElementById('composerToName')?.value.trim() || 'Researcher / Candidate';
+
+  switch (presetKey) {
+    case 'fellow_accept':
+      if (subjEl) subjEl.value = 'Welcome to Curiomas Research & Innovation Institute — Fellowship Admitted';
+      if (msgEl) msgEl.value = `Dear ${name},\n\nCongratulations! On behalf of the Directorate and Academic Board at Curiomas Research & Innovation Institute (CRII), we are pleased to inform you that your application for the Research Fellowship Cohort has been accepted.\n\nYour researcher access profile has been provisioned. You can sign in using your registered email at:\nhttps://www.curiomas.zone.id/portal\n\nWelcome to the institute! We look forward to your impactful contributions to open science.\n\nWarm regards,\nDirectorate of Admissions & Research\nCuriomas Research & Innovation Institute (CRII)\ncuriomas.members@gmail.com`;
+      break;
+
+    case 'fellow_update':
+      if (subjEl) subjEl.value = 'CRII Fellowship Application Status Update';
+      if (msgEl) msgEl.value = `Dear ${name},\n\nThank you for your fellowship application to Curiomas Research & Innovation Institute. We are currently conducting technical review across all candidate portfolios.\n\nIf any additional artifacts, GitHub repositories, or preprint links are required, our admissions office will reach out directly.\n\nWarm regards,\nAdmissions Office\nCuriomas Research & Innovation Institute (CRII)`;
+      break;
+
+    case 'fellow_decline':
+      if (subjEl) subjEl.value = 'Update on your Fellowship Application — CRII';
+      if (msgEl) msgEl.value = `Dear ${name},\n\nThank you for applying to the Curiomas Research & Innovation Institute (CRII) Fellowship. We received many outstanding applications this cohort cycle and regrettably cannot offer you a placement at this time.\n\nWe encourage you to follow our open-source scientific dispatches and reapply in our upcoming cycle.\n\nWarm regards,\nAcademic Review Board\nCuriomas Research & Innovation Institute (CRII)`;
+      break;
+
+    case 'inquiry_reply':
+      if (subjEl) subjEl.value = 'Response from Curiomas Research & Innovation Institute (CRII)';
+      if (msgEl) msgEl.value = `Dear ${name},\n\nThank you for contacting Curiomas Research & Innovation Institute (CRII).\n\nRegarding your inquiry, our research leads and administrative office have reviewed your message.\n\nPlease let us know if you require further details, datasets, or collaboration arrangements.\n\nWarm regards,\nDirectorate Office\nCuriomas Research & Innovation Institute (CRII)\ncuriomas.members@gmail.com`;
+      break;
+
+    default:
+      if (subjEl) subjEl.value = 'CRII Research Institute Dispatch';
+      if (msgEl) msgEl.value = '';
+      break;
+  }
+};
+
 window.openEmailComposer = function(toEmail = '', toName = '', defaultSubject = '', defaultMsg = '') {
   const modal = document.getElementById('emailComposerModal');
   if (!modal) return;
@@ -2449,11 +2497,13 @@ window.openEmailComposer = function(toEmail = '', toName = '', defaultSubject = 
   const subjEl = document.getElementById('composerSubject');
   const msgEl = document.getElementById('composerMessage');
   const tplEl = document.getElementById('composerTemplateId');
+  const presetEl = document.getElementById('composerTemplateSelect');
 
   if (toEl) toEl.value = toEmail;
   if (nameEl) nameEl.value = toName;
-  if (subjEl && defaultSubject) subjEl.value = defaultSubject;
-  if (msgEl && defaultMsg) msgEl.value = defaultMsg;
+  if (subjEl) subjEl.value = defaultSubject || 'CRII Research Institute Dispatch';
+  if (msgEl) msgEl.value = defaultMsg || '';
+  if (presetEl) presetEl.value = 'custom';
 
   // Prepopulate saved Template ID from localStorage or settings
   const savedTemplateId = localStorage.getItem('crii_emailjs_template_id') || 

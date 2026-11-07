@@ -1263,6 +1263,20 @@ class CriiApiClient {
     return true;
   }
 
+  async deleteApplication(id) {
+    const data = await this.getInternsData();
+    data.applications = (data.applications || []).filter(a => a.id !== id);
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
+
+    try {
+      await fetch(`${CRII_CONFIG.API_BASE}/applications?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn("Failed to delete application from D1:", e);
+    }
+
+    return true;
+  }
+
   async submitInternApplication(formData) {
     const data = await this.getInternsData();
     const newApp = {

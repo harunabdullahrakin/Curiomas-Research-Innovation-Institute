@@ -14,6 +14,9 @@ function escapeHtml(str) {
  * Interns & Core Team Showcase Script
  */
 
+window.initInternsRoster = loadRosters;
+window.initApplicationForm = initApplicationForm;
+
 document.addEventListener('DOMContentLoaded', async () => {
   await loadRosters();
   await initApplicationForm();

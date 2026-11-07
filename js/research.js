@@ -10,11 +10,16 @@ let currentCategory = 'all';
 let searchQuery = '';
 let activeTab = 'papers';
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initResearchCatalog() {
   await loadResearchData();
   initFilters();
   initTabs();
   initModals();
+}
+window.initResearchCatalog = initResearchCatalog;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initResearchCatalog();
 });
 
 async function loadResearchData() {

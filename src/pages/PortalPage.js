@@ -138,6 +138,14 @@ export function renderPortalPageHtml() {
             </svg>
             <span class="portal-nav-label">Institute & Navbar</span>
           </button>
+
+          <button class="portal-nav-btn" data-tab="emailer" onclick="openEmailComposer('', '', '', ''); return false;" data-tooltip="Email Dispatcher">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            <span class="portal-nav-label">Email Dispatcher</span>
+            <span class="portal-nav-badge" style="background: rgba(37, 99, 235, 0.15); color: #2563eb; font-weight: 700;">Gmail</span>
+          </button>
         </div>
 
       </nav>
@@ -195,9 +203,15 @@ export function renderPortalPageHtml() {
             <h1>Institute Operations Dashboard</h1>
             <p>Overview of publications, admissions queue, and open datasets.</p>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="showTab('posts')">
-            <span>+ New Publication</span>
-          </button>
+          <div style="display:inline-flex; gap:0.6rem; align-items:center;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openEmailComposer('', '', '', '')" title="Compose Email via curiomas.members@gmail.com" style="display:inline-flex; align-items:center; gap:0.4rem;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <span>Compose Email</span>
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="showTab('posts')">
+              <span>+ New Publication</span>
+            </button>
+          </div>
         </div>
 
         <!-- Metric Cards -->
@@ -1617,6 +1631,20 @@ export function renderPortalPageHtml() {
       </div>
       <form id="emailComposerForm">
         <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 1.15rem; background: rgba(37,99,235,0.04); border: 1px solid rgba(37,99,235,0.12); padding: 0.85rem; border-radius: 8px;">
+            <label class="form-label" for="composerTemplateSelect" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+              <span>Quick Template / Preset</span>
+              <span style="font-size:0.75rem; color:var(--text-muted);">Auto-fills subject and dispatch body</span>
+            </label>
+            <select id="composerTemplateSelect" class="form-input" onchange="applyComposerPreset(this.value)">
+              <option value="custom">Custom Email (Blank)</option>
+              <option value="fellow_accept">Fellowship Admission & Welcome (With Portal Login URL)</option>
+              <option value="fellow_update">Fellowship Application Status Update</option>
+              <option value="fellow_decline">Application Not Accepted Notice</option>
+              <option value="inquiry_reply">Institute General Inquiry Response</option>
+            </select>
+          </div>
+
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="composerToEmail">Recipient Email *</label>

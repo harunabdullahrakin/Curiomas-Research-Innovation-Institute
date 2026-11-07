@@ -3,18 +3,21 @@
  * Full Article & Research Paper Reader View
  */
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initArticleReader() {
   const urlParams = new URLSearchParams(window.location.search);
   const identifier = urlParams.get('id') || urlParams.get('slug');
 
   const post = await window.CRII_API.getPostBySlugOrId(identifier);
 
+  const container = document.getElementById('articleContainer');
+  if (!container) return;
+
   if (!post) {
-    document.getElementById('articleContainer').innerHTML = `
+    container.innerHTML = `
       <div style="text-align:center; padding:5rem 1rem;">
         <h1 style="font-size:2rem; margin-bottom:1rem; color:var(--text-primary);">Publication Not Found</h1>
         <p style="margin-bottom:2rem; color:var(--text-muted);">The requested research publication could not be located in our repository.</p>
-        <a href="research.html" class="btn btn-primary">Back to Research Catalog</a>
+        <a href="/research" class="btn btn-primary">Back to Research Catalog</a>
       </div>
     `;
     return;
@@ -22,6 +25,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderArticle(post);
   initScrollProgress();
+}
+window.initArticleReader = initArticleReader;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initArticleReader();
 });
 
 function renderArticle(post) {

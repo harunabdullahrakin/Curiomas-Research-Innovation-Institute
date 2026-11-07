@@ -1,12 +1,12 @@
 /**
  * CURIOMAS RESEARCH & INNOVATION INSTITUTE (CRII)
  * Deep Forest Green Footer Component (#071f16)
- * Strictly matches CSS layout rules in css/style.css (lines 2590-2698)
+ * Strictly matches CSS layout rules in css/style.css
  */
 
 export function renderFooterHtml() {
   return `
-    <footer class="mockup-forest-footer">
+    <footer class="mockup-forest-footer" style="background:#071f16; color:#ffffff;">
       <div class="mockup-container">
         <!-- 1. Top Grid: Brand Column + 4 Navigation / Focus Columns -->
         <div class="footer-top-grid">
@@ -26,7 +26,7 @@ export function renderFooterHtml() {
           <!-- Column 1: Navigation -->
           <div class="footer-col">
             <h4 class="footer-col-header">NAVIGATION</h4>
-            <ul class="footer-links-list">
+            <ul class="footer-links-list" style="list-style:none; padding:0; margin:0;">
               <li><a href="/">Home</a></li>
               <li><a href="/research">Research & Publications</a></li>
               <li><a href="/blog">Dispatches</a></li>
@@ -40,7 +40,7 @@ export function renderFooterHtml() {
           <!-- Column 2: Research Focus -->
           <div class="footer-col">
             <h4 class="footer-col-header">RESEARCH FOCUS</h4>
-            <ul class="footer-links-list">
+            <ul class="footer-links-list" style="list-style:none; padding:0; margin:0;">
               <li><a href="/research">Astrophysics & Space Science</a></li>
               <li><a href="/research">Ancient Evolutionary Biology</a></li>
               <li><a href="/research">AI & Computational Biophysics</a></li>
@@ -51,7 +51,7 @@ export function renderFooterHtml() {
           <!-- Column 3: Admissions & Fellowships -->
           <div class="footer-col">
             <h4 class="footer-col-header">ADMISSIONS</h4>
-            <ul class="footer-links-list">
+            <ul class="footer-links-list" style="list-style:none; padding:0; margin:0;">
               <li><a href="/team#apply">Student Fellowships</a></li>
               <li><a href="/team">Mentorship Tracks</a></li>
               <li><a href="/contact">Research Collaborations</a></li>
@@ -62,7 +62,7 @@ export function renderFooterHtml() {
           <!-- Column 4: Get in Touch -->
           <div class="footer-col">
             <h4 class="footer-col-header">GET IN TOUCH</h4>
-            <ul class="footer-links-list">
+            <ul class="footer-links-list" style="list-style:none; padding:0; margin:0;">
               <li><a href="/contact">Inquiries & Partnerships</a></li>
               <li><a href="mailto:harunabdullahrakin@gmail.com">Director's Office</a></li>
               <li><a href="mailto:curiomas.members@gmail.com">General Contact</a></li>

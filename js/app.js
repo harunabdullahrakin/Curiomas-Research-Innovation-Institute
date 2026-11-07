@@ -1460,3 +1460,47 @@ async function initCohorts() {
     console.warn('initCohorts error:', e);
   }
 }
+
+// Attach Dynamic Home Loaders to Window for SPA Re-Renders
+window.initFeaturedArticles = initFeaturedArticles;
+window.initDivisions = initDivisions;
+window.initCohorts = initCohorts;
+
+// Google Translate Integration & Language Switcher
+window.triggerGoogleTranslate = function(lang = 'en') {
+  try {
+    const validLang = (lang === 'bn') ? 'bn' : 'en';
+    localStorage.setItem('crii_site_language', validLang);
+
+    // Set googtrans cookie across domains
+    const cookieVal = `/en/${validLang}`;
+    document.cookie = `googtrans=${cookieVal}; path=/;`;
+    if (window.location.hostname) {
+      document.cookie = `googtrans=${cookieVal}; path=/; domain=${window.location.hostname};`;
+      const parts = window.location.hostname.split('.');
+      if (parts.length >= 2) {
+        document.cookie = `googtrans=${cookieVal}; path=/; domain=.${parts.slice(-2).join('.')};`;
+      }
+    }
+
+    // Try finding Google Translate combo
+    const combo = document.querySelector('.goog-te-combo');
+    if (combo) {
+      combo.value = validLang;
+      combo.dispatchEvent(new Event('change'));
+    } else {
+      // If combo not in DOM yet, reload cleanly so googtrans cookie takes effect
+      window.location.reload();
+    }
+
+    // Update navbar indicators if present
+    const flagImg = document.getElementById('navLangFlagImg');
+    if (flagImg) {
+      flagImg.src = validLang === 'bn' ? 'https://flagcdn.com/w40/bd.png' : 'https://flagcdn.com/w40/gb.png';
+      flagImg.alt = validLang === 'bn' ? 'বাংলা' : 'English';
+    }
+  } catch (err) {
+    console.warn('Language switch notice:', err);
+  }
+};
+

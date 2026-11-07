@@ -96,6 +96,19 @@ export function initNavbarInteractions(router) {
   const langMenu = document.getElementById('navLangMenu');
   const langDropdown = document.getElementById('navLangDropdown');
   if (langBtn && langMenu) {
+    // Restore saved language preference on mount
+    const savedLang = localStorage.getItem('crii_site_language') || 'en';
+    if (savedLang === 'bn') {
+      const flagImg = document.getElementById('navLangFlagImg');
+      if (flagImg) {
+        flagImg.src = 'https://flagcdn.com/w40/bd.png';
+        flagImg.alt = 'বাংলা';
+      }
+      langMenu.querySelectorAll('.nav-lang-opt').forEach(o => {
+        o.classList.toggle('active', o.getAttribute('data-lang') === 'bn');
+      });
+    }
+
     langBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const open = langMenu.classList.toggle('show');

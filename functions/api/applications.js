@@ -243,18 +243,44 @@ export async function onRequestPut(context) {
 export async function onRequestDelete(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const id = url.searchParams.get("id");
+  let id = url.searchParams.get("id");
 
   if (!id) {
-    return new Response(JSON.stringify({ error: "Missing ID" }), { status: 400 });
+    try {
+      const body = await request.json();
+      id = body.id;
+    } catch (e) {}
+  }
+
+  if (!id) {
+    return new Response(JSON.stringify({ error: "Missing application ID" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 
   if (env && env.DB) {
     try {
       await ensureTable(env.DB);
       await env.DB.prepare("DELETE FROM applications WHERE id = ?").bind(id).run();
+
+      // Clean up from backup store
+      try {
+        const storeRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'applications_store'").first();
+        if (storeRow && storeRow.value_json) {
+          let list = JSON.parse(storeRow.value_json);
+          if (Array.isArray(list)) {
+            list = list.filter(item => item.id !== id);
+            await env.DB.prepare("UPDATE settings SET value_json = ?, updatedAt = ? WHERE key = 'applications_store'").bind(JSON.stringify(list), new Date().toISOString()).run();
+          }
+        }
+      } catch (e) {}
     } catch (e) {
       console.error("D1 application delete error:", e);
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
     }
   }
 
