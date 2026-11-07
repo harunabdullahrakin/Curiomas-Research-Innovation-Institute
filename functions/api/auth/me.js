@@ -6,18 +6,30 @@
 export async function onRequestGet(context) {
   const { request, env } = context;
 
+  let token = "";
   const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.replace("Bearer ", "").trim();
+  }
+
+  // Also fallback to HttpOnly session cookie
+  if (!token) {
+    const cookieHeader = request.headers.get("Cookie") || "";
+    const match = cookieHeader.match(/(?:^|;\s*)crii_session=([^;]*)/);
+    if (match) {
+      token = decodeURIComponent(match[1]).trim();
+    }
+  }
+
+  if (!token) {
     return new Response(JSON.stringify({
       authenticated: false,
-      error: "Missing authorization token"
+      error: "Missing authorization token or session cookie"
     }), {
       status: 401,
       headers: { "Content-Type": "application/json" }
     });
   }
-
-  const token = authHeader.replace("Bearer ", "").trim();
   const nowIso = new Date().toISOString();
 
   // 1. Look up session in Cloudflare D1 SQL database

@@ -6,10 +6,20 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
 
+  let token = "";
   const authHeader = request.headers.get("Authorization");
   if (authHeader && authHeader.startsWith("Bearer ")) {
-    const token = authHeader.replace("Bearer ", "").trim();
+    token = authHeader.replace("Bearer ", "").trim();
+  }
+  if (!token) {
+    const cookieHeader = request.headers.get("Cookie") || "";
+    const match = cookieHeader.match(/(?:^|;\s*)crii_session=([^;]*)/);
+    if (match) {
+      token = decodeURIComponent(match[1]).trim();
+    }
+  }
 
+  if (token) {
     if (env && env.DB) {
       try {
         await env.DB.prepare("DELETE FROM sessions WHERE token = ?").bind(token).run();
@@ -29,6 +39,9 @@ export async function onRequestPost(context) {
 
   return new Response(JSON.stringify({ success: true, message: "Logged out successfully" }), {
     status: 200,
-    headers: { "Content-Type": "application/json" }
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": "crii_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"
+    }
   });
 }

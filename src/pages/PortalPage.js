@@ -1,149 +1,13 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRII Portal — Institute Authentication & Research Management</title>
-  <link rel="preload" href="assets/Eyekons.otf" as="font" type="font/otf" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=4.0">
-  <link rel="stylesheet" href="css/components.css?v=4.0">
-  <link rel="stylesheet" href="css/portal.css?v=5.0">
-  <link rel="stylesheet" href="css/word-editor.css?v=1.0">
-  <link rel="icon" type="image/png" href="assets/curiomas-no-bg.png">
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <style>
-    *, *::before, *::after, html, body, button, input, select, textarea, p, span, a, strong, em, b, i, div, li, ul, label, table, th, td {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    }
-    h1, h2, h3, h4, h5, h6,
-    .portal-title-block h1,
-    .modal-title,
-    .division-manage-title,
-    .cohort-manage-title,
-    [class*="-title"]:not([class*="-sub"]):not(.quick-tag-label),
-    [class*="-heading"] {
-      font-family: 'Eyekons', 'Playfair Display', Georgia, serif !important;
-    }
-  </style>
-</head>
-<body style="background-color: var(--bg-primary);">
-  <!-- ==========================================================================
-       INSTITUTE LOGIN SCREEN (Shown when not authenticated)
-       ========================================================================== -->
-  <section id="portalAuthSection" class="login-split-page" style="display:none;">
-    <!-- LEFT PANEL: Visual Showcase & Mission -->
-    <div class="login-showcase-pane">
-      <div class="login-showcase-overlay"></div>
-      
-      <div class="login-showcase-content">
-        <div class="login-brand-header">
-          <img src="assets/curiomas-no-bg.png" alt="CRII Emblem" loading="eager">
-          <div>
-            <div class="login-brand-name">Curiomas Institute</div>
-            <div class="login-brand-sub">Research & Innovation</div>
-          </div>
-        </div>
+/**
+ * CURIOMAS RESEARCH & INNOVATION INSTITUTE (CRII)
+ * Portal Dashboard Page Component
+ */
 
-        <div class="login-hero-center">
-          
+import { auth } from '../services/auth.js';
 
-          <h1 class="login-hero-title">Bring structure to your research.</h1>
-          
-          <p class="login-hero-desc">
-            An autonomous, student-driven research collective unifying deep-space atmospheres, ancient paleogenomics, and biophysical machine learning into open, reproducible frameworks.
-          </p>
-
-          </div>
-        </div>
-
-        <div class="login-showcase-footer">
-          <div class="login-showcase-motto">Turning Curiosity into Action.</div>
-          <div class="login-showcase-note">Autonomous by Design • CC-BY 4.0</div>
-        </div>
-      </div>
-
-    <!-- RIGHT PANEL: Authentication Panel -->
-    <div class="login-form-pane">
-      <div class="login-form-top-nav">
-        <a href="/" class="login-back-link">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          <span>Return to Institute Website</span>
-        </a>
-      </div>
-
-      <div class="login-form-center">
-        <div class="login-form-crest">
-          <img src="assets/curiomas-no-bg.png" alt="CRII Crest">
-        </div>
-
-        <h2 class="login-form-title">Institute Sign In</h2>
-        <p class="login-form-subtitle">
-          Welcome back. Access the verified researcher dashboard, editorial suite, and publication repositories.
-        </p>
-
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <a id="loginWithAutzBtn" class="login-primary-btn" href="#" style="text-decoration:none;">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            <span>Login with your account</span>
-          </a>
-
-          <div id="loginStatus" style="display:none; text-align: center; padding: 0.9rem; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: var(--accent-primary);"></div>
-
-          <div id="loginError" style="display:none; text-align: left; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 0.9rem; border-radius: 12px; font-size: 0.85rem; line-height: 1.5;"></div>
-        </div>
-
-      </div>
-
-      <div class="login-form-footer">Protected by parameterized institute access control</div>
-    </div>
-  </section>
-
-  <!-- ==========================================================================
-       ADMIN & RESEARCHER MANAGEMENT DASHBOARD (Authenticated)
-       ========================================================================== -->
-  <section id="portalDashboardSection" class="portal-layout" style="display:none;">
-    
-    <!-- Mobile Navigation Topbar (< 992px) -->
-    <header class="portal-mobile-topbar">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <button id="portalMobileMenuBtn" class="portal-mobile-menu-btn" aria-label="Open Navigation Menu">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
-        </button>
-        <div class="portal-mobile-brand">
-          <img src="assets/curiomas-no-bg.png" alt="CRII Logo" style="width: 26px; height: 26px; object-fit: contain;">
-          <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); letter-spacing: -0.01em;">CRII Portal</span>
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <button class="portal-icon-btn theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Light / Dark Mode">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5"/>
-            <line x1="12" y1="1" x2="12" y2="3"/>
-            <line x1="12" y1="21" x2="12" y2="23"/>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-            <line x1="1" y1="12" x2="3" y2="12"/>
-            <line x1="21" y1="12" x2="23" y2="12"/>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-          </svg>
-        </button>
-      </div>
-    </header>
-
-    <!-- Mobile Drawer Backdrop -->
-    <div id="portalSidebarBackdrop" class="portal-sidebar-backdrop"></div>
-
-    <!-- Sidebar -->
-    <aside id="portalSidebar" class="portal-sidebar">
-      
-      <!-- Brand & Desktop Toggle Button -->
-      <div class="portal-brand">
-        <a href="/" class="portal-brand-content" title="CRII Portal Home">
+export function renderPortalPageHtml() {
+  return `
+    <div class="page-portal-wrapper">
           <div class="brand-logo-container">
             <img src="assets/curiomas-no-bg.png" alt="CRII Logo" class="brand-logo-img">
           </div>
@@ -1683,13 +1547,6 @@
     </div>
   </div>
 
-  <script type="module" src="/js/config.js"></script>
-  <script type="module" src="/js/app.js"></script>
-  <script type="module" src="/js/auth.js"></script>
-  <script type="module" src="/js/doc-sanitize.js"></script>
-  <script type="module" src="/js/word-editor.js"></script>
-  <script type="module" src="/js/portal.js"></script>
-
   <!-- Division Edit / Create Modal -->
   <div id="divisionModal" class="modal-overlay">
     <div class="modal-dialog" style="max-width: 620px;">
@@ -1819,5 +1676,29 @@
     </div>
   </div>
 
-</body>
-</html>
+    </div>
+  `;
+}
+
+export async function mountPortalPage(router) {
+  // 1. Strict Authentication Guard
+  if (!auth.isAuthenticated()) {
+    if (router) router.navigate('/login?redirect=/portal');
+    else window.location.href = '/login?redirect=/portal';
+    return;
+  }
+
+  // 2. Verify Session with Cloudflare D1 SQL Backend in background
+  auth.verifySession().then(res => {
+    if (!res.authenticated) {
+      if (window.showToast) window.showToast('Your session has expired. Please sign in again.', 'error');
+      if (router) router.navigate('/login');
+      else window.location.href = '/login';
+    }
+  });
+
+  // 3. Initialize Portal Dashboard Engine
+  if (typeof window.initPortalDashboard === 'function') {
+    window.initPortalDashboard();
+  }
+}

@@ -176,13 +176,18 @@ export async function onRequestPost(context) {
       }
     }
 
+    const cookieHeader = `crii_session=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`;
+
     return new Response(JSON.stringify({
       success: true,
       token: token,
       user: sessionUser
     }), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: {
+        "Content-Type": "application/json",
+        "Set-Cookie": cookieHeader
+      }
     });
   } catch (err) {
     console.error("Authentication server error:", err);
