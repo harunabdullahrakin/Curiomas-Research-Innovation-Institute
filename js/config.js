@@ -740,11 +740,25 @@ class CriiApiClient {
       const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS);
       if (raw !== null) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.filter(d => !CRII_LEGACY_PURGED_DIVISION_IDS.includes(d.id));
         }
       }
     } catch (e) {}
+
+    // Fallback to fetch from D1 settings
+    try {
+      const res = await fetch(CRII_CONFIG.API_BASE + '/settings');
+      if (res.ok) {
+        const settings = await res.json();
+        if (Array.isArray(settings.divisions) && settings.divisions.length > 0) {
+          const filtered = settings.divisions.filter(d => !CRII_LEGACY_PURGED_DIVISION_IDS.includes(d.id));
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(filtered));
+          return filtered;
+        }
+      }
+    } catch (e) {}
+
     return [];
   }
 

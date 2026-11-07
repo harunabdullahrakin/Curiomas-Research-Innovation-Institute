@@ -9,23 +9,31 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  initThemeEngine();
-  initBrandingAndNavbar();
-  initHeroCustomization();
-  initScrollRevealEffects();
-  initFestiveSeasonalTheme();
-  initCustomCursor();
-  initCookieConsent();
-  initMobileNav();
-  initAutoHidingNavbar();
-  initUserSessionState();
-  initToastContainer();
-  initFeaturedArticles();
-  initDivisions();
-  initCohorts();
-  initHomeTeam();
-  initGoogleTranslateAndLang();
-  initSearchOverlay();
+  const safeInit = (fn, name) => {
+    try {
+      fn();
+    } catch (err) {
+      console.error(`[CRII Core] Error initializing ${name}:`, err);
+    }
+  };
+
+  safeInit(initThemeEngine, 'initThemeEngine');
+  safeInit(initBrandingAndNavbar, 'initBrandingAndNavbar');
+  safeInit(initHeroCustomization, 'initHeroCustomization');
+  safeInit(initScrollRevealEffects, 'initScrollRevealEffects');
+  safeInit(initFestiveSeasonalTheme, 'initFestiveSeasonalTheme');
+  safeInit(initCustomCursor, 'initCustomCursor');
+  safeInit(initCookieConsent, 'initCookieConsent');
+  safeInit(initMobileNav, 'initMobileNav');
+  safeInit(initAutoHidingNavbar, 'initAutoHidingNavbar');
+  safeInit(initUserSessionState, 'initUserSessionState');
+  safeInit(initToastContainer, 'initToastContainer');
+  safeInit(initFeaturedArticles, 'initFeaturedArticles');
+  safeInit(initDivisions, 'initDivisions');
+  safeInit(initCohorts, 'initCohorts');
+  safeInit(initHomeTeam, 'initHomeTeam');
+  safeInit(initGoogleTranslateAndLang, 'initGoogleTranslateAndLang');
+  safeInit(initSearchOverlay, 'initSearchOverlay');
 });
 
 // Hero Appearance & Dynamic Multi-Image / Video / Font Customization
@@ -239,6 +247,8 @@ function initHeroCustomization() {
   document.documentElement.style.setProperty('--hero-blur', `${blurPx}px`);
   document.documentElement.style.setProperty('--hero-overlay-bg', `rgba(10, 15, 30, ${overlayOpacity})`);
 }
+
+let criiScrollObserver = null;
 
 function initScrollRevealEffects() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -1285,9 +1295,13 @@ async function initDivisions() {
       `).join('');
       if (window.refreshScrollAnimations) window.refreshScrollAnimations();
     } else {
-      container.innerHTML = '';
-      const section = container.closest('.divisions-section') || container.closest('section');
-      if (section) section.style.display = 'none';
+      container.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: rgba(0, 0, 0, 0.02); border-radius: 12px; border: 1px dashed #d5cebf; color: #78716c;">
+          <p style="font-size: 1.05rem; font-weight: 600; color: #44403c; margin-bottom: 0.4rem;">Research Divisions Initializing</p>
+          <p style="font-size: 0.88rem; color: #78716c; margin-bottom: 1rem;">Frontier research departments across astrophysics, paleogenomics and biophysics.</p>
+          <a href="/research" class="mockup-btn-dark-green" style="display: inline-flex;">Explore Research Programs</a>
+        </div>
+      `;
     }
   } catch (e) {
     console.warn('initDivisions error:', e);

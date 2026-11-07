@@ -2261,7 +2261,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-sand-cta-section {
   background: #ded3be;
   padding: 5rem 0;
-  border-bottom: 1px solid #cdbfa7;
+  border-bottom: none;
 }
 
 .sand-cta-grid {
@@ -2403,7 +2403,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   background: #07101d;
   color: #ffffff;
   padding: 5.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
 }
 
 .midnight-title {
