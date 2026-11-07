@@ -1,0 +1,29 @@
+{
+  "activeInterns": [
+    {
+      "id": "team-001",
+      "name": "Harun Abdullah Rakin",
+      "email": "harunabdullahrakin@gmail.com",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      "university": "CRII Council",
+      "degree": "Director of Research",
+      "division": "Executive Council",
+      "role": "Super Admin & Lead Investigator",
+      "cohort": "Founding",
+      "status": "Active",
+      "bio": "Pioneering open computational science, astrophysical synthetic models, and multi-agent systems for student discovery.",
+      "socials": {
+        "github": "https://github.com/harunabdullahrakin",
+        "linkedin": "https://linkedin.com",
+        "email": "harunabdullahrakin@gmail.com"
+      },
+      "projects": [
+        "CRII Computational Core",
+        "Autonomous Research Pipelines"
+      ],
+      "isTeamMember": true,
+      "orderIndex": 1
+    }
+  ],
+  "applications": []
+}

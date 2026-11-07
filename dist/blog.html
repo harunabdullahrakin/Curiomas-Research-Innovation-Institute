@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scientific Dispatches & Notes — Curiomas CRII</title>
+  <meta name="description" content="Scientific dispatches, laboratory notes, and student research reflections from Curiomas Research & Innovation Institute.">
+  <link rel="preload" href="/assets/Eyekons-Bxhk0pug.otf" as="font" type="font/otf" crossorigin>
+  <link rel="icon" type="image/png" href="/assets/curiomas-no-bg-S1oIryqN.png">
+  <style>:root{--font-body:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;--font-display:"Eyekons", "Playfair Display", Georgia, serif;--font-mono:"JetBrains Mono", Consolas, "SF Mono", monospace}body,p,span,a,button,input,select,textarea,label,li,ul,ol,div{font-family:var(--font-body)!important}h1,h2,h3,h4,h5,h6,.mockup-page-hero-title,.article-card-title,[class*=-title]:not([class*=-sub]):not(.quick-tag-label),[class*=-heading]{letter-spacing:-.02em;font-weight:700;font-family:var(--font-display)!important}.article-card-desc,.dispatch-content{line-height:1.65;font-family:var(--font-body)!important}code,pre{font-family:var(--font-mono)!important}</style>
+  <script type="module" crossorigin src="/assets/blog-CSuD8Sot.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/config-WQoC_c_K.js">
+  <link rel="modulepreload" crossorigin href="/assets/app-a7Or-imY.js">
+  <link rel="stylesheet" crossorigin href="/assets/config-CEJ9uS8n.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       PAGE HERO & FLOATING CAPSULE NAVBAR
+       ========================================================================= -->
+  <section class="mockup-page-hero">
+    <div class="mockup-container">
+            <!-- Floating Pill Navbar -->
+      <div class="mockup-nav-wrapper">
+        <header class="mockup-nav-capsule">
+          <!-- Left Logo & Expanding Tag on Hover -->
+          <a href="/" class="mockup-brand" aria-label="Curiomas Research & Innovation Institute" title="Curiomas">
+            <img src="/assets/curiomas-no-bg-S1oIryqN.png" alt="CRII" class="mockup-brand-img">
+            <span class="mockup-brand-tag">CURIOMAS</span>
+          </a>
+
+          <!-- Main Nav Links -->
+          <nav class="mockup-nav-center">
+            <ul class="mockup-nav-links" id="mainNavMenu">
+              <li><a href="/" class="mockup-nav-link">Home</a></li>
+              <li><a href="/research" class="mockup-nav-link">Research</a></li>
+              <li><a href="/blog" class="mockup-nav-link active">Dispatches</a></li>
+              <li><a href="/team" class="mockup-nav-link">Team</a></li>
+              <li><a href="/contact" class="mockup-nav-link">Contact</a></li>
+              <li class="mobile-nav-login-item">
+                <a href="/portal" class="mockup-nav-link mobile-login-link">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                  <span>LOGIN</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+
+          <!-- Right Action Group -->
+          <div class="mockup-nav-right">
+            <!-- Orange LOGIN Button -->
+            <a href="/portal" class="nav-login-btn">LOGIN</a>
+
+            <!-- RSS Feed Icon Button -->
+            <a href="/blog" class="nav-action-icon-btn nav-rss-link" title="Dispatches RSS Feed" aria-label="Dispatches RSS Feed">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+            </a>
+
+            <!-- Search Icon Button -->
+            <button type="button" class="nav-action-icon-btn nav-search-trigger" id="navSearchTrigger" aria-label="Search posts" title="Search posts (Ctrl+K)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+
+            <!-- Language / Flag Dropdown -->
+            <div class="nav-lang-dropdown" id="navLangDropdown">
+              <button type="button" class="nav-action-icon-btn nav-lang-btn" id="navLangBtn" aria-expanded="false" aria-label="Select Language" title="Change Language">
+                <img src="https://flagcdn.com/w40/gb.png" alt="English" class="nav-lang-flag-img" id="navLangFlagImg">
+              </button>
+              <div class="nav-lang-menu" id="navLangMenu">
+                <button type="button" class="nav-lang-opt active" data-lang="en">
+                  <img src="https://flagcdn.com/w40/gb.png" class="opt-flag" alt="GB">
+                  <span>English</span>
+                </button>
+                <button type="button" class="nav-lang-opt" data-lang="bn">
+                  <img src="https://flagcdn.com/w40/bd.png" class="opt-flag" alt="BD">
+                  <span>বাংলা</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Mobile Hamburger Toggle -->
+            <button class="nav-action-icon-btn menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu" type="button">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
+          </div>
+        </header>
+      </div>
+
+      <!-- Google Translate Mount & Search Modal -->
+      <div id="google_translate_element" style="display:none!important;"></div>
+
+      <div class="crii-search-overlay" id="criiSearchOverlay" aria-hidden="true" style="display:none;">
+        <div class="crii-search-backdrop" id="criiSearchBackdrop"></div>
+        <div class="crii-search-modal">
+          <div class="crii-search-header">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" class="crii-search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="siteSearchInput" class="crii-search-input" placeholder="Search dispatches, research, topics..." autocomplete="off" spellcheck="false">
+            <kbd class="crii-search-esc" id="criiSearchEsc">ESC</kbd>
+          </div>
+          <div class="crii-search-quick-tags" id="criiSearchQuickTags">
+            <span class="quick-tag-label">Suggested:</span>
+            <button type="button" class="quick-tag-btn" data-query="Spectra">Spectra</button>
+            <button type="button" class="quick-tag-btn" data-query="Biophysics">Biophysics</button>
+            <button type="button" class="quick-tag-btn" data-query="Paleogenomics">Paleogenomics</button>
+            <button type="button" class="quick-tag-btn" data-query="Habitability">Habitability</button>
+          </div>
+          <div class="crii-search-body" id="criiSearchResults">
+            <div class="crii-search-empty">Type keywords or click a suggestion above to search...</div>
+          </div>
+          <div class="crii-search-footer">
+            <span><kbd>↑</kbd> <kbd>↓</kbd> Navigate</span>
+            <span><kbd>↵</kbd> Select</span>
+            <span><kbd>ESC</kbd> Close</span>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Hero Header Text -->
+      <div class="mockup-page-hero-body">
+
+        <h1 class="mockup-page-hero-title">
+          Scientific Dispatches & Notes
+        </h1>
+
+        <p class="mockup-page-hero-subtitle">
+          Field observations, mathematical derivations, and research perspectives written by young investigators and fellowship fellows.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seamless Wave Divider from Page Hero (#060b16) into Content (#faf8f5) -->
+  <div class="mockup-curve-divider" aria-hidden="true" style="background-color: #060b16; color: #faf8f5; margin-top: -2px; margin-bottom: -2px;">
+    <svg viewBox="0 0 1440 56" preserveAspectRatio="none" class="mockup-curve-svg">
+      <path class="curve-path-2" d="M-50,28 C360,56 720,0 1080,42 C1260,63 1380,21 1490,28 L1490,70 L-50,70 Z" fill="currentColor" fill-opacity="0.8" />
+      <path class="curve-path-1" d="M-50,20 C320,52 680,8 1020,38 C1200,52 1350,15 1490,20 L1490,70 L-50,70 Z" fill="currentColor" />
+    </svg>
+    <div class="mockup-section-connector" style="position: absolute; top: -19px; left: 50%; transform: translateX(-50%); z-index: 20; margin: 0;">
+      <div class="connector-circle">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ffffff" stroke-width="2.8"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MAIN DISPATCHES CONTENT
+       ========================================================================= -->
+  <main class="mockup-page-content">
+    <div class="mockup-container" style="max-width: 960px;">
+
+      <!-- Tag Cloud Filter -->
+      <div style="margin-bottom: 3rem; text-align: center;">
+        <div id="tagList" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;"></div>
+      </div>
+
+      <!-- Blog List Container -->
+      <div id="blogContainer" style="display: flex; flex-direction: column; gap: 2rem;"></div>
+
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       FOREST GREEN FOOTER
+       ========================================================================= -->
+  <!-- Blog Footer Wave -->
+  <div class="mockup-curve-divider" aria-hidden="true" style="background-color: #faf8f5; color: #071f16; margin-top: -2px; margin-bottom: -2px;">
+    <svg class="mockup-curve-svg" viewBox="0 0 1440 56" fill="none" preserveAspectRatio="none">
+      <path class="curve-path-2" d="M-50,28 C360,56 720,0 1080,42 C1260,63 1380,21 1490,28 L1490,70 L-50,70 Z" fill="currentColor" fill-opacity="0.8" />
+      <path class="curve-path-1" d="M-50,20 C320,52 680,8 1020,38 C1200,52 1350,15 1490,20 L1490,70 L-50,70 Z" fill="currentColor" />
+    </svg>
+  </div>
+
+  <footer class="mockup-forest-footer">
+    <div class="mockup-container">
+      <div class="footer-top-grid">
+        <div class="footer-brand-col">
+          <div class="footer-brand-header">
+            <img src="/assets/curiomas-no-bg-S1oIryqN.png" alt="CRII" class="footer-brand-logo">
+            <span class="footer-brand-name">curiomas</span>
+          </div>
+          <div class="footer-brand-sub">Autonomous Research Institute</div>
+          <div class="footer-brand-sub">Founded 2026</div>
+        </div>
+
+        <div class="footer-links-col">
+          <h4 class="footer-col-header">INSTITUTE</h4>
+          <ul class="footer-links-list">
+            <li><a href="/">About Us</a></li>
+            <li><a href="/research">Research Divisions</a></li>
+            <li><a href="/team">Core Team & Mentors</a></li>
+            <li><a href="/contact">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <h4 class="footer-col-header">DIVISIONS</h4>
+          <ul class="footer-links-list">
+            <li><a href="/research">Space & Astrophysics</a></li>
+            <li><a href="/research">Ancient Biology & Paleontology</a></li>
+            <li><a href="/research">AI & Computational Science</a></li>
+            <li><a href="/research">Astrobiology & Extremophiles</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <h4 class="footer-col-header">RESEARCH</h4>
+          <ul class="footer-links-list">
+            <li><a href="/research">Publications & Preprints</a></li>
+            <li><a href="/research">Datasets & Pipelines</a></li>
+            <li><a href="/portal">Research Repository</a></li>
+            <li><a href="/research">Peer Review Guidelines</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <h4 class="footer-col-header">FELLOWSHIP</h4>
+          <ul class="footer-links-list">
+            <li><a href="/team#apply">Apply as Fellow</a></li>
+            <li><a href="/team">Mentorship</a></li>
+            <li><a href="/team#apply">Admissions FAQ</a></li>
+            <li><a href="/contact">Institutional Partners</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-motto-row">
+        <div class="footer-huge-motto">Turning Curiosity into Action.</div>
+        <div class="footer-institute-note">An autonomous student-driven scientific institute.</div>
+      </div>
+
+      <div class="footer-legal-bar">
+        <div>© 2026 Curiomas Research & Innovation Institute. Released under CC-BY 4.0.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+</body>
+</html>
