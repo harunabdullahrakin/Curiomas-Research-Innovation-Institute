@@ -1100,37 +1100,62 @@
                 </div>
               </div>
 
-              <!-- Video Background Fallback / Optional -->
-              <details style="margin-bottom: 1.5rem; background: rgba(255, 255, 255, 0.02); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                <summary style="font-size: 0.82rem; font-weight: 600; cursor: pointer; color: var(--text-secondary);">
-                  Advanced: Ambient Video Background Settings
-                </summary>
-                <div style="margin-top: 1rem;">
-                  <div class="form-group">
-                    <label class="form-label" for="settingHeroVideoUrl">Hero Video URL</label>
-                    <input type="text" id="settingHeroVideoUrl" class="form-input" placeholder="assets/hero-bg.mp4 or https://...">
-                    <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem; flex-wrap: wrap; font-size: 0.72rem;">
-                      <span style="color: var(--text-muted); align-self: center;">Video Presets:</span>
-                      <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="setHeroVideoPreset('assets/hero-bg.mp4')">Local MP4</button>
-                      <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="setHeroVideoPreset('https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4')">Stars Video</button>
-                    </div>
-                  </div>
-                  <div class="form-group" style="margin-top: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                      <label class="form-label" for="settingHeroBlur" style="margin: 0;">Backdrop Blur Intensity</label>
-                      <span id="heroBlurValueBadge" style="font-weight: 700; color: var(--accent-primary); font-size: 0.88rem;">12px</span>
-                    </div>
-                    <input type="range" id="settingHeroBlur" min="0" max="30" step="1" value="12" style="width: 100%; accent-color: var(--accent-primary);">
-                  </div>
-                  <div class="form-group" style="margin-top: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                      <label class="form-label" for="settingHeroOverlay" style="margin: 0;">Overlay Darkness</label>
-                      <span id="heroOverlayValueBadge" style="font-weight: 700; color: var(--accent-primary); font-size: 0.88rem;">55%</span>
-                    </div>
-                    <input type="range" id="settingHeroOverlay" min="10" max="90" step="5" value="55" style="width: 100%; accent-color: var(--accent-primary);">
-                  </div>
+              <!-- Multi-Video Background Pool -->
+              <div class="form-group" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <label class="form-label" style="margin: 0; font-weight: 600;">Background Videos Pool</label>
+                  <span id="heroVideosCountBadge" style="font-size: 0.75rem; color: var(--accent-primary); font-weight: 700;">0 Videos</span>
                 </div>
-              </details>
+                <p style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                  When Video mode is active, one video is played (randomly on visit, or the pinned ★ video). While the video is buffering, a random image is displayed and smoothly fades out once the video begins.
+                </p>
+
+                <!-- Video Chips Grid -->
+                <div id="heroVideosListContainer" class="hero-videos-manage-grid">
+                  <!-- Rendered dynamically via JS -->
+                </div>
+
+                <!-- Add New Video URL or Upload File -->
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                  <input type="url" id="newHeroVideoUrl" class="form-input" placeholder="Paste video URL (https://... or .mp4 / .webm)" style="flex: 1; min-width: 180px;">
+                  <button type="button" class="btn btn-secondary" onclick="addHeroVideoFromInput()" style="white-space: nowrap; padding: 0.5rem 1rem;">
+                    + Add Video URL
+                  </button>
+                  <input type="file" id="heroVideoUploadInput" accept="video/mp4,video/webm" style="display: none;" onchange="handleHeroVideoUpload(event)">
+                  <button type="button" class="btn btn-secondary" onclick="document.getElementById('heroVideoUploadInput').click()" style="white-space: nowrap; padding: 0.5rem 1rem;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.35rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Upload Video</span>
+                  </button>
+                </div>
+                <div id="heroVideoUploadStatus" style="font-size: 0.75rem; color: var(--accent-primary); margin-top: 0.35rem; display: none;"></div>
+
+                <!-- Quick Video Presets -->
+                <div style="display: flex; gap: 0.4rem; margin-top: 0.6rem; flex-wrap: wrap; font-size: 0.72rem;">
+                  <span style="color: var(--text-muted); align-self: center;">Quick Video Presets:</span>
+                  <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="addHeroVideoPreset('assets/hero-bg.mp4')">+ Local Cosmos</button>
+                  <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="addHeroVideoPreset('https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4')">+ Deep Stars</button>
+                  <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="addHeroVideoPreset('https://assets.mixkit.co/videos/preview/mixkit-flying-through-a-starfield-in-space-41539-large.mp4')">+ Starfield Warp</button>
+                  <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="addHeroVideoPreset('https://assets.mixkit.co/videos/preview/mixkit-planet-earth-rotating-in-space-39982-large.mp4')">+ Earth Orbit</button>
+                </div>
+              </div>
+
+              <!-- Blur & Overlay Settings -->
+              <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <label class="form-label" for="settingHeroBlur" style="margin: 0;">Backdrop Blur</label>
+                    <span id="heroBlurValueBadge" style="font-weight: 700; color: var(--accent-primary); font-size: 0.88rem;">12px</span>
+                  </div>
+                  <input type="range" id="settingHeroBlur" min="0" max="30" step="1" value="12" style="width: 100%; accent-color: var(--accent-primary);">
+                </div>
+                <div class="form-group">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <label class="form-label" for="settingHeroOverlay" style="margin: 0;">Overlay Darkness</label>
+                    <span id="heroOverlayValueBadge" style="font-weight: 700; color: var(--accent-primary); font-size: 0.88rem;">55%</span>
+                  </div>
+                  <input type="range" id="settingHeroOverlay" min="10" max="90" step="5" value="55" style="width: 100%; accent-color: var(--accent-primary);">
+                </div>
+              </div>
 
               <!-- Real-time Live Preview of Hero Font & Background Image -->
               <div style="margin-top: 1.5rem;">

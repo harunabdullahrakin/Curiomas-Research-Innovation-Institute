@@ -342,6 +342,15 @@ class CriiApiClient {
         if (!parsed.mediaType) parsed.mediaType = 'both';
         if (!parsed.selectionMode) parsed.selectionMode = 'random';
         if (parsed.fixedImageIndex === undefined) parsed.fixedImageIndex = 0;
+        if (!Array.isArray(parsed.backgroundVideos) || parsed.backgroundVideos.length === 0) {
+          parsed.backgroundVideos = [
+        "assets/hero-bg.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-flying-through-a-starfield-in-space-41539-large.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-planet-earth-rotating-in-space-39982-large.mp4"
+      ];
+        }
+        if (parsed.fixedVideoIndex === undefined) parsed.fixedVideoIndex = 0;
         return parsed;
       }
     } catch (e) {}
@@ -349,6 +358,13 @@ class CriiApiClient {
       mediaType: "both",
       selectionMode: "random",
       fixedImageIndex: 0,
+      fixedVideoIndex: 0,
+      backgroundVideos: [
+        "assets/hero-bg.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-flying-through-a-starfield-in-space-41539-large.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-planet-earth-rotating-in-space-39982-large.mp4"
+      ],
       videoUrl: "assets/hero-bg.mp4",
       blurPx: 12,
       overlayOpacity: 0.55,
@@ -370,7 +386,9 @@ class CriiApiClient {
       mediaType: ['image', 'video', 'both'].includes(settings.mediaType) ? settings.mediaType : 'both',
       selectionMode: ['random', 'fixed'].includes(settings.selectionMode) ? settings.selectionMode : 'random',
       fixedImageIndex: Math.max(0, Number(settings.fixedImageIndex) || 0),
-      videoUrl: settings.videoUrl || "assets/hero-bg.mp4",
+      fixedVideoIndex: Math.max(0, Number(settings.fixedVideoIndex) || 0),
+      backgroundVideos: Array.isArray(settings.backgroundVideos) ? settings.backgroundVideos.filter(u => typeof u === 'string' && u.trim().length > 0) : [],
+      videoUrl: settings.videoUrl || (Array.isArray(settings.backgroundVideos) && settings.backgroundVideos[0]) || "assets/hero-bg.mp4",
       blurPx: Math.max(0, Math.min(40, Number(settings.blurPx) || 0)),
       overlayOpacity: Math.max(0, Math.min(1, Number(settings.overlayOpacity) || 0.55)),
       fontFamily: settings.fontFamily || "Eyekons",

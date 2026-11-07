@@ -1888,3 +1888,114 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .hero-image-chip.is-fixed-active .hero-image-chip-pin {
   color: #f59e0b;
 }
+
+/* Hero Background Images & Videos Pools in Admin Portal */
+.hero-images-manage-grid,
+.hero-videos-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hero-image-chip,
+.hero-video-chip {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+  background: var(--bg-surface);
+  aspect-ratio: 16 / 9;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hero-image-chip:hover,
+.hero-video-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-primary);
+}
+
+.hero-image-chip img,
+.hero-video-chip video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-image-chip-delete,
+.hero-video-chip-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(220, 38, 38, 0.88);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  z-index: 5;
+}
+
+.hero-image-chip-delete:hover,
+.hero-video-chip-delete:hover {
+  background: #dc2626;
+}
+
+.hero-image-chip-pin,
+.hero-video-chip-pin {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  z-index: 5;
+}
+
+.hero-image-chip-pin:hover,
+.hero-video-chip-pin:hover {
+  color: #fbbf24;
+}
+
+.hero-image-chip.is-fixed-active,
+.hero-video-chip.is-fixed-active {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.45);
+}
+
+.hero-image-chip.is-fixed-active .hero-image-chip-pin,
+.hero-video-chip.is-fixed-active .hero-video-chip-pin {
+  color: #f59e0b;
+}
+
+.hero-video-chip-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 4;
+}

@@ -1329,6 +1329,8 @@ window.deleteResearcher = async function(id) {
 // -----------------------------------------------------------------------------
 let activeHeroBackgroundImages = [];
 let activeFixedImageIndex = 0;
+let activeHeroBackgroundVideos = [];
+let activeFixedVideoIndex = 0;
 
 function updateHeroPreview() {
   const fontSelect = document.getElementById('settingHeroFontFamily');
@@ -1338,9 +1340,9 @@ function updateHeroPreview() {
   const overlaySlider = document.getElementById('settingHeroOverlay');
   const blurBadge = document.getElementById('heroBlurValueBadge');
   const overlayBadge = document.getElementById('heroOverlayValueBadge');
-  const previewStage = document.getElementById('heroLivePreviewStage');
-  const previewOverlay = document.getElementById('heroLivePreviewOverlay');
   const previewTitle = document.getElementById('heroLivePreviewTitle');
+  const previewOverlay = document.getElementById('heroLivePreviewOverlay');
+  const previewStage = document.getElementById('heroLivePreviewStage');
 
   const selectedFont = fontSelect ? fontSelect.value : 'Eyekons';
   const imgOpacity = imageOpacitySlider ? Number(imageOpacitySlider.value) / 100 : 0.40;
@@ -1358,7 +1360,7 @@ function updateHeroPreview() {
   }
 
   if (previewOverlay) {
-    previewOverlay.style.background = `rgba(5, 7, 15, ${1 - imgOpacity * 0.5})`;
+    previewOverlay.style.background = `rgba(5, 7, 15, ${overlay / 100})`;
   }
 
   if (previewStage && activeHeroBackgroundImages.length > 0) {
@@ -1388,38 +1390,91 @@ function renderHeroImagesList() {
     const isFixed = idx === activeFixedImageIndex;
     return `
       <div class="hero-image-chip ${isFixed ? 'is-fixed-active' : ''}" title="${escapeHtml(url)}">
-        <img src="${escapeHtml(url)}" alt="Hero BG ${idx + 1}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=400&q=60';">
-        <button type="button" class="hero-image-chip-delete" onclick="removeHeroImage(${idx})" title="Remove image">&times;</button>
-        <button type="button" class="hero-image-chip-pin" onclick="setHeroFixedImage(${idx})" title="${isFixed ? 'Currently active fixed background' : 'Click to set as fixed image'}">★</button>
-        <span class="hero-image-badge-active">${isFixed ? '★ Fixed Active' : '#' + (idx + 1)}</span>
+        <img src="${escapeHtml(url)}" alt="Hero BG ${idx + 1}" loading="lazy" onerror="this.src='assets/curiomas-no-bg.png'">
+        <button type="button" class="hero-image-chip-pin" title="${isFixed ? 'Currently pinned fixed active image' : 'Pin as fixed active image'}" onclick="setHeroFixedImage(${idx})">
+          ${isFixed ? '★' : '☆'}
+        </button>
+        <button type="button" class="hero-image-chip-delete" title="Remove image" onclick="removeHeroImage(${idx})">
+          &times;
+        </button>
       </div>
     `;
   }).join('');
-
-  updateHeroPreview();
 }
 
-function removeHeroImage(idx) {
-  if (idx >= 0 && idx < activeHeroBackgroundImages.length) {
-    activeHeroBackgroundImages.splice(idx, 1);
-    if (activeFixedImageIndex >= activeHeroBackgroundImages.length) {
-      activeFixedImageIndex = Math.max(0, activeHeroBackgroundImages.length - 1);
-    }
-    renderHeroImagesList();
-    if (window.showToast) window.showToast('Image removed from pool', 'info');
+function renderHeroVideosList() {
+  const container = document.getElementById('heroVideosListContainer');
+  const badge = document.getElementById('heroVideosCountBadge');
+  if (badge) {
+    badge.innerText = `${activeHeroBackgroundVideos.length} Video${activeHeroBackgroundVideos.length === 1 ? '' : 's'}`;
   }
-}
-window.removeHeroImage = removeHeroImage;
+  if (!container) return;
 
-function setHeroFixedImage(idx) {
+  if (activeHeroBackgroundVideos.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 1.25rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; border: 1px dashed var(--border-color); border-radius: 6px;">
+        No videos in pool. Please add a video URL or click "Upload Video" below.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = activeHeroBackgroundVideos.map((url, idx) => {
+    const isFixed = idx === activeFixedVideoIndex;
+    return `
+      <div class="hero-video-chip ${isFixed ? 'is-fixed-active' : ''}" title="${escapeHtml(url)}">
+        <video src="${escapeHtml(url)}" muted loop playsinline autoplay onmouseover="this.play()" onmouseout="this.pause()"></video>
+        <button type="button" class="hero-video-chip-pin" title="${isFixed ? 'Currently pinned fixed active video' : 'Pin as fixed active video'}" onclick="setHeroFixedVideo(${idx})">
+          ${isFixed ? '★' : '☆'}
+        </button>
+        <button type="button" class="hero-video-chip-delete" title="Remove video" onclick="removeHeroVideo(${idx})">
+          &times;
+        </button>
+        <div class="hero-video-chip-badge">Video #${idx + 1}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.removeHeroImage = function(idx) {
+  if (activeHeroBackgroundImages.length <= 1) {
+    if (window.showToast) window.showToast('You must keep at least 1 image in the pool.', 'warning');
+    return;
+  }
+  activeHeroBackgroundImages.splice(idx, 1);
+  if (activeFixedImageIndex >= activeHeroBackgroundImages.length) {
+    activeFixedImageIndex = Math.max(0, activeHeroBackgroundImages.length - 1);
+  }
+  renderHeroImagesList();
+  updateHeroPreview();
+};
+
+window.setHeroFixedImage = function(idx) {
   activeFixedImageIndex = idx;
   renderHeroImagesList();
   updateHeroPreview();
-  if (window.showToast) window.showToast(`Image #${idx + 1} set as active fixed background!`, 'info');
-}
-window.setHeroFixedImage = setHeroFixedImage;
+  if (window.showToast) window.showToast(`Image #${idx + 1} pinned as fixed active background!`, 'info');
+};
 
-function addHeroImageFromInput() {
+window.removeHeroVideo = function(idx) {
+  if (activeHeroBackgroundVideos.length <= 1) {
+    if (window.showToast) window.showToast('You must keep at least 1 video in the pool.', 'warning');
+    return;
+  }
+  activeHeroBackgroundVideos.splice(idx, 1);
+  if (activeFixedVideoIndex >= activeHeroBackgroundVideos.length) {
+    activeFixedVideoIndex = Math.max(0, activeHeroBackgroundVideos.length - 1);
+  }
+  renderHeroVideosList();
+};
+
+window.setHeroFixedVideo = function(idx) {
+  activeFixedVideoIndex = idx;
+  renderHeroVideosList();
+  if (window.showToast) window.showToast(`Video #${idx + 1} pinned as fixed active background!`, 'info');
+};
+
+window.addHeroImageFromInput = function() {
   const input = document.getElementById('newHeroImageUrl');
   if (!input) return;
   const url = input.value.trim();
@@ -1434,11 +1489,29 @@ function addHeroImageFromInput() {
   activeHeroBackgroundImages.push(url);
   input.value = '';
   renderHeroImagesList();
+  updateHeroPreview();
   if (window.showToast) window.showToast('Image added to hero background pool!', 'success');
-}
-window.addHeroImageFromInput = addHeroImageFromInput;
+};
 
-async function handleHeroImageUpload(event) {
+window.addHeroVideoFromInput = function() {
+  const input = document.getElementById('newHeroVideoUrl');
+  if (!input) return;
+  const url = input.value.trim();
+  if (!url) {
+    if (window.showToast) window.showToast('Please enter a video URL', 'error');
+    return;
+  }
+  if (activeHeroBackgroundVideos.includes(url)) {
+    if (window.showToast) window.showToast('Video already exists in pool', 'warning');
+    return;
+  }
+  activeHeroBackgroundVideos.push(url);
+  input.value = '';
+  renderHeroVideosList();
+  if (window.showToast) window.showToast('Video added to hero background pool!', 'success');
+};
+
+window.handleHeroImageUpload = async function(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
 
@@ -1451,7 +1524,6 @@ async function handleHeroImageUpload(event) {
 
   let uploadedUrl = null;
 
-  // Try Cloudflare R2 /api/upload
   try {
     const formData = new FormData();
     formData.append('file', file);
@@ -1464,10 +1536,9 @@ async function handleHeroImageUpload(event) {
       if (data.url) uploadedUrl = data.url;
     }
   } catch (e) {
-    console.warn('API upload fallback to local Data URL:', e);
+    console.warn('API upload fallback:', e);
   }
 
-  // Fallback to local Data URL via FileReader
   if (!uploadedUrl) {
     try {
       uploadedUrl = await new Promise((resolve, reject) => {
@@ -1479,7 +1550,7 @@ async function handleHeroImageUpload(event) {
     } catch (err) {
       if (statusEl) {
         statusEl.style.color = '#ef4444';
-        statusEl.innerHTML = `⚠️ Failed to process image file: ${err.message}`;
+        statusEl.innerHTML = `⚠️ Upload failed: ${escapeHtml(err.message)}`;
       }
       return;
     }
@@ -1488,19 +1559,78 @@ async function handleHeroImageUpload(event) {
   if (uploadedUrl) {
     activeHeroBackgroundImages.push(uploadedUrl);
     renderHeroImagesList();
+    updateHeroPreview();
     if (statusEl) {
       statusEl.style.color = '#10b981';
       statusEl.innerHTML = `✓ Image uploaded & added to pool successfully!`;
       setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 4000);
     }
-    if (window.showToast) window.showToast('Hero image uploaded and added to pool!', 'success');
+    if (window.showToast) window.showToast('Image uploaded and added to pool!', 'success');
   }
 
   event.target.value = '';
-}
-window.handleHeroImageUpload = handleHeroImageUpload;
+};
 
-function addHeroImagePreset(url) {
+window.handleHeroVideoUpload = async function(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('heroVideoUploadStatus');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = 'var(--accent-primary)';
+    statusEl.innerHTML = `⏳ Uploading video "${escapeHtml(file.name)}"... Please wait.`;
+  }
+
+  let uploadedUrl = null;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) uploadedUrl = data.url;
+    }
+  } catch (e) {
+    console.warn('Video upload API error:', e);
+  }
+
+  if (!uploadedUrl) {
+    try {
+      uploadedUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    } catch (err) {
+      if (statusEl) {
+        statusEl.style.color = '#ef4444';
+        statusEl.innerHTML = `⚠️ Upload failed: ${escapeHtml(err.message)}`;
+      }
+      return;
+    }
+  }
+
+  if (uploadedUrl) {
+    activeHeroBackgroundVideos.push(uploadedUrl);
+    renderHeroVideosList();
+    if (statusEl) {
+      statusEl.style.color = '#10b981';
+      statusEl.innerHTML = `✓ Video uploaded & added to pool successfully!`;
+      setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 4000);
+    }
+    if (window.showToast) window.showToast('Hero video uploaded and added to pool!', 'success');
+  }
+
+  event.target.value = '';
+};
+
+window.addHeroImagePreset = function(url) {
   if (!url) return;
   if (activeHeroBackgroundImages.includes(url)) {
     if (window.showToast) window.showToast('Preset already added to pool', 'info');
@@ -1508,9 +1638,24 @@ function addHeroImagePreset(url) {
   }
   activeHeroBackgroundImages.push(url);
   renderHeroImagesList();
-  if (window.showToast) window.showToast('Preset added to hero pool!', 'success');
-}
-window.addHeroImagePreset = addHeroImagePreset;
+  updateHeroPreview();
+  if (window.showToast) window.showToast('Preset added to hero images pool!', 'success');
+};
+
+window.addHeroVideoPreset = function(url) {
+  if (!url) return;
+  if (activeHeroBackgroundVideos.includes(url)) {
+    if (window.showToast) window.showToast('Video preset already added to pool', 'info');
+    return;
+  }
+  activeHeroBackgroundVideos.push(url);
+  renderHeroVideosList();
+  if (window.showToast) window.showToast('Video preset added to pool!', 'success');
+};
+
+window.setHeroVideoPreset = function(url) {
+  addHeroVideoPreset(url);
+};
 
 function initHeroAppearanceSettings() {
   if (!window.CRII_API) return;
@@ -1522,20 +1667,17 @@ function initHeroAppearanceSettings() {
   const selectionModeSelect = document.getElementById('settingHeroSelectionMode');
   const imageOpacitySlider = document.getElementById('settingHeroImageOpacity');
   const imageOpacityBadge = document.getElementById('heroImageOpacityValueBadge');
-  const videoInput = document.getElementById('settingHeroVideoUrl');
   const blurSlider = document.getElementById('settingHeroBlur');
   const overlaySlider = document.getElementById('settingHeroOverlay');
   const blurBadge = document.getElementById('heroBlurValueBadge');
   const overlayBadge = document.getElementById('heroOverlayValueBadge');
 
   activeFixedImageIndex = Number(settings.fixedImageIndex) || 0;
+  activeFixedVideoIndex = Number(settings.fixedVideoIndex) || 0;
 
-  // Populate font
   if (fontSelect && settings.fontFamily) {
     fontSelect.value = settings.fontFamily;
   }
-
-  // Populate media type & selection mode
   if (mediaTypeSelect && settings.mediaType) {
     mediaTypeSelect.value = settings.mediaType;
   }
@@ -1543,8 +1685,7 @@ function initHeroAppearanceSettings() {
     selectionModeSelect.value = settings.selectionMode;
   }
 
-  // Populate background images
-  activeHeroBackgroundImages = Array.isArray(settings.backgroundImages) && settings.backgroundImages.length > 0
+  activeHeroBackgroundImages = (Array.isArray(settings.backgroundImages) && settings.backgroundImages.length > 0)
     ? [...settings.backgroundImages]
     : [
         "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85",
@@ -1553,15 +1694,21 @@ function initHeroAppearanceSettings() {
         "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85"
       ];
 
-  // Populate image opacity
+  activeHeroBackgroundVideos = (Array.isArray(settings.backgroundVideos) && settings.backgroundVideos.length > 0)
+    ? [...settings.backgroundVideos]
+    : [
+        "assets/hero-bg.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-flying-through-a-starfield-in-space-41539-large.mp4",
+        "https://assets.mixkit.co/videos/preview/mixkit-planet-earth-rotating-in-space-39982-large.mp4"
+      ];
+
   if (imageOpacitySlider) {
     const op = settings.imageOpacity !== undefined ? Math.round(settings.imageOpacity * 100) : 40;
     imageOpacitySlider.value = op;
     if (imageOpacityBadge) imageOpacityBadge.innerText = `${op}%`;
   }
 
-  // Video and blur fields
-  if (videoInput) videoInput.value = settings.videoUrl || "assets/hero-bg.mp4";
   if (blurSlider) blurSlider.value = settings.blurPx !== undefined ? settings.blurPx : 12;
   if (overlaySlider) overlaySlider.value = Math.round((settings.overlayOpacity !== undefined ? settings.overlayOpacity : 0.55) * 100);
 
@@ -1573,6 +1720,7 @@ function initHeroAppearanceSettings() {
   if (overlaySlider) overlaySlider.addEventListener('input', updateHeroPreview);
 
   renderHeroImagesList();
+  renderHeroVideosList();
   updateHeroPreview();
 
   const heroForm = document.getElementById('heroAppearanceForm');
@@ -1583,7 +1731,6 @@ function initHeroAppearanceSettings() {
       const selectionMode = selectionModeSelect ? selectionModeSelect.value : 'random';
       const fontFamily = fontSelect ? fontSelect.value : 'Eyekons';
       const imageOpacity = imageOpacitySlider ? Number(imageOpacitySlider.value) / 100 : 0.40;
-      const videoUrl = videoInput ? videoInput.value.trim() : "assets/hero-bg.mp4";
       const blurPx = blurSlider ? Number(blurSlider.value) : 12;
       const overlayOpacity = overlaySlider ? Number(overlaySlider.value) / 100 : 0.55;
 
@@ -1591,28 +1738,21 @@ function initHeroAppearanceSettings() {
         mediaType,
         selectionMode,
         fixedImageIndex: activeFixedImageIndex,
+        fixedVideoIndex: activeFixedVideoIndex,
         fontFamily,
         backgroundImages: [...activeHeroBackgroundImages],
+        backgroundVideos: [...activeHeroBackgroundVideos],
+        videoUrl: activeHeroBackgroundVideos[0] || "assets/hero-bg.mp4",
         imageOpacity,
-        videoUrl,
         blurPx,
         overlayOpacity
       });
 
-      window.showToast('Hero section media & typography settings saved!', 'success');
+      if (window.showToast) window.showToast('Hero section media pool & typography saved!', 'success');
     });
   }
 }
 
-
-window.setHeroVideoPreset = function(url) {
-  const videoInput = document.getElementById('settingHeroVideoUrl');
-  if (videoInput) {
-    videoInput.value = url;
-  }
-};
-
-// -----------------------------------------------------------------------------
 // 4. ADMISSIONS QUEUE REVIEW
 // -----------------------------------------------------------------------------
 function renderApplicationsTable() {

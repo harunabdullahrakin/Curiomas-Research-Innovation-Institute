@@ -48,76 +48,176 @@ function initHeroCustomization() {
     'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=85'
   ];
 
+  const defaultVideos = [
+    'assets/hero-bg.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-flying-through-a-starfield-in-space-41539-large.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-planet-earth-rotating-in-space-39982-large.mp4'
+  ];
+
   const imagePool = (Array.isArray(settings.backgroundImages) && settings.backgroundImages.length > 0)
     ? settings.backgroundImages
     : defaultImages;
 
-  // 1. Determine media active state
-  let showVideo = false;
-  let showImage = false;
+  const videoPool = (Array.isArray(settings.backgroundVideos) && settings.backgroundVideos.length > 0)
+    ? settings.backgroundVideos
+    : (settings.videoUrl ? [settings.videoUrl, ...defaultVideos.slice(1)] : defaultVideos);
 
-  if (mediaType === 'video') {
-    showVideo = true;
-    showImage = false;
-  } else if (mediaType === 'image') {
-    showVideo = false;
-    showImage = true;
-  } else {
-    // mediaType === 'both'
-    if (selectionMode === 'random') {
-      // 50% chance video, 50% chance image on load
-      const pickVideo = Math.random() < 0.5;
-      showVideo = pickVideo;
-      showImage = !pickVideo;
-    } else {
-      // fixed mode: play video with image as backdrop/fallback
-      showVideo = true;
-      showImage = true;
-    }
-  }
-
-  // 2. Select image (random or fixed)
+  // 1. Pick Image (random or fixed)
   let pickedImage = imagePool[0];
   if (selectionMode === 'random') {
     pickedImage = imagePool[Math.floor(Math.random() * imagePool.length)];
   } else {
-    const fixedIdx = Number(settings.fixedImageIndex) || 0;
-    pickedImage = imagePool[fixedIdx] || imagePool[0];
+    const fixedImgIdx = Math.max(0, Math.min(Number(settings.fixedImageIndex) || 0, imagePool.length - 1));
+    pickedImage = imagePool[fixedImgIdx] || imagePool[0];
   }
 
-  // Apply Background Image Layer
+  // 2. Pick Video (random or fixed)
+  let pickedVideo = videoPool[0];
+  if (selectionMode === 'random') {
+    pickedVideo = videoPool[Math.floor(Math.random() * videoPool.length)];
+  } else {
+    const fixedVidIdx = Math.max(0, Math.min(Number(settings.fixedVideoIndex) || 0, videoPool.length - 1));
+    pickedVideo = videoPool[fixedVidIdx] || videoPool[0];
+  }
+
+  const desiredImageOpacity = settings.imageOpacity !== undefined ? settings.imageOpacity : 0.40;
+
+  // 3. ALWAYS prepare the background image layer as immediate placeholder
   if (bgLayer) {
-    if (showImage || showVideo) {
-      const imgLoader = new Image();
-      imgLoader.onload = () => {
-        bgLayer.style.backgroundImage = `url('${pickedImage}')`;
-        bgLayer.style.display = 'block';
-        const imgOpacity = settings.imageOpacity !== undefined ? settings.imageOpacity : (showVideo ? 0.25 : 0.40);
-        bgLayer.style.opacity = showImage ? imgOpacity : '0.20';
-      };
-      imgLoader.src = pickedImage;
-    } else {
-      bgLayer.style.display = 'none';
+    bgLayer.style.backgroundImage = `url('${pickedImage}')`;
+    bgLayer.style.backgroundSize = 'cover';
+    bgLayer.style.backgroundPosition = 'center';
+    bgLayer.style.transition = 'opacity 0.8s ease';
+  }
+
+  // CASE A: IMAGE ONLY
+  if (mediaType === 'image') {
+    if (video) {
+      video.pause();
+      video.style.display = 'none';
+      video.style.opacity = '0';
+    }
+    if (bgLayer) {
+      bgLayer.style.display = 'block';
+      bgLayer.style.opacity = String(desiredImageOpacity);
     }
   }
 
-  // Apply Video Layer
-  if (video) {
-    if (showVideo && settings.videoUrl) {
+  // CASE B: VIDEO ONLY
+  else if (mediaType === 'video') {
+    // Show random image immediately while video buffers/loads
+    if (bgLayer) {
+      bgLayer.style.display = 'block';
+      bgLayer.style.opacity = String(desiredImageOpacity);
+    }
+
+    if (video) {
       video.style.display = 'block';
-      const currentSrc = video.querySelector('source')?.getAttribute('src');
-      if (currentSrc !== settings.videoUrl) {
-        video.innerHTML = `<source src="${settings.videoUrl}" type="video/mp4">`;
+      video.style.opacity = '0';
+      video.style.transition = 'opacity 0.8s ease';
+
+      const currentSrc = video.querySelector('source')?.getAttribute('src') || video.src;
+      if (currentSrc !== pickedVideo) {
+        video.innerHTML = `<source src="${pickedVideo}" type="video/mp4">`;
         video.load();
       }
-      video.play().catch(() => {});
-    } else {
-      video.style.display = 'none';
-      try { video.pause(); } catch(e){}
+
+      // Smooth transition: Once video begins playback, fade out the image layer completely!
+      let hasFadedImage = false;
+      const onVideoPlaying = () => {
+        if (hasFadedImage) return;
+        hasFadedImage = true;
+        video.style.opacity = '0.70';
+        if (bgLayer) {
+          bgLayer.style.opacity = '0';
+          setTimeout(() => {
+            if (bgLayer.style.opacity === '0') {
+              bgLayer.style.display = 'none';
+            }
+          }, 850);
+        }
+      };
+
+      video.onplaying = onVideoPlaying;
+      video.addEventListener('playing', onVideoPlaying, { once: true });
+
+      // Fallback: If video errors, keep image layer displayed so screen is never blank
+      video.onerror = () => {
+        if (bgLayer) {
+          bgLayer.style.display = 'block';
+          bgLayer.style.opacity = String(desiredImageOpacity);
+        }
+        video.style.display = 'none';
+      };
+
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay restricted: retain image placeholder
+          if (bgLayer) {
+            bgLayer.style.display = 'block';
+            bgLayer.style.opacity = String(desiredImageOpacity);
+          }
+        });
+      }
     }
   }
 
-  // 3. Dynamic Hero Title Font Family
+  // CASE C: BOTH (Mixed Video + Image)
+  else {
+    if (selectionMode === 'random') {
+      const pickVideo = Math.random() < 0.5;
+      if (pickVideo && video) {
+        if (bgLayer) {
+          bgLayer.style.display = 'block';
+          bgLayer.style.opacity = String(desiredImageOpacity);
+        }
+        video.style.display = 'block';
+        video.style.opacity = '0';
+        video.style.transition = 'opacity 0.8s ease';
+        const currentSrc = video.querySelector('source')?.getAttribute('src') || video.src;
+        if (currentSrc !== pickedVideo) {
+          video.innerHTML = `<source src="${pickedVideo}" type="video/mp4">`;
+          video.load();
+        }
+        video.onplaying = () => {
+          video.style.opacity = '0.70';
+          if (bgLayer) {
+            bgLayer.style.opacity = '0';
+            setTimeout(() => { if (bgLayer.style.opacity === '0') bgLayer.style.display = 'none'; }, 850);
+          }
+        };
+        video.play().catch(() => {
+          if (bgLayer) { bgLayer.style.display = 'block'; bgLayer.style.opacity = String(desiredImageOpacity); }
+        });
+      } else {
+        if (video) { video.pause(); video.style.display = 'none'; }
+        if (bgLayer) {
+          bgLayer.style.display = 'block';
+          bgLayer.style.opacity = String(desiredImageOpacity);
+        }
+      }
+    } else {
+      // Fixed mode: video plays over image backdrop
+      if (bgLayer) {
+        bgLayer.style.display = 'block';
+        bgLayer.style.opacity = '0.20';
+      }
+      if (video) {
+        video.style.display = 'block';
+        video.style.opacity = '0.65';
+        const currentSrc = video.querySelector('source')?.getAttribute('src') || video.src;
+        if (currentSrc !== pickedVideo) {
+          video.innerHTML = `<source src="${pickedVideo}" type="video/mp4">`;
+          video.load();
+        }
+        video.play().catch(() => {});
+      }
+    }
+  }
+
+  // 4. Dynamic Hero Title Font Family
   const heroTitle = document.querySelector('.mockup-hero-title');
   if (heroTitle && settings.fontFamily) {
     const fontMap = {
@@ -127,23 +227,18 @@ function initHeroCustomization() {
       'Space Grotesk': "'Space Grotesk', -apple-system, sans-serif",
       'Syne': "'Syne', -apple-system, sans-serif",
       'Outfit': "'Outfit', -apple-system, sans-serif",
-      'System Sans': "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      'system-ui': "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
     };
     const resolvedFont = fontMap[settings.fontFamily] || settings.fontFamily;
     heroTitle.style.setProperty('font-family', resolvedFont, 'important');
   }
 
   const blurPx = settings.blurPx !== undefined ? settings.blurPx : 12;
-  const opacity = settings.overlayOpacity !== undefined ? settings.overlayOpacity : 0.55;
+  const overlayOpacity = settings.overlayOpacity !== undefined ? settings.overlayOpacity : 0.55;
 
   document.documentElement.style.setProperty('--hero-blur', `${blurPx}px`);
-  document.documentElement.style.setProperty('--hero-overlay-bg', `rgba(10, 15, 30, ${opacity})`);
+  document.documentElement.style.setProperty('--hero-overlay-bg', `rgba(10, 15, 30, ${overlayOpacity})`);
 }
-
-// =============================================================================
-// SCROLL ANIMATIONS ENGINE (IntersectionObserver with smooth reveals & stagger)
-// =============================================================================
-let criiScrollObserver = null;
 
 function initScrollRevealEffects() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
