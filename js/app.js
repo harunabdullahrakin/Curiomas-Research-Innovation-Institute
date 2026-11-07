@@ -28,37 +28,96 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearchOverlay();
 });
 
-// Hero Appearance & Dynamic Multi-Image / Font Customization
+// Hero Appearance & Dynamic Multi-Image / Video / Font Customization
 function initHeroCustomization() {
   if (!window.CRII_API) return;
   const settings = window.CRII_API.getHeroSettings();
   if (!settings) return;
 
-  // 1. Dynamic Random Background Image Selection on Load
+  const mediaType = settings.mediaType || 'both'; // 'image', 'video', 'both'
+  const selectionMode = settings.selectionMode || 'random'; // 'random', 'fixed'
+
   const bgLayer = document.getElementById('heroBgImageLayer');
-  if (bgLayer) {
-    const defaultImages = [
-      'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85',
-      'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85',
-      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1920&q=85',
-      'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85',
-      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=85'
-    ];
+  const video = document.getElementById('heroVideo');
 
-    const imagePool = (Array.isArray(settings.backgroundImages) && settings.backgroundImages.length > 0)
-      ? settings.backgroundImages
-      : defaultImages;
+  const defaultImages = [
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=85',
+    'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=85',
+    'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=1920&q=85',
+    'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=85',
+    'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=85'
+  ];
 
-    const pickedImage = imagePool[Math.floor(Math.random() * imagePool.length)];
-    const imgLoader = new Image();
-    imgLoader.onload = () => {
-      bgLayer.style.backgroundImage = `url('${pickedImage}')`;
-      bgLayer.style.opacity = settings.imageOpacity !== undefined ? settings.imageOpacity : '0.40';
-    };
-    imgLoader.src = pickedImage;
+  const imagePool = (Array.isArray(settings.backgroundImages) && settings.backgroundImages.length > 0)
+    ? settings.backgroundImages
+    : defaultImages;
+
+  // 1. Determine media active state
+  let showVideo = false;
+  let showImage = false;
+
+  if (mediaType === 'video') {
+    showVideo = true;
+    showImage = false;
+  } else if (mediaType === 'image') {
+    showVideo = false;
+    showImage = true;
+  } else {
+    // mediaType === 'both'
+    if (selectionMode === 'random') {
+      // 50% chance video, 50% chance image on load
+      const pickVideo = Math.random() < 0.5;
+      showVideo = pickVideo;
+      showImage = !pickVideo;
+    } else {
+      // fixed mode: play video with image as backdrop/fallback
+      showVideo = true;
+      showImage = true;
+    }
   }
 
-  // 2. Dynamic Hero Title Font Family
+  // 2. Select image (random or fixed)
+  let pickedImage = imagePool[0];
+  if (selectionMode === 'random') {
+    pickedImage = imagePool[Math.floor(Math.random() * imagePool.length)];
+  } else {
+    const fixedIdx = Number(settings.fixedImageIndex) || 0;
+    pickedImage = imagePool[fixedIdx] || imagePool[0];
+  }
+
+  // Apply Background Image Layer
+  if (bgLayer) {
+    if (showImage || showVideo) {
+      const imgLoader = new Image();
+      imgLoader.onload = () => {
+        bgLayer.style.backgroundImage = `url('${pickedImage}')`;
+        bgLayer.style.display = 'block';
+        const imgOpacity = settings.imageOpacity !== undefined ? settings.imageOpacity : (showVideo ? 0.25 : 0.40);
+        bgLayer.style.opacity = showImage ? imgOpacity : '0.20';
+      };
+      imgLoader.src = pickedImage;
+    } else {
+      bgLayer.style.display = 'none';
+    }
+  }
+
+  // Apply Video Layer
+  if (video) {
+    if (showVideo && settings.videoUrl) {
+      video.style.display = 'block';
+      const currentSrc = video.querySelector('source')?.getAttribute('src');
+      if (currentSrc !== settings.videoUrl) {
+        video.innerHTML = `<source src="${settings.videoUrl}" type="video/mp4">`;
+        video.load();
+      }
+      video.play().catch(() => {});
+    } else {
+      video.style.display = 'none';
+      try { video.pause(); } catch(e){}
+    }
+  }
+
+  // 3. Dynamic Hero Title Font Family
   const heroTitle = document.querySelector('.mockup-hero-title');
   if (heroTitle && settings.fontFamily) {
     const fontMap = {
@@ -72,16 +131,6 @@ function initHeroCustomization() {
     };
     const resolvedFont = fontMap[settings.fontFamily] || settings.fontFamily;
     heroTitle.style.setProperty('font-family', resolvedFont, 'important');
-  }
-
-  // 3. Optional Hero Video fallback
-  const video = document.getElementById('heroVideo');
-  if (video && settings.videoUrl) {
-    const currentSrc = video.querySelector('source')?.getAttribute('src');
-    if (currentSrc !== settings.videoUrl) {
-      video.innerHTML = `<source src="${settings.videoUrl}" type="video/mp4">`;
-      video.load();
-    }
   }
 
   const blurPx = settings.blurPx !== undefined ? settings.blurPx : 12;

@@ -1002,6 +1002,23 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+
+.mockup-hero-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.70;
+  transition: opacity 0.8s ease-in-out;
+}
+
 .mockup-hero-bg-layer {
   position: absolute;
   inset: 0;

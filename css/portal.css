@@ -1862,3 +1862,29 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   pointer-events: none;
 }
 
+
+.hero-image-chip.is-fixed-active {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.45);
+}
+.hero-image-chip-pin {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+.hero-image-chip.is-fixed-active .hero-image-chip-pin {
+  color: #f59e0b;
+}

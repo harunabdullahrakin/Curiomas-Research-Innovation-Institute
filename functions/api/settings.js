@@ -5,6 +5,9 @@
 
 const DEFAULT_SETTINGS = {
   hero: {
+    mediaType: "both",
+    selectionMode: "random",
+    fixedImageIndex: 0,
     videoUrl: "assets/hero-bg.mp4",
     blurPx: 12,
     overlayOpacity: 0.55,

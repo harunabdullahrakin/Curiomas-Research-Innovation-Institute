@@ -1002,6 +1002,32 @@
             </p>
 
             <form id="heroAppearanceForm">
+
+              <!-- Hero Media Display & Selection Options -->
+              <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                  <label class="form-label" for="settingHeroMediaType" style="font-weight: 600;">Media Display Type</label>
+                  <select id="settingHeroMediaType" class="form-input">
+                    <option value="both">Video + Image (Mixed)</option>
+                    <option value="image">Image Only</option>
+                    <option value="video">Video Only</option>
+                  </select>
+                  <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+                    Display background images, ambient video, or both.
+                  </span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="settingHeroSelectionMode" style="font-weight: 600;">Selection Behavior</label>
+                  <select id="settingHeroSelectionMode" class="form-input">
+                    <option value="random">Random on Load (Shuffles on each reload)</option>
+                    <option value="fixed">Fixed (Always show selected / pinned media)</option>
+                  </select>
+                  <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+                    Random rotates on visit; Fixed shows the chosen pinned one.
+                  </span>
+                </div>
+              </div>
+
               <!-- Font Selection -->
               <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label" for="settingHeroFontFamily">Hero Title Font Family</label>
@@ -1034,13 +1060,21 @@
                   <!-- Rendered dynamically via JS -->
                 </div>
 
-                <!-- Add New Image URL -->
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                  <input type="url" id="newHeroImageUrl" class="form-input" placeholder="Paste image URL (https://...)" style="flex-grow: 1;">
+                
+                <!-- Add New Image URL or Upload File -->
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                  <input type="url" id="newHeroImageUrl" class="form-input" placeholder="Paste image URL (https://...)" style="flex: 1; min-width: 180px;">
                   <button type="button" class="btn btn-secondary" onclick="addHeroImageFromInput()" style="white-space: nowrap; padding: 0.5rem 1rem;">
-                    + Add Image
+                    + Add URL
+                  </button>
+                  <input type="file" id="heroImageUploadInput" accept="image/*" style="display: none;" onchange="handleHeroImageUpload(event)">
+                  <button type="button" class="btn btn-secondary" onclick="document.getElementById('heroImageUploadInput').click()" style="white-space: nowrap; padding: 0.5rem 1rem;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.35rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Upload Image</span>
                   </button>
                 </div>
+                <div id="heroImageUploadStatus" style="font-size: 0.75rem; color: var(--accent-primary); margin-top: 0.35rem; display: none;"></div>
+
 
                 <!-- Quick Presets -->
                 <div style="display: flex; gap: 0.4rem; margin-top: 0.6rem; flex-wrap: wrap; font-size: 0.72rem;">

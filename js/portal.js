@@ -1328,25 +1328,219 @@ window.deleteResearcher = async function(id) {
 // 3. CONFIGURABLE HERO VIDEO, MULTI-IMAGE & TYPOGRAPHY SETTINGS
 // -----------------------------------------------------------------------------
 let activeHeroBackgroundImages = [];
+let activeFixedImageIndex = 0;
 
-function initHeroAppearanceSettings() {
-  const settings = window.CRII_API.getHeroSettings();
+function updateHeroPreview() {
   const fontSelect = document.getElementById('settingHeroFontFamily');
   const imageOpacitySlider = document.getElementById('settingHeroImageOpacity');
   const imageOpacityBadge = document.getElementById('heroImageOpacityValueBadge');
+  const blurSlider = document.getElementById('settingHeroBlur');
+  const overlaySlider = document.getElementById('settingHeroOverlay');
+  const blurBadge = document.getElementById('heroBlurValueBadge');
+  const overlayBadge = document.getElementById('heroOverlayValueBadge');
   const previewStage = document.getElementById('heroLivePreviewStage');
   const previewOverlay = document.getElementById('heroLivePreviewOverlay');
   const previewTitle = document.getElementById('heroLivePreviewTitle');
 
+  const selectedFont = fontSelect ? fontSelect.value : 'Eyekons';
+  const imgOpacity = imageOpacitySlider ? Number(imageOpacitySlider.value) / 100 : 0.40;
+  const blur = blurSlider ? blurSlider.value : 12;
+  const overlay = overlaySlider ? overlaySlider.value : 55;
+
+  if (imageOpacityBadge && imageOpacitySlider) {
+    imageOpacityBadge.innerText = `${imageOpacitySlider.value}%`;
+  }
+  if (blurBadge) blurBadge.innerText = `${blur}px`;
+  if (overlayBadge) overlayBadge.innerText = `${overlay}%`;
+
+  if (previewTitle) {
+    previewTitle.style.fontFamily = `"${selectedFont}", sans-serif`;
+  }
+
+  if (previewOverlay) {
+    previewOverlay.style.background = `rgba(5, 7, 15, ${1 - imgOpacity * 0.5})`;
+  }
+
+  if (previewStage && activeHeroBackgroundImages.length > 0) {
+    const imgToShow = activeHeroBackgroundImages[activeFixedImageIndex] || activeHeroBackgroundImages[0];
+    previewStage.style.backgroundImage = `url('${imgToShow}')`;
+  }
+}
+
+function renderHeroImagesList() {
+  const container = document.getElementById('heroImagesListContainer');
+  const badge = document.getElementById('heroImagesCountBadge');
+  if (badge) {
+    badge.innerText = `${activeHeroBackgroundImages.length} Image${activeHeroBackgroundImages.length === 1 ? '' : 's'}`;
+  }
+  if (!container) return;
+
+  if (activeHeroBackgroundImages.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 1.25rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; border: 1px dashed var(--border-color); border-radius: 6px;">
+        No images in background pool. Please add an image URL or click "Upload Image" below.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = activeHeroBackgroundImages.map((url, idx) => {
+    const isFixed = idx === activeFixedImageIndex;
+    return `
+      <div class="hero-image-chip ${isFixed ? 'is-fixed-active' : ''}" title="${escapeHtml(url)}">
+        <img src="${escapeHtml(url)}" alt="Hero BG ${idx + 1}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=400&q=60';">
+        <button type="button" class="hero-image-chip-delete" onclick="removeHeroImage(${idx})" title="Remove image">&times;</button>
+        <button type="button" class="hero-image-chip-pin" onclick="setHeroFixedImage(${idx})" title="${isFixed ? 'Currently active fixed background' : 'Click to set as fixed image'}">★</button>
+        <span class="hero-image-badge-active">${isFixed ? '★ Fixed Active' : '#' + (idx + 1)}</span>
+      </div>
+    `;
+  }).join('');
+
+  updateHeroPreview();
+}
+
+function removeHeroImage(idx) {
+  if (idx >= 0 && idx < activeHeroBackgroundImages.length) {
+    activeHeroBackgroundImages.splice(idx, 1);
+    if (activeFixedImageIndex >= activeHeroBackgroundImages.length) {
+      activeFixedImageIndex = Math.max(0, activeHeroBackgroundImages.length - 1);
+    }
+    renderHeroImagesList();
+    if (window.showToast) window.showToast('Image removed from pool', 'info');
+  }
+}
+window.removeHeroImage = removeHeroImage;
+
+function setHeroFixedImage(idx) {
+  activeFixedImageIndex = idx;
+  renderHeroImagesList();
+  updateHeroPreview();
+  if (window.showToast) window.showToast(`Image #${idx + 1} set as active fixed background!`, 'info');
+}
+window.setHeroFixedImage = setHeroFixedImage;
+
+function addHeroImageFromInput() {
+  const input = document.getElementById('newHeroImageUrl');
+  if (!input) return;
+  const url = input.value.trim();
+  if (!url) {
+    if (window.showToast) window.showToast('Please enter an image URL', 'error');
+    return;
+  }
+  if (activeHeroBackgroundImages.includes(url)) {
+    if (window.showToast) window.showToast('Image already exists in pool', 'warning');
+    return;
+  }
+  activeHeroBackgroundImages.push(url);
+  input.value = '';
+  renderHeroImagesList();
+  if (window.showToast) window.showToast('Image added to hero background pool!', 'success');
+}
+window.addHeroImageFromInput = addHeroImageFromInput;
+
+async function handleHeroImageUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('heroImageUploadStatus');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = 'var(--accent-primary)';
+    statusEl.innerHTML = `⏳ Uploading "${escapeHtml(file.name)}"... Please wait.`;
+  }
+
+  let uploadedUrl = null;
+
+  // Try Cloudflare R2 /api/upload
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) uploadedUrl = data.url;
+    }
+  } catch (e) {
+    console.warn('API upload fallback to local Data URL:', e);
+  }
+
+  // Fallback to local Data URL via FileReader
+  if (!uploadedUrl) {
+    try {
+      uploadedUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    } catch (err) {
+      if (statusEl) {
+        statusEl.style.color = '#ef4444';
+        statusEl.innerHTML = `⚠️ Failed to process image file: ${err.message}`;
+      }
+      return;
+    }
+  }
+
+  if (uploadedUrl) {
+    activeHeroBackgroundImages.push(uploadedUrl);
+    renderHeroImagesList();
+    if (statusEl) {
+      statusEl.style.color = '#10b981';
+      statusEl.innerHTML = `✓ Image uploaded & added to pool successfully!`;
+      setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 4000);
+    }
+    if (window.showToast) window.showToast('Hero image uploaded and added to pool!', 'success');
+  }
+
+  event.target.value = '';
+}
+window.handleHeroImageUpload = handleHeroImageUpload;
+
+function addHeroImagePreset(url) {
+  if (!url) return;
+  if (activeHeroBackgroundImages.includes(url)) {
+    if (window.showToast) window.showToast('Preset already added to pool', 'info');
+    return;
+  }
+  activeHeroBackgroundImages.push(url);
+  renderHeroImagesList();
+  if (window.showToast) window.showToast('Preset added to hero pool!', 'success');
+}
+window.addHeroImagePreset = addHeroImagePreset;
+
+function initHeroAppearanceSettings() {
+  if (!window.CRII_API) return;
+  const settings = window.CRII_API.getHeroSettings();
+  if (!settings) return;
+
+  const fontSelect = document.getElementById('settingHeroFontFamily');
+  const mediaTypeSelect = document.getElementById('settingHeroMediaType');
+  const selectionModeSelect = document.getElementById('settingHeroSelectionMode');
+  const imageOpacitySlider = document.getElementById('settingHeroImageOpacity');
+  const imageOpacityBadge = document.getElementById('heroImageOpacityValueBadge');
   const videoInput = document.getElementById('settingHeroVideoUrl');
   const blurSlider = document.getElementById('settingHeroBlur');
   const overlaySlider = document.getElementById('settingHeroOverlay');
   const blurBadge = document.getElementById('heroBlurValueBadge');
   const overlayBadge = document.getElementById('heroOverlayValueBadge');
 
+  activeFixedImageIndex = Number(settings.fixedImageIndex) || 0;
+
   // Populate font
   if (fontSelect && settings.fontFamily) {
     fontSelect.value = settings.fontFamily;
+  }
+
+  // Populate media type & selection mode
+  if (mediaTypeSelect && settings.mediaType) {
+    mediaTypeSelect.value = settings.mediaType;
+  }
+  if (selectionModeSelect && settings.selectionMode) {
+    selectionModeSelect.value = settings.selectionMode;
   }
 
   // Populate background images
@@ -1366,103 +1560,14 @@ function initHeroAppearanceSettings() {
     if (imageOpacityBadge) imageOpacityBadge.innerText = `${op}%`;
   }
 
-  // Video and legacy blur fields
+  // Video and blur fields
   if (videoInput) videoInput.value = settings.videoUrl || "assets/hero-bg.mp4";
   if (blurSlider) blurSlider.value = settings.blurPx !== undefined ? settings.blurPx : 12;
   if (overlaySlider) overlaySlider.value = Math.round((settings.overlayOpacity !== undefined ? settings.overlayOpacity : 0.55) * 100);
 
-  function updateHeroPreview() {
-    const selectedFont = fontSelect ? fontSelect.value : 'Eyekons';
-    const imgOpacity = imageOpacitySlider ? Number(imageOpacitySlider.value) / 100 : 0.40;
-    const blur = blurSlider ? blurSlider.value : 12;
-    const overlay = overlaySlider ? overlaySlider.value : 55;
-
-    if (imageOpacityBadge && imageOpacitySlider) {
-      imageOpacityBadge.innerText = `${imageOpacitySlider.value}%`;
-    }
-    if (blurBadge) blurBadge.innerText = `${blur}px`;
-    if (overlayBadge) overlayBadge.innerText = `${overlay}%`;
-
-    if (previewTitle) {
-      previewTitle.style.fontFamily = `"${selectedFont}", sans-serif`;
-    }
-
-    if (previewOverlay) {
-      // Reflect background darkness & glass blur
-      previewOverlay.style.background = `rgba(5, 7, 15, ${1 - imgOpacity * 0.5})`;
-    }
-
-    if (previewStage && activeHeroBackgroundImages.length > 0) {
-      previewStage.style.backgroundImage = `url('${activeHeroBackgroundImages[0]}')`;
-    }
-  }
-
-  function renderHeroImagesList() {
-    const container = document.getElementById('heroImagesListContainer');
-    const badge = document.getElementById('heroImagesCountBadge');
-    if (badge) {
-      badge.innerText = `${activeHeroBackgroundImages.length} Image${activeHeroBackgroundImages.length === 1 ? '' : 's'}`;
-    }
-    if (!container) return;
-
-    if (activeHeroBackgroundImages.length === 0) {
-      container.innerHTML = `
-        <div style="grid-column: 1 / -1; padding: 1.25rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; border: 1px dashed var(--border-color); border-radius: 6px;">
-          No images in background pool. Please add an image or preset below.
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = activeHeroBackgroundImages.map((url, idx) => `
-      <div class="hero-image-chip" title="${escapeHtml(url)}">
-        <img src="${escapeHtml(url)}" alt="Hero BG ${idx + 1}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=400&q=60';">
-        <button type="button" class="hero-image-chip-delete" onclick="removeHeroImage(${idx})" title="Remove image">&times;</button>
-        <span class="hero-image-badge-active">#${idx + 1}</span>
-      </div>
-    `).join('');
-
-    updateHeroPreview();
-  }
-
-  window.removeHeroImage = function(idx) {
-    if (idx >= 0 && idx < activeHeroBackgroundImages.length) {
-      activeHeroBackgroundImages.splice(idx, 1);
-      renderHeroImagesList();
-      window.showToast('Image removed from pool', 'info');
-    }
-  };
-
-  window.addHeroImageFromInput = function() {
-    const input = document.getElementById('newHeroImageUrl');
-    if (!input) return;
-    const url = input.value.trim();
-    if (!url) {
-      window.showToast('Please enter an image URL', 'error');
-      return;
-    }
-    if (activeHeroBackgroundImages.includes(url)) {
-      window.showToast('Image already exists in pool', 'warning');
-      return;
-    }
-    activeHeroBackgroundImages.push(url);
-    input.value = '';
-    renderHeroImagesList();
-    window.showToast('Image added to hero background pool!', 'success');
-  };
-
-  window.addHeroImagePreset = function(url) {
-    if (!url) return;
-    if (activeHeroBackgroundImages.includes(url)) {
-      window.showToast('Preset already added to pool', 'info');
-      return;
-    }
-    activeHeroBackgroundImages.push(url);
-    renderHeroImagesList();
-    window.showToast('Preset added to hero pool!', 'success');
-  };
-
   if (fontSelect) fontSelect.addEventListener('change', updateHeroPreview);
+  if (mediaTypeSelect) mediaTypeSelect.addEventListener('change', updateHeroPreview);
+  if (selectionModeSelect) selectionModeSelect.addEventListener('change', updateHeroPreview);
   if (imageOpacitySlider) imageOpacitySlider.addEventListener('input', updateHeroPreview);
   if (blurSlider) blurSlider.addEventListener('input', updateHeroPreview);
   if (overlaySlider) overlaySlider.addEventListener('input', updateHeroPreview);
@@ -1474,6 +1579,8 @@ function initHeroAppearanceSettings() {
   if (heroForm) {
     heroForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const mediaType = mediaTypeSelect ? mediaTypeSelect.value : 'both';
+      const selectionMode = selectionModeSelect ? selectionModeSelect.value : 'random';
       const fontFamily = fontSelect ? fontSelect.value : 'Eyekons';
       const imageOpacity = imageOpacitySlider ? Number(imageOpacitySlider.value) / 100 : 0.40;
       const videoUrl = videoInput ? videoInput.value.trim() : "assets/hero-bg.mp4";
@@ -1481,6 +1588,9 @@ function initHeroAppearanceSettings() {
       const overlayOpacity = overlaySlider ? Number(overlaySlider.value) / 100 : 0.55;
 
       await window.CRII_API.saveHeroSettings({
+        mediaType,
+        selectionMode,
+        fixedImageIndex: activeFixedImageIndex,
         fontFamily,
         backgroundImages: [...activeHeroBackgroundImages],
         imageOpacity,
@@ -1489,10 +1599,11 @@ function initHeroAppearanceSettings() {
         overlayOpacity
       });
 
-      window.showToast('Hero section typography & multi-image settings saved!', 'success');
+      window.showToast('Hero section media & typography settings saved!', 'success');
     });
   }
 }
+
 
 window.setHeroVideoPreset = function(url) {
   const videoInput = document.getElementById('settingHeroVideoUrl');

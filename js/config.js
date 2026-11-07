@@ -337,9 +337,18 @@ class CriiApiClient {
   getHeroSettings() {
     try {
       const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.HERO_SETTINGS);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (!parsed.mediaType) parsed.mediaType = 'both';
+        if (!parsed.selectionMode) parsed.selectionMode = 'random';
+        if (parsed.fixedImageIndex === undefined) parsed.fixedImageIndex = 0;
+        return parsed;
+      }
     } catch (e) {}
     return {
+      mediaType: "both",
+      selectionMode: "random",
+      fixedImageIndex: 0,
       videoUrl: "assets/hero-bg.mp4",
       blurPx: 12,
       overlayOpacity: 0.55,
@@ -358,6 +367,9 @@ class CriiApiClient {
   async saveHeroSettings(settings) {
     if (!settings) return;
     const sanitized = {
+      mediaType: ['image', 'video', 'both'].includes(settings.mediaType) ? settings.mediaType : 'both',
+      selectionMode: ['random', 'fixed'].includes(settings.selectionMode) ? settings.selectionMode : 'random',
+      fixedImageIndex: Math.max(0, Number(settings.fixedImageIndex) || 0),
       videoUrl: settings.videoUrl || "assets/hero-bg.mp4",
       blurPx: Math.max(0, Math.min(40, Number(settings.blurPx) || 0)),
       overlayOpacity: Math.max(0, Math.min(1, Number(settings.overlayOpacity) || 0.55)),
