@@ -4,22 +4,16 @@
  */
 
 import { renderCurveDivider } from '../components/CurveDivider.js';
+import { renderPageHero } from '../components/PageHero.js';
 
 export function renderContactPageHtml() {
   return `
     <div class="page-contact-wrapper">
-      <section class="mockup-page-hero">
-        <div class="mockup-container">
-          <div class="mockup-page-hero-body">
-            <h1 class="mockup-page-hero-title">
-              Contact the Institute
-            </h1>
-            <p class="mockup-page-hero-subtitle">
-              Have questions about our open research papers, collaborative research tracks, or student admissions? Reach out to our leadership and fellow cohorts.
-            </p>
-          </div>
-        </div>
-      </section>
+      ${renderPageHero({
+        title: 'Contact the Institute',
+        subtitle: 'Have questions about our open research papers, collaborative research tracks, or student admissions? Reach out to our leadership and fellow cohorts.',
+        breadcrumbs: [{ label: 'Home', href: '/' }, { label: 'Contact', href: '/contact' }]
+      })}
 
       <!-- Wave from Dark Page Hero (#060b16) into Light Content (#faf8f5) -->
       ${renderCurveDivider({ bgColor: '#060b16', color: '#faf8f5' })}

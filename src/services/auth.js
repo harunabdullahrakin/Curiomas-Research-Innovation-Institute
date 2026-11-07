@@ -168,4 +168,6 @@ export class AuthService {
 }
 
 export const auth = new AuthService();
-window.CRII_AUTH = auth;
+if (typeof window !== 'undefined') {
+  window.CRII_AUTH = auth;
+}

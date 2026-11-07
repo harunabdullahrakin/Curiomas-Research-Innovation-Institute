@@ -1,12 +1,13 @@
 {
   "version": 1,
   "include": [
-    "/api/*"
+    "/*"
   ],
   "exclude": [
-    "/css/*",
-    "/js/*",
+    "/assets/*",
     "/data/*",
-    "/favicon.ico"
+    "/favicon.ico",
+    "/favicon.png",
+    "/favicon.svg"
   ]
 }

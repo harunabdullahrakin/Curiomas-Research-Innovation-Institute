@@ -23,8 +23,9 @@ let currentPostBlocks = [];
 let currentEditorSubtab = 'write';
 let isCurrentPostPublished = true;
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const user = window.CRII_API.getCurrentUser();
+async function initPortalDashboard() {
+  const user = (window.CRII_AUTH && typeof window.CRII_AUTH.getUser === 'function' && window.CRII_AUTH.getUser()) ||
+               (window.CRII_API && typeof window.CRII_API.getCurrentUser === 'function' && window.CRII_API.getCurrentUser());
   const authSection = document.getElementById('portalAuthSection');
   const dashboardSection = document.getElementById('portalDashboardSection');
 
@@ -66,7 +67,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEmailComposer();
 
   await refreshDashboardData();
-});
+}
+
+window.initPortalDashboard = initPortalDashboard;
+window.refreshDashboardData = refreshDashboardData;
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => initPortalDashboard());
+  } else {
+    // If already loaded
+    if (document.getElementById('portalDashboardSection')) {
+      initPortalDashboard();
+    }
+  }
+}
 
 // -----------------------------------------------------------------------------
 // NAVIGATION & DASHBOARD DATA

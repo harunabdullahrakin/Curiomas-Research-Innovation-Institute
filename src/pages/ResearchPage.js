@@ -4,22 +4,16 @@
  */
 
 import { renderCurveDivider } from '../components/CurveDivider.js';
+import { renderPageHero } from '../components/PageHero.js';
 
 export function renderResearchPageHtml() {
   return `
     <div class="page-research-wrapper">
-      <section class="mockup-page-hero">
-        <div class="mockup-container">
-          <div class="mockup-page-hero-body">
-            <h1 class="mockup-page-hero-title">
-              Research Publications & Datasets
-            </h1>
-            <p class="mockup-page-hero-subtitle">
-              Browse peer-grade publications, synthetic spectroscopic transits, and genomic clock calibrations authored by autonomous student researchers and fellows.
-            </p>
-          </div>
-        </div>
-      </section>
+      ${renderPageHero({
+        title: 'Research Publications & Datasets',
+        subtitle: 'Browse peer-grade publications, synthetic spectroscopic transits, and genomic clock calibrations authored by autonomous student researchers and fellows.',
+        breadcrumbs: [{ label: 'Home', href: '/' }, { label: 'Research', href: '/research' }]
+      })}
 
       <!-- Wave from Dark Page Hero (#060b16) into Light Content (#faf8f5) -->
       ${renderCurveDivider({ bgColor: '#060b16', color: '#faf8f5' })}

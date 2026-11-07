@@ -9,6 +9,8 @@ export function renderArticlePageHtml() {
   return `
     <div class="page-article-wrapper">
       <section class="mockup-page-hero" style="min-height: 280px; padding: 7rem 0 3.5rem 0;">
+        <div class="mockup-page-hero-bg-layer"></div>
+        <div class="mockup-page-hero-bg-overlay"></div>
         <div class="mockup-container">
           <div class="mockup-page-hero-body" style="max-width: 860px;">
             <div style="font-size: 0.86rem; color: #94a3b8; margin-bottom: 1.25rem;">

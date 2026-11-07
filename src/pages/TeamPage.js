@@ -4,23 +4,17 @@
  */
 
 import { renderCurveDivider } from '../components/CurveDivider.js';
+import { renderPageHero } from '../components/PageHero.js';
 
 export function renderTeamPageHtml() {
   return `
     <div class="page-team-wrapper">
       <!-- Dark Page Hero -->
-      <section class="mockup-page-hero">
-        <div class="mockup-container">
-          <div class="mockup-page-hero-body scroll-reveal">
-            <h1 class="mockup-page-hero-title">
-              Core Team & Research Mentors
-            </h1>
-            <p class="mockup-page-hero-subtitle">
-              Meet the student researchers, principal investigators, and mentors shaping autonomous open science tracks across astrophysics, paleobiology, and machine learning.
-            </p>
-          </div>
-        </div>
-      </section>
+      ${renderPageHero({
+        title: 'Core Team & Research Mentors',
+        subtitle: 'Meet the student researchers, principal investigators, and mentors shaping autonomous open science tracks across astrophysics, paleobiology, and machine learning.',
+        breadcrumbs: [{ label: 'Home', href: '/' }, { label: 'Team', href: '/team' }]
+      })}
 
       <!-- Wave from Dark Page Hero (#060b16) into Light Content (#faf8f5) -->
       ${renderCurveDivider({ bgColor: '#060b16', color: '#faf8f5' })}
