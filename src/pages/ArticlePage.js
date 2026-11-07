@@ -66,22 +66,9 @@ export function renderArticlePageHtml() {
           <article id="postContent" style="margin-bottom: 4rem; line-height: 1.8; font-size: 1.08rem; color: #2d3748;"></article>
 
           <!-- Keywords / Tags -->
-          <div style="padding: 1.75rem 0; border-top: 1px solid #e5dfd5; margin-bottom: 3.5rem;">
+          <div style="padding: 1.75rem 0; border-top: 1px solid #e5dfd5; margin-bottom: 2rem;">
             <span style="font-size: 0.78rem; text-transform: uppercase; color: #78716c; font-weight: 700; display: block; margin-bottom: 0.65rem; letter-spacing: 0.08em;">Keywords</span>
             <div id="postTags" style="display: flex; flex-wrap: wrap; gap: 0.45rem;"></div>
-          </div>
-
-          <!-- Institute Citation Callout -->
-          <div style="background: #ffffff; padding: 2rem; display: flex; gap: 1.25rem; align-items: center; border-radius: 12px; border: 1px solid #e5dfd5; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
-            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: #0284c7; display: grid; place-items: center; flex-shrink: 0;">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-            </div>
-            <div>
-              <h4 style="font-size: 1.15rem; margin-bottom: 0.35rem; color: #16281e;">Curiomas Research & Innovation Institute</h4>
-              <p style="font-size: 0.92rem; line-height: 1.6; color: #5f6862; margin: 0;">
-                Authored by student researchers at CRII under open science principles. "Turning Curiosity into Action."
-              </p>
-            </div>
           </div>
         </div>
       </main>

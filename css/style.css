@@ -655,22 +655,22 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
    ========================================================================== */
 .cookie-banner {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: 1.25rem;
   left: 50%;
   transform: translateX(-50%) translateY(120%);
   width: 90%;
-  max-width: 640px;
-  background: rgba(255, 255, 255, 0.88);
+  max-width: 1240px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22), inset 0 1px 2px rgba(255, 255, 255, 0.9);
   border-radius: 20px;
-  padding: 1.25rem 1.6rem;
+  padding: 1rem 1.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.25rem;
+  gap: 1.5rem;
   z-index: 10000;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1070,7 +1070,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 /* ==========================================================================
-   CRII FROSTED GLASS CAPSULE NAVBAR (LONG, WHITISH TRANSPARENT WITH CENTER BADGE)
+   CRII WHITE FROSTED CAPSULE NAVBAR (WHITE COLOR, DARK TEXT, CENTER LOGO BADGE)
    ========================================================================== */
 .mockup-nav-wrapper {
   position: fixed;
@@ -1096,18 +1096,18 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   pointer-events: auto !important;
   width: 100%;
   max-width: 1240px;
-  height: 54px;
-  min-height: 54px;
-  background: rgba(255, 255, 255, 0.12);
+  height: 56px;
+  min-height: 56px;
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.98);
   border-radius: 9999px;
   padding: 0 0.75rem 0 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.25), inset 0 1px 1.5px rgba(255, 255, 255, 0.45);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
   position: relative;
   z-index: 2147483641 !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1120,9 +1120,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 .mockup-nav-wrapper.nav-scrolled .crii-nav-capsule,
 .mockup-nav-wrapper.nav-scrolled .mockup-nav-capsule {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.38);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.32), inset 0 1px 2px rgba(255, 255, 255, 0.55);
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22), 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
 /* Nav Segments: Left & Right */
@@ -1149,44 +1149,47 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   gap: 0.35rem;
 }
 
-/* Nav Items: Clean Text with Icon */
+/* Nav Items: Clean Dark Typography with Icons */
 .nav-item {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: rgba(255, 255, 255, 0.88);
+  color: #1e293b;
   font-family: inherit;
-  font-size: 0.84rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   text-decoration: none;
-  padding: 0.38rem 0.85rem;
+  padding: 0.42rem 0.95rem;
   border-radius: 9999px;
   white-space: nowrap;
   transition: all 0.2s ease;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .nav-item svg {
-  opacity: 0.85;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  stroke: #475569;
+  opacity: 0.9;
+  transition: stroke 0.2s ease, transform 0.2s ease;
 }
 
 .nav-item:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.16);
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
 }
 
 .nav-item:hover svg {
-  opacity: 1;
+  stroke: #0284c7;
   transform: translateY(-1px);
 }
 
 .nav-item.active {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.22);
-  font-weight: 600;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.12);
+  font-weight: 700;
+}
+
+.nav-item.active svg {
+  stroke: #0284c7;
 }
 
 /* Middle Chamfered Shield Badge */
@@ -1195,10 +1198,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  padding: 0.42rem 1.45rem;
-  background: radial-gradient(circle at 50% 0%, #172554 0%, #091024 100%);
-  border: 1.5px solid rgba(96, 165, 250, 0.7);
-  box-shadow: 0 0 16px rgba(59, 130, 246, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  padding: 0.44rem 1.55rem;
+  background: radial-gradient(circle at 50% 0%, #172554 0%, #080e1e 100%);
+  border: 1.5px solid rgba(56, 189, 248, 0.8);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
   clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0% 50%);
   text-decoration: none;
   cursor: pointer;
@@ -1209,8 +1212,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 .nav-center-badge:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 24px rgba(96, 165, 250, 0.75), inset 0 1px 3px rgba(255, 255, 255, 0.5);
-  border-color: #60a5fa;
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.65), 0 6px 16px rgba(0, 0, 0, 0.3);
+  border-color: #38bdf8;
 }
 
 .badge-logo-wrap {
@@ -1241,7 +1244,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .nav-v-divider {
   width: 1px;
   height: 20px;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.12);
   margin: 0 0.35rem;
   flex-shrink: 0;
 }
@@ -1251,9 +1254,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #334155;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1265,9 +1268,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .nav-icon-action:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: #ffffff;
+  background: rgba(2, 132, 199, 0.1);
+  border-color: rgba(2, 132, 199, 0.3);
+  color: #0284c7;
   transform: translateY(-1px);
 }
 
@@ -1280,17 +1283,17 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff !important;
   font-family: inherit;
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.03em;
   text-decoration: none;
-  padding: 0.44rem 1.15rem;
+  padding: 0.44rem 1.25rem;
   border-radius: 9999px;
   white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
   cursor: pointer;
@@ -1298,8 +1301,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .nav-explore-btn:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
   transform: translateY(-1px);
 }
 
@@ -1321,7 +1324,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   height: 15px;
   border-radius: 3px;
   object-fit: cover;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   pointer-events: none;
 }
 
@@ -1329,12 +1332,12 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 14px;
   padding: 6px;
   min-width: 150px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
   display: none;
   flex-direction: column;
   gap: 3px;
@@ -1357,8 +1360,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   text-align: left;
   padding: 0.55rem 0.85rem;
   border-radius: 8px;
-  color: #e2e8f0;
+  color: #1e293b;
   font-size: 0.86rem;
+  font-weight: 500;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s ease;
@@ -1366,14 +1370,14 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .nav-lang-opt:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
 }
 
 .nav-lang-opt.active {
-  color: #38bdf8;
+  color: #0284c7;
   font-weight: 700;
-  background: rgba(56, 189, 248, 0.16);
+  background: rgba(2, 132, 199, 0.12);
 }
 
 .opt-flag {
@@ -1381,7 +1385,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   height: 13px;
   border-radius: 2px;
   object-fit: cover;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
 
@@ -1391,13 +1395,13 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   width: 100%;
   max-width: 1240px;
   margin-top: 8px;
-  background: rgba(10, 16, 30, 0.94);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 20px;
   padding: 0.75rem;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
   pointer-events: auto !important;
   flex-direction: column;
   gap: 0.35rem;
@@ -1414,7 +1418,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   gap: 0.75rem;
   padding: 0.65rem 1rem;
   border-radius: 12px;
-  color: rgba(255, 255, 255, 0.88);
+  color: #1e293b;
   font-family: inherit;
   font-size: 0.92rem;
   font-weight: 500;
@@ -1424,20 +1428,20 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 .mobile-nav-link:hover,
 .mobile-nav-link.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
 }
 
 .mobile-nav-link.active {
   font-weight: 600;
-  color: #60a5fa;
+  color: #0284c7;
 }
 
 .mobile-login-pill {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff !important;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 @keyframes navMobileDropdown {
@@ -1480,6 +1484,22 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   }
 }
 
+/* Google Translate header suppression */
+.goog-te-banner-frame,
+.skiptranslate:not(#navLangDropdown *) {
+  display: none !important;
+}
+body {
+  top: 0px !important;
+  position: static !important;
+}
+#goog-gt-tt, .goog-te-balloon-frame {
+  display: none !important;
+}
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
 /* ==========================================================================
    ENHANCED CRII SPOTLIGHT SEARCH POPUP
    ========================================================================== */
@@ -1496,19 +1516,21 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .crii-search-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(4, 7, 14, 0.78);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(10, 16, 30, 0.45);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
 .crii-search-modal {
   position: relative;
   width: 92%;
-  max-width: 620px;
-  background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 65%), #080c16;
-  border: 1px solid rgba(56, 189, 248, 0.28);
-  border-radius: 18px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.16);
+  max-width: 640px;
+  background: rgba(15, 23, 42, 0.70);
+  backdrop-filter: blur(36px) saturate(190%);
+  -webkit-backdrop-filter: blur(36px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 1.5px rgba(255, 255, 255, 0.35);
   overflow: hidden;
   animation: searchModalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

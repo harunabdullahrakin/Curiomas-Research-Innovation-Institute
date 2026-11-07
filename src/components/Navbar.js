@@ -152,6 +152,37 @@ export function renderNavbarHtml(currentPath = '/') {
   `;
 }
 
+export function triggerGoogleTranslate(lang) {
+  try {
+    localStorage.setItem('crii_site_language', lang);
+    const hostname = window.location.hostname;
+    const cookieVal = lang === 'en' ? '/en/en' : `/en/${lang}`;
+
+    document.cookie = `googtrans=${cookieVal}; path=/;`;
+    document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
+    if (hostname.includes('.')) {
+      const parts = hostname.split('.');
+      if (parts.length >= 2) {
+        const rootDomain = parts.slice(-2).join('.');
+        document.cookie = `googtrans=${cookieVal}; path=/; domain=.${rootDomain};`;
+      }
+      document.cookie = `googtrans=${cookieVal}; path=/; domain=.${hostname};`;
+    }
+
+    const combo = document.querySelector('.goog-te-combo');
+    if (combo) {
+      combo.value = lang;
+      combo.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+      window.location.reload();
+    }
+  } catch (err) {
+    console.error('Translation error:', err);
+    window.location.reload();
+  }
+}
+window.triggerGoogleTranslate = triggerGoogleTranslate;
+
 export function initNavbarInteractions(router) {
   const searchBtn = document.getElementById('navSearchTrigger');
   if (searchBtn && window.CRII_OPEN_SEARCH) {
@@ -172,6 +203,22 @@ export function initNavbarInteractions(router) {
       langMenu.querySelectorAll('.nav-lang-opt').forEach(o => {
         o.classList.toggle('active', o.getAttribute('data-lang') === 'bn');
       });
+
+      const hostname = window.location.hostname;
+      document.cookie = `googtrans=/en/bn; path=/;`;
+      document.cookie = `googtrans=/en/bn; path=/; domain=${hostname};`;
+
+      const checkCombo = setInterval(() => {
+        const combo = document.querySelector('.goog-te-combo');
+        if (combo) {
+          if (combo.value !== 'bn') {
+            combo.value = 'bn';
+            combo.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          clearInterval(checkCombo);
+        }
+      }, 300);
+      setTimeout(() => clearInterval(checkCombo), 4000);
     }
 
     langBtn.addEventListener('click', (e) => {

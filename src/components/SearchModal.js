@@ -5,8 +5,6 @@
 
 export function renderSearchModalHtml() {
   return `
-    <div id="google_translate_element" style="display:none!important;"></div>
-
     <div class="crii-search-overlay" id="criiSearchOverlay" aria-hidden="true" style="display:none;">
       <div class="crii-search-backdrop" id="criiSearchBackdrop"></div>
       <div class="crii-search-modal">

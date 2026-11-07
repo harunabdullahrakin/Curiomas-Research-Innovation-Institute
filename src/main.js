@@ -30,6 +30,8 @@ import { auth } from './services/auth.js';
 import { Router } from './router.js';
 
 // 4. Bootstrap App Shell
+const CRII_VERSION_STAMP = 'v2.1.8-capsule-glass';
+
 function bootstrap() {
   const app = document.getElementById('app');
   if (!app) return;
