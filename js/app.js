@@ -172,56 +172,26 @@ function initHeroCustomization() {
     }
   }
 
-  // CASE C: BOTH (Mixed Video + Image)
+  // CASE C: BOTH (Mixed Video + Image Backdrop)
   else {
-    if (selectionMode === 'random') {
-      const pickVideo = Math.random() < 0.5;
-      if (pickVideo && video) {
-        if (bgLayer) {
-          bgLayer.style.display = 'block';
-          bgLayer.style.opacity = String(desiredImageOpacity);
-        }
-        video.style.display = 'block';
-        video.style.opacity = '0';
-        video.style.transition = 'opacity 0.8s ease';
-        const currentSrc = video.querySelector('source')?.getAttribute('src') || video.src;
-        if (currentSrc !== pickedVideo) {
-          video.innerHTML = `<source src="${pickedVideo}" type="video/mp4">`;
-          video.load();
-        }
-        video.onplaying = () => {
-          video.style.opacity = '0.70';
-          if (bgLayer) {
-            bgLayer.style.opacity = '0';
-            setTimeout(() => { if (bgLayer.style.opacity === '0') bgLayer.style.display = 'none'; }, 850);
-          }
-        };
-        video.play().catch(() => {
-          if (bgLayer) { bgLayer.style.display = 'block'; bgLayer.style.opacity = String(desiredImageOpacity); }
-        });
-      } else {
-        if (video) { video.pause(); video.style.display = 'none'; }
-        if (bgLayer) {
-          bgLayer.style.display = 'block';
-          bgLayer.style.opacity = String(desiredImageOpacity);
-        }
+    // In Both mode: video plays over background image
+    if (bgLayer) {
+      bgLayer.style.display = 'block';
+      bgLayer.style.opacity = String(Math.min(desiredImageOpacity, 0.35));
+    }
+    if (video) {
+      video.style.display = 'block';
+      video.style.opacity = '0.70';
+      const currentSrc = video.querySelector('source')?.getAttribute('src') || video.src;
+      if (currentSrc !== pickedVideo || video.readyState === 0) {
+        video.innerHTML = `<source src="${pickedVideo}" type="video/mp4">`;
+        video.load();
       }
-    } else {
-      // Fixed mode: video plays over image backdrop
-      if (bgLayer) {
-        bgLayer.style.display = 'block';
-        bgLayer.style.opacity = '0.20';
-      }
-      if (video) {
-        video.style.display = 'block';
-        video.style.opacity = '0.65';
-        const currentSrc = video.querySelector('source')?.getAttribute('src') || video.src;
-        if (currentSrc !== pickedVideo) {
-          video.innerHTML = `<source src="${pickedVideo}" type="video/mp4">`;
-          video.load();
-        }
+      video.play().catch(() => {
+        // Fallback to muted playback if blocked
+        video.muted = true;
         video.play().catch(() => {});
-      }
+      });
     }
   }
 
@@ -291,6 +261,9 @@ function initHeroCustomization() {
     });
   }
 }
+
+window.initHeroCustomization = initHeroCustomization;
+window.initHeroSound = initHeroSound;
 
 function initHeroSound(video, settings) {
   if (!video) return;

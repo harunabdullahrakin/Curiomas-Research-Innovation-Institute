@@ -1690,7 +1690,7 @@ export async function mountPortalPage(router) {
 
   // 2. Verify Session with Cloudflare D1 SQL Backend in background
   auth.verifySession().then(res => {
-    if (!res.authenticated) {
+    if (res && res.revoked) {
       if (window.showToast) window.showToast('Your session has expired. Please sign in again.', 'error');
       if (router) router.navigate('/login');
       else window.location.href = '/login';

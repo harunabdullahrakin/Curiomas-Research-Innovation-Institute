@@ -35,6 +35,11 @@ const CRII_CONFIG = {
 
 const CRII_DEFAULT_ARTICLES = [];
 
+if (typeof window !== 'undefined') {
+  window.CRII_CONFIG = CRII_CONFIG;
+  window.CRII_DEFAULT_ARTICLES = CRII_DEFAULT_ARTICLES;
+}
+
 const CRII_PERMANENT_PURGED_POST_IDS = [
   'crii-article-exoplanetary-spectra',
   'crii-article-fossil-calibration',

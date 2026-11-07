@@ -14,7 +14,7 @@ export function renderHomePageHtml() {
            ========================================================================= -->
       <section class="mockup-hero-section">
         <!-- Ambient Hero Video Layer -->
-        <video id="heroVideo" class="mockup-hero-video" autoplay muted loop playsinline poster="/assets/curiomas-no-bg.png" style="display:none;">
+        <video id="heroVideo" class="mockup-hero-video" autoplay muted loop playsinline poster="/assets/curiomas-no-bg.png">
           <source src="/assets/hero-bg.mp4" type="video/mp4">
         </video>
         <!-- Dynamic Background Image Layer -->
@@ -397,8 +397,10 @@ export function renderHomePageHtml() {
 }
 
 export async function mountHomePage() {
-  // 1. Initialize Hero Background & Ambient Video/Audio
-  initHeroMedia();
+  // 1. Initialize Hero Background, Video & Audio Engine
+  if (typeof window.initHeroCustomization === 'function') {
+    window.initHeroCustomization();
+  }
 
   // 2. Load "From the Institute" articles
   if (typeof window.initFeaturedArticles === 'function') {
@@ -418,44 +420,5 @@ export async function mountHomePage() {
   // 5. Trigger scroll animation observer
   if (typeof window.refreshScrollAnimations === 'function') {
     window.refreshScrollAnimations();
-  }
-}
-
-function initHeroMedia() {
-  const heroVideo = document.getElementById('heroVideo');
-  const heroBgImageLayer = document.getElementById('heroBgImageLayer');
-  const heroSoundToggle = document.getElementById('heroSoundToggle');
-
-  if (!window.CRII_API) return;
-  const settings = window.CRII_API.getHeroSettings();
-  const mediaType = settings.mediaType || 'images';
-
-  let hasVideo = false;
-  if ((mediaType === 'videos' || mediaType === 'both') && settings.videos && settings.videos.length > 0) {
-    const videoUrl = settings.videos[Math.floor(Math.random() * settings.videos.length)];
-    if (heroVideo) {
-      heroVideo.src = videoUrl;
-      heroVideo.style.display = 'block';
-      heroVideo.muted = true;
-      heroVideo.play().catch(() => {});
-      hasVideo = true;
-
-      // Attach to global audioController
-      audioController.attachVideo(heroVideo);
-      audioController.init('heroSoundToggle');
-      if (heroSoundToggle) heroSoundToggle.style.display = 'flex';
-    }
-  } else {
-    if (heroVideo) heroVideo.style.display = 'none';
-    if (heroSoundToggle) heroSoundToggle.style.display = 'none';
-  }
-
-  // Background Image Layer
-  if (heroBgImageLayer) {
-    if (settings.images && settings.images.length > 0) {
-      const imgUrl = settings.images[Math.floor(Math.random() * settings.images.length)];
-      heroBgImageLayer.style.backgroundImage = `url("${imgUrl}")`;
-      heroBgImageLayer.style.opacity = hasVideo ? '0.35' : '1';
-    }
   }
 }

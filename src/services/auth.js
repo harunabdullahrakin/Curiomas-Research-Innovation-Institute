@@ -1,7 +1,7 @@
 /**
  * CURIOMAS RESEARCH & INNOVATION INSTITUTE (CRII)
  * Enhanced Authentication & Session Security Service
- * Supports HttpOnly Secure Cookies + Bearer Token + Cloudflare D1 SQL Verification
+ * Supports Cryptographic HMAC-SHA256 Signed Tokens + Cloudflare D1 SQL Verification
  */
 
 export class AuthService {
@@ -38,15 +38,36 @@ export class AuthService {
   }
 
   isAuthenticated() {
-    return Boolean(this.getToken() && this.getCurrentUser());
+    const token = this.getToken();
+    const user = this.getCurrentUser();
+    if (!token || !user) return false;
+
+    // If it's a signed v2 token, verify local expiration
+    if (token.startsWith('crii_v2.')) {
+      try {
+        const parts = token.split('.');
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(b64));
+        if (payload.exp && Date.now() > payload.exp) {
+          this.clearSession();
+          return false;
+        }
+      } catch (e) {
+        // Fallback to true if base64 parse is not needed
+      }
+    }
+    return true;
   }
 
   /**
    * Verify session with Cloudflare D1 SQL backend via /api/auth/me
-   * Sends both Authorization header and credentials: 'include' for HttpOnly cookie
    */
   async verifySession() {
     const token = this.getToken();
+    if (!token) {
+      return { authenticated: false, user: null };
+    }
+
     try {
       const headers = { 'Accept': 'application/json' };
       if (token) {
@@ -67,18 +88,24 @@ export class AuthService {
           localStorage.setItem('crii_auth_user', JSON.stringify(data.user));
           return { authenticated: true, user: data.user };
         }
+      } else if (res.status === 401) {
+        const data = await res.json().catch(() => ({}));
+        // If explicitly revoked by admin, wipe session
+        if (data.revoked) {
+          this.clearSession();
+          return { authenticated: false, revoked: true, user: null };
+        }
       }
     } catch (e) {
-      console.warn('Session verification network error, keeping local cache:', e);
-      if (this.isAuthenticated()) {
-        return { authenticated: true, user: this.currentUser, cached: true };
-      }
+      console.warn('Session verification network error, keeping verified local cache:', e);
     }
 
-    // If server rejected or token invalid, clear local auth
-    if (this.token) {
-      this.clearSession();
+    // If local token is still valid by timestamp, do not aggressively kick the user out
+    if (this.isAuthenticated()) {
+      return { authenticated: true, user: this.getCurrentUser(), cached: true };
     }
+
+    this.clearSession();
     return { authenticated: false, user: null };
   }
 

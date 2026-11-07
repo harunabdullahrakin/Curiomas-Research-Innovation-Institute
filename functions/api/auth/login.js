@@ -1,7 +1,30 @@
 /**
  * Cloudflare Pages Function: /api/auth/login
  * Autz.org SSO OAuth Verification & Cloudflare D1 SQL Session Enforcement
+ * Cryptographically signed HMAC-SHA256 sessions with D1 SQL auto-migration
  */
+
+function toBase64Url(uint8Array) {
+  let binary = '';
+  for (let i = 0; i < uint8Array.byteLength; i++) binary += String.fromCharCode(uint8Array[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function signToken(payload, secret) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const payloadJson = JSON.stringify(payload);
+  const payloadB64 = toBase64Url(enc.encode(payloadJson));
+  const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(payloadB64));
+  const sigB64 = toBase64Url(new Uint8Array(sigBuf));
+  return `crii_v2.${payloadB64}.${sigB64}`;
+}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -141,11 +164,10 @@ export async function onRequestPost(context) {
       });
     }
 
-    // 3. Issue Session Token and Persist to Cloudflare D1 SQL
-    const randomHex = crypto.randomUUID().replace(/-/g, "");
-    const token = `crii_sess_${randomHex}_${Date.now()}`;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    // 3. Issue Cryptographically Signed HMAC-SHA256 Token & Persist to D1
+    const now = Date.now();
+    const expiresMs = now + 7 * 24 * 60 * 60 * 1000;
+    const expiresAt = new Date(expiresMs).toISOString();
 
     const sessionUser = {
       email: email,
@@ -155,14 +177,32 @@ export async function onRequestPost(context) {
       autzId: autzId,
       verified: true,
       authProvider: "autz.org",
-      loginAt: now.toISOString()
+      loginAt: new Date(now).toISOString()
     };
 
+    const secret = (env && (env.AUTH_SECRET || env.ADMIN_EMAIL)) || "crii_institute_jwt_hmac_secret_2026";
+    const signedToken = await signToken({
+      user: sessionUser,
+      exp: expiresMs,
+      iat: now
+    }, secret);
+
+    // Ensure sessions table exists in D1 before insertion
     if (env && env.DB) {
       try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            email TEXT NOT NULL,
+            user_json TEXT NOT NULL,
+            createdAt TEXT NOT NULL,
+            expiresAt TEXT NOT NULL
+          )
+        `).run().catch(() => {});
+
         await env.DB.prepare(
           "INSERT OR REPLACE INTO sessions (token, email, user_json, createdAt, expiresAt) VALUES (?, ?, ?, ?, ?)"
-        ).bind(token, email, JSON.stringify(sessionUser), now.toISOString(), expiresAt).run();
+        ).bind(signedToken, email, JSON.stringify(sessionUser), new Date(now).toISOString(), expiresAt).run().catch(() => {});
       } catch (sessErr) {
         console.error("Cloudflare D1 session insert error:", sessErr);
       }
@@ -170,17 +210,17 @@ export async function onRequestPost(context) {
 
     if (env && env.CRII_KV) {
       try {
-        await env.CRII_KV.put(`session:${token}`, JSON.stringify(sessionUser), { expirationTtl: 86400 * 7 });
+        await env.CRII_KV.put(`session:${signedToken}`, JSON.stringify(sessionUser), { expirationTtl: 86400 * 7 });
       } catch (kvErr) {
         console.warn("KV session store error:", kvErr);
       }
     }
 
-    const cookieHeader = `crii_session=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`;
+    const cookieHeader = `crii_session=${encodeURIComponent(signedToken)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`;
 
     return new Response(JSON.stringify({
       success: true,
-      token: token,
+      token: signedToken,
       user: sessionUser
     }), {
       status: 200,

@@ -45,6 +45,11 @@ function initInstituteAuthHandler() {
   }
 
   // 2. Capture and Exchange Authorization Code from Callback
+  // In the Vite SPA shell, code exchange is handled by src/pages/LoginPage.js
+  if (document.getElementById('app') || window.CRII_ROUTER) {
+    return;
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('auth_code') || urlParams.get('code');
 

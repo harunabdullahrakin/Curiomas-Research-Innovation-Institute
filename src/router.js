@@ -178,6 +178,15 @@ export class Router {
       }
     }
 
+    // Initialize Hero Media Engine (Video/Audio on Home, Random Images on Sub-Pages)
+    if (typeof window.initHeroCustomization === 'function') {
+      try {
+        window.initHeroCustomization();
+      } catch (e) {
+        console.warn('initHeroCustomization error:', e);
+      }
+    }
+
     // Handle hash scroll or scroll to top
     if (hash) {
       const targetId = hash.replace(/^#/, '');

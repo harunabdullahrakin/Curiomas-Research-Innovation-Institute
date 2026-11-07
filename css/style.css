@@ -3255,6 +3255,23 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 
 /* === ANIMATED ORGANIC CURVES & WAVY DIVIDERS === */
+.mockup-hero-section,
+.mockup-editorial-section,
+.mockup-institute-section,
+.mockup-divisions-section,
+.mockup-repo-section,
+.mockup-emerald-section,
+.mockup-mentors-section,
+.mockup-sand-cta-section,
+.mockup-cohort-section,
+.mockup-midnight-section,
+.mockup-forest-footer,
+.mockup-page-hero,
+.mockup-page-content {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
 .mockup-curve-divider {
   position: relative;
   width: 100%;
@@ -3262,8 +3279,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   line-height: 0;
   pointer-events: none;
   z-index: 5;
-  margin-top: -2px !important;
-  margin-bottom: -2px !important;
+  margin-top: -3px !important;
+  margin-bottom: -3px !important;
   display: block;
   border: none !important;
   outline: none !important;
@@ -3295,7 +3312,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 .mockup-curve-svg path.curve-path-2 {
   fill: currentColor !important;
-  opacity: 0.45;
+  opacity: 0.75;
   transform-box: fill-box;
   transform-origin: 50% 100%;
   animation: curveWaveMotion2 18s ease-in-out infinite alternate;
