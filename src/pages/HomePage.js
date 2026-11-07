@@ -14,7 +14,7 @@ export function renderHomePageHtml() {
            ========================================================================= -->
       <section class="mockup-hero-section">
         <!-- Ambient Hero Video Layer -->
-        <video id="heroVideo" class="mockup-hero-video" autoplay muted loop playsinline poster="/assets/curiomas-no-bg.png"></video>
+        <video id="heroVideo" class="mockup-hero-video" autoplay muted loop playsinline style="background:#060b16;"></video>
         <!-- Dynamic Background Image Layer -->
         <div class="mockup-hero-bg-layer" id="heroBgImageLayer"></div>
         <div class="mockup-hero-bg-overlay"></div>

@@ -93,8 +93,10 @@ export function renderArticlePageHtml() {
 }
 
 export async function mountArticlePage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const id = urlParams.get('id') || urlParams.get('slug');
   if (typeof window.initArticleReader === 'function') {
-    window.initArticleReader();
+    await window.initArticleReader(id);
   }
   if (typeof window.refreshScrollAnimations === 'function') {
     window.refreshScrollAnimations();

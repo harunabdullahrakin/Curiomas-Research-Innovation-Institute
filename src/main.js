@@ -8,6 +8,7 @@
 import '../css/style.css';
 import '../css/components.css';
 import '../css/portal.css';
+import '../css/word-editor.css';
 
 // 2. Underlying Institute Data Layer & Module Engines
 import '../js/config.js';

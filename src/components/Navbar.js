@@ -1,8 +1,3 @@
-/**
- * CURIOMAS RESEARCH & INNOVATION INSTITUTE (CRII)
- * Floating Capsule Navbar Component
- */
-
 import { auth } from '../services/auth.js';
 
 export function renderNavbarHtml(currentPath = '/') {
@@ -44,7 +39,7 @@ export function renderNavbarHtml(currentPath = '/') {
 
         <!-- Right Action Group -->
         <div class="mockup-nav-right">
-          <!-- Orange LOGIN/PORTAL Button -->
+          <!-- LOGIN/PORTAL Button -->
           <a href="${loginPath}" class="nav-login-btn">${loginLabel}</a>
 
           <!-- RSS Feed Icon Button -->
@@ -75,7 +70,7 @@ export function renderNavbarHtml(currentPath = '/') {
           </div>
 
           <!-- Mobile Hamburger Toggle -->
-          <button class="nav-action-icon-btn menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu" type="button">
+          <button class="nav-action-icon-btn menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu" type="button" aria-expanded="false">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
           </button>
         </div>
@@ -85,18 +80,15 @@ export function renderNavbarHtml(currentPath = '/') {
 }
 
 export function initNavbarInteractions(router) {
-  // 1. Search trigger
   const searchBtn = document.getElementById('navSearchTrigger');
   if (searchBtn && window.CRII_OPEN_SEARCH) {
     searchBtn.addEventListener('click', () => window.CRII_OPEN_SEARCH());
   }
 
-  // 2. Language dropdown
   const langBtn = document.getElementById('navLangBtn');
   const langMenu = document.getElementById('navLangMenu');
   const langDropdown = document.getElementById('navLangDropdown');
   if (langBtn && langMenu) {
-    // Restore saved language preference on mount
     const savedLang = localStorage.getItem('crii_site_language') || 'en';
     if (savedLang === 'bn') {
       const flagImg = document.getElementById('navLangFlagImg');
@@ -135,7 +127,6 @@ export function initNavbarInteractions(router) {
         langMenu.classList.remove('show');
         langBtn.setAttribute('aria-expanded', 'false');
 
-        // Trigger Google Translate cookie
         if (typeof window.triggerGoogleTranslate === 'function') {
           window.triggerGoogleTranslate(lang);
         }
@@ -143,18 +134,35 @@ export function initNavbarInteractions(router) {
     });
   }
 
-  // 3. Mobile menu toggle
   const menuToggle = document.getElementById('menuToggleBtn');
   const navMenu = document.getElementById('mainNavMenu');
   if (menuToggle && navMenu) {
-    menuToggle.addEventListener('click', () => {
-      navMenu.classList.toggle('show');
-    });
+    const setMenuState = (isOpen) => {
+      navMenu.classList.toggle('show', isOpen);
+      menuToggle.setAttribute('aria-expanded', String(isOpen));
+      menuToggle.classList.toggle('active', isOpen);
+      menuToggle.innerHTML = isOpen
+        ? `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>`;
+    };
+
+    menuToggle.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = !navMenu.classList.contains('show');
+      setMenuState(isOpen);
+    };
 
     navMenu.querySelectorAll('a').forEach(a => {
       a.addEventListener('click', () => {
-        navMenu.classList.remove('show');
+        setMenuState(false);
       });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!navMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+        setMenuState(false);
+      }
     });
   }
 }
@@ -172,7 +180,6 @@ export function updateNavbarActive(path = '/') {
     }
   });
 
-  // Also update login/portal button text
   const isAuth = auth.isAuthenticated();
   const loginBtns = document.querySelectorAll('.nav-login-btn, .mobile-login-link span');
   loginBtns.forEach(b => {
