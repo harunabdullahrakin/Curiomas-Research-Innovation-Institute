@@ -99,14 +99,6 @@ async function initHeroCustomization() {
 
   const desiredImageOpacity = settings.imageOpacity !== undefined ? settings.imageOpacity : 0.40;
 
-  // 3. ALWAYS prepare the background image layer as immediate placeholder
-  if (bgLayer) {
-    bgLayer.style.backgroundImage = `url('${pickedImage}')`;
-    bgLayer.style.backgroundSize = 'cover';
-    bgLayer.style.backgroundPosition = 'center';
-    bgLayer.style.transition = 'opacity 0.8s ease';
-  }
-
   // CASE A: IMAGE ONLY
   if (mediaType === 'image') {
     if (video) {
@@ -115,23 +107,27 @@ async function initHeroCustomization() {
       video.style.opacity = '0';
     }
     if (bgLayer) {
+      bgLayer.style.backgroundImage = `url('${pickedImage}')`;
+      bgLayer.style.backgroundSize = 'cover';
+      bgLayer.style.backgroundPosition = 'center';
       bgLayer.style.display = 'block';
       bgLayer.style.opacity = String(desiredImageOpacity);
     }
   }
 
-  // CASE B: VIDEO ONLY
+  // CASE B: VIDEO ONLY (Strictly video only: absolutely NO image loads or displays)
   else if (mediaType === 'video') {
-    // Show random image immediately while video buffers/loads
     if (bgLayer) {
-      bgLayer.style.display = 'block';
-      bgLayer.style.opacity = String(desiredImageOpacity);
+      bgLayer.style.backgroundImage = 'none';
+      bgLayer.style.display = 'none';
+      bgLayer.style.opacity = '0';
     }
 
     if (video) {
       video.style.display = 'block';
-      video.style.opacity = '0';
-      video.style.transition = 'opacity 0.8s ease';
+      video.style.opacity = '1';
+      video.style.background = '#060b16';
+      video.style.transition = 'opacity 0.6s ease';
 
       const currentSrc = video.querySelector('source')?.getAttribute('src') || video.src;
       if (currentSrc !== pickedVideo || video.readyState === 0) {
@@ -139,51 +135,20 @@ async function initHeroCustomization() {
         video.load();
       }
 
-      // Smooth transition: Once video begins playback, fade out the image layer completely!
-      let hasFadedImage = false;
-      const onVideoPlaying = () => {
-        if (hasFadedImage) return;
-        hasFadedImage = true;
-        video.style.opacity = '0.70';
-        if (bgLayer) {
-          bgLayer.style.opacity = '0';
-          setTimeout(() => {
-            if (bgLayer && bgLayer.style.opacity === '0') {
-              bgLayer.style.display = 'none';
-            }
-          }, 850);
-        }
-      };
-
-      video.onplaying = onVideoPlaying;
-      video.addEventListener('playing', onVideoPlaying, { once: true });
-      video.addEventListener('timeupdate', onVideoPlaying, { once: true });
-
-      // If video is already ready or playing, reveal immediately
-      if (video.readyState >= 2 && !video.paused) {
-        onVideoPlaying();
-      }
-
-      // Fallback: If video errors, keep image layer displayed so screen is never blank
       video.onerror = () => {
+        // When video only, keep clean cosmos dark background
         if (bgLayer) {
-          bgLayer.style.display = 'block';
-          bgLayer.style.opacity = String(desiredImageOpacity);
+          bgLayer.style.backgroundImage = 'none';
+          bgLayer.style.display = 'none';
         }
-        video.style.display = 'none';
       };
 
       // Always ensure muted first for browser autoplay compliance
       video.muted = true;
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.then(() => {
-          if (video.readyState >= 2) onVideoPlaying();
-        }).catch(() => {
-          if (bgLayer) {
-            bgLayer.style.display = 'block';
-            bgLayer.style.opacity = String(desiredImageOpacity);
-          }
+        playPromise.catch(() => {
+          // Autoplay blocked by browser policy, video remains visible ready to play on first user tap
         });
       }
     }
@@ -191,8 +156,10 @@ async function initHeroCustomization() {
 
   // CASE C: BOTH (Mixed Video + Image Backdrop)
   else {
-    // In Both mode: video plays over background image
     if (bgLayer) {
+      bgLayer.style.backgroundImage = `url('${pickedImage}')`;
+      bgLayer.style.backgroundSize = 'cover';
+      bgLayer.style.backgroundPosition = 'center';
       bgLayer.style.display = 'block';
       bgLayer.style.opacity = String(Math.min(desiredImageOpacity, 0.35));
     }

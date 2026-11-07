@@ -54,8 +54,10 @@ function bootstrap() {
   // Background Session Validation with Cloudflare D1 SQL
   auth.verifySession().then(res => {
     if (res.authenticated) {
-      document.querySelectorAll('.nav-login-btn').forEach(btn => {
-        btn.textContent = 'PORTAL';
+      document.querySelectorAll('.nav-login-btn, .nav-explore-btn, .mobile-login-pill').forEach(btn => {
+        const span = btn.querySelector('span');
+        if (span) span.textContent = 'PORTAL';
+        else btn.textContent = 'PORTAL';
         btn.setAttribute('href', '/portal');
       });
     }

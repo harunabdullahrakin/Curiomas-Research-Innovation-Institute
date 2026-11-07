@@ -15,8 +15,8 @@ export function renderHomePageHtml() {
       <section class="mockup-hero-section">
         <!-- Ambient Hero Video Layer -->
         <video id="heroVideo" class="mockup-hero-video" autoplay muted loop playsinline style="background:#060b16;"></video>
-        <!-- Dynamic Background Image Layer -->
-        <div class="mockup-hero-bg-layer" id="heroBgImageLayer"></div>
+        <!-- Dynamic Background Image Layer (only activated if mediaType is 'image' or 'both') -->
+        <div class="mockup-hero-bg-layer" id="heroBgImageLayer" style="display:none; opacity:0;"></div>
         <div class="mockup-hero-bg-overlay"></div>
 
         <!-- Floating Small Audio Play/Pause Button (Top Right Side) -->
