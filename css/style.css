@@ -1092,19 +1092,19 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   max-width: 1140px;
   height: 68px;
   min-height: 68px;
-  background: rgba(6, 11, 22, 0.94);
-  background-image: linear-gradient(180deg, rgba(30, 41, 59, 0.45) 0%, rgba(6, 11, 22, 0.97) 100%);
+  background: rgba(255, 255, 255, 0.90);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.90) 100%);
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.95);
   border-top: none;
-  border-bottom: 2px solid #38bdf8;
-  border-radius: 0 0 20px 20px;
+  border-bottom: 2px solid rgba(2, 132, 199, 0.5);
+  border-radius: 0 0 22px 22px;
   padding: 0 1.35rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 18px 45px -10px rgba(0, 0, 0, 0.94), 0 0 28px rgba(56, 189, 248, 0.22);
+  box-shadow: 0 16px 40px -10px rgba(15, 23, 42, 0.16), 0 2px 10px rgba(0, 0, 0, 0.04);
   position: relative;
   z-index: 2147483641 !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1115,10 +1115,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .mockup-nav-wrapper.nav-scrolled .mockup-nav-capsule {
-  background: rgba(4, 8, 16, 0.98);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(4, 8, 16, 0.99) 100%);
-  box-shadow: 0 22px 55px -8px rgba(0, 0, 0, 0.96), 0 0 34px rgba(56, 189, 248, 0.32);
-  border-bottom-color: #38bdf8;
+  background: rgba(255, 255, 255, 0.97);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(241, 245, 249, 0.97) 100%);
+  box-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.22), 0 0 24px rgba(2, 132, 199, 0.15);
+  border-bottom-color: #0284c7;
 }
 
 /* Brand & Expanding Logo Tag */
@@ -1138,9 +1138,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   height: 32px;
   border-radius: 7px;
   object-fit: contain;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  box-shadow: 0 1px 6px rgba(2, 132, 199, 0.2);
   flex-shrink: 0;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
@@ -1153,8 +1153,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   opacity: 0;
   overflow: hidden;
   white-space: nowrap;
-  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
-  color: #040812 !important;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff !important;
   font-family: inherit;
   font-weight: 800;
   font-size: 0.74rem;
@@ -1170,7 +1170,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
               padding 0.35s ease,
               margin-left 0.35s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
 }
 
 /* On hover over the whole navbar capsule OR the logo, expand brand tag */
@@ -1186,7 +1186,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-nav-capsule:hover .mockup-brand-img,
 .mockup-brand:hover .mockup-brand-img {
   transform: scale(1.05);
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
+  box-shadow: 0 0 14px rgba(2, 132, 199, 0.45);
 }
 
 /* Navigation Links Center */
@@ -1209,7 +1209,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   align-items: center;
   justify-content: center;
   position: relative;
-  color: #e2e8f0;
+  color: #334155;
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 700;
@@ -1223,13 +1223,13 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .mockup-nav-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
 }
 
 .mockup-nav-link.active {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
+  background: rgba(2, 132, 199, 0.10);
+  color: #0284c7;
   font-weight: 800;
 }
 
@@ -1240,9 +1240,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   left: 12px;
   right: 12px;
   height: 2px;
-  background: #38bdf8;
+  background: #0284c7;
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+  box-shadow: 0 0 6px rgba(2, 132, 199, 0.5);
 }
 
 /* Right Section & Action Buttons */
@@ -1258,7 +1258,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb 0%, #0284c7 60%, #38bdf8 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff !important;
   font-family: inherit;
   font-size: 0.8rem;
@@ -1269,13 +1269,13 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   padding: 0.48rem 1.3rem;
   border-radius: 9999px;
   white-space: nowrap;
-  box-shadow: 0 2px 14px rgba(56, 189, 248, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.3);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
 }
 
 .nav-login-btn:hover {
-  box-shadow: 0 0 24px rgba(56, 189, 248, 0.65), 0 0 35px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 0 24px rgba(2, 132, 199, 0.65), 0 0 35px rgba(3, 105, 161, 0.4);
   transform: translateY(-1px);
   color: #ffffff !important;
 }
@@ -1285,9 +1285,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  color: #475569;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1299,9 +1299,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .nav-action-icon-btn:hover {
-  background: rgba(56, 189, 248, 0.16);
-  border-color: rgba(56, 189, 248, 0.35);
-  color: #38bdf8;
+  background: rgba(2, 132, 199, 0.12);
+  border-color: rgba(2, 132, 199, 0.3);
+  color: #0284c7;
   transform: translateY(-1px);
 }
 
@@ -1319,7 +1319,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   height: 15px;
   border-radius: 3px;
   object-fit: cover;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   pointer-events: none;
 }
 
@@ -1327,12 +1327,12 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: rgba(10, 14, 24, 0.98);
-  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 14px;
   padding: 6px;
   min-width: 150px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15), 0 0 15px rgba(2, 132, 199, 0.08);
   display: none;
   flex-direction: column;
   gap: 3px;
@@ -2601,6 +2601,16 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   margin-bottom: 4.5rem;
 }
 
+.footer-brand-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+}
+
 .footer-brand-header {
   display: flex;
   align-items: center;
@@ -2683,6 +2693,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   font-weight: 400;
   color: #ffffff;
   letter-spacing: -0.01em;
+  font-family: var(--font-display, 'Eyekons', 'Playfair Display', Georgia, serif);
 }
 
 .footer-institute-note {

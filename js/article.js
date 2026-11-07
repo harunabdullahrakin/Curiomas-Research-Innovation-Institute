@@ -3,14 +3,32 @@
  * Full Article & Research Paper Reader View
  */
 
-async function initArticleReader() {
+async function initArticleReader(explicitId = null) {
   const urlParams = new URLSearchParams(window.location.search);
-  const identifier = urlParams.get('id') || urlParams.get('slug');
-
-  const post = await window.CRII_API.getPostBySlugOrId(identifier);
+  const identifier = explicitId || urlParams.get('id') || urlParams.get('slug');
 
   const container = document.getElementById('articleContainer');
   if (!container) return;
+
+  if (!identifier) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:5rem 1rem;">
+        <h1 style="font-size:2rem; margin-bottom:1rem; color:var(--text-primary);">Scientific Dispatch</h1>
+        <p style="margin-bottom:2rem; color:var(--text-muted);">No article was selected. Please explore our open publications catalog.</p>
+        <a href="/research" class="btn btn-primary">Browse Research Catalog</a>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="text-align:center; padding:5rem 1rem; color:var(--text-muted);">
+      <div style="width:36px; height:36px; border:3px solid var(--border-color); border-top-color:var(--accent-primary); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 1.5rem auto;"></div>
+      <p style="font-size:1.1rem; font-weight:600; color:var(--text-primary);">Loading scientific publication...</p>
+    </div>
+  `;
+
+  const post = await window.CRII_API.getPostBySlugOrId(identifier);
 
   if (!post) {
     container.innerHTML = `

@@ -93,7 +93,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 /* Sidebar Shell */
 .portal-sidebar {
-  width: var(--sidebar-width);
+  width: var(--sidebar-width, 270px) !important;
+  max-width: var(--sidebar-width, 270px) !important;
+  min-width: var(--sidebar-width, 270px) !important;
+  flex: 0 0 270px !important;
   background: var(--bg-surface);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -109,6 +112,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
+  box-sizing: border-box;
 }
 
 .portal-sidebar::-webkit-scrollbar {
@@ -475,7 +479,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
    COLLAPSED (MINI) SIDEBAR MODE
    ============================================================================= */
 .portal-sidebar.collapsed {
-  width: var(--sidebar-collapsed-width);
+  width: var(--sidebar-collapsed-width, 76px) !important;
+  max-width: var(--sidebar-collapsed-width, 76px) !important;
+  min-width: var(--sidebar-collapsed-width, 76px) !important;
+  flex: 0 0 76px !important;
   padding: 1.25rem 0.55rem;
 }
 
@@ -592,16 +599,19 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 /* Main Area */
 .portal-main {
-  flex-grow: 1;
-  margin-left: var(--sidebar-width);
+  flex: 1 1 0%;
+  margin-left: var(--sidebar-width, 270px) !important;
+  width: calc(100% - var(--sidebar-width, 270px)) !important;
   padding: 2.25rem 2.75rem;
   background-color: var(--bg-primary);
-  transition: margin-left 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-left 0.24s cubic-bezier(0.4, 0, 0.2, 1), width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .sidebar-collapsed .portal-main {
-  margin-left: var(--sidebar-collapsed-width);
+  margin-left: var(--sidebar-collapsed-width, 76px) !important;
+  width: calc(100% - var(--sidebar-collapsed-width, 76px)) !important;
 }
 
 .portal-topbar {
@@ -1221,6 +1231,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     bottom: 0;
     left: 0;
     width: 280px !important;
+    max-width: 280px !important;
+    min-width: 280px !important;
+    flex: 0 0 280px !important;
     height: 100vh;
     transform: translateX(-100%);
     box-shadow: none;
@@ -1232,6 +1245,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   }
   .portal-sidebar.collapsed {
     width: 280px !important;
+    max-width: 280px !important;
+    min-width: 280px !important;
+    flex: 0 0 280px !important;
   }
   .portal-sidebar.collapsed .brand-text-block,
   .portal-sidebar.collapsed .portal-nav-label,

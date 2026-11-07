@@ -37,8 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Hero Appearance & Dynamic Multi-Image / Video / Font Customization
-function initHeroCustomization() {
+async function initHeroCustomization() {
   if (!window.CRII_API) return;
+
+  // On first load or whenever hero renders, fetch real settings from Cloudflare D1
+  if (typeof window.CRII_API.syncSettingsFromDb === 'function') {
+    try {
+      await window.CRII_API.syncSettingsFromDb();
+    } catch (e) {}
+  }
+
   const settings = window.CRII_API.getHeroSettings();
   if (!settings) return;
 

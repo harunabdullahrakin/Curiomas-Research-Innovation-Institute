@@ -14,9 +14,7 @@ export function renderHomePageHtml() {
            ========================================================================= -->
       <section class="mockup-hero-section">
         <!-- Ambient Hero Video Layer -->
-        <video id="heroVideo" class="mockup-hero-video" autoplay muted loop playsinline poster="/assets/curiomas-no-bg.png">
-          <source src="/assets/hero-bg.mp4" type="video/mp4">
-        </video>
+        <video id="heroVideo" class="mockup-hero-video" autoplay muted loop playsinline poster="/assets/curiomas-no-bg.png"></video>
         <!-- Dynamic Background Image Layer -->
         <div class="mockup-hero-bg-layer" id="heroBgImageLayer"></div>
         <div class="mockup-hero-bg-overlay"></div>
@@ -399,7 +397,7 @@ export function renderHomePageHtml() {
 export async function mountHomePage() {
   // 1. Initialize Hero Background, Video & Audio Engine
   if (typeof window.initHeroCustomization === 'function') {
-    window.initHeroCustomization();
+    await window.initHeroCustomization();
   }
 
   // 2. Load "From the Institute" articles

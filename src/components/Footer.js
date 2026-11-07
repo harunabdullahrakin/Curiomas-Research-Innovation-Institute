@@ -7,6 +7,12 @@
 export function renderFooterHtml() {
   return `
     <footer class="mockup-forest-footer" style="background:#071f16; color:#ffffff;">
+      <style>
+        .mockup-forest-footer ul { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+        .mockup-forest-footer li { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+        .mockup-forest-footer a { color: #a3c2b4 !important; text-decoration: none !important; font-size: 0.9rem; }
+        .mockup-forest-footer a:hover { color: #ffffff !important; }
+      </style>
       <div class="mockup-container">
         <!-- 1. Top Grid: Brand Column + 4 Navigation / Focus Columns -->
         <div class="footer-top-grid">

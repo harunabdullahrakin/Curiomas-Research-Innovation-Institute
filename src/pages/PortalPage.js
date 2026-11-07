@@ -208,7 +208,7 @@ export function renderPortalPageHtml() {
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
               <span>Compose Email</span>
             </button>
-            <button class="btn btn-primary btn-sm" onclick="showTab('posts')">
+            <button class="btn btn-primary btn-sm" onclick="showTab('posts'); if (window.openBloggerEditor) openBloggerEditor(null);">
               <span>+ New Publication</span>
             </button>
           </div>

@@ -66,21 +66,23 @@ export class Router {
   }
 
   navigate(url) {
-    // Parse path and hash
-    const [pathPart, hashPart] = url.split('#');
-    const path = pathPart || '/';
+    // Parse path, query parameters, and hash
+    const [urlWithoutHash, hashPart] = url.split('#');
     const hash = hashPart ? `#${hashPart}` : '';
 
-    if (window.location.pathname !== path || window.location.hash !== hash) {
+    if (window.location.pathname + window.location.search !== urlWithoutHash || window.location.hash !== hash) {
       history.pushState(null, '', url);
     }
 
-    this.resolveRoute(path, hash);
+    this.resolveRoute(urlWithoutHash, hash);
   }
 
   async resolveRoute(rawPath = '/', hash = '') {
+    // Separate pathname from query parameters (e.g. /article?id=crii-paper-1793999373177)
+    const [pathnamePart, queryPart] = rawPath.split('?');
+
     // Normalize path
-    let path = rawPath.toLowerCase().replace(/\.html$/, '');
+    let path = (pathnamePart || '/').toLowerCase().replace(/\.html$/, '');
     if (!path.startsWith('/')) path = '/' + path;
     if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
 

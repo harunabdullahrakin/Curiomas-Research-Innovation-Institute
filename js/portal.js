@@ -367,27 +367,42 @@ function openBloggerEditor(postId) {
     post = cachedPosts.find(p => p.id === postId);
   }
 
-  if (post) {
-    document.getElementById('bloggerTitleInput').value = post.title || "";
-    isCurrentPostPublished = post.published !== false;
-    document.getElementById('bloggerCoverInput').value = post.coverImage || "";
-    document.getElementById('bloggerSlugInput').value = post.slug || "";
-    document.getElementById('bloggerCategoryInput').value = post.category || "Space & Astrophysics";
+  const populateFields = (p) => {
+    document.getElementById('bloggerTitleInput').value = p.title || "";
+    isCurrentPostPublished = p.published !== false;
+    document.getElementById('bloggerCoverInput').value = p.coverImage || "";
+    document.getElementById('bloggerSlugInput').value = p.slug || "";
+    document.getElementById('bloggerCategoryInput').value = p.category || "Space & Astrophysics";
     const featEl = document.getElementById('bloggerFeaturedInput');
-    if (featEl) featEl.checked = Boolean(post.featured);
-    document.getElementById('bloggerAuthorsInput').value = (post.authors || []).join(', ');
-    document.getElementById('bloggerDoiInput').value = post.doi || "";
-    document.getElementById('bloggerSummaryInput').value = post.summary || "";
-    document.getElementById('bloggerAbstractInput').value = post.abstract || "";
-    document.getElementById('bloggerTagsInput').value = (post.tags || []).join(', ');
-    updateCoverPreview(post.coverImage || "");
+    if (featEl) featEl.checked = Boolean(p.featured);
+    document.getElementById('bloggerAuthorsInput').value = (p.authors || []).join(', ');
+    document.getElementById('bloggerDoiInput').value = p.doi || "";
+    document.getElementById('bloggerSummaryInput').value = p.summary || "";
+    document.getElementById('bloggerAbstractInput').value = p.abstract || "";
+    document.getElementById('bloggerTagsInput').value = (p.tags || []).join(', ');
+    updateCoverPreview(p.coverImage || "");
 
     // Load blocks
-    if (Array.isArray(post.blocks) && post.blocks.length > 0) {
-      currentPostBlocks = JSON.parse(JSON.stringify(post.blocks));
+    if (Array.isArray(p.blocks) && p.blocks.length > 0) {
+      currentPostBlocks = JSON.parse(JSON.stringify(p.blocks));
     } else {
       // Convert legacy content string to initial blocks
-      currentPostBlocks = convertContentToInitialBlocks(post.content || "");
+      currentPostBlocks = convertContentToInitialBlocks(p.content || "");
+    }
+    updateBloggerStatusUI();
+    renderBlockStack();
+    if (window.CRII_WORD) window.CRII_WORD.load(p, () => currentPostBlocks);
+    switchBloggerSubtab('write');
+  };
+
+  if (post) {
+    populateFields(post);
+  } else if (postId) {
+    // If not in cache yet, fetch from API
+    if (window.CRII_API && typeof window.CRII_API.getPostBySlugOrId === 'function') {
+      window.CRII_API.getPostBySlugOrId(postId).then(fetched => {
+        if (fetched) populateFields(fetched);
+      });
     }
   } else {
     // Brand new post
@@ -410,13 +425,13 @@ function openBloggerEditor(postId) {
       { id: `b-${Date.now()}-1`, type: 'heading', content: '1. Introduction & Overview' },
       { id: `b-${Date.now()}-2`, type: 'text', content: 'Describe research objectives, experimental setups, and discovery outcomes here.' }
     ];
+    updateBloggerStatusUI();
+    renderBlockStack();
+    if (window.CRII_WORD) window.CRII_WORD.load(null, () => currentPostBlocks);
+    switchBloggerSubtab('write');
   }
-
-  updateBloggerStatusUI();
-  renderBlockStack();
-  if (window.CRII_WORD) window.CRII_WORD.load(post, () => currentPostBlocks);
-  switchBloggerSubtab('write');
 }
+window.openBloggerEditor = openBloggerEditor;
 
 async function closeBloggerEditor() {
   const dirView = document.getElementById('postsDirectoryView');
@@ -426,6 +441,9 @@ async function closeBloggerEditor() {
   currentEditingPostId = null;
   await refreshDashboardData();
 }
+window.closeBloggerEditor = closeBloggerEditor;
+window.switchBloggerSubtab = switchBloggerSubtab;
+window.saveCurrentPost = saveCurrentPost;
 
 function updateCoverPreview(url) {
   const box = document.getElementById('bloggerCoverPreviewBox');
@@ -1115,6 +1133,7 @@ function renderPostsDirectory() {
     `;
   }).join('');
 }
+window.renderPostsDirectory = renderPostsDirectory;
 
 window.filterPostsList = function(type) {
   ['All', 'Pub', 'Draft'].forEach(t => {
@@ -1273,6 +1292,7 @@ function renderRosterGrid() {
     `;
   }).join('');
 }
+window.renderRosterGrid = renderRosterGrid;
 
 window.filterRosterList = function(type) {
   ['All', 'Team', 'Fellows'].forEach(t => {
@@ -1457,6 +1477,7 @@ function renderHeroVideosList() {
     `;
   }).join('');
 }
+window.renderHeroVideosList = renderHeroVideosList;
 
 window.removeHeroImage = function(idx) {
   if (activeHeroBackgroundImages.length <= 1) {
@@ -1829,6 +1850,7 @@ function renderApplicationsTable() {
     `;
   }).join('');
 }
+window.renderApplicationsTable = renderApplicationsTable;
 
 window.deleteApplicationRow = async function(id) {
   if (window.confirm('Are you sure you want to permanently delete this application record?')) {
@@ -2098,6 +2120,7 @@ function renderDatasetsTable() {
     </tr>
   `).join('');
 }
+window.renderDatasetsTable = renderDatasetsTable;
 
 function initAccessControl() {
   const form = document.getElementById('addAllowedUserForm');
@@ -2160,6 +2183,7 @@ function renderAllowedUsersTable() {
     </tr>
   `).join('');
 }
+window.renderAllowedUsersTable = renderAllowedUsersTable;
 
 window.removeAllowedEmail = async function(email) {
   if (window.confirm(`Revoke portal permissions for ${email}?`)) {
