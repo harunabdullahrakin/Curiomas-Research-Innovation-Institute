@@ -65,6 +65,7 @@ async function initPortalDashboard() {
   initInstituteSettings();
   initFestiveSettings();
   initEmailComposer();
+  initStorageDropzone();
 
   await refreshDashboardData();
 }
@@ -205,6 +206,9 @@ function showTab(tabName) {
   currentTab = tabName;
   if (tabName === 'divisions' && typeof window.renderDivisionsTab === 'function') {
     window.renderDivisionsTab();
+  }
+  if (tabName === 'storage' && typeof window.renderStorageTab === 'function') {
+    window.renderStorageTab();
   }
   if (tabName === 'cohorts') {
     if (typeof window.renderCohortsTab === 'function') window.renderCohortsTab();
@@ -1832,11 +1836,59 @@ function initApplicationModal() {
   const acceptBtn = document.getElementById('acceptAppBtn');
   if (acceptBtn) {
     acceptBtn.addEventListener('click', async () => {
-      if (activeAppId) {
-        await window.CRII_API.updateApplicationStatus(activeAppId, 'Accepted');
+      if (!activeAppId) return;
+      const app = (cachedInternsData.applications || []).find(a => a.id === activeAppId);
+      if (!app) return;
+
+      const role = document.getElementById('reviewAppRoleSelect')?.value || 'Research Fellow';
+      const division = document.getElementById('reviewAppDivisionSelect')?.value || app.preferredDivision || 'Scientific Division';
+      const grantLoginAccess = document.getElementById('reviewAppGrantAccess')?.checked ?? true;
+      const addToRoster = document.getElementById('reviewAppAddToRoster')?.checked ?? true;
+      const sendEmail = document.getElementById('reviewAppSendEmail')?.checked ?? true;
+
+      acceptBtn.disabled = true;
+      acceptBtn.innerHTML = '<span>Processing Admission...</span>';
+
+      try {
+        await window.CRII_API.updateApplicationStatus(activeAppId, 'Accepted', {
+          role,
+          division,
+          grantLoginAccess,
+          addToRoster
+        });
+
+        if (sendEmail && typeof emailjs !== 'undefined') {
+          const emailjsTpl = localStorage.getItem('crii_emailjs_template_id') ||
+            (window.CRII_API.getEmailjsTemplateId && window.CRII_API.getEmailjsTemplateId()) ||
+            'zhelx7y';
+
+          const emailParams = {
+            to_name: app.fullName,
+            to_email: app.email,
+            reply_to: 'harunabdullahrakin@gmail.com',
+            subject: 'Welcome to Curiomas Research & Innovation Institute — Admission Confirmed',
+            message: `Dear ${app.fullName},\n\nCongratulations! We are pleased to inform you that your application to the Curiomas Research & Innovation Institute (CRII) has been Accepted.\n\nYou have been officially appointed as:\n• Role: ${role}\n• Division: ${division}\n\nYour researcher portal access has been provisioned. You can sign in using your account at:\nhttps://www.curiomas.zone.id/login\n\nWelcome to the collective. We look forward to your scientific contributions.\n\nWarm regards,\nHarun Abdullah Rakin\nSuper Admin & Director\nCuriomas Research & Innovation Institute (CRII)`
+          };
+
+          try {
+            await emailjs.send('curiomas', emailjsTpl, emailParams, 'h3x_9dtR8frBq2pCi');
+            if (window.showToast) window.showToast(`Acceptance email dispatched to ${app.email}`, 'success');
+          } catch(e) {
+            console.warn('EmailJS dispatch failed:', e);
+          }
+        }
+
         modal.classList.remove('active');
-        window.showToast('Candidate accepted & enrolled to research cohort!', 'success');
+        if (window.showToast) window.showToast('Candidate accepted, access provisioned & enrolled to cohort!', 'success');
         await refreshDashboardData();
+      } catch(err) {
+        if (window.showToast) window.showToast('Failed to accept application: ' + err.message, 'error');
+      } finally {
+        acceptBtn.disabled = false;
+        acceptBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Accept & Grant Access</span>
+        `;
       }
     });
   }
@@ -1856,11 +1908,51 @@ function initApplicationModal() {
   const rejectBtn = document.getElementById('rejectAppBtn');
   if (rejectBtn) {
     rejectBtn.addEventListener('click', async () => {
-      if (activeAppId) {
-        await window.CRII_API.updateApplicationStatus(activeAppId, 'Declined');
+      if (!activeAppId) return;
+      const app = (cachedInternsData.applications || []).find(a => a.id === activeAppId);
+      if (!app) return;
+
+      if (!confirm(`Are you sure you want to decline the application from ${app.fullName}?`)) return;
+
+      const sendEmail = document.getElementById('reviewAppSendEmail')?.checked ?? true;
+      rejectBtn.disabled = true;
+      rejectBtn.innerHTML = '<span>Processing...</span>';
+
+      try {
+        await window.CRII_API.updateApplicationStatus(activeAppId, 'Declined', {});
+
+        if (sendEmail && typeof emailjs !== 'undefined') {
+          const emailjsTpl = localStorage.getItem('crii_emailjs_template_id') ||
+            (window.CRII_API.getEmailjsTemplateId && window.CRII_API.getEmailjsTemplateId()) ||
+            'zhelx7y';
+
+          const emailParams = {
+            to_name: app.fullName,
+            to_email: app.email,
+            reply_to: 'harunabdullahrakin@gmail.com',
+            subject: 'Update on your Curiomas Research & Innovation Institute Application',
+            message: `Dear ${app.fullName},\n\nThank you for your interest in the Curiomas Research & Innovation Institute and for submitting your application.\n\nAfter careful review of our current cohort capacity and division alignments, we regret to inform you that we are unable to offer you a research fellowship at this time.\n\nWe appreciate the time you took to share your background with us, and we encourage you to stay engaged with our open-source datasets and publications, and re-apply for upcoming cohorts.\n\nSincerely,\nAdmissions Review Committee\nCuriomas Research & Innovation Institute (CRII)`
+          };
+
+          try {
+            await emailjs.send('curiomas', emailjsTpl, emailParams, 'h3x_9dtR8frBq2pCi');
+            if (window.showToast) window.showToast(`Decline notice emailed to ${app.email}`, 'info');
+          } catch(e) {
+            console.warn('EmailJS dispatch failed:', e);
+          }
+        }
+
         modal.classList.remove('active');
-        window.showToast('Application marked as Declined', 'info');
+        if (window.showToast) window.showToast('Application marked as Declined', 'info');
         await refreshDashboardData();
+      } catch(err) {
+        if (window.showToast) window.showToast('Failed to decline application: ' + err.message, 'error');
+      } finally {
+        rejectBtn.disabled = false;
+        rejectBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Decline Application</span>
+        `;
       }
     });
   }
@@ -1874,6 +1966,21 @@ window.reviewApplication = function(appId) {
   const modal = document.getElementById('appReviewModal');
   const details = document.getElementById('appReviewDetails');
   if (!modal || !details) return;
+
+  // Populate dynamic division options
+  const divSelect = document.getElementById('reviewAppDivisionSelect');
+  if (divSelect) {
+    const divs = (window.CRII_API && window.CRII_API.getDivisions && window.CRII_API.getDivisions()) || [];
+    divSelect.innerHTML = divs.map(d => `<option value="${escapeHtml(d.title)}">${escapeHtml(d.title)}</option>`).join('');
+    if (app.preferredDivision) {
+      const match = Array.from(divSelect.options).find(o => o.value.toLowerCase().includes(app.preferredDivision.toLowerCase()));
+      if (match) divSelect.value = match.value;
+    }
+  }
+
+  // Set default role
+  const roleSelect = document.getElementById('reviewAppRoleSelect');
+  if (roleSelect) roleSelect.value = 'Research Fellow';
 
   let parsedCustomFields = {};
   if (app.customFields) parsedCustomFields = app.customFields;
@@ -1924,7 +2031,6 @@ window.reviewApplication = function(appId) {
 
   modal.classList.add('active');
 };
-
 // -----------------------------------------------------------------------------
 // 5. DATASETS, PERMISSIONS & BRANDING
 // -----------------------------------------------------------------------------
@@ -2880,3 +2986,310 @@ async function handleSaveAppFormSettings(e) {
   }
 }
 window.handleSaveAppFormSettings = handleSaveAppFormSettings;
+// -----------------------------------------------------------------------------
+// MEDIA & ASSET STORAGE MANAGER (Cloudflare R2 + D1 Catalog)
+// -----------------------------------------------------------------------------
+let cachedStorageItems = [];
+let activeStorageFilter = 'all';
+let activeStorageSearch = '';
+
+async function renderStorageTab() {
+  const grid = document.getElementById('storageMediaGrid');
+  if (!grid) return;
+
+  grid.innerHTML = `
+    <div style="grid-column: 1 / -1; padding: 3rem 1rem; text-align: center; color: var(--text-muted);">
+      <div class="spinner" style="display:inline-block; width: 28px; height: 28px; border: 3px solid var(--accent-primary); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 0.75rem;"></div>
+      <p style="font-size: 0.9rem;">Connecting to Cloudflare R2 Bucket & fetching object catalog...</p>
+    </div>
+  `;
+
+  try {
+    const res = await fetch('/api/storage', {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    cachedStorageItems = Array.isArray(data.items) ? data.items : [];
+
+    // Calculate metrics
+    const totalCount = cachedStorageItems.length;
+    let totalBytes = 0;
+    let videoCount = 0;
+    let imageCount = 0;
+
+    cachedStorageItems.forEach(item => {
+      totalBytes += (Number(item.size) || 0);
+      const isVid = item.type === 'video' || (item.mimeType && item.mimeType.startsWith('video/')) || /\.(mp4|webm|mov|mkv)$/i.test(item.filename || item.key);
+      if (isVid) videoCount++;
+      else imageCount++;
+    });
+
+    const totalSizeMb = (totalBytes / (1024 * 1024)).toFixed(1);
+
+    const elTotal = document.getElementById('storageTotalCount');
+    const elSize = document.getElementById('storageTotalSize');
+    const elVid = document.getElementById('storageVideoCount');
+    const elImg = document.getElementById('storageImageCount');
+
+    if (elTotal) elTotal.innerText = String(totalCount);
+    if (elSize) elSize.innerText = `${totalSizeMb} MB`;
+    if (elVid) elVid.innerText = String(videoCount);
+    if (elImg) elImg.innerText = String(imageCount);
+
+    renderStorageGrid();
+  } catch(err) {
+    grid.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 3rem 1rem; text-align: center; color: #ef4444; background: rgba(239, 68, 68, 0.08); border-radius: 12px; border: 1px dashed rgba(239, 68, 68, 0.3);">
+        <p style="font-weight: 600; margin-bottom: 0.35rem;">Failed to load Cloudflare R2 storage catalog</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(err.message)}</p>
+        <button class="btn btn-secondary btn-sm" onclick="renderStorageTab()" style="margin-top: 1rem;">Retry</button>
+      </div>
+    `;
+  }
+}
+window.renderStorageTab = renderStorageTab;
+
+function renderStorageGrid() {
+  const grid = document.getElementById('storageMediaGrid');
+  if (!grid) return;
+
+  let items = [...cachedStorageItems];
+
+  // Apply Filter
+  if (activeStorageFilter === 'image') {
+    items = items.filter(it => it.type === 'image' || (it.mimeType && it.mimeType.startsWith('image/')) || /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(it.filename || it.key));
+  } else if (activeStorageFilter === 'video') {
+    items = items.filter(it => it.type === 'video' || (it.mimeType && it.mimeType.startsWith('video/')) || /\.(mp4|webm|mov|mkv)$/i.test(it.filename || it.key));
+  }
+
+  // Apply Search
+  if (activeStorageSearch) {
+    items = items.filter(it => {
+      const q = activeStorageSearch;
+      return (it.filename && it.filename.toLowerCase().includes(q)) ||
+             (it.key && it.key.toLowerCase().includes(q)) ||
+             (it.mimeType && it.mimeType.toLowerCase().includes(q));
+    });
+  }
+
+  if (items.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 3.5rem 1rem; text-align: center; color: var(--text-muted); background: var(--bg-surface); border-radius: 12px; border: 1px dashed var(--border-color);">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" style="margin-bottom: 0.75rem; opacity: 0.6;"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <p style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">No media assets found</p>
+        <p style="font-size: 0.82rem;">${cachedStorageItems.length === 0 ? 'Your R2 storage bucket is empty. Click "Upload Media" above to upload your first image or video.' : 'No assets match the active search / filter criteria.'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = items.map(item => {
+    const isVideo = item.type === 'video' || (item.mimeType && item.mimeType.startsWith('video/')) || /\.(mp4|webm|mov|mkv)$/i.test(item.filename || item.key);
+    const sizeMb = ((Number(item.size) || 0) / (1024 * 1024)).toFixed(2);
+    const dateFormatted = item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Recent';
+    const publicUrl = item.url || `/api/images/${item.key.replace(/^uploads\//, '')}`;
+
+    return `
+      <div class="storage-card" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <!-- Media Preview -->
+        <div style="position: relative; height: 160px; background: #07101d; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+          ${isVideo ? `
+            <video src="${escapeHtml(publicUrl)}" preload="metadata" muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; pointer-events: none;">
+              <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; color: #ffffff;">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+          ` : `
+            <img src="${escapeHtml(publicUrl)}" alt="${escapeHtml(item.filename)}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/assets/curiomas-no-bg.png'; this.style.objectFit='contain'; this.style.padding='1.5rem';">
+          `}
+          <!-- Type Badge -->
+          <span style="position: absolute; top: 8px; right: 8px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: ${isVideo ? 'rgba(245, 158, 11, 0.9)' : 'rgba(37, 99, 235, 0.9)'}; color: #ffffff; backdrop-filter: blur(4px);">
+            ${isVideo ? 'VIDEO' : 'IMAGE'}
+          </span>
+        </div>
+
+        <!-- Info & Metadata -->
+        <div style="padding: 0.9rem 1rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(item.filename)}">
+              ${escapeHtml(item.filename)}
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span>${sizeMb} MB</span>
+              <span>${dateFormatted}</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.72rem; padding: 0.35rem 0.5rem;" onclick="copyStorageUrl('${escapeHtml(publicUrl)}')">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem;"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span>Copy URL</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 0.35rem 0.5rem;" title="Set as Hero Background ${isVideo ? 'Video' : 'Image'}" onclick="useAsHeroMedia('${escapeHtml(publicUrl)}', ${isVideo})">
+              <span>Use in Hero</span>
+            </button>
+            <button class="btn btn-sm" style="background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); font-size: 0.72rem; padding: 0.35rem 0.5rem;" title="Delete Object from R2" onclick="deleteStorageMedia('${escapeHtml(item.key)}', '${escapeHtml(item.filename)}')">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.filterStorageMedia = function(filter) {
+  activeStorageFilter = filter;
+  document.querySelectorAll('.storage-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+    if (btn.dataset.filter === filter) {
+      btn.classList.remove('btn-secondary');
+      btn.classList.add('btn-primary');
+    } else {
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-secondary');
+    }
+  });
+  renderStorageGrid();
+};
+
+window.handleStorageSearch = function(query) {
+  activeStorageSearch = (query || '').toLowerCase().trim();
+  renderStorageGrid();
+};
+
+window.copyStorageUrl = function(url) {
+  const fullUrl = url.startsWith('http') ? url : (window.location.origin + url);
+  navigator.clipboard.writeText(fullUrl).then(() => {
+    if (window.showToast) window.showToast('Public media URL copied to clipboard!', 'success');
+  }).catch(() => {
+    prompt('Copy media URL:', fullUrl);
+  });
+};
+
+window.useAsHeroMedia = function(url, isVideo) {
+  const fullUrl = url.startsWith('http') ? url : (window.location.origin + url);
+  if (isVideo) {
+    if (typeof window.addHeroVideoPreset === 'function') {
+      window.addHeroVideoPreset(fullUrl);
+      if (window.showToast) window.showToast('Video added to Hero Background Video Pool!', 'success');
+    }
+  } else {
+    const settings = (window.CRII_API && window.CRII_API.getHeroSettings && window.CRII_API.getHeroSettings()) || {};
+    const images = Array.isArray(settings.backgroundImages) ? [...settings.backgroundImages] : [];
+    if (!images.includes(fullUrl)) {
+      images.unshift(fullUrl);
+      settings.backgroundImages = images;
+      if (window.CRII_API && window.CRII_API.saveHeroSettings) {
+        window.CRII_API.saveHeroSettings(settings);
+      }
+      if (typeof window.renderHeroImagesList === 'function') window.renderHeroImagesList();
+      if (typeof window.updateHeroPreview === 'function') window.updateHeroPreview();
+      if (window.showToast) window.showToast('Image added to Hero Background Image Pool!', 'success');
+    } else {
+      if (window.showToast) window.showToast('Image already exists in Hero Pool', 'info');
+    }
+  }
+};
+
+window.deleteStorageMedia = async function(key, filename) {
+  if (!confirm(`Are you sure you want to permanently delete "${filename || key}" from Cloudflare R2? This cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/storage?key=${encodeURIComponent(key)}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.success) {
+      if (window.showToast) window.showToast(`Deleted "${filename || key}" successfully`, 'success');
+      cachedStorageItems = cachedStorageItems.filter(it => it.key !== key);
+      renderStorageTab();
+    } else {
+      throw new Error(data.error || 'Failed to delete');
+    }
+  } catch(err) {
+    if (window.showToast) window.showToast(`Delete failed: ${err.message}`, 'error');
+  }
+};
+
+window.handleStorageFileUpload = async function(event) {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+
+  if (window.showToast) window.showToast(`Uploading ${files.length} file${files.length === 1 ? '' : 's'} to Cloudflare R2...`, 'info');
+
+  let successCount = 0;
+  let failCount = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('source', 'portal_storage');
+
+    try {
+      const res = await fetch('/api/storage', {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.success) successCount++;
+      else failCount++;
+    } catch(e) {
+      failCount++;
+    }
+  }
+
+  // Clear input value so same files can be re-selected
+  event.target.value = '';
+
+  if (successCount > 0) {
+    if (window.showToast) window.showToast(`Successfully uploaded ${successCount} asset${successCount === 1 ? '' : 's'} to R2!`, 'success');
+    renderStorageTab();
+  }
+  if (failCount > 0) {
+    if (window.showToast) window.showToast(`${failCount} asset upload(s) failed.`, 'error');
+  }
+};
+
+function initStorageDropzone() {
+  const dropzone = document.getElementById('storageDropzone');
+  const fileInput = document.getElementById('storageFileInput');
+  if (!dropzone || !fileInput) return;
+
+  dropzone.onclick = () => fileInput.click();
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.style.borderColor = 'var(--accent-primary, #0284c7)';
+      dropzone.style.background = 'rgba(2, 132, 199, 0.05)';
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.style.borderColor = 'var(--border-color)';
+      dropzone.style.background = 'var(--bg-surface)';
+    });
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files && files.length > 0) {
+      window.handleStorageFileUpload({ target: { files, value: '' } });
+    }
+  });
+}
+window.initStorageDropzone = initStorageDropzone;

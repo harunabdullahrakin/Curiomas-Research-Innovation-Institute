@@ -15,11 +15,11 @@ export function renderCurveDivider({ bgColor = '#060b16', color = '#f4efe6', fli
   ` : '';
 
   return `
-    <div class="mockup-curve-divider ${flipClass}" aria-hidden="true" style="background-color: ${bgColor}; color: ${color}; margin-top: -3px; margin-bottom: -3px;">
-      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" class="mockup-curve-svg">
-        <rect x="-60" y="-10" width="1560" height="85" fill="${bgColor}"></rect>
-        <path class="curve-path-2" d="M-60,32 C360,60 720,5 1080,44 C1260,62 1380,20 1500,30 L1500,75 L-60,75 Z" fill="${color}" fill-opacity="0.75"></path>
-        <path class="curve-path-1" d="M-60,22 C320,54 680,10 1020,38 C1200,52 1350,16 1500,22 L1500,75 L-60,75 Z" fill="${color}"></path>
+    <div class="mockup-curve-divider ${flipClass}" aria-hidden="true" style="background-color: ${bgColor}; color: ${color}; margin-top: -4px; margin-bottom: -4px; transform: translateZ(0);">
+      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" class="mockup-curve-svg" style="display:block; width:calc(100% + 4px); margin-left:-2px; height:56px;">
+        <rect x="-60" y="-10" width="1560" height="95" fill="${bgColor}"></rect>
+        <path class="curve-path-2" d="M-60,32 C360,60 720,5 1080,44 C1260,62 1380,20 1500,30 L1500,85 L-60,85 Z" fill="${color}" fill-opacity="0.75"></path>
+        <path class="curve-path-1" d="M-60,22 C320,54 680,10 1020,38 C1200,52 1350,16 1500,22 L1500,85 L-60,85 Z" fill="${color}"></path>
       </svg>
       ${connectorHtml}
     </div>

@@ -18,7 +18,10 @@ export async function onRequestGet(context) {
   }
 
   try {
-    const object = await env.STORAGE.get(key);
+    let object = await env.STORAGE.get(key);
+    if (!object && !key.startsWith("uploads/")) {
+      object = await env.STORAGE.get(`uploads/${key}`);
+    }
 
     if (!object) {
       return new Response("Image not found", { status: 404 });

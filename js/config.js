@@ -1299,25 +1299,73 @@ class CriiApiClient {
     return newApp;
   }
 
-  async updateApplicationStatus(appId, newStatus) {
+  async updateApplicationStatus(appId, newStatus, options = {}) {
+    const user = this.getCurrentUser();
+    const reviewerName = user ? (user.name || user.email) : "Administrator";
+    const { role = "Research Fellow", division = "Institute Research Council", grantLoginAccess = true, addToRoster = true } = options;
+
+    // 1. Sync with Cloudflare D1 Backend
+    try {
+      await fetch(`${CRII_CONFIG.API_BASE}/applications`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: appId,
+          status: newStatus,
+          reviewedBy: reviewerName,
+          role,
+          division,
+          grantLoginAccess,
+          addToRoster
+        })
+      });
+    } catch (err) {
+      console.warn("D1 application status sync notice:", err);
+    }
+
+    // 2. Also provision in /api/auth/users if Accepted
+    if (newStatus === 'Accepted' && grantLoginAccess) {
+      try {
+        const data = await this.getInternsData();
+        const app = (data.applications || []).find(a => a.id === appId);
+        if (app && app.email) {
+          await fetch(`${CRII_CONFIG.API_BASE}/auth/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: app.email,
+              name: app.fullName,
+              role: role,
+              division: division
+            })
+          });
+        }
+      } catch (err) {
+        console.warn("Direct allowed_users sync notice:", err);
+      }
+    }
+
+    // 3. Update Local Storage Cache
     const data = await this.getInternsData();
     const app = data.applications.find(a => a.id === appId);
     if (app) {
       app.status = newStatus;
+      app.reviewedBy = reviewerName;
+      app.reviewedAt = new Date().toISOString();
       if (newStatus === 'Accepted') {
         const alreadyActive = data.activeInterns.some(i => i.email === app.email);
-        if (!alreadyActive) {
+        if (!alreadyActive && addToRoster) {
           await this.saveIntern({
             name: app.fullName,
             email: app.email,
-            university: app.university,
-            degree: app.fieldOfStudy,
-            division: app.preferredDivision,
-            role: "Research Intern",
-            cohort: "Upcoming Cohort",
+            university: app.university || "Independent Research",
+            degree: app.fieldOfStudy || "Fellow Researcher",
+            division: division || app.preferredDivision || "Institute Research Council",
+            role: role || "Research Fellow",
+            cohort: "Fellowship Intake " + new Date().getFullYear(),
             status: "Active",
             isTeamMember: false,
-            bio: app.statement ? app.statement.slice(0, 140) + "..." : "Student Researcher at CRII"
+            bio: app.statement ? app.statement.slice(0, 140) + "..." : "Autonomous Fellow Researcher at CRII"
           });
         }
       }

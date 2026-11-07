@@ -37,6 +37,10 @@ export class AuthService {
     }
   }
 
+  getUser() {
+    return this.getCurrentUser();
+  }
+
   isAuthenticated() {
     const token = this.getToken();
     const user = this.getCurrentUser();

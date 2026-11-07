@@ -126,7 +126,7 @@ function initHeroCustomization() {
       video.style.transition = 'opacity 0.8s ease';
 
       const currentSrc = video.querySelector('source')?.getAttribute('src') || video.src;
-      if (currentSrc !== pickedVideo) {
+      if (currentSrc !== pickedVideo || video.readyState === 0) {
         video.innerHTML = `<source src="${pickedVideo}" type="video/mp4">`;
         video.load();
       }
@@ -140,7 +140,7 @@ function initHeroCustomization() {
         if (bgLayer) {
           bgLayer.style.opacity = '0';
           setTimeout(() => {
-            if (bgLayer.style.opacity === '0') {
+            if (bgLayer && bgLayer.style.opacity === '0') {
               bgLayer.style.display = 'none';
             }
           }, 850);
@@ -149,6 +149,12 @@ function initHeroCustomization() {
 
       video.onplaying = onVideoPlaying;
       video.addEventListener('playing', onVideoPlaying, { once: true });
+      video.addEventListener('timeupdate', onVideoPlaying, { once: true });
+
+      // If video is already ready or playing, reveal immediately
+      if (video.readyState >= 2 && !video.paused) {
+        onVideoPlaying();
+      }
 
       // Fallback: If video errors, keep image layer displayed so screen is never blank
       video.onerror = () => {
@@ -159,10 +165,13 @@ function initHeroCustomization() {
         video.style.display = 'none';
       };
 
+      // Always ensure muted first for browser autoplay compliance
+      video.muted = true;
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Autoplay restricted: retain image placeholder
+        playPromise.then(() => {
+          if (video.readyState >= 2) onVideoPlaying();
+        }).catch(() => {
           if (bgLayer) {
             bgLayer.style.display = 'block';
             bgLayer.style.opacity = String(desiredImageOpacity);
@@ -187,8 +196,8 @@ function initHeroCustomization() {
         video.innerHTML = `<source src="${pickedVideo}" type="video/mp4">`;
         video.load();
       }
+      video.muted = true;
       video.play().catch(() => {
-        // Fallback to muted playback if blocked
         video.muted = true;
         video.play().catch(() => {});
       });

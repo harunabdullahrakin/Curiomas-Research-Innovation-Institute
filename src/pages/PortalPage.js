@@ -8,29 +8,38 @@ import { auth } from '../services/auth.js';
 export function renderPortalPageHtml() {
   return `
     <div class="page-portal-wrapper">
-          <div class="brand-logo-container">
-            <img src="assets/curiomas-no-bg.png" alt="CRII Logo" class="brand-logo-img">
-          </div>
-          <div class="brand-text-block">
-            <div class="brand-title">CRII PORTAL</div>
-            <div class="brand-badge">Institute Verified</div>
-          </div>
-        </a>
+      <section class="portal-layout" id="portalDashboardSection">
+        <!-- Mobile Drawer Backdrop -->
+        <div class="portal-sidebar-backdrop" id="portalSidebarBackdrop"></div>
 
-        <!-- Desktop Toggle Button -->
-        <button id="portalSidebarToggleBtn" class="portal-sidebar-toggle-btn" title="Toggle sidebar (Ctrl+B)" aria-label="Toggle sidebar">
-          <svg class="toggle-icon-collapse" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2"/>
-            <path d="M9 3v18"/>
-            <path d="m15 9-3 3 3 3"/>
-          </svg>
-          <svg class="toggle-icon-expand" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2"/>
-            <path d="M9 3v18"/>
-            <path d="m13 9 3 3-3 3"/>
-          </svg>
-        </button>
-      </div>
+        <!-- Sidebar Shell -->
+        <aside class="portal-sidebar" id="portalSidebar">
+          <!-- Sidebar Brand Header -->
+          <div class="portal-brand">
+            <a href="/" class="portal-brand-content" title="Return to CRII Public Website">
+              <div class="brand-logo-container">
+                <img src="/assets/curiomas-no-bg.png" alt="CRII Logo" class="brand-logo-img">
+              </div>
+              <div class="brand-text-block">
+                <div class="brand-title">CRII PORTAL</div>
+                <div class="brand-badge">Institute Verified</div>
+              </div>
+            </a>
+
+            <!-- Desktop Toggle Button -->
+            <button id="portalSidebarToggleBtn" class="portal-sidebar-toggle-btn" title="Toggle sidebar (Ctrl+B)" aria-label="Toggle sidebar">
+              <svg class="toggle-icon-collapse" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2"/>
+                <path d="M9 3v18"/>
+                <path d="m15 9-3 3 3 3"/>
+              </svg>
+              <svg class="toggle-icon-expand" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2"/>
+                <path d="M9 3v18"/>
+                <path d="m13 9 3 3-3 3"/>
+              </svg>
+            </button>
+          </div>
 
       <!-- Navigation Menu -->
       <nav class="portal-nav">
@@ -99,7 +108,20 @@ export function renderPortalPageHtml() {
           </button>
         </div>
 
-        <!-- Group 4: Governance & System -->
+        <!-- Group 4: Storage & Media Manager -->
+        <div class="portal-nav-group">
+          <div class="portal-nav-group-title">Storage & Assets</div>
+
+          <button class="portal-nav-btn" data-tab="storage" data-tooltip="Media Storage Manager">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            </svg>
+            <span class="portal-nav-label">Media & R2 Storage</span>
+            <span id="sidebarMediaBadge" class="portal-nav-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700;">R2</span>
+          </button>
+        </div>
+
+        <!-- Group 5: Governance & System -->
         <div class="portal-nav-group">
           <div class="portal-nav-group-title">Governance & Settings</div>
 
@@ -1216,6 +1238,100 @@ export function renderPortalPageHtml() {
           </div>
         </div>
       </div>
+
+      <!-- ====================================================================
+           TAB: MEDIA & R2 STORAGE MANAGER
+           ==================================================================== -->
+      <div id="tab-storage" class="portal-tab-content" style="display:none;">
+        <div class="portal-topbar">
+          <div class="portal-title-block">
+            <h1>Image & Video Storage Manager</h1>
+            <p>Cloudflare R2 Bucket Object Catalog — Upload, inspect, manage, and delete images and videos.</p>
+          </div>
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" id="refreshStorageBtn" onclick="renderStorageTab()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <span>Refresh R2</span>
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('storageFileInput').click()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload Media</span>
+            </button>
+            <input type="file" id="storageFileInput" style="display: none;" accept="image/*,video/mp4,video/webm" multiple onchange="handleStorageFileUpload(event)">
+          </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="portal-stats-grid" style="margin-bottom: 2rem;">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: rgba(37,99,235,0.1); color: #2563eb;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Total Stored Objects</span>
+              <span class="stat-value" id="storageTotalCount">0</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: rgba(16,185,129,0.1); color: #10b981;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Storage Used</span>
+              <span class="stat-value" id="storageTotalSize">0 MB</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: rgba(245,158,11,0.1); color: #f59e0b;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect width="15" height="14" x="1" y="5" rx="2" ry="2"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Video Files</span>
+              <span class="stat-value" id="storageVideoCount">0</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: rgba(139,92,246,0.1); color: #8b5cf6;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6Z"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Image Files</span>
+              <span class="stat-value" id="storageImageCount">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar + Drag & Drop Area -->
+        <div class="data-table-card" style="padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+          <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-sm btn-primary storage-filter-btn active" data-filter="all" onclick="filterStorageMedia('all')">All Media</button>
+              <button class="btn btn-sm btn-secondary storage-filter-btn" data-filter="image" onclick="filterStorageMedia('image')">Images</button>
+              <button class="btn btn-sm btn-secondary storage-filter-btn" data-filter="video" onclick="filterStorageMedia('video')">Videos</button>
+            </div>
+
+            <div class="search-input-group" style="max-width: 380px; flex: 1;">
+              <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="storageSearchInput" class="search-input" placeholder="Search filenames, extensions, or keys..." oninput="handleStorageSearch(this.value)">
+            </div>
+          </div>
+
+          <!-- Drag & Drop Zone -->
+          <div id="storageDropzone" class="storage-dropzone" style="margin-top: 1.25rem; border: 2px dashed var(--border-color); border-radius: 12px; padding: 2rem 1.5rem; text-align: center; background: var(--bg-surface); cursor: pointer; transition: all 0.2s ease;">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--accent-primary, #0284c7)" stroke-width="1.8" style="margin-bottom: 0.65rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Drag and drop files here, or click to upload</div>
+            <div style="font-size: 0.82rem; color: var(--text-muted);">Supports PNG, JPG, WEBP, SVG, GIF images and MP4, WEBM videos (Up to 100MB per file)</div>
+          </div>
+        </div>
+
+        <!-- Media Grid Container -->
+        <div id="storageMediaGrid" class="storage-media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
     </main>
   </section>
 
@@ -1463,22 +1579,27 @@ export function renderPortalPageHtml() {
 
   <!-- Application Review Modal -->
   <div id="appReviewModal" class="modal-overlay">
-    <div class="modal-dialog" style="max-width: 720px;">
+    <div class="modal-dialog" style="max-width: 760px;">
       <div class="modal-header">
-        <h3 class="modal-title">Review Fellowship Application</h3>
+        <h3 class="modal-title" style="display:flex; align-items:center; gap:0.5rem;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Fellowship Application Review</span>
+        </h3>
         <button class="modal-close">&times;</button>
       </div>
-      <div id="appReviewDetails" class="modal-body"></div>
-      <div class="modal-footer" style="justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
-        <button id="rejectAppBtn" class="btn btn-sm" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.25);">
-          Decline
+      <div id="appReviewDetails" class="modal-body" style="padding: 1.5rem;"></div>
+      <div class="modal-footer" style="justify-content:space-between; flex-wrap:wrap; gap:0.5rem; background: var(--bg-surface); border-top: 1px solid var(--border-color); padding: 1rem 1.5rem;">
+        <button id="rejectAppBtn" class="btn btn-sm" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.25); font-weight:600; padding:0.5rem 1rem;">
+          ✕ Decline & Send Email
         </button>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-          <button id="reviewEmailApplicantBtn" class="btn btn-sm" style="background:#09261c; color:#ffffff; border:1px solid #09261c;">
-            Email Candidate ✉
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+          <button id="reviewEmailApplicantBtn" class="btn btn-sm" style="background:rgba(37,99,235,0.08); color:var(--accent-primary); border:1px solid rgba(37,99,235,0.2);">
+            ✉ Custom Email
           </button>
           <button id="reviewUnderwayBtn" class="btn btn-secondary btn-sm">Mark Under Review</button>
-          <button id="acceptAppBtn" class="btn btn-primary btn-sm">Accept & Enroll to Cohort ✓</button>
+          <button id="acceptAppBtn" class="btn btn-primary btn-sm" style="font-weight:600; padding:0.5rem 1.25rem;">
+            ✓ Accept & Provision Fellow
+          </button>
         </div>
       </div>
     </div>
