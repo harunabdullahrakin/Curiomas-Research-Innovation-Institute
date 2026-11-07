@@ -1671,9 +1671,14 @@ function initHeroAppearanceSettings() {
   const overlaySlider = document.getElementById('settingHeroOverlay');
   const blurBadge = document.getElementById('heroBlurValueBadge');
   const overlayBadge = document.getElementById('heroOverlayValueBadge');
+  const soundEnabledCheckbox = document.getElementById('settingHeroSoundEnabled');
 
   activeFixedImageIndex = Number(settings.fixedImageIndex) || 0;
   activeFixedVideoIndex = Number(settings.fixedVideoIndex) || 0;
+
+  if (soundEnabledCheckbox) {
+    soundEnabledCheckbox.checked = settings.soundEnabled !== undefined ? Boolean(settings.soundEnabled) : true;
+  }
 
   if (fontSelect && settings.fontFamily) {
     fontSelect.value = settings.fontFamily;
@@ -1733,6 +1738,7 @@ function initHeroAppearanceSettings() {
       const imageOpacity = imageOpacitySlider ? Number(imageOpacitySlider.value) / 100 : 0.40;
       const blurPx = blurSlider ? Number(blurSlider.value) : 12;
       const overlayOpacity = overlaySlider ? Number(overlaySlider.value) / 100 : 0.55;
+      const soundEnabled = soundEnabledCheckbox ? soundEnabledCheckbox.checked : true;
 
       await window.CRII_API.saveHeroSettings({
         mediaType,
@@ -1740,6 +1746,7 @@ function initHeroAppearanceSettings() {
         fixedImageIndex: activeFixedImageIndex,
         fixedVideoIndex: activeFixedVideoIndex,
         fontFamily,
+        soundEnabled,
         backgroundImages: [...activeHeroBackgroundImages],
         backgroundVideos: [...activeHeroBackgroundVideos],
         videoUrl: activeHeroBackgroundVideos[0] || "assets/hero-bg.mp4",

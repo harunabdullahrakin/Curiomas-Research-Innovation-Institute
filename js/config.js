@@ -342,6 +342,7 @@ class CriiApiClient {
         if (!parsed.mediaType) parsed.mediaType = 'both';
         if (!parsed.selectionMode) parsed.selectionMode = 'random';
         if (parsed.fixedImageIndex === undefined) parsed.fixedImageIndex = 0;
+        if (parsed.soundEnabled === undefined) parsed.soundEnabled = true;
         if (!Array.isArray(parsed.backgroundVideos) || parsed.backgroundVideos.length === 0) {
           parsed.backgroundVideos = [
         "assets/hero-bg.mp4",
@@ -358,6 +359,8 @@ class CriiApiClient {
       mediaType: "both",
       selectionMode: "random",
       fixedImageIndex: 0,
+      fixedVideoIndex: 0,
+      soundEnabled: true,
       fixedVideoIndex: 0,
       backgroundVideos: [
         "assets/hero-bg.mp4",
@@ -389,6 +392,7 @@ class CriiApiClient {
       fixedVideoIndex: Math.max(0, Number(settings.fixedVideoIndex) || 0),
       backgroundVideos: Array.isArray(settings.backgroundVideos) ? settings.backgroundVideos.filter(u => typeof u === 'string' && u.trim().length > 0) : [],
       videoUrl: settings.videoUrl || (Array.isArray(settings.backgroundVideos) && settings.backgroundVideos[0]) || "assets/hero-bg.mp4",
+      soundEnabled: settings.soundEnabled !== undefined ? Boolean(settings.soundEnabled) : true,
       blurPx: Math.max(0, Math.min(40, Number(settings.blurPx) || 0)),
       overlayOpacity: Math.max(0, Math.min(1, Number(settings.overlayOpacity) || 0.55)),
       fontFamily: settings.fontFamily || "Eyekons",

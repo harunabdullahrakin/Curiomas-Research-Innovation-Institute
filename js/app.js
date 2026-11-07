@@ -225,6 +225,14 @@ function initHeroCustomization() {
     }
   }
 
+  // Audio / Sound Handler for Hero Video
+  if (video && video.style.display !== 'none') {
+    initHeroSound(video, settings);
+  } else {
+    const soundBtn = document.getElementById('heroSoundToggle');
+    if (soundBtn) soundBtn.style.display = 'none';
+  }
+
   // 4. Dynamic Hero Title Font Family
   const heroTitle = document.querySelector('.mockup-hero-title');
   if (heroTitle && settings.fontFamily) {
@@ -246,6 +254,102 @@ function initHeroCustomization() {
 
   document.documentElement.style.setProperty('--hero-blur', `${blurPx}px`);
   document.documentElement.style.setProperty('--hero-overlay-bg', `rgba(10, 15, 30, ${overlayOpacity})`);
+
+  // 5. Dynamic Background Image for ALL Sub-Pages (.mockup-page-hero)
+  const subPageHeros = document.querySelectorAll('.mockup-page-hero');
+  if (subPageHeros && subPageHeros.length > 0) {
+    subPageHeros.forEach(pageHero => {
+      let pageBg = pageHero.querySelector('.mockup-page-hero-bg-layer');
+      if (!pageBg && typeof document.createElement === 'function') {
+        pageBg = document.createElement('div');
+        pageBg.className = 'mockup-page-hero-bg-layer';
+        if (pageHero.prepend) {
+          pageHero.prepend(pageBg);
+        } else if (pageHero.insertBefore && pageHero.firstChild) {
+          pageHero.insertBefore(pageBg, pageHero.firstChild);
+        } else if (pageHero.appendChild) {
+          pageHero.appendChild(pageBg);
+        }
+      }
+      let pageOverlay = pageHero.querySelector('.mockup-page-hero-bg-overlay');
+      if (!pageOverlay && typeof document.createElement === 'function') {
+        pageOverlay = document.createElement('div');
+        pageOverlay.className = 'mockup-page-hero-bg-overlay';
+        if (pageBg && pageBg.insertAdjacentElement) {
+          pageBg.insertAdjacentElement('afterend', pageOverlay);
+        } else if (pageHero.appendChild) {
+          pageHero.appendChild(pageOverlay);
+        }
+      }
+
+      // Pick a random image from the pool
+      if (pageBg && pageBg.style) {
+        const randomSubImg = imagePool[Math.floor(Math.random() * imagePool.length)];
+        pageBg.style.backgroundImage = `url('${randomSubImg}')`;
+        pageBg.style.opacity = String(desiredImageOpacity || 0.38);
+      }
+    });
+  }
+}
+
+function initHeroSound(video, settings) {
+  if (!video) return;
+  const soundBtn = document.getElementById('heroSoundToggle');
+  const soundIcon = document.getElementById('heroSoundIcon');
+  const soundLabel = document.getElementById('heroSoundLabel');
+
+  const speakerOffIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+  const speakerOnIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+
+  function updateSoundUi(isUnmuted) {
+    if (soundBtn) {
+      if (isUnmuted) {
+        soundBtn.classList.add('is-playing');
+        if (soundIcon) soundIcon.innerHTML = speakerOnIcon;
+        if (soundLabel) soundLabel.textContent = 'Audio ON';
+      } else {
+        soundBtn.classList.remove('is-playing');
+        if (soundIcon) soundIcon.innerHTML = speakerOffIcon;
+        if (soundLabel) soundLabel.textContent = 'Audio Muted';
+      }
+    }
+  }
+
+  // Check saved preference or dashboard setting
+  const storedPref = localStorage.getItem('crii_hero_sound');
+  const shouldPlayAudio = settings.soundEnabled !== false && (storedPref === '1' || storedPref === null);
+
+  if (soundBtn) {
+    soundBtn.style.display = 'inline-flex';
+    updateSoundUi(!video.muted);
+
+    soundBtn.onclick = (e) => {
+      e.preventDefault();
+      video.muted = !video.muted;
+      if (!video.muted) {
+        video.volume = 0.85;
+        video.play().catch(() => {});
+      }
+      localStorage.setItem('crii_hero_sound', video.muted ? '0' : '1');
+      updateSoundUi(!video.muted);
+    };
+  }
+
+  if (shouldPlayAudio) {
+    const onFirstGesture = () => {
+      if (video && video.style.display !== 'none') {
+        video.muted = false;
+        video.volume = 0.85;
+        video.play().catch(() => {});
+        updateSoundUi(true);
+        localStorage.setItem('crii_hero_sound', '1');
+      }
+      window.removeEventListener('pointerdown', onFirstGesture);
+      window.removeEventListener('keydown', onFirstGesture);
+    };
+    window.addEventListener('pointerdown', onFirstGesture, { once: true });
+    window.addEventListener('keydown', onFirstGesture, { once: true });
+  }
 }
 
 let criiScrollObserver = null;

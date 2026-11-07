@@ -996,7 +996,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   background-color: #060b16;
   background-image: radial-gradient(circle at 82% 35%, rgba(45, 95, 185, 0.35) 0%, rgba(15, 30, 65, 0.2) 40%, transparent 70%);
   color: #ffffff;
-  padding-top: 5.5rem;
+  padding-top: 6.2rem;
   padding-bottom: 2rem;
   overflow: hidden;
   border-bottom: none;
@@ -1014,7 +1014,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   transform: translate(-50%, -50%);
   object-fit: cover;
   z-index: 0;
-  pointer-events: none;
+  pointer-events: none !important;
   opacity: 0.70;
   transition: opacity 0.8s ease-in-out;
 }
@@ -1028,7 +1028,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   opacity: 0.40;
   transition: opacity 1.2s ease-in-out;
   z-index: 0;
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
 .mockup-hero-bg-overlay {
@@ -1036,7 +1036,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   inset: 0;
   background: radial-gradient(circle at 50% 45%, rgba(6, 11, 22, 0.25) 0%, rgba(6, 11, 22, 0.75) 65%, #060b16 100%);
   z-index: 1;
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
 .mockup-hero-section .mockup-container {
@@ -1075,7 +1075,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   left: 0;
   right: 0;
   width: 100%;
-  z-index: 99999;
+  z-index: 2147483640 !important;
   display: flex;
   justify-content: center;
   pointer-events: none;
@@ -1087,29 +1087,37 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .mockup-nav-capsule {
-  pointer-events: auto;
+  pointer-events: auto !important;
   width: 100%;
   max-width: 1140px;
-  height: 52px;
-  background: rgba(8, 12, 22, 0.95);
+  height: 62px;
+  min-height: 62px;
+  background: rgba(6, 11, 22, 0.92);
+  background-image: linear-gradient(135deg, rgba(14, 165, 233, 0.10) 0%, rgba(6, 11, 22, 0.95) 50%, rgba(16, 185, 129, 0.08) 100%);
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid rgba(56, 189, 248, 0.16);
+  border: 1.5px solid rgba(56, 189, 248, 0.28);
   border-top: none;
-  border-radius: 0 0 16px 16px;
-  padding: 0 0.85rem 0 0.95rem;
+  border-radius: 0 0 18px 18px;
+  padding: 0 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 14px 35px -8px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.08);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.88), 0 0 28px rgba(2, 132, 199, 0.18);
   position: relative;
+  z-index: 2147483641 !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.mockup-nav-capsule * {
+  pointer-events: auto;
+}
+
 .mockup-nav-wrapper.nav-scrolled .mockup-nav-capsule {
-  background: rgba(6, 9, 16, 0.98);
-  box-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.9), 0 0 25px rgba(56, 189, 248, 0.16);
-  border-color: rgba(56, 189, 248, 0.28);
+  background: rgba(4, 8, 16, 0.98);
+  background-image: linear-gradient(135deg, rgba(14, 165, 233, 0.14) 0%, rgba(4, 8, 16, 0.98) 50%, rgba(16, 185, 129, 0.10) 100%);
+  box-shadow: 0 20px 50px -8px rgba(0, 0, 0, 0.94), 0 0 32px rgba(56, 189, 248, 0.24);
+  border-color: rgba(56, 189, 248, 0.40);
 }
 
 /* Brand & Expanding Logo Tag */
@@ -1662,6 +1670,60 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   color: #38bdf8;
 }
 
+/* Hero Sound / Audio Toggle Button */
+.hero-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: rgba(8, 14, 28, 0.72);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #e2e8f0;
+  padding: 0.62rem 1.15rem;
+  border-radius: 9999px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.14);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto !important;
+  user-select: none;
+}
+
+.hero-sound-btn:hover {
+  background: rgba(14, 24, 48, 0.92);
+  border-color: rgba(56, 189, 248, 0.70);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), 0 0 22px rgba(56, 189, 248, 0.38);
+}
+
+.hero-sound-btn.is-playing {
+  background: rgba(6, 32, 24, 0.88);
+  border-color: rgba(16, 185, 129, 0.60);
+  color: #34d399;
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.30);
+}
+
+.hero-sound-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.hero-sound-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
 .mockup-hero-ticker {
   position: relative;
   z-index: 2;
@@ -1696,12 +1758,33 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 /* Sub-page Cosmos Hero Banner */
 .mockup-page-hero {
   position: relative;
-  background: #060b16 radial-gradient(circle at 82% 35%, rgba(45, 95, 185, 0.28) 0%, rgba(15, 30, 65, 0.15) 40%, transparent 70%);
+  background-color: #060b16;
+  background-image: radial-gradient(circle at 82% 35%, rgba(45, 95, 185, 0.28) 0%, rgba(15, 30, 65, 0.15) 40%, transparent 70%);
   color: #ffffff;
-  padding-top: 5.8rem;
+  padding-top: 6.2rem;
   padding-bottom: 4.25rem;
   overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+}
+
+.mockup-page-hero-bg-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.38;
+  transition: opacity 1.2s ease-in-out;
+  z-index: 0;
+  pointer-events: none !important;
+}
+
+.mockup-page-hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(6, 11, 22, 0.35) 0%, rgba(6, 11, 22, 0.82) 70%, #060b16 100%);
+  z-index: 1;
+  pointer-events: none !important;
 }
 
 .mockup-page-hero::before {
@@ -2607,9 +2690,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     padding: 0;
   }
   .mockup-nav-capsule {
-    height: 48px;
-    padding: 0 0.65rem;
-    border-radius: 0 0 14px 14px;
+    height: 56px;
+    min-height: 56px;
+    padding: 0 0.85rem;
+    border-radius: 0 0 16px 16px;
   }
   .mockup-brand-tag {
     display: none !important;
@@ -2645,7 +2729,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     align-items: stretch;
     gap: 0.35rem;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.15);
-    z-index: 9999999 !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
   }
   .mockup-nav-links.show {
     display: flex !important;
@@ -3145,6 +3230,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   line-height: 0;
   pointer-events: none;
   z-index: 2;
+  margin-top: -2px !important;
+  margin-bottom: -2px !important;
+  display: block;
 }
 
 .mockup-curve-divider.curve-flip {
@@ -3154,36 +3242,37 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-curve-svg {
   position: relative;
   display: block;
-  width: calc(100% + 1.3px);
+  width: calc(100% + 2px);
   height: 56px;
+  vertical-align: top;
 }
 
 .mockup-curve-svg path.curve-path-1 {
   fill: currentColor;
-  opacity: 0.88;
+  opacity: 0.92;
   animation: curveWaveMotion 12s ease-in-out infinite alternate;
-  transform-origin: 50% 50%;
+  transform-origin: 50% 100% !important;
   will-change: transform;
 }
 
 .mockup-curve-svg path.curve-path-2 {
   fill: currentColor;
-  opacity: 0.45;
+  opacity: 0.50;
   animation: curveWaveMotion2 16s ease-in-out infinite alternate;
-  transform-origin: 50% 50%;
+  transform-origin: 50% 100% !important;
   will-change: transform;
 }
 
 @keyframes curveWaveMotion {
   0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  50% { transform: translate3d(-18px, 2px, 0) scaleY(1.08); }
-  100% { transform: translate3d(18px, -2px, 0) scaleY(0.94); }
+  50% { transform: translate3d(-18px, 0, 0) scaleY(1.05); }
+  100% { transform: translate3d(18px, 0, 0) scaleY(0.96); }
 }
 
 @keyframes curveWaveMotion2 {
   0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  50% { transform: translate3d(20px, -3px, 0) scaleY(1.12); }
-  100% { transform: translate3d(-18px, 3px, 0) scaleY(0.9); }
+  50% { transform: translate3d(20px, 0, 0) scaleY(1.07); }
+  100% { transform: translate3d(-18px, 0, 0) scaleY(0.95); }
 }
 
 /* Wavy Decorative Accent Underlines */
@@ -3268,15 +3357,4 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 
-/* Seamless curve divider standard */
-.mockup-curve-divider {
-  display: block;
-  width: 100%;
-  line-height: 0;
-  position: relative;
-}
-.mockup-curve-svg {
-  display: block;
-  width: 100%;
-  height: 52px;
-}
+
