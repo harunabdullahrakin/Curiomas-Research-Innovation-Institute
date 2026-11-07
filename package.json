@@ -1,0 +1,26 @@
+{
+  "name": "curiomas",
+  "version": "1.0.0",
+  "description": "Curiomas Research & Innovation Institute — Platform",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "pages:dev": "wrangler pages dev dist",
+    "pages:deploy": "wrangler pages deploy dist"
+  },
+  "keywords": [
+    "curiomas",
+    "research",
+    "open-science",
+    "vite",
+    "cloudflare-pages"
+  ],
+  "author": "Curiomas Institute",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^8.3.6",
+    "wrangler": "^4.158.0"
+  }
+}

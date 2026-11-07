@@ -1,0 +1,77 @@
+[
+  {
+    "id": "ds-crii-001",
+    "title": "TRAPPIST-1e Synthetic Atmospheric Transmission Spectra (0.6 - 12.0 μm)",
+    "category": "Space & Astrophysics",
+    "version": "v1.4.0",
+    "updated": "2026-03-12",
+    "format": "CSV & HDF5",
+    "size": "42.8 MB",
+    "license": "CC-BY 4.0 Open Science",
+    "leadResearcher": "Aria Rahman",
+    "description": "Synthetic radiative transfer transits modeled under 6 distinct atmospheric regimes: modern Earth-analog, Archean Earth-analog, desiccated CO2-rich, water-depleted abiotic, and flare-perturbed photochemistry.",
+    "parameters": ["Wavelength (μm)", "Transit Depth (ppm)", "1-sigma Uncertainty", "Molecular Absorption Contribution", "Stellar Flare Residual"],
+    "previewRows": [
+      {"wavelength_um": 0.852, "transit_depth_ppm": 5280.12, "uncertainty": 12.4, "primary_absorber": "H2O / Rayleigh", "regime": "Archean"},
+      {"wavelength_um": 1.414, "transit_depth_ppm": 5315.40, "uncertainty": 14.1, "primary_absorber": "H2O", "regime": "Archean"},
+      {"wavelength_um": 3.310, "transit_depth_ppm": 5392.88, "uncertainty": 18.2, "primary_absorber": "CH4", "regime": "Archean"},
+      {"wavelength_um": 4.280, "transit_depth_ppm": 5540.60, "uncertainty": 21.0, "primary_absorber": "CO2", "regime": "Archean"},
+      {"wavelength_um": 9.600, "transit_depth_ppm": 5304.15, "uncertainty": 28.5, "primary_absorber": "O3 (Trace)", "regime": "Archean"}
+    ]
+  },
+  {
+    "id": "ds-crii-002",
+    "title": "Ediacaran-Cambrian Metazoan Ortholog Calibrations & Fossil Node Chronologies",
+    "category": "Ancient Biology & Paleontology",
+    "version": "v2.1.0",
+    "updated": "2026-02-25",
+    "format": "JSON & FASTA",
+    "size": "18.3 MB",
+    "license": "CC-BY 4.0 Open Science",
+    "leadResearcher": "Shayan Debnath",
+    "description": "Curated dataset comprising 124 orthologous ribosomal and mitochondrial protein alignments with soft bounded stratigraphic calibrations from 38 worldwide fossil horizons.",
+    "parameters": ["Gene Family ID", "Phylogenetic Clade", "Minimum Node Age (Ma)", "Maximum Node Age (Ma)", "Stratigraphic Reference"],
+    "previewRows": [
+      {"clade": "Basal Bilateria", "node_min_ma": 575.4, "node_max_ma": 612.0, "calibration_marker": "Lantian / Doushantuo", "tree_support_posterior": 0.98},
+      {"clade": "Ecdysozoa", "node_min_ma": 541.0, "node_max_ma": 560.2, "calibration_marker": "Cloudina / Kimberella", "tree_support_posterior": 0.95},
+      {"clade": "Lophotrochozoa", "node_min_ma": 538.8, "node_max_ma": 558.0, "calibration_marker": "Small Shelly Fossils (SSF)", "tree_support_posterior": 0.96},
+      {"clade": "Deuterostomia", "node_min_ma": 526.0, "node_max_ma": 545.1, "calibration_marker": "Chengjiang Vetulicolians", "tree_support_posterior": 0.92}
+    ]
+  },
+  {
+    "id": "ds-crii-003",
+    "title": "Extremophilic Archaea Protein Stability & Melting Temperature Benchmarks",
+    "category": "AI & Computational Science",
+    "version": "v1.0.2",
+    "updated": "2026-01-18",
+    "format": "CSV & PDB/CIF",
+    "size": "65.1 MB",
+    "license": "ODbL 1.0",
+    "leadResearcher": "Kenji Takahashi",
+    "description": "Structural 3D coordinates and experimental melting temperatures (Tm) for 1,420 enzymes from deep-sea hydrothermal vents and volcanic thermal springs paired with mesophilic orthologs.",
+    "parameters": ["PDB/AlphaFold ID", "Species", "Optimal Growth Temp (°C)", "Experimental Tm (°C)", "Salt Bridge Density", "Loop Shortening Ratio"],
+    "previewRows": [
+      {"protein_id": "TKO_EST01", "species": "Thermococcus kodakarensis", "optimal_temp_c": 85, "melting_temp_c": 104.2, "salt_bridges": 38, "predicted_deltaG": -42.8},
+      {"protein_id": "MJA_KIN04", "species": "Methanocaldococcus jannaschii", "optimal_temp_c": 80, "melting_temp_c": 98.6, "salt_bridges": 29, "predicted_deltaG": -37.4},
+      {"protein_id": "ECO_EST_WT", "species": "Escherichia coli (Control)", "optimal_temp_c": 37, "melting_temp_c": 56.4, "salt_bridges": 11, "predicted_deltaG": -19.2}
+    ]
+  },
+  {
+    "id": "ds-crii-004",
+    "title": "Melanized Fungi Heavy-Ion Linear Energy Transfer (LET) Attenuation Log",
+    "category": "Astrobiology & Genetics",
+    "version": "v1.1.0",
+    "updated": "2026-04-01",
+    "format": "CSV & JSON",
+    "size": "9.4 MB",
+    "license": "CC-BY 4.0 Open Science",
+    "leadResearcher": "Zainab Chowdhury",
+    "description": "Dosimetric transmission rates for 200 MeV proton and 400 MeV/n Carbon ion beams through varying thicknesses (1mm - 20mm) of melanized Cladosporium sphaerospermum mycelium composites.",
+    "parameters": ["Beam Type", "LET (keV/μm)", "Shield Thickness (mm)", "Dose Transmitted (%)", "Biomass Survival (%)"],
+    "previewRows": [
+      {"beam": "Proton 200 MeV", "let_kev_um": 0.45, "thickness_mm": 5.0, "transmitted_pct": 84.2, "survival_pct": 99.8},
+      {"beam": "Proton 200 MeV", "let_kev_um": 0.45, "thickness_mm": 15.0, "transmitted_pct": 61.9, "survival_pct": 98.4},
+      {"beam": "Carbon Ion 400 MeV/n", "let_kev_um": 11.2, "thickness_mm": 10.0, "transmitted_pct": 49.3, "survival_pct": 94.1}
+    ]
+  }
+]

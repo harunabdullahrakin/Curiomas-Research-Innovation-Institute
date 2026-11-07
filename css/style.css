@@ -2018,7 +2018,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-editorial-section {
   background: #f4efe6;
   padding: 5rem 0;
-  border-bottom: 1px solid #e5dfd2;
+  border-bottom: none;
 }
 
 .editorial-header {
@@ -3261,10 +3261,12 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   overflow: hidden;
   line-height: 0;
   pointer-events: none;
-  z-index: 2;
+  z-index: 5;
   margin-top: -2px !important;
   margin-bottom: -2px !important;
   display: block;
+  border: none !important;
+  outline: none !important;
 }
 
 .mockup-curve-divider.curve-flip {
@@ -3274,37 +3276,42 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-curve-svg {
   position: relative;
   display: block;
-  width: calc(100% + 2px);
+  width: calc(100% + 4px);
+  margin-left: -2px;
   height: 56px;
   vertical-align: top;
+  border: none;
+  outline: none;
 }
 
 .mockup-curve-svg path.curve-path-1 {
-  fill: currentColor;
-  opacity: 0.92;
-  animation: curveWaveMotion 12s ease-in-out infinite alternate;
-  transform-origin: 50% 100% !important;
+  fill: currentColor !important;
+  opacity: 1 !important;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: curveWaveMotion 14s ease-in-out infinite alternate;
   will-change: transform;
 }
 
 .mockup-curve-svg path.curve-path-2 {
-  fill: currentColor;
-  opacity: 0.50;
-  animation: curveWaveMotion2 16s ease-in-out infinite alternate;
-  transform-origin: 50% 100% !important;
+  fill: currentColor !important;
+  opacity: 0.45;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: curveWaveMotion2 18s ease-in-out infinite alternate;
   will-change: transform;
 }
 
 @keyframes curveWaveMotion {
   0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  50% { transform: translate3d(-18px, 0, 0) scaleY(1.05); }
-  100% { transform: translate3d(18px, 0, 0) scaleY(0.96); }
+  50% { transform: translate3d(-14px, 0, 0) scaleY(1.06); }
+  100% { transform: translate3d(14px, 0, 0) scaleY(1.02); }
 }
 
 @keyframes curveWaveMotion2 {
   0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  50% { transform: translate3d(20px, 0, 0) scaleY(1.07); }
-  100% { transform: translate3d(-18px, 0, 0) scaleY(0.95); }
+  50% { transform: translate3d(16px, 0, 0) scaleY(1.08); }
+  100% { transform: translate3d(-14px, 0, 0) scaleY(1.03); }
 }
 
 /* Wavy Decorative Accent Underlines */
