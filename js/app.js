@@ -786,10 +786,31 @@ function initMobileNav() {
   });
 }
 
-// 5b. Auto-hiding Navbar on Scroll Down, Re-appearing on Scroll Up
+// 5b. Auto-hiding Navbar on Scroll Down, Re-appearing on Scroll Up & Adaptive Theme
 function initAutoHidingNavbar() {
   const navWrapper = document.querySelector('.mockup-nav-wrapper');
   if (!navWrapper) return;
+
+  function updateNavbarTheme() {
+    const heroSection = document.querySelector('.mockup-hero-section, .mockup-page-hero');
+    let isOverDark = false;
+
+    if (heroSection) {
+      const heroRect = heroSection.getBoundingClientRect();
+      isOverDark = heroRect.bottom > 85;
+    }
+
+    if (isOverDark) {
+      navWrapper.classList.remove('nav-theme-light');
+      navWrapper.classList.add('nav-theme-dark');
+    } else {
+      navWrapper.classList.remove('nav-theme-dark');
+      navWrapper.classList.add('nav-theme-light');
+    }
+  }
+
+  updateNavbarTheme();
+  window.updateNavbarTheme = updateNavbarTheme;
 
   let lastScrollY = window.pageYOffset || document.documentElement.scrollTop;
   let ticking = false;
@@ -799,6 +820,8 @@ function initAutoHidingNavbar() {
     if (!ticking) {
       window.requestAnimationFrame(() => {
         const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+        updateNavbarTheme();
 
         if (currentScrollY > 15) {
           navWrapper.classList.add('nav-scrolled');

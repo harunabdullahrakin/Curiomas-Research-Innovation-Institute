@@ -189,6 +189,11 @@ export class Router {
       }
     }
 
+    // Refresh Adaptive Navbar Theme (Transparent over dark hero, darker white over light content)
+    if (typeof window.updateNavbarTheme === 'function') {
+      window.updateNavbarTheme();
+    }
+
     // Handle hash scroll or scroll to top
     if (hash) {
       const targetId = hash.replace(/^#/, '');
