@@ -178,7 +178,7 @@ function initSidebarNavigation() {
   showTab(currentTab);
 }
 
-window.showTab = function(tabName) {
+function showTab(tabName) {
   document.querySelectorAll('.portal-tab-content').forEach(el => el.style.display = 'none');
   const target = document.getElementById(`tab-${tabName}`);
   if (target) target.style.display = 'block';
@@ -188,14 +188,20 @@ window.showTab = function(tabName) {
   });
 
   currentTab = tabName;
-  if (tabName === 'divisions') renderDivisionsTab();
-  if (tabName === 'cohorts') { renderCohortsTab(); initApplicationFormBuilder(); }
+  if (tabName === 'divisions' && typeof window.renderDivisionsTab === 'function') {
+    window.renderDivisionsTab();
+  }
+  if (tabName === 'cohorts') {
+    if (typeof window.renderCohortsTab === 'function') window.renderCohortsTab();
+    if (typeof window.initApplicationFormBuilder === 'function') window.initApplicationFormBuilder();
+  }
   try {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
     window.history.replaceState({}, '', url);
   } catch (e) {}
-};
+}
+window.showTab = showTab;
 
 async function refreshDashboardData() {
   const stats = await window.CRII_API.getStats();
@@ -221,7 +227,7 @@ async function refreshDashboardData() {
   renderApplicationsTable();
   renderDatasetsTable();
   await renderDivisionsTab();
-  renderDivisionsTab();
+  await renderCohortsTab();
   renderAllowedUsersTable();
 }
 
@@ -493,7 +499,7 @@ window.handleBlockImageUpload = async function(event, idx) {
     renderBlockStack();
   } catch (err) {
     console.error('R2 Block Upload error:', err);
-    alert('Upload failed: ' + err.message + '\n\nMake sure Cloudflare R2 is bound as "STORAGE" in Pages Settings -> Functions.');
+    window.alert('Upload failed: ' + err.message + '\n\nMake sure Cloudflare R2 is bound as "STORAGE" in Pages Settings -> Functions.');
     if (statusSpan) statusSpan.style.display = 'none';
   }
 };
@@ -1123,7 +1129,7 @@ window.togglePublishPost = async function(id) {
 };
 
 window.deletePost = async function(id) {
-  if (confirm('Permanently delete this research publication?')) {
+  if (window.confirm('Permanently delete this research publication?')) {
     await window.CRII_API.deletePost(id);
     window.showToast('Publication deleted', 'info');
     await refreshDashboardData();
@@ -1311,7 +1317,7 @@ window.closeResearcherModal = function() {
 };
 
 window.deleteResearcher = async function(id) {
-  if (confirm('Delete this researcher from the institute roster?')) {
+  if (window.confirm('Delete this researcher from the institute roster?')) {
     await window.CRII_API.deleteIntern(id);
     window.showToast('Researcher profile removed', 'info');
     await refreshDashboardData();
@@ -1762,7 +1768,7 @@ function renderAllowedUsersTable() {
 }
 
 window.removeAllowedEmail = async function(email) {
-  if (confirm(`Revoke portal permissions for ${email}?`)) {
+  if (window.confirm(`Revoke portal permissions for ${email}?`)) {
     const res = await window.CRII_API.removeAllowedUser(email);
     if (!res.success) {
       window.showToast(res.error, 'error');
@@ -2089,7 +2095,7 @@ window.closeEmailComposer = function() {
 // -----------------------------------------------------------------------------
 // RESEARCH DIVISIONS CRUD MANAGEMENT
 // -----------------------------------------------------------------------------
-window.renderDivisionsTab = async function() {
+async function renderDivisionsTab() {
   const container = document.getElementById('portalDivisionsList');
   if (!container || !window.CRII_API) return;
 
@@ -2132,18 +2138,20 @@ window.renderDivisionsTab = async function() {
   `).join('');
 };
 
-window.openDivisionModal = function(id = null) {
+async function openDivisionModal(id = null) {
   const modal = document.getElementById('divisionModal');
   const modalTitle = document.getElementById('divisionModalTitle');
   const form = document.getElementById('divisionForm');
   if (!modal || !form) return;
 
   form.reset();
-  document.getElementById('divisionIdInput').value = '';
+  const idInput = document.getElementById('divisionIdInput');
+  if (idInput) idInput.value = '';
 
   if (id) {
     if (modalTitle) modalTitle.innerText = 'Edit Research Division';
-    window.CRII_API.getDivisions().then(divisions => {
+    try {
+      const divisions = (await window.CRII_API.getDivisions()) || [];
       const div = divisions.find(d => String(d.id) === String(id));
       if (div) {
         document.getElementById('divisionIdInput').value = div.id;
@@ -2154,27 +2162,35 @@ window.openDivisionModal = function(id = null) {
         document.getElementById('divisionImageInput').value = div.image || '';
         document.getElementById('divisionLinkInput').value = div.link || '/research';
       }
-    });
+    } catch (e) {
+      console.warn('Could not load division for edit:', e);
+    }
   } else {
     if (modalTitle) modalTitle.innerText = 'Add Research Division';
     document.getElementById('divisionLinkInput').value = '/research';
   }
 
   modal.classList.add('active');
-};
+  modal.style.display = 'flex';
+  modal.style.opacity = '1';
+  modal.style.pointerEvents = 'auto';
+}
 
-window.closeDivisionModal = function() {
+function closeDivisionModal() {
   const modal = document.getElementById('divisionModal');
   if (modal) {
     modal.classList.remove('active');
+    modal.style.display = 'none';
+    modal.style.opacity = '0';
+    modal.style.pointerEvents = 'none';
   }
-};
+}
 
-window.editDivision = function(id) {
+function editDivision(id) {
   window.openDivisionModal(id);
 };
 
-window.handleSaveDivision = async function(e) {
+async function handleSaveDivision(e) {
   e.preventDefault();
   const id = document.getElementById('divisionIdInput').value.trim();
   const title = document.getElementById('divisionTitleInput').value.trim();
@@ -2206,7 +2222,7 @@ window.handleSaveDivision = async function(e) {
     await window.renderDivisionsTab();
     if (window.showToast) window.showToast('Research division saved successfully!', 'success');
   } catch (err) {
-    alert('Failed to save division: ' + (err.message || err));
+    window.alert('Failed to save division: ' + (err.message || err));
   } finally {
     if (saveBtn) {
       saveBtn.disabled = false;
@@ -2215,8 +2231,8 @@ window.handleSaveDivision = async function(e) {
   }
 };
 
-window.deleteDivisionConfirm = async function(id, title) {
-  if (!confirm(`Are you sure you want to delete the division "${title}"?\nThis will remove it from the homepage and research catalog.`)) {
+async function deleteDivisionConfirm(id, title) {
+  if (!window.confirm(`Are you sure you want to delete the division "${title}"?\nThis will remove it from the homepage and research catalog.`)) {
     return;
   }
 
@@ -2225,12 +2241,21 @@ window.deleteDivisionConfirm = async function(id, title) {
     await window.renderDivisionsTab();
     if (window.showToast) window.showToast('Division removed.', 'info');
   } catch (err) {
-    alert('Failed to delete division: ' + (err.message || err));
+    window.alert('Failed to delete division: ' + (err.message || err));
   }
 };
 
+
+window.renderDivisionsTab = renderDivisionsTab;
+window.openDivisionModal = openDivisionModal;
+window.closeDivisionModal = closeDivisionModal;
+window.editDivision = editDivision;
+window.handleSaveDivision = handleSaveDivision;
+window.deleteDivisionConfirm = deleteDivisionConfirm;
+window.renderCohortsTab = renderCohortsTab;
+
 // --- COHORTS / WHO CAN JOIN US MANAGEMENT ---
-window.renderCohortsTab = async function() {
+async function renderCohortsTab() {
   const container = document.getElementById('portalCohortsList');
   if (!container || !window.CRII_API) return;
 
@@ -2276,68 +2301,93 @@ window.renderCohortsTab = async function() {
   `).join('');
 };
 
-window.openCohortModal = function(id = null) {
+async function openCohortModal(id = null) {
   const modal = document.getElementById('cohortModal');
   const modalTitle = document.getElementById('cohortModalTitle');
   const form = document.getElementById('cohortForm');
-  if (!modal) return;
+  if (!modal) {
+    console.error('cohortModal element not found');
+    return;
+  }
 
   if (form) form.reset();
-  document.getElementById('cohortIdInput').value = '';
+  const idInput = document.getElementById('cohortIdInput');
+  if (idInput) idInput.value = '';
 
   // Populate dynamic division options into cohortDivisionInput
   const divSelect = document.getElementById('cohortDivisionInput');
   if (divSelect && window.CRII_API) {
     divSelect.innerHTML = '<option value="All Research Tracks">All Research Tracks</option>';
-    const divisions = window.CRII_API.getDivisions() || [];
-    divisions.forEach(d => {
-      divSelect.innerHTML += `<option value="${d.title}">${d.title}</option>`;
-    });
+    try {
+      const divisions = (await window.CRII_API.getDivisions()) || [];
+      if (Array.isArray(divisions)) {
+        divisions.forEach(d => {
+          divSelect.innerHTML += `<option value="${d.title}">${d.title}</option>`;
+        });
+      }
+    } catch (e) {
+      console.warn('Could not load divisions for cohort modal:', e);
+    }
   }
 
   if (id) {
     if (modalTitle) modalTitle.innerText = 'Edit Cohort Profile';
-    window.CRII_API.getCohorts().then(cohorts => {
+    try {
+      const cohorts = (await window.CRII_API.getCohorts()) || [];
       const c = cohorts.find(item => String(item.id) === String(id));
       if (c) {
-        document.getElementById('cohortIdInput').value = c.id;
-        document.getElementById('cohortTitleInput').value = c.title || '';
-        if (document.getElementById('cohortGradeInput')) {
-          document.getElementById('cohortGradeInput').value = c.grade || c.academicLevel || '';
-        }
-        if (divSelect && c.divisionScope) {
-          divSelect.value = c.divisionScope;
-        }
-        document.getElementById('cohortDescInput').value = c.desc || '';
-        document.getElementById('cohortImageInput').value = c.image || '';
-        document.getElementById('cohortLinkInput').value = c.link || '/team#apply';
-        document.getElementById('cohortLinkTextInput').value = c.linkText || 'Apply as Fellow';
+        if (idInput) idInput.value = c.id;
+        const titleEl = document.getElementById('cohortTitleInput');
+        if (titleEl) titleEl.value = c.title || '';
+        const gradeEl = document.getElementById('cohortGradeInput');
+        if (gradeEl) gradeEl.value = c.grade || c.academicLevel || '';
+        if (divSelect && c.divisionScope) divSelect.value = c.divisionScope;
+        const descEl = document.getElementById('cohortDescInput');
+        if (descEl) descEl.value = c.desc || '';
+        const imgEl = document.getElementById('cohortImageInput');
+        if (imgEl) imgEl.value = c.image || '';
+        const linkEl = document.getElementById('cohortLinkInput');
+        if (linkEl) linkEl.value = c.link || '/team#apply';
+        const linkTxtEl = document.getElementById('cohortLinkTextInput');
+        if (linkTxtEl) linkTxtEl.value = c.linkText || 'Apply as Fellow';
       }
-    });
+    } catch (e) {
+      console.warn('Could not load cohort for edit:', e);
+    }
   } else {
     if (modalTitle) modalTitle.innerText = 'Add Cohort Profile';
-    if (document.getElementById('cohortGradeInput')) document.getElementById('cohortGradeInput').value = 'Undergraduate (1st - 4th Year)';
-    document.getElementById('cohortLinkInput').value = '/team#apply';
-    document.getElementById('cohortLinkTextInput').value = 'Apply as Fellow';
+    const gradeEl = document.getElementById('cohortGradeInput');
+    if (gradeEl) gradeEl.value = 'Undergraduate (1st - 4th Year)';
+    const linkEl = document.getElementById('cohortLinkInput');
+    if (linkEl) linkEl.value = '/team#apply';
+    const linkTxtEl = document.getElementById('cohortLinkTextInput');
+    if (linkTxtEl) linkTxtEl.value = 'Apply as Fellow';
   }
 
   modal.classList.add('active');
   modal.style.display = 'flex';
-};
+  modal.style.opacity = '1';
+  modal.style.pointerEvents = 'auto';
+}
+window.openCohortModal = openCohortModal;
 
-window.closeCohortModal = function() {
+function closeCohortModal() {
   const modal = document.getElementById('cohortModal');
   if (modal) {
     modal.classList.remove('active');
     modal.style.display = 'none';
+    modal.style.opacity = '0';
+    modal.style.pointerEvents = 'none';
   }
-};
+}
+window.closeCohortModal = closeCohortModal;
 
-window.editCohort = function(id) {
-  window.openCohortModal(id);
-};
+function editCohort(id) {
+  openCohortModal(id);
+}
+window.editCohort = editCohort;
 
-window.handleSaveCohort = async function(e) {
+async function handleSaveCohort(e) {
   if (e && e.preventDefault) e.preventDefault();
 
   const id = document.getElementById('cohortIdInput').value.trim();
@@ -2374,7 +2424,7 @@ window.handleSaveCohort = async function(e) {
     await window.renderCohortsTab();
     if (window.showToast) window.showToast('Cohort profile saved successfully!', 'success');
   } catch (err) {
-    alert('Failed to save cohort profile: ' + (err.message || err));
+    window.alert('Failed to save cohort profile: ' + (err.message || err));
   } finally {
     if (saveBtn) {
       saveBtn.disabled = false;
@@ -2383,8 +2433,10 @@ window.handleSaveCohort = async function(e) {
   }
 };
 
-window.deleteCohortConfirm = async function(id, title) {
-  if (!confirm(`Are you sure you want to delete the profile "${title}"?\nThis will remove it from the homepage "Who can join us?" section.`)) {
+window.handleSaveCohort = handleSaveCohort;
+
+async function deleteCohortConfirm(id, title) {
+  if (!window.confirm(`Are you sure you want to delete the profile "${title}"?\nThis will remove it from the homepage "Who can join us?" section.`)) {
     return;
   }
 
@@ -2393,10 +2445,12 @@ window.deleteCohortConfirm = async function(id, title) {
     await window.renderCohortsTab();
     if (window.showToast) window.showToast('Cohort profile deleted.', 'info');
   } catch (err) {
-    alert('Failed to delete cohort profile: ' + (err.message || err));
+    window.alert('Failed to delete cohort profile: ' + (err.message || err));
   }
 };
 
+
+window.deleteCohortConfirm = deleteCohortConfirm;
 
 async function loadRandomScientificBackground() {
   const pane = document.querySelector('.login-showcase-pane');
@@ -2444,29 +2498,13 @@ async function loadRandomScientificBackground() {
 // -----------------------------------------------------------------------------
 let currentAppFormConfig = null;
 
-window.initApplicationFormBuilder = function() {
-  if (!window.CRII_API || !window.CRII_API.getApplicationFormConfig) return;
-  currentAppFormConfig = window.CRII_API.getApplicationFormConfig();
-  if (!currentAppFormConfig) return;
-
-  const fields = currentAppFormConfig.fields || {};
-  Object.keys(fields).forEach(key => {
-    const visEl = document.getElementById('fieldVis_' + key);
-    const reqEl = document.getElementById('fieldReq_' + key);
-    if (visEl) visEl.checked = fields[key].visible !== false;
-    if (reqEl) reqEl.checked = fields[key].required === true;
-  });
-
-  renderCustomFieldsBuilder();
-};
-
-window.renderCustomFieldsBuilder = function() {
+function renderCustomFieldsBuilder() {
   const container = document.getElementById('customFieldsBuilderList');
   if (!container || !currentAppFormConfig) return;
 
   const customFields = currentAppFormConfig.customFields || [];
   if (customFields.length === 0) {
-    container.innerHTML = `<div style="font-size:0.85rem; color:var(--text-muted); padding:0.75rem 0; font-style:italic;">No custom fields added yet. Click "+ Add Custom Question" to create one.</div>`;
+    container.innerHTML = '<div style="font-size:0.85rem; color:var(--text-muted); padding:0.75rem 0; font-style:italic;">No custom fields added yet. Click "+ Add Custom Question" to create one.</div>';
     return;
   }
 
@@ -2498,15 +2536,34 @@ window.renderCustomFieldsBuilder = function() {
       </div>
     </div>
   `).join('');
-};
+}
+window.renderCustomFieldsBuilder = renderCustomFieldsBuilder;
 
-window.updateCustomFieldProp = function(idx, prop, val) {
+function initApplicationFormBuilder() {
+  if (!window.CRII_API || !window.CRII_API.getApplicationFormConfig) return;
+  currentAppFormConfig = window.CRII_API.getApplicationFormConfig();
+  if (!currentAppFormConfig) return;
+
+  const fields = currentAppFormConfig.fields || {};
+  Object.keys(fields).forEach(key => {
+    const visEl = document.getElementById('fieldVis_' + key);
+    const reqEl = document.getElementById('fieldReq_' + key);
+    if (visEl) visEl.checked = fields[key].visible !== false;
+    if (reqEl) reqEl.checked = fields[key].required === true;
+  });
+
+  renderCustomFieldsBuilder();
+}
+window.initApplicationFormBuilder = initApplicationFormBuilder;
+
+function updateCustomFieldProp(idx, prop, val) {
   if (!currentAppFormConfig || !currentAppFormConfig.customFields[idx]) return;
   currentAppFormConfig.customFields[idx][prop] = val;
   if (prop === 'type') renderCustomFieldsBuilder();
-};
+}
+window.updateCustomFieldProp = updateCustomFieldProp;
 
-window.addCustomFormFieldRow = function() {
+function addCustomFormFieldRow() {
   if (!currentAppFormConfig) currentAppFormConfig = { fields: {}, customFields: [] };
   if (!Array.isArray(currentAppFormConfig.customFields)) currentAppFormConfig.customFields = [];
   currentAppFormConfig.customFields.push({
@@ -2517,15 +2574,17 @@ window.addCustomFormFieldRow = function() {
     required: false
   });
   renderCustomFieldsBuilder();
-};
+}
+window.addCustomFormFieldRow = addCustomFormFieldRow;
 
-window.removeCustomFormFieldRow = function(idx) {
+function removeCustomFormFieldRow(idx) {
   if (!currentAppFormConfig || !Array.isArray(currentAppFormConfig.customFields)) return;
   currentAppFormConfig.customFields.splice(idx, 1);
   renderCustomFieldsBuilder();
-};
+}
+window.removeCustomFormFieldRow = removeCustomFormFieldRow;
 
-window.handleSaveAppFormSettings = async function(e) {
+async function handleSaveAppFormSettings(e) {
   if (e && e.preventDefault) e.preventDefault();
   if (!window.CRII_API || !window.CRII_API.saveApplicationFormConfig) return;
 
@@ -2546,4 +2605,5 @@ window.handleSaveAppFormSettings = async function(e) {
   if (window.showToast) {
     window.showToast('Application form settings & custom questions saved to database!', 'success');
   }
-};
+}
+window.handleSaveAppFormSettings = handleSaveAppFormSettings;

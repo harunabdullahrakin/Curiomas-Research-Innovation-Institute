@@ -1,3 +1,14 @@
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /**
  * CURIOMAS RESEARCH & INNOVATION INSTITUTE (CRII)
  * Interns & Core Team Showcase Script
@@ -5,7 +16,7 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadRosters();
-  initApplicationForm();
+  await initApplicationForm();
 });
 
 async function loadRosters() {
@@ -133,21 +144,49 @@ async function initApplicationForm() {
   // 2. Populate Real Divisions into Preferred Division dropdown
   const divSelect = document.getElementById('appDivision');
   if (divSelect && window.CRII_API) {
-    const realDivisions = window.CRII_API.getDivisions() || [];
-    if (realDivisions.length > 0) {
-      divSelect.innerHTML = realDivisions.map(d => `<option value="${escapeHtml(d.title)}">${escapeHtml(d.title)}</option>`).join('');
+    try {
+      const realDivisions = (await window.CRII_API.getDivisions()) || [];
+      if (Array.isArray(realDivisions) && realDivisions.length > 0) {
+        divSelect.innerHTML = '<option value="">Select Research Division Track...</option>' +
+          realDivisions.map(d => `<option value="${escapeHtml(d.title)}">${escapeHtml(d.title)}</option>`).join('');
+      } else {
+        divSelect.innerHTML = `
+          <option value="">Select Research Division Track...</option>
+          <option value="Space & Astrophysics">Space & Astrophysics</option>
+          <option value="Ancient Biology & Paleogenomics">Ancient Biology & Paleogenomics</option>
+          <option value="AI & Computational Science">AI & Computational Science</option>
+          <option value="Astrobiology & Extremophiles">Astrobiology & Extremophiles</option>
+          <option value="Interdisciplinary Open Science">Interdisciplinary Open Science</option>
+        `;
+      }
+    } catch (e) {
+      console.warn('Error fetching divisions for form:', e);
     }
   }
 
   // 3. Populate Real Cohorts & Grades into Academic Level dropdown
   const levelSelect = document.getElementById('appLevel');
   if (levelSelect && window.CRII_API) {
-    const realCohorts = window.CRII_API.getCohorts() || [];
-    if (realCohorts.length > 0) {
-      levelSelect.innerHTML = realCohorts.map(c => {
-        const gradeText = c.grade || c.academicLevel ? ` (${c.grade || c.academicLevel})` : '';
-        return `<option value="${escapeHtml(c.title + gradeText)}">${escapeHtml(c.title + gradeText)}</option>`;
-      }).join('');
+    try {
+      const realCohorts = (await window.CRII_API.getCohorts()) || [];
+      if (Array.isArray(realCohorts) && realCohorts.length > 0) {
+        levelSelect.innerHTML = '<option value="">Select Academic Level / Cohort Profile...</option>' +
+          realCohorts.map(c => {
+            const gradeText = c.grade || c.academicLevel ? ` (${c.grade || c.academicLevel})` : '';
+            return `<option value="${escapeHtml(c.title + gradeText)}">${escapeHtml(c.title + gradeText)}</option>`;
+          }).join('');
+      } else {
+        levelSelect.innerHTML = `
+          <option value="">Select Academic Level / Cohort Profile...</option>
+          <option value="Undergraduate Researchers (1st - 4th Year)">Undergraduate Researchers (1st - 4th Year)</option>
+          <option value="Postgraduate & Masters Scholars">Postgraduate & Masters Scholars</option>
+          <option value="High School Scholars (Grade 10-12)">High School Scholars (Grade 10-12)</option>
+          <option value="PhD Candidates & Postdoctoral Fellows">PhD Candidates & Postdoctoral Fellows</option>
+          <option value="Self-Directed & Independent Researchers">Self-Directed & Independent Researchers</option>
+        `;
+      }
+    } catch (e) {
+      console.warn('Error fetching cohorts for form:', e);
     }
   }
 
@@ -181,35 +220,39 @@ async function initApplicationForm() {
 
     // Render Custom Fields
     const customContainer = document.getElementById('appCustomFieldsContainer');
-    if (customContainer && Array.isArray(formConfig.customFields) && formConfig.customFields.length > 0) {
-      customContainer.innerHTML = formConfig.customFields.map((cf, idx) => {
-        const inputId = `appCustom_${idx}`;
-        let inputHtml = '';
-        if (cf.type === 'textarea') {
-          inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}"></textarea>`;
-        } else if (cf.type === 'select') {
-          const opts = Array.isArray(cf.options) ? cf.options : [];
-          inputHtml = `
-            <select id="${inputId}" class="form-select" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''}>
-              <option value="">Select option...</option>
-              ${opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}
-            </select>
-          `;
-        } else if (cf.type === 'number') {
-          inputHtml = `<input type="number" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
-        } else {
-          inputHtml = `<input type="text" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
-        }
+    if (customContainer) {
+      if (Array.isArray(formConfig.customFields) && formConfig.customFields.length > 0) {
+        customContainer.innerHTML = formConfig.customFields.map((cf, idx) => {
+          const inputId = `appCustom_${idx}`;
+          let inputHtml = '';
+          if (cf.type === 'textarea') {
+            inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}"></textarea>`;
+          } else if (cf.type === 'select') {
+            const opts = Array.isArray(cf.options) ? cf.options : [];
+            inputHtml = `
+              <select id="${inputId}" class="form-select" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''}>
+                <option value="">Select option...</option>
+                ${opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}
+              </select>
+            `;
+          } else if (cf.type === 'number') {
+            inputHtml = `<input type="number" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
+          } else {
+            inputHtml = `<input type="text" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
+          }
 
-        return `
-          <div class="form-group" style="margin-bottom:1.25rem;">
-            <label class="form-label" for="${inputId}" style="font-weight:600;">
-              ${escapeHtml(cf.label)} ${cf.required ? '*' : ''}
-            </label>
-            ${inputHtml}
-          </div>
-        `;
-      }).join('');
+          return `
+            <div class="form-group" style="margin-bottom:1.25rem;">
+              <label class="form-label" for="${inputId}" style="font-weight:600;">
+                ${escapeHtml(cf.label)} ${cf.required ? '*' : ''}
+              </label>
+              ${inputHtml}
+            </div>
+          `;
+        }).join('');
+      } else {
+        customContainer.innerHTML = '';
+      }
     }
   }
 
@@ -218,14 +261,16 @@ async function initApplicationForm() {
     e.preventDefault();
 
     const submitBtn = form.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `Submitting Application...`;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Submitting Application...';
+    }
 
     // Extract custom fields
     const customFields = {};
     document.querySelectorAll('#appCustomFieldsContainer [data-custom-key]').forEach(el => {
       const key = el.getAttribute('data-custom-key');
-      if (key) customFields[key] = el.value.trim();
+      if (key) customFields[key] = (el.value || '').trim();
     });
 
     const formData = {
@@ -244,26 +289,28 @@ async function initApplicationForm() {
       const res = await window.CRII_API.submitInternApplication(formData);
       
       const formCard = document.getElementById('applicationFormCard');
-      formCard.innerHTML = `
-        <div style="text-align:center; padding:3rem 1.5rem;">
-          <div style="width:56px; height:56px; border-radius:50%; background:rgba(16, 185, 129, 0.1); border:1px solid #10b981; color:#059669; display:grid; place-items:center; margin:0 auto 1.5rem;">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
+      if (formCard) {
+        formCard.innerHTML = `
+          <div style="text-align:center; padding:3rem 1.5rem;">
+            <div style="width:56px; height:56px; border-radius:50%; background:rgba(16, 185, 129, 0.1); border:1px solid #10b981; color:#059669; display:grid; place-items:center; margin:0 auto 1.5rem;">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5"/>
+              </svg>
+            </div>
+            <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:var(--text-primary);">Application Received</h2>
+            <p style="color:var(--text-secondary); max-width:540px; margin:0 auto 1.5rem; line-height:1.6;">
+              Thank you, <strong>${escapeHtml(res.fullName)}</strong>. Your research application for the 
+              <span style="color:var(--accent-primary); font-weight:600;">${escapeHtml(res.preferredDivision)}</span> track has been submitted to the admissions review board.
+            </p>
+            <div style="background:var(--bg-primary); padding:0.85rem 1.25rem; border-radius:10px; border:1px solid var(--border-color); display:inline-block; font-family:monospace; font-size:0.88rem; color:var(--accent-primary); margin-bottom:2rem;">
+              Application Reference: ${res.id}
+            </div>
+            <div>
+              <a href="/research" class="btn btn-secondary">Explore Research Papers</a>
+            </div>
           </div>
-          <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:var(--text-primary);">Application Received</h2>
-          <p style="color:var(--text-secondary); max-width:540px; margin:0 auto 1.5rem; line-height:1.6;">
-            Thank you, <strong>${escapeHtml(res.fullName)}</strong>. Your research application for the 
-            <span style="color:var(--accent-primary); font-weight:600;">${escapeHtml(res.preferredDivision)}</span> track has been submitted to the admissions review board.
-          </p>
-          <div style="background:var(--bg-primary); padding:0.85rem 1.25rem; border-radius:10px; border:1px solid var(--border-color); display:inline-block; font-family:monospace; font-size:0.88rem; color:var(--accent-primary); margin-bottom:2rem;">
-            Application Reference: ${res.id}
-          </div>
-          <div>
-            <a href="/research" class="btn btn-secondary">Explore Research Papers</a>
-          </div>
-        </div>
-      `;
+        `;
+      }
 
       // Dispatch EmailJS alert if template configured
       if (window.emailjs) {
@@ -290,11 +337,11 @@ async function initApplicationForm() {
       }
     } catch (err) {
       console.error('Error submitting application:', err);
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = 'Submit Research Application';
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Submit Research Application';
+      }
       alert('There was an issue submitting your application. Please check your connection and try again.');
     }
   });
 }
-
-

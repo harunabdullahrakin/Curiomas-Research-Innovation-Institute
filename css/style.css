@@ -3130,17 +3130,21 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   z-index: 2;
 }
 
+.mockup-curve-divider.curve-flip {
+  transform: rotate(180deg);
+}
+
 .mockup-curve-svg {
   position: relative;
   display: block;
   width: calc(100% + 1.3px);
-  height: 52px;
+  height: 56px;
 }
 
 .mockup-curve-svg path.curve-path-1 {
   fill: currentColor;
-  opacity: 0.85;
-  animation: curveWaveMotion 14s ease-in-out infinite alternate;
+  opacity: 0.88;
+  animation: curveWaveMotion 12s ease-in-out infinite alternate;
   transform-origin: 50% 50%;
   will-change: transform;
 }
@@ -3148,39 +3152,46 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .mockup-curve-svg path.curve-path-2 {
   fill: currentColor;
   opacity: 0.45;
-  animation: curveWaveMotion2 18s ease-in-out infinite alternate;
+  animation: curveWaveMotion2 16s ease-in-out infinite alternate;
   transform-origin: 50% 50%;
   will-change: transform;
 }
 
 @keyframes curveWaveMotion {
   0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  50% { transform: translate3d(-15px, 2px, 0) scaleY(1.06); }
-  100% { transform: translate3d(15px, -2px, 0) scaleY(0.95); }
+  50% { transform: translate3d(-18px, 2px, 0) scaleY(1.08); }
+  100% { transform: translate3d(18px, -2px, 0) scaleY(0.94); }
 }
 
 @keyframes curveWaveMotion2 {
   0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  50% { transform: translate3d(18px, -3px, 0) scaleY(1.1); }
-  100% { transform: translate3d(-16px, 2px, 0) scaleY(0.92); }
+  50% { transform: translate3d(20px, -3px, 0) scaleY(1.12); }
+  100% { transform: translate3d(-18px, 3px, 0) scaleY(0.9); }
 }
 
 /* Wavy Decorative Accent Underlines */
 .wavy-title-line {
   display: block;
-  width: 110px;
-  height: 12px;
-  margin: 0.4rem 0 1rem 0;
+  width: 120px;
+  height: 14px;
+  margin: 0.4rem 0 1.25rem 0;
   overflow: visible;
+}
+
+.wavy-title-line.center {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .wavy-title-line path {
   stroke: var(--accent-primary, #38bdf8);
-  stroke-width: 3;
+  stroke-width: 3.2;
   stroke-linecap: round;
   fill: none;
-  animation: wavyLineBreathe 6s ease-in-out infinite alternate;
-  will-change: transform;
+  stroke-dasharray: 140;
+  stroke-dashoffset: 0;
+  animation: wavyLineBreathe 5s ease-in-out infinite alternate, wavyLineDraw 6s ease-in-out infinite alternate;
+  will-change: transform, stroke-dashoffset;
 }
 
 @keyframes wavyLineBreathe {
@@ -3189,21 +3200,41 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   100% { transform: translateY(0); }
 }
 
+@keyframes wavyLineDraw {
+  0% { stroke-dashoffset: 0; }
+  50% { stroke-dashoffset: 24; }
+  100% { stroke-dashoffset: 0; }
+}
+
 /* Whimsical animated doodle curves matching reference design */
 .doodle-curve-accent {
   position: absolute;
   pointer-events: none;
   user-select: none;
   z-index: 1;
-  opacity: 0.75;
-  animation: doodleFloat 9s ease-in-out infinite alternate;
+  opacity: 0.85;
+  animation: doodleFloat 8s ease-in-out infinite alternate;
   will-change: transform;
+}
+
+.doodle-curve-accent.float-slow {
+  animation-duration: 13s;
+}
+
+.doodle-curve-accent.float-rev {
+  animation: doodleFloatRev 9s ease-in-out infinite alternate;
 }
 
 @keyframes doodleFloat {
   0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  50% { transform: translate3d(8px, -6px, 0) rotate(4deg); }
-  100% { transform: translate3d(-6px, 6px, 0) rotate(-3deg); }
+  50% { transform: translate3d(8px, -6px, 0) rotate(5deg); }
+  100% { transform: translate3d(-6px, 6px, 0) rotate(-4deg); }
+}
+
+@keyframes doodleFloatRev {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-10px, 8px, 0) rotate(-6deg); }
+  100% { transform: translate3d(8px, -6px, 0) rotate(5deg); }
 }
 
 /* Soft curved borders for primary cards */
@@ -3212,6 +3243,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .division-card,
 .cohort-card,
 .repo-card,
-.data-table-card {
-  border-radius: 20px !important;
+.data-table-card,
+.application-card,
+.team-member-card,
+.intern-card {
+  border-radius: 22px !important;
 }
+
