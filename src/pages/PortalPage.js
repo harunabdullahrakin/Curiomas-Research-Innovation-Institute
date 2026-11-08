@@ -939,19 +939,19 @@ export function renderPortalPageHtml() {
             <p>Provide and manage custom verified @domain email aliases for institute researchers, forwarding seamlessly to their personal Gmail accounts via ImprovMX.</p>
           </div>
           <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary btn-sm" id="openManageKeysBtn" title="Manage ImprovMX API Keys">
+            <button type="button" class="btn btn-secondary btn-sm" id="openManageKeysBtn" onclick="window.openManageKeysModal()" title="Manage ImprovMX API Keys">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
               <span>API Keys & Accounts</span>
             </button>
-            <button type="button" class="btn btn-secondary btn-sm" id="refreshAliasesBtn" title="Sync ImprovMX status">
+            <button type="button" class="btn btn-secondary btn-sm" id="refreshAliasesBtn" onclick="window.refreshAliasesData()" title="Sync ImprovMX status">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
               </svg>
               <span>Refresh Status</span>
             </button>
-            <button type="button" class="btn btn-primary" id="openCreateAliasBtn">
+            <button type="button" class="btn btn-primary" id="openCreateAliasBtn" onclick="window.openProvisionAliasModal()">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
@@ -1523,7 +1523,7 @@ export function renderPortalPageHtml() {
        ==================================================================== -->
 
   <!-- Modal 1: Provision Email Alias -->
-  <div id="provisionAliasModal" class="modal-overlay" style="display:none;">
+  <div id="provisionAliasModal" class="modal-overlay">
     <div class="modal-dialog" style="max-width: 520px;">
       <div class="modal-header">
         <h3 class="modal-title">Provision Researcher Email Alias</h3>
@@ -1579,7 +1579,7 @@ export function renderPortalPageHtml() {
   </div>
 
   <!-- Modal 2: Edit Email Alias -->
-  <div id="editAliasModal" class="modal-overlay" style="display:none;">
+  <div id="editAliasModal" class="modal-overlay">
     <div class="modal-dialog" style="max-width: 480px;">
       <div class="modal-header">
         <h3 class="modal-title">Edit Forwarding Destination</h3>
@@ -1607,7 +1607,7 @@ export function renderPortalPageHtml() {
   </div>
 
   <!-- Modal 3: Manage ImprovMX API Keys -->
-  <div id="manageImprovmxKeysModal" class="modal-overlay" style="display:none;">
+  <div id="manageImprovmxKeysModal" class="modal-overlay">
     <div class="modal-dialog" style="max-width: 580px;">
       <div class="modal-header">
         <h3 class="modal-title">ImprovMX API Keys & Accounts</h3>

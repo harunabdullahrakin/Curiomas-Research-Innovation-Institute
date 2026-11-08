@@ -66,6 +66,7 @@ async function initPortalDashboard() {
   initFestiveSettings();
   initEmailComposer();
   initStorageDropzone();
+  initAliasesTab();
 
   await refreshDashboardData();
 }
@@ -3437,11 +3438,7 @@ function initAliasesTab() {
 
   const refreshBtn = document.getElementById('refreshAliasesBtn');
   if (refreshBtn) {
-    refreshBtn.addEventListener('click', async () => {
-      window.showToast('Syncing ImprovMX domains & aliases...', 'info');
-      await window.renderAliasesTab(true);
-      window.showToast('ImprovMX status refreshed!', 'success');
-    });
+    refreshBtn.addEventListener('click', () => window.refreshAliasesData());
   }
 
   const domainSelect = document.getElementById('improvmxDomainSelect');
@@ -3459,6 +3456,18 @@ function initAliasesTab() {
       window.filterAliasesList('all');
     });
   }
+
+  // Backdrop click close for all ImprovMX modals
+  ['provisionAliasModal', 'editAliasModal', 'manageImprovmxKeysModal'].forEach(id => {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+        }
+      });
+    }
+  });
 
   // Live preview binding in provision modal
   const provAlias = document.getElementById('provAliasInput');
@@ -3481,6 +3490,22 @@ function initAliasesTab() {
   if (provFwd) provFwd.addEventListener('input', updatePreview);
 }
 window.initAliasesTab = initAliasesTab;
+
+window.refreshAliasesData = async function() {
+  window.showToast('Syncing ImprovMX domains & aliases...', 'info');
+  await window.renderAliasesTab(true);
+  window.showToast('ImprovMX status refreshed!', 'success');
+};
+
+window.testAliasDispatch = function(aliasEmail, fellowName) {
+  const name = fellowName || 'Researcher';
+  const body = 'Hello ' + name + ',\n\nThis is a verification dispatch sent via your official institute email alias (' + aliasEmail + ').\n\nBest regards,\nCuriomas Executive Council';
+  if (typeof window.openEmailComposer === 'function') {
+    window.openEmailComposer(aliasEmail, name, 'Institute Direct Dispatch Test', body);
+  } else {
+    window.showToast('Alias email: ' + aliasEmail, 'info');
+  }
+};
 
 async function renderAliasesTab(forceRefresh = false) {
   const tbody = document.getElementById('improvmxAliasesTbody');
@@ -3657,13 +3682,13 @@ function renderAliasesTable(aliases) {
           </td>
           <td style="text-align:right;">
             <div style="display:inline-flex; gap:0.4rem;">
-              <button type="button" class="btn btn-secondary btn-sm" title="Edit destination Gmail" onclick="window.openEditAliasModal(${item.id}, '${escapeHtml(item.alias)}', '${escapeHtml(item.forward)}', '${escapeHtml(currentImprovmxDomain)}')">
+              <button type="button" class="btn btn-secondary btn-sm" title="Edit destination Gmail" onclick="window.openEditAliasModal('${item.id}', '${escapeHtml(item.alias)}', '${escapeHtml(item.forward)}', '${escapeHtml(currentImprovmxDomain)}')">
                 Edit
               </button>
-              <button type="button" class="btn btn-glass btn-sm" title="Send test email to alias" onclick="window.openEmailComposer('${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}', '${escapeHtml(fellowName)}', 'Institute Direct Dispatch Test', 'Hello ${escapeHtml(fellowName)},\n\nThis is a verification dispatch sent via your official institute email alias (${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}).\n\nBest regards,\nCuriomas Executive Council')">
+              <button type="button" class="btn btn-glass btn-sm" title="Send test email to alias" onclick="window.testAliasDispatch('${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}', '${escapeHtml(fellowName)}')">
                 Test ✉
               </button>
-              <button type="button" class="btn btn-sm btn-icon" title="Revoke and delete alias" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteImprovmxAlias(${item.id}, '${escapeHtml(item.alias)}', '${escapeHtml(currentImprovmxDomain)}')">
+              <button type="button" class="btn btn-sm btn-icon" title="Revoke and delete alias" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteImprovmxAlias('${item.id}', '${escapeHtml(item.alias)}', '${escapeHtml(currentImprovmxDomain)}')">
                 ✕
               </button>
             </div>
@@ -3699,13 +3724,13 @@ function renderAliasesTable(aliases) {
           <div style="font-size:0.74rem; color:var(--text-muted);">Provisioned on ${createdStr}</div>
 
           <div class="portal-alias-actions">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="window.openEditAliasModal(${item.id}, '${escapeHtml(item.alias)}', '${escapeHtml(item.forward)}', '${escapeHtml(currentImprovmxDomain)}')">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.openEditAliasModal('${item.id}', '${escapeHtml(item.alias)}', '${escapeHtml(item.forward)}', '${escapeHtml(currentImprovmxDomain)}')">
               Edit
             </button>
-            <button type="button" class="btn btn-glass btn-sm" onclick="window.openEmailComposer('${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}', '${escapeHtml(fellowName)}', 'Institute Email Dispatch Test', 'Hello ${escapeHtml(fellowName)},\n\nThis is a verification dispatch sent to your official institute email alias.\n\nCuriomas Executive Council')">
+            <button type="button" class="btn btn-glass btn-sm" onclick="window.testAliasDispatch('${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}', '${escapeHtml(fellowName)}')">
               Test Dispatch
             </button>
-            <button type="button" class="btn btn-sm btn-icon" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteImprovmxAlias(${item.id}, '${escapeHtml(item.alias)}', '${escapeHtml(currentImprovmxDomain)}')">
+            <button type="button" class="btn btn-sm btn-icon" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteImprovmxAlias('${item.id}', '${escapeHtml(item.alias)}', '${escapeHtml(currentImprovmxDomain)}')">
               ✕
             </button>
           </div>
@@ -3752,23 +3777,31 @@ function openProvisionAliasModal() {
   // Populate domains
   const domainSelect = document.getElementById('provDomainSelect');
   if (domainSelect) {
-    domainSelect.innerHTML = cachedImprovmxDomains.map(d => 
+    const domains = cachedImprovmxDomains && cachedImprovmxDomains.length > 0 ? cachedImprovmxDomains : (currentImprovmxDomain ? [{ domain: currentImprovmxDomain }] : []);
+    domainSelect.innerHTML = domains.map(d => 
       '<option value="' + escapeHtml(d.domain) + '"' + (d.domain === currentImprovmxDomain ? ' selected' : '') + '>' + escapeHtml(d.domain) + '</option>'
     ).join('');
   }
 
-  document.getElementById('provAliasInput').value = '';
-  document.getElementById('provForwardInput').value = '';
+  const aliasInput = document.getElementById('provAliasInput');
+  const forwardInput = document.getElementById('provForwardInput');
+  if (aliasInput) aliasInput.value = '';
+  if (forwardInput) forwardInput.value = '';
   const suffixEl = document.getElementById('provDomainSuffix');
   if (suffixEl) suffixEl.textContent = '@' + (currentImprovmxDomain || 'domain.com');
 
-  modal.style.display = 'flex';
+  const prevEl = document.getElementById('provRelayPreview');
+  if (prevEl) {
+    prevEl.innerHTML = '<strong>handle@' + escapeHtml(currentImprovmxDomain || 'domain.com') + '</strong> &rarr; <span style="color:#2563eb;">researcher@gmail.com</span>';
+  }
+
+  modal.classList.add('active');
 }
 window.openProvisionAliasModal = openProvisionAliasModal;
 
 function closeProvisionAliasModal() {
   const modal = document.getElementById('provisionAliasModal');
-  if (modal) modal.style.display = 'none';
+  if (modal) modal.classList.remove('active');
 }
 window.closeProvisionAliasModal = closeProvisionAliasModal;
 
@@ -3834,18 +3867,23 @@ function openEditAliasModal(aliasId, currentAlias, currentForward, domain) {
   const modal = document.getElementById('editAliasModal');
   if (!modal) return;
 
-  document.getElementById('editAliasId').value = aliasId;
-  document.getElementById('editAliasDomain').value = domain;
-  document.getElementById('editAliasDisplay').value = currentAlias + '@' + domain;
-  document.getElementById('editForwardInput').value = currentForward;
+  const idEl = document.getElementById('editAliasId');
+  const domEl = document.getElementById('editAliasDomain');
+  const dispEl = document.getElementById('editAliasDisplay');
+  const fwdEl = document.getElementById('editForwardInput');
 
-  modal.style.display = 'flex';
+  if (idEl) idEl.value = aliasId;
+  if (domEl) domEl.value = domain;
+  if (dispEl) dispEl.value = currentAlias + '@' + domain;
+  if (fwdEl) fwdEl.value = currentForward;
+
+  modal.classList.add('active');
 }
 window.openEditAliasModal = openEditAliasModal;
 
 function closeEditAliasModal() {
   const modal = document.getElementById('editAliasModal');
-  if (modal) modal.style.display = 'none';
+  if (modal) modal.classList.remove('active');
 }
 window.closeEditAliasModal = closeEditAliasModal;
 
@@ -3921,14 +3959,14 @@ window.deleteImprovmxAlias = deleteImprovmxAlias;
 async function openManageKeysModal() {
   const modal = document.getElementById('manageImprovmxKeysModal');
   if (!modal) return;
-  modal.style.display = 'flex';
+  modal.classList.add('active');
   await renderImprovmxKeysList();
 }
 window.openManageKeysModal = openManageKeysModal;
 
 function closeManageKeysModal() {
   const modal = document.getElementById('manageImprovmxKeysModal');
-  if (modal) modal.style.display = 'none';
+  if (modal) modal.classList.remove('active');
 }
 window.closeManageKeysModal = closeManageKeysModal;
 
