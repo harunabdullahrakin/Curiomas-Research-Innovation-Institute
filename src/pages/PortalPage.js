@@ -39,6 +39,14 @@ export function renderPortalPageHtml() {
                 <path d="m13 9 3 3-3 3"/>
               </svg>
             </button>
+
+            <!-- Mobile Drawer Close Button -->
+            <button id="portalSidebarCloseBtn" class="portal-sidebar-close-btn" title="Close drawer" aria-label="Close drawer">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
       <!-- Navigation Menu -->
@@ -191,6 +199,31 @@ export function renderPortalPageHtml() {
         </a>
       </div>
     </aside>
+
+    <!-- Mobile Topbar for Admin Portal -->
+    <header class="portal-mobile-topbar" id="portalMobileTopbar">
+      <div class="portal-mobile-brand">
+        <button id="portalMobileMenuBtn" class="portal-mobile-menu-btn" type="button" aria-label="Open portal navigation">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div style="display:flex; align-items:center; gap:0.55rem;">
+          <img src="/assets/curiomas-no-bg.png" alt="CRII" style="width:26px; height:26px; object-fit:contain;">
+          <span style="font-weight:700; font-size:0.98rem; color:var(--text-primary); letter-spacing:0.03em;">CRII PORTAL</span>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <button type="button" class="portal-icon-btn" onclick="openEmailComposer('', '', '', '')" title="Compose Email via curiomas.members@gmail.com" aria-label="Compose Email">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </button>
+        <button type="button" class="portal-icon-btn theme-toggle-btn" title="Toggle theme" aria-label="Toggle theme">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+      </div>
+    </header>
 
     <!-- Main Content Area -->
     <main class="portal-main">
@@ -1509,7 +1542,7 @@ export function renderPortalPageHtml() {
             </div>
             <div class="form-group">
               <label class="form-label" for="resEmailInput">Email Address *</label>
-              <input type="email" id="resEmailInput" class="form-input" placeholder="jane.smith@curiomas.org" required>
+              <input type="email" id="resEmailInput" class="form-input" placeholder="curiomas.members@gmail.com" required>
             </div>
           </div>
 

@@ -89,6 +89,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   display: block;
   opacity: 1;
   pointer-events: auto;
+  z-index: 1040 !important;
 }
 
 /* Sidebar Shell */
@@ -219,6 +220,28 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 .portal-sidebar-toggle-btn .toggle-icon-expand {
   display: none;
+}
+
+/* Sidebar Close Button (Mobile Drawer) */
+.portal-sidebar-close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.portal-sidebar-close-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* Navigation Groups */
@@ -1237,11 +1260,21 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     height: 100vh;
     transform: translateX(-100%);
     box-shadow: none;
-    z-index: 100;
+    z-index: 1050 !important;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .portal-sidebar.mobile-open {
     transform: translateX(0);
     box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
+  }
+  .portal-sidebar-backdrop {
+    z-index: 1040 !important;
+  }
+  .portal-sidebar-toggle-btn {
+    display: none !important;
+  }
+  .portal-sidebar-close-btn {
+    display: inline-flex !important;
   }
   .portal-sidebar.collapsed {
     width: 280px !important;

@@ -273,7 +273,7 @@
 
 OK = convert, Cancel = start with an empty document.`)&&G(kt(e))}Gt(t)}})),r.querySelector(`.we-convert-blocks-btn`).addEventListener(`click`,Ut),r.querySelector(`.we-convert-doc-btn`).addEventListener(`click`,Wt),r.querySelector(`.we-undo-btn`).addEventListener(`click`,zt),r.querySelector(`.we-redo-btn`).addEventListener(`click`,Bt),window.addEventListener(`keydown`,e=>{(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()===`z`?e.shiftKey?(e.preventDefault(),Bt()):u===`blocks`&&(e.preventDefault(),zt()):(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()===`y`&&u===`blocks`&&(e.preventDefault(),Bt())}),jt(100),setTimeout(()=>Rt(`initial`),300))}function qt(e){let t=null;try{t=JSON.parse(localStorage.getItem(h)||`null`)}catch{t=null}return!t||!t.html?(e&&E(`No saved draft found for this article`,`info`),!1):e||confirm(`An auto-saved draft from `+new Date(t.t).toLocaleString()+` was found for this article.
 
-Restore it?`)?(G(t.html),Gt(`doc`),g=!0,!0):!1}window.CRII_WORD={load(t,n){if(Kt(),l){if(m=n||(()=>[]),h=`crii_doc_draft_`+(t&&t.id?t.id:`new`),g=!1,t&&e.isDoc(t.content)){G(t.content.slice(e.MARK.length)),Gt(`doc`);let n=null;try{n=JSON.parse(localStorage.getItem(h)||`null`)}catch{n=null}n&&n.html&&n.html!==Y()&&qt(!1)}else t?(G(``),Gt(`blocks`)):(G(``),Gt(`doc`),qt(!1));jt(100),At(`home`),v=null,wt(),Ct()}},getMode:()=>l?u:`blocks`,getCleanHtml:()=>l?Y():``,getWordCount:()=>l?gt():0,getExcerpt:e=>l?Ot(e||200):``,isEmpty:()=>!l||_t(),clearDraft(){try{localStorage.removeItem(h)}catch{}g=!1},blocksToHtml:kt}})();var le=`overview`,b=[],x={activeInterns:[],applications:[]},ue=[],de=null,S=[],C=!0;async function w(){let e=window.CRII_AUTH&&typeof window.CRII_AUTH.getUser==`function`&&window.CRII_AUTH.getUser()||window.CRII_API&&typeof window.CRII_API.getCurrentUser==`function`&&window.CRII_API.getCurrentUser(),t=document.getElementById(`portalAuthSection`),n=document.getElementById(`portalDashboardSection`);if(!e){t&&(t.style.display=`grid`,Ke()),n&&(n.style.display=`none`);return}t&&(t.style.display=`none`),n&&(n.style.display=`flex`);let r=document.getElementById(`portalUserName`),i=document.getElementById(`portalUserEmail`),a=document.getElementById(`portalUserRole`),o=document.getElementById(`portalUserAvatar`);r&&(r.innerText=e.name||`Researcher`),i&&(i.innerText=e.email||``),a&&(a.innerText=e.role||`Member`),o&&(o.innerText=(e.name||e.email||`R`).trim().charAt(0).toUpperCase()),E(),T(),pe(),P(),Te(),Oe(),De(),Ae(),je(),Me(),Ne(),it(),await D()}window.initPortalDashboard=w,window.refreshDashboardData=D,typeof document<`u`&&(document.readyState===`loading`?document.addEventListener(`DOMContentLoaded`,()=>w()):document.getElementById(`portalDashboardSection`)&&w());function T(){let e=document.getElementById(`portalSidebar`),t=document.getElementById(`portalSidebarToggleBtn`),n=document.getElementById(`portalDashboardSection`),r=document.getElementById(`portalMobileMenuBtn`),i=document.getElementById(`portalSidebarBackdrop`);e&&(localStorage.getItem(`crii_sidebar_collapsed`)===`true`&&window.innerWidth>992&&(e.classList.add(`collapsed`),n&&n.classList.add(`sidebar-collapsed`)),t&&t.addEventListener(`click`,t=>{t.stopPropagation();let r=!e.classList.contains(`collapsed`);e.classList.toggle(`collapsed`,r),n&&n.classList.toggle(`sidebar-collapsed`,r),localStorage.setItem(`crii_sidebar_collapsed`,r?`true`:`false`)}),r&&r.addEventListener(`click`,()=>{e.classList.add(`mobile-open`),i&&i.classList.add(`active`)}),i&&i.addEventListener(`click`,()=>{e.classList.remove(`mobile-open`),i.classList.remove(`active`)}),document.querySelectorAll(`.portal-nav-btn`).forEach(t=>{t.addEventListener(`click`,()=>{window.innerWidth<=992&&(e.classList.remove(`mobile-open`),i&&i.classList.remove(`active`))})}),window.addEventListener(`keydown`,e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()===`b`){let n=document.activeElement?document.activeElement.tagName.toLowerCase():``;if(n===`input`||n===`textarea`||document.activeElement&&document.activeElement.isContentEditable)return;e.preventDefault(),t&&t.click()}}),document.querySelectorAll(`.theme-toggle-btn`).forEach(e=>{e.addEventListener(`click`,e=>{e.preventDefault(),e.stopPropagation();let t=(document.documentElement.getAttribute(`data-theme`)||`light`)===`light`?`dark`:`light`;document.documentElement.setAttribute(`data-theme`,t),localStorage.setItem(`crii_theme_mode`,t)})}))}function E(){let e=document.querySelectorAll(`.portal-nav-btn`);e.forEach(t=>{t.addEventListener(`click`,()=>{e.forEach(e=>e.classList.remove(`active`)),t.classList.add(`active`),le=t.dataset.tab,fe(le)})});let t=document.getElementById(`portalLogoutBtn`);t&&t.addEventListener(`click`,()=>{window.CRII_API.logout()});let n=new URLSearchParams(window.location.search),r=n.get(`tab`)||n.get(`page`);r&&document.getElementById(`tab-${r}`)&&(le=r),fe(le)}function fe(e){document.querySelectorAll(`.portal-tab-content`).forEach(e=>e.style.display=`none`);let t=document.getElementById(`tab-${e}`);t&&(t.style.display=`block`),document.querySelectorAll(`.portal-nav-btn`).forEach(t=>{t.classList.toggle(`active`,t.dataset.tab===e)}),le=e,e===`divisions`&&typeof window.renderDivisionsTab==`function`&&window.renderDivisionsTab(),e===`storage`&&typeof window.renderStorageTab==`function`&&window.renderStorageTab(),e===`cohorts`&&(typeof window.renderCohortsTab==`function`&&window.renderCohortsTab(),typeof window.initApplicationFormBuilder==`function`&&window.initApplicationFormBuilder());try{let t=new URL(window.location);t.searchParams.set(`tab`,e),window.history.replaceState({},``,t)}catch{}}window.showTab=fe;async function D(){let e=await window.CRII_API.getStats();b=await window.CRII_API.getPosts({includeDrafts:!0}),x=await window.CRII_API.getInternsData(),ue=await window.CRII_API.getDatasets();let t=document.getElementById(`statPapers`);t&&(t.innerText=e.publishedPapers);let n=document.getElementById(`statInterns`);n&&(n.innerText=e.activeInterns);let r=document.getElementById(`statApps`);r&&(r.innerText=e.pendingApplications);let i=document.getElementById(`statDatasets`);i&&(i.innerText=e.openDatasets);let a=document.getElementById(`sidebarAppBadge`);a&&(a.innerText=e.pendingApplications),Se(),F(),Ee(),ke(),await Pe(),await Be(),H()}function pe(){let e=document.getElementById(`openNewPostEditorBtn`);e&&e.addEventListener(`click`,()=>{ge(null)});let t=document.getElementById(`bloggerBackBtn`);t&&t.addEventListener(`click`,()=>{_e()});let n=document.getElementById(`bloggerSaveBtn`);n&&n.addEventListener(`click`,async()=>{await xe()});let r=document.getElementById(`bloggerStatusBtn`);r&&r.addEventListener(`click`,()=>{C=!C,me()});let i=document.querySelectorAll(`.blogger-tab-btn`);i.forEach(e=>{e.addEventListener(`click`,()=>{i.forEach(e=>e.classList.remove(`active`)),e.classList.add(`active`),he(e.dataset.subtab)})});let a=document.getElementById(`bloggerOpenAddBlockBtn`);a&&a.addEventListener(`click`,()=>{openAddBlockModal()});let o=document.getElementById(`bloggerTitleInput`),s=document.getElementById(`bloggerSlugInput`);o&&s&&(o.addEventListener(`input`,()=>{de&&s.dataset.custom||(s.value=o.value.toLowerCase().replace(/[^a-z0-9]+/g,`-`).replace(/(^-|-$)+/g,``))}),s.addEventListener(`input`,()=>{s.dataset.custom=`true`}));let c=document.getElementById(`bloggerCoverInput`);c&&c.addEventListener(`input`,()=>{O(c.value)});let l=document.getElementById(`searchPostsInput`);l&&l.addEventListener(`input`,()=>{Se()})}function me(){let e=document.getElementById(`bloggerStatusBtn`);e&&(C?(e.className=`status-chip published`,e.innerText=`Published`):(e.className=`status-chip draft`,e.innerText=`Draft`))}function he(e){document.getElementById(`bloggerPaneWrite`).style.display=e===`write`?`block`:`none`,document.getElementById(`bloggerPaneDetails`).style.display=e===`details`?`block`:`none`,document.getElementById(`bloggerPanePreview`).style.display=e===`preview`?`block`:`none`,e===`preview`&&N()}function ge(e){de=e;let t=document.getElementById(`postsDirectoryView`),n=document.getElementById(`postsEditorView`);t&&(t.style.display=`none`),n&&(n.style.display=`block`);let r=null;e&&(r=b.find(t=>t.id===e));let i=e=>{document.getElementById(`bloggerTitleInput`).value=e.title||``,C=e.published!==!1,document.getElementById(`bloggerCoverInput`).value=e.coverImage||``,document.getElementById(`bloggerSlugInput`).value=e.slug||``,document.getElementById(`bloggerCategoryInput`).value=e.category||`Space & Astrophysics`;let t=document.getElementById(`bloggerFeaturedInput`);t&&(t.checked=!!e.featured),document.getElementById(`bloggerAuthorsInput`).value=(e.authors||[]).join(`, `),document.getElementById(`bloggerDoiInput`).value=e.doi||``,document.getElementById(`bloggerSummaryInput`).value=e.summary||``,document.getElementById(`bloggerAbstractInput`).value=e.abstract||``,document.getElementById(`bloggerTagsInput`).value=(e.tags||[]).join(`, `),O(e.coverImage||``),S=Array.isArray(e.blocks)&&e.blocks.length>0?JSON.parse(JSON.stringify(e.blocks)):k(e.content||``),me(),A(),window.CRII_WORD&&window.CRII_WORD.load(e,()=>S),he(`write`)};if(r)i(r);else if(e)window.CRII_API&&typeof window.CRII_API.getPostBySlugOrId==`function`&&window.CRII_API.getPostBySlugOrId(e).then(e=>{e&&i(e)});else{document.getElementById(`bloggerTitleInput`).value=``,C=!0,document.getElementById(`bloggerCoverInput`).value=``,document.getElementById(`bloggerSlugInput`).value=``,document.getElementById(`bloggerCategoryInput`).value=`Space & Astrophysics`;let e=document.getElementById(`bloggerFeaturedInput`);e&&(e.checked=!1);let t=window.CRII_API.getCurrentUser();document.getElementById(`bloggerAuthorsInput`).value=t&&(t.name||t.email)||`CRII Fellow`,document.getElementById(`bloggerDoiInput`).value=`10.5281/crii.2026.${Math.floor(1e3+Math.random()*9e3)}`,document.getElementById(`bloggerSummaryInput`).value=``,document.getElementById(`bloggerAbstractInput`).value=``,document.getElementById(`bloggerTagsInput`).value=`Research`,O(``),S=[{id:`b-${Date.now()}-1`,type:`heading`,content:`1. Introduction & Overview`},{id:`b-${Date.now()}-2`,type:`text`,content:`Describe research objectives, experimental setups, and discovery outcomes here.`}],me(),A(),window.CRII_WORD&&window.CRII_WORD.load(null,()=>S),he(`write`)}}window.openBloggerEditor=ge;async function _e(){let e=document.getElementById(`postsDirectoryView`),t=document.getElementById(`postsEditorView`);e&&(e.style.display=`block`),t&&(t.style.display=`none`),de=null,await D()}window.closeBloggerEditor=_e,window.switchBloggerSubtab=he,window.saveCurrentPost=xe;function O(e){let t=document.getElementById(`bloggerCoverPreviewBox`);t&&(t.innerHTML=e?`<img src="${e}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\'color:#ef4444; font-size:0.8rem;\\'>Failed to load cover image</span>'">`:`<span style="color:var(--text-muted); font-size:0.82rem;">Cover preview will appear here</span>`)}window.setBloggerCoverPreset=function(e){let t=document.getElementById(`bloggerCoverInput`);t&&(t.value=e,O(e))},window.handleCoverFileUpload=async function(e){let t=e.target.files&&e.target.files[0];if(!t)return;let n=document.getElementById(`bloggerCoverUploadStatus`);n&&(n.style.display=`block`,n.style.color=`var(--accent)`,n.innerHTML=`⏳ Uploading "${t.name}" to Cloudflare R2...`);let r=new FormData;r.append(`file`,t);try{let e=await fetch(`/api/upload`,{method:`POST`,body:r}),t=await e.json();if(!e.ok||t.error)throw Error(t.details||t.error||`Upload failed`);let i=document.getElementById(`bloggerCoverInput`);i&&(i.value=t.url,O(t.url)),n&&(n.style.color=`#10b981`,n.innerHTML=`✓ Uploaded to R2 successfully: <code>${t.url}</code>`)}catch(e){console.error(`R2 Upload error:`,e),n&&(n.style.color=`#ef4444`,n.innerHTML=`⚠️ Upload failed: ${e.message}. (You can still paste any external image URL).`)}},window.handleBlockImageUpload=async function(e,t){let n=e.target.files&&e.target.files[0];if(!n)return;let r=document.getElementById(`blockUploadStatus_${t}`);r&&(r.style.display=`inline-block`,r.style.color=`var(--accent)`,r.innerHTML=`⏳ Uploading...`);let i=new FormData;i.append(`file`,n);try{let e=await fetch(`/api/upload`,{method:`POST`,body:i}),n=await e.json();if(!e.ok||n.error)throw Error(n.details||n.error||`Upload failed`);updateBlockContent(t,`url`,n.url),A()}catch(e){console.error(`R2 Block Upload error:`,e),window.alert(`Upload failed: `+e.message+`
+Restore it?`)?(G(t.html),Gt(`doc`),g=!0,!0):!1}window.CRII_WORD={load(t,n){if(Kt(),l){if(m=n||(()=>[]),h=`crii_doc_draft_`+(t&&t.id?t.id:`new`),g=!1,t&&e.isDoc(t.content)){G(t.content.slice(e.MARK.length)),Gt(`doc`);let n=null;try{n=JSON.parse(localStorage.getItem(h)||`null`)}catch{n=null}n&&n.html&&n.html!==Y()&&qt(!1)}else t?(G(``),Gt(`blocks`)):(G(``),Gt(`doc`),qt(!1));jt(100),At(`home`),v=null,wt(),Ct()}},getMode:()=>l?u:`blocks`,getCleanHtml:()=>l?Y():``,getWordCount:()=>l?gt():0,getExcerpt:e=>l?Ot(e||200):``,isEmpty:()=>!l||_t(),clearDraft(){try{localStorage.removeItem(h)}catch{}g=!1},blocksToHtml:kt}})();var le=`overview`,b=[],x={activeInterns:[],applications:[]},ue=[],de=null,S=[],C=!0;async function w(){let e=window.CRII_AUTH&&typeof window.CRII_AUTH.getUser==`function`&&window.CRII_AUTH.getUser()||window.CRII_API&&typeof window.CRII_API.getCurrentUser==`function`&&window.CRII_API.getCurrentUser(),t=document.getElementById(`portalAuthSection`),n=document.getElementById(`portalDashboardSection`);if(!e){t&&(t.style.display=`grid`,Ke()),n&&(n.style.display=`none`);return}t&&(t.style.display=`none`),n&&(n.style.display=`flex`);let r=document.getElementById(`portalUserName`),i=document.getElementById(`portalUserEmail`),a=document.getElementById(`portalUserRole`),o=document.getElementById(`portalUserAvatar`);r&&(r.innerText=e.name||`Researcher`),i&&(i.innerText=e.email||``),a&&(a.innerText=e.role||`Member`),o&&(o.innerText=(e.name||e.email||`R`).trim().charAt(0).toUpperCase()),E(),T(),pe(),P(),Te(),Oe(),De(),Ae(),je(),Me(),Ne(),it(),await D()}window.initPortalDashboard=w,window.refreshDashboardData=D,typeof document<`u`&&(document.readyState===`loading`?document.addEventListener(`DOMContentLoaded`,()=>w()):document.getElementById(`portalDashboardSection`)&&w());function T(){let e=document.getElementById(`portalSidebar`),t=document.getElementById(`portalSidebarToggleBtn`),n=document.getElementById(`portalDashboardSection`),r=document.getElementById(`portalMobileMenuBtn`),i=document.getElementById(`portalSidebarBackdrop`);if(!e)return;localStorage.getItem(`crii_sidebar_collapsed`)===`true`&&window.innerWidth>992&&(e.classList.add(`collapsed`),n&&n.classList.add(`sidebar-collapsed`)),t&&t.addEventListener(`click`,t=>{t.stopPropagation();let r=!e.classList.contains(`collapsed`);e.classList.toggle(`collapsed`,r),n&&n.classList.toggle(`sidebar-collapsed`,r),localStorage.setItem(`crii_sidebar_collapsed`,r?`true`:`false`)}),r&&r.addEventListener(`click`,()=>{e.classList.add(`mobile-open`),i&&i.classList.add(`active`)});let a=document.getElementById(`portalSidebarCloseBtn`);a&&a.addEventListener(`click`,t=>{t.stopPropagation(),e.classList.remove(`mobile-open`),i&&i.classList.remove(`active`)}),i&&i.addEventListener(`click`,()=>{e.classList.remove(`mobile-open`),i.classList.remove(`active`)}),document.querySelectorAll(`.portal-nav-btn, .portal-public-link`).forEach(t=>{t.addEventListener(`click`,()=>{window.innerWidth<=992&&(e.classList.remove(`mobile-open`),i&&i.classList.remove(`active`))})}),window.addEventListener(`keydown`,e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()===`b`){let n=document.activeElement?document.activeElement.tagName.toLowerCase():``;if(n===`input`||n===`textarea`||document.activeElement&&document.activeElement.isContentEditable)return;e.preventDefault(),t&&t.click()}}),document.querySelectorAll(`.theme-toggle-btn`).forEach(e=>{e.addEventListener(`click`,e=>{e.preventDefault(),e.stopPropagation();let t=(document.documentElement.getAttribute(`data-theme`)||`light`)===`light`?`dark`:`light`;document.documentElement.setAttribute(`data-theme`,t),localStorage.setItem(`crii_theme_mode`,t)})})}function E(){let e=document.querySelectorAll(`.portal-nav-btn`);e.forEach(t=>{t.addEventListener(`click`,()=>{e.forEach(e=>e.classList.remove(`active`)),t.classList.add(`active`),le=t.dataset.tab,fe(le)})});let t=document.getElementById(`portalLogoutBtn`);t&&t.addEventListener(`click`,()=>{window.CRII_API.logout()});let n=new URLSearchParams(window.location.search),r=n.get(`tab`)||n.get(`page`);r&&document.getElementById(`tab-${r}`)&&(le=r),fe(le)}function fe(e){document.querySelectorAll(`.portal-tab-content`).forEach(e=>e.style.display=`none`);let t=document.getElementById(`tab-${e}`);t&&(t.style.display=`block`),document.querySelectorAll(`.portal-nav-btn`).forEach(t=>{t.classList.toggle(`active`,t.dataset.tab===e)}),le=e,e===`divisions`&&typeof window.renderDivisionsTab==`function`&&window.renderDivisionsTab(),e===`storage`&&typeof window.renderStorageTab==`function`&&window.renderStorageTab(),e===`cohorts`&&(typeof window.renderCohortsTab==`function`&&window.renderCohortsTab(),typeof window.initApplicationFormBuilder==`function`&&window.initApplicationFormBuilder());try{let t=new URL(window.location);t.searchParams.set(`tab`,e),window.history.replaceState({},``,t)}catch{}}window.showTab=fe;async function D(){let e=await window.CRII_API.getStats();b=await window.CRII_API.getPosts({includeDrafts:!0}),x=await window.CRII_API.getInternsData(),ue=await window.CRII_API.getDatasets();let t=document.getElementById(`statPapers`);t&&(t.innerText=e.publishedPapers);let n=document.getElementById(`statInterns`);n&&(n.innerText=e.activeInterns);let r=document.getElementById(`statApps`);r&&(r.innerText=e.pendingApplications);let i=document.getElementById(`statDatasets`);i&&(i.innerText=e.openDatasets);let a=document.getElementById(`sidebarAppBadge`);a&&(a.innerText=e.pendingApplications),Se(),F(),Ee(),ke(),await Pe(),await Be(),H()}function pe(){let e=document.getElementById(`openNewPostEditorBtn`);e&&e.addEventListener(`click`,()=>{ge(null)});let t=document.getElementById(`bloggerBackBtn`);t&&t.addEventListener(`click`,()=>{_e()});let n=document.getElementById(`bloggerSaveBtn`);n&&n.addEventListener(`click`,async()=>{await xe()});let r=document.getElementById(`bloggerStatusBtn`);r&&r.addEventListener(`click`,()=>{C=!C,me()});let i=document.querySelectorAll(`.blogger-tab-btn`);i.forEach(e=>{e.addEventListener(`click`,()=>{i.forEach(e=>e.classList.remove(`active`)),e.classList.add(`active`),he(e.dataset.subtab)})});let a=document.getElementById(`bloggerOpenAddBlockBtn`);a&&a.addEventListener(`click`,()=>{openAddBlockModal()});let o=document.getElementById(`bloggerTitleInput`),s=document.getElementById(`bloggerSlugInput`);o&&s&&(o.addEventListener(`input`,()=>{de&&s.dataset.custom||(s.value=o.value.toLowerCase().replace(/[^a-z0-9]+/g,`-`).replace(/(^-|-$)+/g,``))}),s.addEventListener(`input`,()=>{s.dataset.custom=`true`}));let c=document.getElementById(`bloggerCoverInput`);c&&c.addEventListener(`input`,()=>{O(c.value)});let l=document.getElementById(`searchPostsInput`);l&&l.addEventListener(`input`,()=>{Se()})}function me(){let e=document.getElementById(`bloggerStatusBtn`);e&&(C?(e.className=`status-chip published`,e.innerText=`Published`):(e.className=`status-chip draft`,e.innerText=`Draft`))}function he(e){document.getElementById(`bloggerPaneWrite`).style.display=e===`write`?`block`:`none`,document.getElementById(`bloggerPaneDetails`).style.display=e===`details`?`block`:`none`,document.getElementById(`bloggerPanePreview`).style.display=e===`preview`?`block`:`none`,e===`preview`&&N()}function ge(e){de=e;let t=document.getElementById(`postsDirectoryView`),n=document.getElementById(`postsEditorView`);t&&(t.style.display=`none`),n&&(n.style.display=`block`);let r=null;e&&(r=b.find(t=>t.id===e));let i=e=>{document.getElementById(`bloggerTitleInput`).value=e.title||``,C=e.published!==!1,document.getElementById(`bloggerCoverInput`).value=e.coverImage||``,document.getElementById(`bloggerSlugInput`).value=e.slug||``,document.getElementById(`bloggerCategoryInput`).value=e.category||`Space & Astrophysics`;let t=document.getElementById(`bloggerFeaturedInput`);t&&(t.checked=!!e.featured),document.getElementById(`bloggerAuthorsInput`).value=(e.authors||[]).join(`, `),document.getElementById(`bloggerDoiInput`).value=e.doi||``,document.getElementById(`bloggerSummaryInput`).value=e.summary||``,document.getElementById(`bloggerAbstractInput`).value=e.abstract||``,document.getElementById(`bloggerTagsInput`).value=(e.tags||[]).join(`, `),O(e.coverImage||``),S=Array.isArray(e.blocks)&&e.blocks.length>0?JSON.parse(JSON.stringify(e.blocks)):k(e.content||``),me(),A(),window.CRII_WORD&&window.CRII_WORD.load(e,()=>S),he(`write`)};if(r)i(r);else if(e)window.CRII_API&&typeof window.CRII_API.getPostBySlugOrId==`function`&&window.CRII_API.getPostBySlugOrId(e).then(e=>{e&&i(e)});else{document.getElementById(`bloggerTitleInput`).value=``,C=!0,document.getElementById(`bloggerCoverInput`).value=``,document.getElementById(`bloggerSlugInput`).value=``,document.getElementById(`bloggerCategoryInput`).value=`Space & Astrophysics`;let e=document.getElementById(`bloggerFeaturedInput`);e&&(e.checked=!1);let t=window.CRII_API.getCurrentUser();document.getElementById(`bloggerAuthorsInput`).value=t&&(t.name||t.email)||`CRII Fellow`,document.getElementById(`bloggerDoiInput`).value=`10.5281/crii.2026.${Math.floor(1e3+Math.random()*9e3)}`,document.getElementById(`bloggerSummaryInput`).value=``,document.getElementById(`bloggerAbstractInput`).value=``,document.getElementById(`bloggerTagsInput`).value=`Research`,O(``),S=[{id:`b-${Date.now()}-1`,type:`heading`,content:`1. Introduction & Overview`},{id:`b-${Date.now()}-2`,type:`text`,content:`Describe research objectives, experimental setups, and discovery outcomes here.`}],me(),A(),window.CRII_WORD&&window.CRII_WORD.load(null,()=>S),he(`write`)}}window.openBloggerEditor=ge;async function _e(){let e=document.getElementById(`postsDirectoryView`),t=document.getElementById(`postsEditorView`);e&&(e.style.display=`block`),t&&(t.style.display=`none`),de=null,await D()}window.closeBloggerEditor=_e,window.switchBloggerSubtab=he,window.saveCurrentPost=xe;function O(e){let t=document.getElementById(`bloggerCoverPreviewBox`);t&&(t.innerHTML=e?`<img src="${e}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\'color:#ef4444; font-size:0.8rem;\\'>Failed to load cover image</span>'">`:`<span style="color:var(--text-muted); font-size:0.82rem;">Cover preview will appear here</span>`)}window.setBloggerCoverPreset=function(e){let t=document.getElementById(`bloggerCoverInput`);t&&(t.value=e,O(e))},window.handleCoverFileUpload=async function(e){let t=e.target.files&&e.target.files[0];if(!t)return;let n=document.getElementById(`bloggerCoverUploadStatus`);n&&(n.style.display=`block`,n.style.color=`var(--accent)`,n.innerHTML=`⏳ Uploading "${t.name}" to Cloudflare R2...`);let r=new FormData;r.append(`file`,t);try{let e=await fetch(`/api/upload`,{method:`POST`,body:r}),t=await e.json();if(!e.ok||t.error)throw Error(t.details||t.error||`Upload failed`);let i=document.getElementById(`bloggerCoverInput`);i&&(i.value=t.url,O(t.url)),n&&(n.style.color=`#10b981`,n.innerHTML=`✓ Uploaded to R2 successfully: <code>${t.url}</code>`)}catch(e){console.error(`R2 Upload error:`,e),n&&(n.style.color=`#ef4444`,n.innerHTML=`⚠️ Upload failed: ${e.message}. (You can still paste any external image URL).`)}},window.handleBlockImageUpload=async function(e,t){let n=e.target.files&&e.target.files[0];if(!n)return;let r=document.getElementById(`blockUploadStatus_${t}`);r&&(r.style.display=`inline-block`,r.style.color=`var(--accent)`,r.innerHTML=`⏳ Uploading...`);let i=new FormData;i.append(`file`,n);try{let e=await fetch(`/api/upload`,{method:`POST`,body:i}),n=await e.json();if(!e.ok||n.error)throw Error(n.details||n.error||`Upload failed`);updateBlockContent(t,`url`,n.url),A()}catch(e){console.error(`R2 Block Upload error:`,e),window.alert(`Upload failed: `+e.message+`
 
 Make sure Cloudflare R2 is bound as "STORAGE" in Pages Settings -> Functions.`),r&&(r.style.display=`none`)}};function k(e){if(!e)return[{id:`b-${Date.now()}`,type:`text`,content:``}];let t=e.split(`
 
@@ -2125,55 +2125,57 @@ SNR | 24.5 dB`)}</textarea>
 
       <main class="mockup-page-content">
         <div class="mockup-container" style="max-width: 1080px;">
-          <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 3.5rem; align-items: flex-start;">
-            <!-- Contact Form Card -->
-            <div style="background: #ffffff; padding: 2.75rem; border-radius: 14px; border: 1px solid #e5dfd5; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
-              <h2 class="mockup-h2" style="font-size: 2rem; margin-bottom: 0.5rem;">Direct Institute Dispatch</h2>
-              <p style="font-size: 0.94rem; color: #5f6862; margin-bottom: 2rem; line-height: 1.6;">
-                Our student coordinators and research mentors typically respond within 24 to 48 hours.
-              </p>
+          <div class="contact-layout-grid">
+            <!-- Contact Form Column -->
+            <div class="contact-form-col">
+              <div class="contact-form-card">
+                <h2 class="mockup-h2" style="font-size: 2rem; margin-bottom: 0.5rem;">Direct Institute Dispatch</h2>
+                <p style="font-size: 0.94rem; color: #5f6862; margin-bottom: 2rem; line-height: 1.6;">
+                  Our student coordinators and research mentors typically respond within 24 to 48 hours.
+                </p>
 
-              <form id="contactForm">
-                <div class="form-group">
-                  <label class="form-label" for="contactName" style="font-weight: 600;">Your Full Name *</label>
-                  <input type="text" id="contactName" class="form-input" placeholder="e.g. Dr. Alex Mercer" required>
-                </div>
+                <form id="contactForm">
+                  <div class="form-group">
+                    <label class="form-label" for="contactName" style="font-weight: 600;">Your Full Name *</label>
+                    <input type="text" id="contactName" class="form-input" placeholder="e.g. Dr. Alex Mercer" required>
+                  </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="contactEmail" style="font-weight: 600;">Email Address *</label>
-                  <input type="email" id="contactEmail" class="form-input" placeholder="alex.mercer@institution.edu" required>
-                </div>
+                  <div class="form-group">
+                    <label class="form-label" for="contactEmail" style="font-weight: 600;">Email Address *</label>
+                    <input type="email" id="contactEmail" class="form-input" placeholder="alex.mercer@institution.edu" required>
+                  </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="contactAffiliation" style="font-weight: 600;">Institutional Affiliation / Organization</label>
-                  <input type="text" id="contactAffiliation" class="form-input" placeholder="University, Research Lab, or Independent Scholar">
-                </div>
+                  <div class="form-group">
+                    <label class="form-label" for="contactAffiliation" style="font-weight: 600;">Institutional Affiliation / Organization</label>
+                    <input type="text" id="contactAffiliation" class="form-input" placeholder="University, Research Lab, or Independent Scholar">
+                  </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="contactSubject" style="font-weight: 600;">Inquiry Category *</label>
-                  <select id="contactSubject" class="form-select" required>
-                    <option value="Research Collaboration">Academic & Research Collaboration</option>
-                    <option value="Internship Question">Student Fellowship & Internship Inquiries</option>
-                    <option value="Dataset Request">Dataset Verification & Licensing</option>
-                    <option value="General Question">General Institute Question</option>
-                  </select>
-                </div>
+                  <div class="form-group">
+                    <label class="form-label" for="contactSubject" style="font-weight: 600;">Inquiry Category *</label>
+                    <select id="contactSubject" class="form-select" required>
+                      <option value="Research Collaboration">Academic & Research Collaboration</option>
+                      <option value="Internship Question">Student Fellowship & Internship Inquiries</option>
+                      <option value="Dataset Request">Dataset Verification & Licensing</option>
+                      <option value="General Question">General Institute Question</option>
+                    </select>
+                  </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="contactMessage" style="font-weight: 600;">Message *</label>
-                  <textarea id="contactMessage" class="form-textarea" placeholder="Describe your inquiry, project proposal, or feedback in detail..." required style="min-height: 130px;"></textarea>
-                </div>
+                  <div class="form-group">
+                    <label class="form-label" for="contactMessage" style="font-weight: 600;">Message *</label>
+                    <textarea id="contactMessage" class="form-textarea" placeholder="Describe your inquiry, project proposal, or feedback in detail..." required style="min-height: 130px;"></textarea>
+                  </div>
 
-                <button type="submit" class="mockup-btn-dark-green" style="width: 100%; padding: 0.95rem; font-size: 1rem; border: none; cursor: pointer; margin-top: 1rem;">
-                  <span>Send Inquiry</span>
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                </button>
-              </form>
+                  <button type="submit" class="mockup-btn-dark-green" style="width: 100%; padding: 0.95rem; font-size: 1rem; border: none; cursor: pointer; margin-top: 1rem;">
+                    <span>Send Inquiry</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                  </button>
+                </form>
+              </div>
             </div>
 
-            <!-- Direct Channels & Context -->
-            <div style="display: flex; flex-direction: column; gap: 2rem;">
-              <div style="background: #ffffff; padding: 2.25rem; border-radius: 14px; border: 1px solid #e5dfd5; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+            <!-- Direct Channels & Context Column -->
+            <div class="contact-channels-col" style="display: flex; flex-direction: column; gap: 2rem;">
+              <div class="contact-channels-card">
                 <h3 style="font-size: 1.35rem; font-weight: 600; color: #16281e; margin-bottom: 1.5rem;">Direct Channels</h3>
 
                 <div style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -2183,7 +2185,7 @@ SNR | 24.5 dB`)}</textarea>
                     </div>
                     <div>
                       <div style="font-weight: 600; font-size: 0.95rem; color: #16281e;">General Administration</div>
-                      <div style="font-size: 0.88rem; color: #5f6862; margin-top: 0.2rem;">contact@curiomas.org</div>
+                      <a href="mailto:curiomas.members@gmail.com" style="font-size: 0.88rem; color: #0284c7; margin-top: 0.2rem; display: block; text-decoration: none; font-weight: 500;">curiomas.members@gmail.com</a>
                     </div>
                   </div>
 
@@ -2193,23 +2195,33 @@ SNR | 24.5 dB`)}</textarea>
                     </div>
                     <div>
                       <div style="font-weight: 600; font-size: 0.95rem; color: #16281e;">Student Fellowship Admissions</div>
-                      <div style="font-size: 0.88rem; color: #5f6862; margin-top: 0.2rem;">admissions@curiomas.org</div>
+                      <a href="mailto:curiomas.members@gmail.com" style="font-size: 0.88rem; color: #059669; margin-top: 0.2rem; display: block; text-decoration: none; font-weight: 500;">curiomas.members@gmail.com</a>
                     </div>
                   </div>
 
                   <div style="display: flex; gap: 1rem; align-items: flex-start;">
                     <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(99, 102, 241, 0.1); color: #6366f1; display: grid; place-items: center; flex-shrink: 0;">
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 17.93V18a1 1 0 0 1-1-1v-1a2 2 0 0 1 2-2h1.5a1 1 0 0 0 1-1v-.5a1.5 1.5 0 0 0-1.5-1.5H13a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1V4.07A8 8 0 0 1 20 12a7.92 7.92 0 0 1-.7 3.23z"/></svg>
+                    </div>
+                    <div>
+                      <div style="font-weight: 600; font-size: 0.95rem; color: #16281e;">Official Domain & Portal</div>
+                      <a href="https://www.curiomas.zone.id" target="_blank" rel="noopener noreferrer" style="font-size: 0.88rem; color: #6366f1; margin-top: 0.2rem; display: block; text-decoration: none; font-weight: 500;">https://www.curiomas.zone.id</a>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(15, 23, 42, 0.08); color: #1e293b; display: grid; place-items: center; flex-shrink: 0;">
                       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
                     </div>
                     <div>
                       <div style="font-weight: 600; font-size: 0.95rem; color: #16281e;">Open Source Code & Data</div>
-                      <div style="font-size: 0.88rem; color: #5f6862; margin-top: 0.2rem;">github.com/curiomas-crii</div>
+                      <a href="https://github.com/curiomas-crii" target="_blank" rel="noopener noreferrer" style="font-size: 0.88rem; color: #5f6862; margin-top: 0.2rem; display: block; text-decoration: none;">github.com/curiomas-crii</a>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div style="background: #f1ebe1; padding: 2.25rem; border-radius: 14px; border: 1px solid #e2d9cc;">
+              <div class="contact-context-card">
                 <h3 style="font-size: 1.25rem; font-weight: 600; color: #18281e; margin-bottom: 0.85rem;">Autonomous & Reproducible</h3>
                 <p style="font-size: 0.92rem; line-height: 1.65; color: #555f58; margin: 0;">
                   All scientific communications, dataset releases, and preprints are maintained under the institute's commitment to public reproducibility and global access.
@@ -2223,7 +2235,7 @@ SNR | 24.5 dB`)}</textarea>
       <!-- Footer Wave Divider -->
       ${Z({bgColor:`#faf8f5`,color:`#071f16`})}
     </div>
-  `}async function Kt(){let e=document.getElementById(`contactForm`);e&&e.addEventListener(`submit`,async t=>{t.preventDefault();let n=document.getElementById(`contactName`).value.trim(),r=document.getElementById(`contactEmail`).value.trim(),i=document.getElementById(`contactAffiliation`).value.trim(),a=document.getElementById(`contactSubject`).value.trim(),o=document.getElementById(`contactMessage`).value.trim(),s=e.querySelector(`button[type="submit"]`),c=s.innerHTML;s.disabled=!0,s.innerHTML=`<span>Sending inquiry...</span>`;try{if(window.emailjs){let e=localStorage.getItem(`crii_emailjs_template_id`)||(window.CRII_API&&typeof window.CRII_API.getEmailjsTemplateId==`function`?window.CRII_API.getEmailjsTemplateId():null)||`zhelx7y`;emailjs.init({publicKey:`h3x_9dtR8frBq2pCi`}),await emailjs.send(`curiomas`,e,{to_email:`curiomas.members@gmail.com`,from_name:n,sender_email:r,sender_affiliation:i,subject:`CRII Inquiry [${a}]: ${n}`,message:`From: ${n} (${r})\nAffiliation: ${i}\nCategory: ${a}\n\nMessage:\n${o}`,reply_to:r})}window.showToast&&window.showToast(`Your message has been sent successfully. We will be in touch shortly!`,`success`),e.reset()}catch(t){console.error(`Contact submit error:`,t),window.showToast&&window.showToast(`Inquiry received. If urgent, please email contact@curiomas.org directly.`,`info`),e.reset()}finally{s.disabled=!1,s.innerHTML=c}}),typeof window.refreshScrollAnimations==`function`&&window.refreshScrollAnimations()}function qt(){return`
+  `}async function Kt(){let e=document.getElementById(`contactForm`);e&&e.addEventListener(`submit`,async t=>{t.preventDefault();let n=document.getElementById(`contactName`).value.trim(),r=document.getElementById(`contactEmail`).value.trim(),i=document.getElementById(`contactAffiliation`).value.trim(),a=document.getElementById(`contactSubject`).value.trim(),o=document.getElementById(`contactMessage`).value.trim(),s=e.querySelector(`button[type="submit"]`),c=s.innerHTML;s.disabled=!0,s.innerHTML=`<span>Sending inquiry...</span>`;try{if(window.emailjs){let e=localStorage.getItem(`crii_emailjs_template_id`)||(window.CRII_API&&typeof window.CRII_API.getEmailjsTemplateId==`function`?window.CRII_API.getEmailjsTemplateId():null)||`zhelx7y`;emailjs.init({publicKey:`h3x_9dtR8frBq2pCi`}),await emailjs.send(`curiomas`,e,{to_email:`curiomas.members@gmail.com`,from_name:n,sender_email:r,sender_affiliation:i,subject:`CRII Inquiry [${a}]: ${n}`,message:`From: ${n} (${r})\nAffiliation: ${i}\nCategory: ${a}\n\nMessage:\n${o}`,reply_to:r})}window.showToast&&window.showToast(`Your message has been sent successfully. We will be in touch shortly!`,`success`),e.reset()}catch(t){console.error(`Contact submit error:`,t),window.showToast&&window.showToast(`Inquiry received. If urgent, please email curiomas.members@gmail.com directly.`,`info`),e.reset()}finally{s.disabled=!1,s.innerHTML=c}}),typeof window.refreshScrollAnimations==`function`&&window.refreshScrollAnimations()}function qt(){return`
     <div class="page-login-wrapper">
       <main class="login-split-page">
         <!-- LEFT PANEL: Visual Showcase with Random Scientific Image API -->
@@ -2335,6 +2347,14 @@ SNR | 24.5 dB`)}</textarea>
                 <rect width="18" height="18" x="3" y="3" rx="2"/>
                 <path d="M9 3v18"/>
                 <path d="m13 9 3 3-3 3"/>
+              </svg>
+            </button>
+
+            <!-- Mobile Drawer Close Button -->
+            <button id="portalSidebarCloseBtn" class="portal-sidebar-close-btn" title="Close drawer" aria-label="Close drawer">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
           </div>
@@ -2489,6 +2509,31 @@ SNR | 24.5 dB`)}</textarea>
         </a>
       </div>
     </aside>
+
+    <!-- Mobile Topbar for Admin Portal -->
+    <header class="portal-mobile-topbar" id="portalMobileTopbar">
+      <div class="portal-mobile-brand">
+        <button id="portalMobileMenuBtn" class="portal-mobile-menu-btn" type="button" aria-label="Open portal navigation">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div style="display:flex; align-items:center; gap:0.55rem;">
+          <img src="/assets/curiomas-no-bg.png" alt="CRII" style="width:26px; height:26px; object-fit:contain;">
+          <span style="font-weight:700; font-size:0.98rem; color:var(--text-primary); letter-spacing:0.03em;">CRII PORTAL</span>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <button type="button" class="portal-icon-btn" onclick="openEmailComposer('', '', '', '')" title="Compose Email via curiomas.members@gmail.com" aria-label="Compose Email">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </button>
+        <button type="button" class="portal-icon-btn theme-toggle-btn" title="Toggle theme" aria-label="Toggle theme">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+      </div>
+    </header>
 
     <!-- Main Content Area -->
     <main class="portal-main">
@@ -3807,7 +3852,7 @@ SNR | 24.5 dB`)}</textarea>
             </div>
             <div class="form-group">
               <label class="form-label" for="resEmailInput">Email Address *</label>
-              <input type="email" id="resEmailInput" class="form-input" placeholder="jane.smith@curiomas.org" required>
+              <input type="email" id="resEmailInput" class="form-input" placeholder="curiomas.members@gmail.com" required>
             </div>
           </div>
 

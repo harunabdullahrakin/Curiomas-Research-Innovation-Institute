@@ -124,6 +124,16 @@ function initSidebarToggle() {
     });
   }
 
+  // Mobile drawer explicit close button
+  const sidebarCloseBtn = document.getElementById('portalSidebarCloseBtn');
+  if (sidebarCloseBtn) {
+    sidebarCloseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.remove('mobile-open');
+      if (backdrop) backdrop.classList.remove('active');
+    });
+  }
+
   // Mobile backdrop click handler
   if (backdrop) {
     backdrop.addEventListener('click', () => {
@@ -132,8 +142,8 @@ function initSidebarToggle() {
     });
   }
 
-  // Close mobile sidebar when nav button clicked
-  document.querySelectorAll('.portal-nav-btn').forEach(btn => {
+  // Close mobile sidebar when nav button or public link clicked
+  document.querySelectorAll('.portal-nav-btn, .portal-public-link').forEach(btn => {
     btn.addEventListener('click', () => {
       if (window.innerWidth <= 992) {
         sidebar.classList.remove('mobile-open');
