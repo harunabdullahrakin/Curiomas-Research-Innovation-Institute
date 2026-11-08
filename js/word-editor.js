@@ -1148,19 +1148,55 @@
     return (blocks || []).map(b => {
       const c = b.content || '';
       switch (b.type) {
-        case 'heading': return '<h2>' + esc(c) + '</h2>';
-        case 'subheading': return '<h3>' + esc(c) + '</h3>';
-        case 'image': return b.url ? figureHtml(b.url, b.caption || '', b.caption || '', '75', 'center').replace('<p><br></p>', '') : '';
-        case 'code': return '<pre class="doc-code"><code>' + esc(c) + '</code></pre>';
-        case 'quote': return '<blockquote><p>' + inlineMd(c) + '</p>' + (b.author ? '<footer>— ' + esc(b.author) + '</footer>' : '') + '</blockquote>';
-        case 'callout': { const k = (b.style || 'note').toLowerCase(); const kind = ['note', 'tip', 'warning', 'important', 'success'].includes(k) ? k : 'note'; return '<div class="doc-callout doc-callout-' + kind + '" data-callout="' + kind + '"><p><strong>' + esc(kind.charAt(0).toUpperCase() + kind.slice(1)) + '</strong></p><p>' + inlineMd(c) + '</p></div>'; }
-        case 'list': return '<ul>' + c.split('\n').filter(x => x.trim()).map(x => '<li>' + inlineMd(x.replace(/^[-*]\s*/, '')) + '</li>').join('') + '</ul>';
-        case 'divider': return '<hr>';
-        case 'video': { const s = videoEmbed(b.url); return s ? '<div class="doc-video"><iframe src="' + s + '" allowfullscreen frameborder="0"></iframe></div>' : ''; }
-        case 'timeline': return '<div class="doc-timeline"><strong>' + esc(b.date || '') + '</strong><p>' + inlineMd(c) + '</p></div>';
-        case 'music': return b.url ? '<div class="doc-audio"><p><strong>' + esc(c || 'Audio') + '</strong></p><audio controls preload="none" src="' + esc(b.url) + '"></audio></div>' : '';
-        case 'table': return '<pre class="doc-code"><code>' + esc(c) + '</code></pre>';
-        default: return c.split(/\n{2,}/).map(p => '<p>' + inlineMd(p).replace(/\n/g, '<br>') + '</p>').join('');
+        case 'heading': {
+          const lvl = b.level || 2;
+          return `<h${lvl} data-block-type="heading">${esc(c)}</h${lvl}>`;
+        }
+        case 'subheading':
+          return `<h3 data-block-type="subheading">${esc(c)}</h3>`;
+        case 'image':
+          return b.url ? `<figure class="doc-figure" data-block-type="image" data-url="${esc(b.url)}"><img src="${esc(b.url)}" alt="${esc(b.caption || '')}" style="width:75%;"><figcaption class="doc-caption">${esc(b.caption || '')}</figcaption></figure><p><br></p>` : '';
+        case 'code':
+          return `<pre class="doc-code" data-block-type="code" data-language="${esc(b.language || 'python')}"><code class="language-${esc(b.language || 'python')}">${esc(c)}</code></pre><p><br></p>`;
+        case 'quote':
+          return `<blockquote class="doc-quote" data-block-type="quote" data-author="${esc(b.author || '')}"><p>${inlineMd(c)}</p>${b.author ? `<footer class="doc-citation">— ${esc(b.author)}</footer>` : ''}</blockquote><p><br></p>`;
+        case 'callout': {
+          const k = (b.style || 'note').toLowerCase();
+          const kind = ['note', 'tip', 'warning', 'important', 'caution', 'success'].includes(k) ? k : 'note';
+          const title = kind.charAt(0).toUpperCase() + kind.slice(1);
+          return `<div class="doc-callout doc-callout-${kind}" data-block-type="callout" data-callout="${kind}"><p><strong>${title}</strong></p><p>${inlineMd(c)}</p></div><p><br></p>`;
+        }
+        case 'list': {
+          const lines = c.split('\n').filter(x => x.trim());
+          return `<ul class="doc-list" data-block-type="list">${lines.map(x => `<li>${inlineMd(x.replace(/^[-*]\s*/, ''))}</li>`).join('')}</ul><p><br></p>`;
+        }
+        case 'divider':
+          return `<hr class="doc-divider" data-block-type="divider"><p><br></p>`;
+        case 'video': {
+          const s = videoEmbed(b.url);
+          return s ? `<div class="doc-video doc-video-wrapper" data-block-type="video" data-url="${esc(b.url)}"><iframe src="${s}" allowfullscreen frameborder="0"></iframe></div><p><br></p>` : '';
+        }
+        case 'timeline':
+          return `<div class="doc-timeline" data-block-type="timeline" data-date="${esc(b.date || 'Phase 1')}"><p><strong>${esc(b.date || 'Phase 1')}</strong></p><p>${inlineMd(c)}</p></div><p><br></p>`;
+        case 'music':
+          return b.url ? `<div class="doc-music-card doc-audio" data-block-type="music" data-url="${esc(b.url)}" data-content="${esc(c || '')}"><p>🎵 <strong>${esc(c || 'Research Soundtrack')}</strong></p><p><a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.url)}</a></p>${b.opinion ? `<p class="doc-music-opinion"><em>${esc(b.opinion)}</em></p>` : ''}</div><p><br></p>` : '';
+        case 'math':
+          return `<div class="doc-equation" data-block-type="math" data-latex="${esc(c)}" contenteditable="false"></div><p><br></p>`;
+        case 'table': {
+          const rows = c.split('\n').filter(r => r.trim());
+          if (rows.length === 0) return '';
+          let tblHtml = '<div class="table-wrapper doc-table-wrapper" data-block-type="table"><table class="doc-table admin-table">';
+          rows.forEach((row, rIdx) => {
+            const cells = row.split('|').map(cell => cell.trim());
+            const cellTag = rIdx === 0 ? 'th' : 'td';
+            tblHtml += '<tr>' + cells.map(cell => `<${cellTag}>${inlineMd(cell)}</${cellTag}>`).join('') + '</tr>';
+          });
+          tblHtml += '</table></div><p><br></p>';
+          return tblHtml;
+        }
+        case 'text':
+        default:
+          return c.split(/\n{2,}/).map(p => `<p data-block-type="text">${inlineMd(p).replace(/\n/g, '<br>')}</p>`).join('');
       }
     }).join('');
   }
@@ -1514,25 +1550,30 @@
     }
 
     children.forEach(el => {
+      const explicitType = el.getAttribute('data-block-type');
       const tag = el.tagName.toLowerCase();
-      if (tag === 'h1' || tag === 'h2') {
-        blocks.push({ id: uid(), type: 'heading', content: el.innerText.trim() });
-      } else if (tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6') {
+
+      if (explicitType === 'heading' || tag === 'h1' || tag === 'h2') {
+        const lvl = tag === 'h1' ? 1 : 2;
+        blocks.push({ id: uid(), type: 'heading', level: lvl, content: el.innerText.trim() });
+      } else if (explicitType === 'subheading' || tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6') {
         blocks.push({ id: uid(), type: 'subheading', content: el.innerText.trim() });
-      } else if (tag === 'figure' || el.classList.contains('doc-figure') || tag === 'img') {
+      } else if (explicitType === 'image' || tag === 'figure' || el.classList.contains('doc-figure') || tag === 'img') {
         const img = tag === 'img' ? el : el.querySelector('img');
         const cap = el.querySelector('figcaption') || el.querySelector('.doc-caption');
-        if (img && img.src) {
+        const url = el.getAttribute('data-url') || (img ? img.src : '');
+        if (url) {
           blocks.push({
             id: uid(),
             type: 'image',
-            url: img.src,
-            caption: cap ? cap.innerText.trim() : (img.alt || '')
+            url: url,
+            caption: cap ? cap.innerText.trim() : (img ? img.alt || '' : '')
           });
         }
-      } else if (tag === 'blockquote') {
+      } else if (explicitType === 'quote' || tag === 'blockquote') {
+        const authorAttr = el.getAttribute('data-author');
         const foot = el.querySelector('footer');
-        const author = foot ? foot.innerText.replace(/^—\s*/, '').trim() : '';
+        const author = authorAttr || (foot ? foot.innerText.replace(/^—\s*/, '').trim() : '');
         const clone = el.cloneNode(true);
         const fInClone = clone.querySelector('footer');
         if (fInClone) fInClone.remove();
@@ -1542,33 +1583,64 @@
           content: clone.innerText.trim(),
           author
         });
-      } else if (el.classList.contains('doc-callout')) {
+      } else if (explicitType === 'callout' || el.classList.contains('doc-callout')) {
         const style = el.getAttribute('data-callout') || 'note';
         const clone = el.cloneNode(true);
         const p1 = clone.querySelector('p');
-        if (p1 && clone.children.length > 1) p1.remove();
+        if (p1 && clone.children.length > 1 && ['note', 'tip', 'warning', 'important', 'caution', 'success'].includes(p1.innerText.trim().toLowerCase())) {
+          p1.remove();
+        }
         blocks.push({
           id: uid(),
           type: 'callout',
           style,
           content: clone.innerText.trim()
         });
-      } else if (tag === 'pre' || el.classList.contains('doc-code')) {
+      } else if (explicitType === 'code' || tag === 'pre' || el.classList.contains('doc-code')) {
+        const lang = el.getAttribute('data-language') || 'python';
         const code = el.querySelector('code') || el;
         blocks.push({
           id: uid(),
           type: 'code',
           content: code.innerText.trim(),
-          language: 'python'
+          language: lang
         });
-      } else if (tag === 'ul' || tag === 'ol') {
-        const items = Array.from(el.querySelectorAll('li')).map(li => li.innerText.trim()).filter(Boolean);
+      } else if (explicitType === 'math' || el.classList.contains('doc-equation') || el.classList.contains('doc-math-block')) {
+        const latex = el.getAttribute('data-latex') || el.innerText.replace(/\$\$/g, '').trim();
         blocks.push({
           id: uid(),
-          type: 'list',
-          content: items.map(x => '- ' + x).join('\n')
+          type: 'math',
+          content: latex
         });
-      } else if (tag === 'table' || el.classList.contains('table-wrapper')) {
+      } else if (explicitType === 'timeline' || el.classList.contains('doc-timeline')) {
+        const dateAttr = el.getAttribute('data-date');
+        const str = el.querySelector('strong, .timeline-badge');
+        const p = el.querySelector('p, .timeline-desc');
+        blocks.push({
+          id: uid(),
+          type: 'timeline',
+          date: dateAttr || (str ? str.innerText.trim() : 'Phase 1'),
+          content: p ? p.innerText.trim() : el.innerText.trim()
+        });
+      } else if (explicitType === 'music' || el.classList.contains('doc-music-card') || el.classList.contains('doc-audio')) {
+        const url = el.getAttribute('data-url') || el.querySelector('a')?.href || el.querySelector('audio')?.src || '';
+        const title = el.getAttribute('data-content') || el.querySelector('strong')?.innerText.trim() || 'Research Soundtrack';
+        const opinion = el.querySelector('.doc-music-opinion')?.innerText.trim() || '';
+        blocks.push({
+          id: uid(),
+          type: 'music',
+          url,
+          content: title,
+          opinion
+        });
+      } else if (explicitType === 'video' || el.classList.contains('doc-video') || el.classList.contains('doc-video-wrapper')) {
+        const url = el.getAttribute('data-url') || el.querySelector('iframe')?.src || '';
+        blocks.push({
+          id: uid(),
+          type: 'video',
+          url
+        });
+      } else if (explicitType === 'table' || tag === 'table' || el.classList.contains('table-wrapper')) {
         const tbl = tag === 'table' ? el : el.querySelector('table');
         if (tbl) {
           const rows = Array.from(tbl.querySelectorAll('tr')).map(r => {
@@ -1580,32 +1652,14 @@
             content: rows.join('\n')
           });
         }
-      } else if (tag === 'hr') {
+      } else if (explicitType === 'divider' || tag === 'hr') {
         blocks.push({ id: uid(), type: 'divider' });
-      } else if (el.classList.contains('doc-timeline')) {
-        const str = el.querySelector('strong');
-        const p = el.querySelector('p');
+      } else if (tag === 'ul' || tag === 'ol') {
+        const items = Array.from(el.querySelectorAll('li')).map(li => li.innerText.trim()).filter(Boolean);
         blocks.push({
           id: uid(),
-          type: 'timeline',
-          date: str ? str.innerText.trim() : '',
-          content: p ? p.innerText.trim() : el.innerText.trim()
-        });
-      } else if (el.classList.contains('doc-video')) {
-        const ifr = el.querySelector('iframe');
-        blocks.push({
-          id: uid(),
-          type: 'video',
-          url: ifr ? ifr.src : ''
-        });
-      } else if (el.classList.contains('doc-audio')) {
-        const aud = el.querySelector('audio');
-        const tit = el.querySelector('strong');
-        blocks.push({
-          id: uid(),
-          type: 'music',
-          url: aud ? aud.src : '',
-          content: tit ? tit.innerText.trim() : 'Audio'
+          type: 'list',
+          content: items.map(x => '- ' + x).join('\n')
         });
       } else {
         const text = el.innerText.trim();
@@ -1823,16 +1877,34 @@
     pane.prepend(modeBar);
     mounted = true;
 
+    function syncBlocksToDoc() {
+      const blocks = (window.getEditorBlocks ? window.getEditorBlocks() : (blocksProvider ? blocksProvider() : [])) || [];
+      if (blocks && blocks.length > 0) {
+        setHtml(blocksToHtml(blocks));
+      }
+    }
+
+    function syncDocToBlocks() {
+      const html = getCleanHtml();
+      if (html && html.trim() && !isEmpty()) {
+        const blocks = htmlToBlocks(html);
+        if (window.setEditorBlocks) {
+          window.setEditorBlocks(blocks);
+        }
+      }
+    }
+
     modeBar.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
       const target = b.dataset.mode;
       if (target === mode) return;
-      if (target === 'doc' && isEmpty()) {
-        const blocks = (window.getEditorBlocks ? window.getEditorBlocks() : blocksProvider()) || [];
-        if (blocks.some(x => x && (x.content || x.url)) && confirm('Convert your existing blocks into the document editor?\n\nOK = convert, Cancel = start with an empty document.')) {
-          setHtml(blocksToHtml(blocks));
-        }
+      takeSnapshot('switch_mode_' + target);
+      if (target === 'doc') {
+        syncBlocksToDoc();
+      } else if (target === 'blocks') {
+        syncDocToBlocks();
       }
       setMode(target);
+      afterChange();
     }));
 
     // Bind Conversion Buttons
@@ -1891,6 +1963,9 @@
         setMode('doc');
         let d = null; try { d = JSON.parse(localStorage.getItem(draftKey) || 'null'); } catch (e) { d = null; }
         if (d && d.html && d.html !== getCleanHtml()) restoreDraft(false);
+      } else if (post && Array.isArray(post.blocks) && post.blocks.length > 0) {
+        setHtml(blocksToHtml(post.blocks));
+        setMode('blocks');
       } else if (post) {
         setHtml('');
         setMode('blocks');
@@ -1905,11 +1980,27 @@
       updateStatus(); updateNav();
     },
     getMode: () => (mounted ? mode : 'blocks'),
+    setMode,
+    setHtml,
     getCleanHtml: () => (mounted ? getCleanHtml() : ''),
     getWordCount: () => (mounted ? wordCount() : 0),
     getExcerpt: n => (mounted ? getExcerpt(n || 200) : ''),
     isEmpty: () => (mounted ? isEmpty() : true),
     clearDraft() { try { localStorage.removeItem(draftKey); } catch (e) { /* ignore */ } dirty = false; },
-    blocksToHtml
+    blocksToHtml,
+    htmlToBlocks,
+    syncBlocksToDoc: () => {
+      const blocks = (window.getEditorBlocks ? window.getEditorBlocks() : (blocksProvider ? blocksProvider() : [])) || [];
+      if (blocks && blocks.length > 0) setHtml(blocksToHtml(blocks));
+    },
+    syncDocToBlocks: () => {
+      const html = getCleanHtml();
+      if (html && html.trim() && !isEmpty()) {
+        const blocks = htmlToBlocks(html);
+        if (window.setEditorBlocks) window.setEditorBlocks(blocks);
+        return blocks;
+      }
+      return [];
+    }
   };
 })();

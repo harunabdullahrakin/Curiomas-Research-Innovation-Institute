@@ -221,6 +221,9 @@ function renderArticle(post, container) {
 
 function renderBlockToHtml(block) {
   if (!block) return '';
+  if (window.CRII_WORD && typeof window.CRII_WORD.blocksToHtml === 'function') {
+    return window.CRII_WORD.blocksToHtml([block]);
+  }
   const type = block.type || 'text';
   const c = block.content || '';
 
@@ -229,16 +232,46 @@ function renderBlockToHtml(block) {
       const level = block.level || 2;
       return `<h${level} style="font-size:${level === 1 ? '2.1rem' : level === 2 ? '1.65rem' : '1.35rem'}; color:#0f172a; font-weight:800; margin:2.25rem 0 1rem 0;">${c}</h${level}>`;
     }
-    case 'quote':
-      return `<blockquote style="border-left:4px solid #0284c7; padding:1rem 1.5rem; margin:1.75rem 0; background:#f8fafc; color:#334155; font-style:italic; border-radius:0 10px 10px 0;">${c}</blockquote>`;
-    case 'callout':
-      return `<div style="background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid #3b82f6; padding:1.25rem 1.5rem; border-radius:8px; margin:1.75rem 0; color:#1e40af;">${c}</div>`;
+    case 'subheading':
+      return `<h3 style="font-size:1.35rem; color:#0f172a; font-weight:700; margin:2rem 0 0.85rem 0;">${c}</h3>`;
+    case 'quote': {
+      const authorHtml = block.author ? `<cite style="display:block; margin-top:0.6rem; font-size:0.85rem; color:#64748b; font-style:normal; font-weight:600;">— ${escapeHtml(block.author)}</cite>` : '';
+      return `<blockquote style="border-left:4px solid #0284c7; padding:1rem 1.5rem; margin:1.75rem 0; background:#f8fafc; color:#334155; font-style:italic; border-radius:0 10px 10px 0;">${c}${authorHtml}</blockquote>`;
+    }
+    case 'callout': {
+      const tone = block.tone || 'note';
+      const tones = {
+        note: { bg: '#eff6ff', border: '#bfdbfe', accent: '#3b82f6', color: '#1e40af', icon: 'ℹ' },
+        warning: { bg: '#fffbeb', border: '#fde68a', accent: '#f59e0b', color: '#92400e', icon: '⚠' },
+        tip: { bg: '#ecfdf5', border: '#a7f3d0', accent: '#10b981', color: '#065f46', icon: '💡' },
+        important: { bg: '#fef2f2', border: '#fecaca', accent: '#ef4444', color: '#991b1b', icon: '★' }
+      };
+      const t = tones[tone] || tones.note;
+      return `<div style="background:${t.bg}; border:1px solid ${t.border}; border-left:4px solid ${t.accent}; padding:1.15rem 1.4rem; border-radius:8px; margin:1.75rem 0; color:${t.color}; font-size:1.02rem; line-height:1.7;"><strong style="margin-right:0.4rem;">${t.icon}</strong> ${c}</div>`;
+    }
     case 'code':
-      return `<pre style="background:#0f172a; color:#f8fafc; padding:1.25rem; border-radius:10px; overflow-x:auto; margin:1.75rem 0; font-family:monospace; font-size:0.92rem;"><code>${escapeHtml(c)}</code></pre>`;
+      return `<pre style="background:#0f172a; color:#f8fafc; padding:1.25rem; border-radius:10px; overflow-x:auto; margin:1.75rem 0; font-family:monospace; font-size:0.92rem;"><code data-lang="${escapeHtml(block.language || 'text')}">${escapeHtml(c)}</code></pre>`;
     case 'math':
-      return `<div style="background:#f8fafc; padding:1.25rem; border-radius:10px; border:1px solid #e2e8f0; margin:1.75rem 0; font-family:monospace; color:#0284c7; text-align:center; overflow-x:auto;">$$${c}$$</div>`;
+      return `<div class="doc-equation" style="background:#f8fafc; padding:1.25rem; border-radius:10px; border:1px solid #e2e8f0; margin:1.75rem 0; font-family:monospace; color:#0284c7; text-align:center; overflow-x:auto;">$$${c}$$</div>`;
     case 'image':
       return `<figure style="margin:2rem 0; text-align:center;"><img src="${block.url || c}" alt="${block.caption || ''}" style="max-width:100%; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.06);"><figcaption style="font-size:0.85rem; color:#64748b; margin-top:0.5rem; font-style:italic;">${block.caption || ''}</figcaption></figure>`;
+    case 'video': {
+      const src = block.url || c || '';
+      let embedSrc = src;
+      const ytMatch = src.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([A-Za-z0-9_-]+)/);
+      if (ytMatch) embedSrc = `https://www.youtube.com/embed/${ytMatch[1]}`;
+      return `<div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:12px; margin:2rem 0; box-shadow:0 4px 16px rgba(0,0,0,0.08); background:#000;"><iframe src="${embedSrc}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen></iframe></div>`;
+    }
+    case 'timeline':
+      return `<div style="display:flex; gap:1.25rem; padding:1rem 0; border-left:3px solid #3b82f6; padding-left:1.25rem; margin:1.25rem 0;"><span style="font-size:0.82rem; font-weight:700; color:#2563eb; background:#eff6ff; padding:0.25rem 0.65rem; border-radius:9999px; height:fit-content; white-space:nowrap;">${escapeHtml(block.date || 'Milestone')}</span><div style="font-size:1.02rem; color:#334155; line-height:1.7;">${c}</div></div>`;
+    case 'music':
+      return `<div style="display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; margin:1.75rem 0;"><span style="font-size:1.5rem;">🎵</span><div style="flex:1;"><a href="${escapeHtml(block.url || '#')}" target="_blank" style="font-weight:600; color:#0f172a; text-decoration:none;">${escapeHtml(block.title || 'Soundtrack / Track')}</a><p style="margin:0.2rem 0 0 0; font-size:0.86rem; color:#64748b;">${c}</p></div></div>`;
+    case 'table':
+      return `<div style="overflow-x:auto; margin:1.75rem 0;"><table style="width:100%; border-collapse:collapse; border:1px solid #e2e8f0; font-size:0.95rem;">${c}</table></div>`;
+    case 'list': {
+      const items = (Array.isArray(block.items) ? block.items : String(c).split('\n')).filter(Boolean);
+      return `<ul style="margin:1.5rem 0; padding-left:1.75rem; color:#334155; line-height:1.8;">${items.map(it => `<li>${it}</li>`).join('')}</ul>`;
+    }
     case 'divider':
       return `<hr style="border:none; border-top:1px solid #e2e8f0; margin:2.5rem 0;">`;
     case 'text':

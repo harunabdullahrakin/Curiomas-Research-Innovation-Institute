@@ -158,15 +158,14 @@ export function triggerGoogleTranslate(lang) {
     const hostname = window.location.hostname;
     const cookieVal = lang === 'en' ? '/en/en' : `/en/${lang}`;
 
+    // Set cookie without domain to avoid Public Suffix List (.zone.id) browser rejection
     document.cookie = `googtrans=${cookieVal}; path=/;`;
-    document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
-    if (hostname.includes('.')) {
-      const parts = hostname.split('.');
-      if (parts.length >= 2) {
-        const rootDomain = parts.slice(-2).join('.');
-        document.cookie = `googtrans=${cookieVal}; path=/; domain=.${rootDomain};`;
+    if (hostname) {
+      document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
+      const domainWithoutWww = hostname.replace(/^www\./, '');
+      if (domainWithoutWww !== hostname) {
+        document.cookie = `googtrans=${cookieVal}; path=/; domain=.${domainWithoutWww};`;
       }
-      document.cookie = `googtrans=${cookieVal}; path=/; domain=.${hostname};`;
     }
 
     const combo = document.querySelector('.goog-te-combo');

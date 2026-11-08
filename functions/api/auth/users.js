@@ -73,6 +73,7 @@ export async function onRequestGet(context) {
       return new Response(JSON.stringify(activeUsers), {
         headers: {
           "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
           "Cache-Control": "no-cache, no-store, must-revalidate"
         }
       });
@@ -94,6 +95,7 @@ export async function onRequestGet(context) {
   ]), {
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
       "Cache-Control": "no-cache, no-store, must-revalidate"
     }
   });
@@ -154,6 +156,7 @@ export async function onRequestPost(context) {
       status: 200,
       headers: {
         "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
         "Cache-Control": "no-cache, no-store, must-revalidate"
       }
     });
@@ -232,6 +235,7 @@ export async function onRequestDelete(context) {
       status: 200,
       headers: {
         "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
         "Cache-Control": "no-cache, no-store, must-revalidate"
       }
     });

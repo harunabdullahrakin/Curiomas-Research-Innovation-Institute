@@ -595,7 +595,10 @@ class CriiApiClient {
   async getAllowedUsers() {
     // 1. Fetch directly from Cloudflare D1 SQL backend first
     try {
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users`);
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       if (res.ok) {
         const remoteUsers = await res.json();
         if (Array.isArray(remoteUsers)) {
@@ -635,7 +638,10 @@ class CriiApiClient {
 
   async syncAllowedUsersFromDb() {
     try {
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users`);
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       if (res.ok) {
         const remoteUsers = await res.json();
         if (Array.isArray(remoteUsers)) {
@@ -713,12 +719,18 @@ class CriiApiClient {
     // 2. Await Cloudflare D1 SQL deletion
     try {
       const token = this.getAuthToken();
-      await fetch(`${CRII_CONFIG.API_BASE}/auth/users?email=${encodeURIComponent(targetEmail)}`, {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users?email=${encodeURIComponent(targetEmail)}&_t=${Date.now()}`, {
         method: 'DELETE',
         headers: {
+          'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
+        },
+        body: JSON.stringify({ email: targetEmail })
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.warn("D1 delete user response warning:", errData);
+      }
     } catch (e) {
       console.warn("D1 delete user error:", e);
     }
@@ -731,7 +743,10 @@ class CriiApiClient {
   async getDivisions() {
     // 1. Fetch directly from Cloudflare D1 settings backend first
     try {
-      const res = await fetch(CRII_CONFIG.API_BASE + '/settings');
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/settings?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       if (res.ok) {
         const settings = await res.json();
         if (Array.isArray(settings.divisions)) {
@@ -829,7 +844,10 @@ class CriiApiClient {
   async getCohorts() {
     // 1. Fetch directly from Cloudflare D1 settings backend first
     try {
-      const res = await fetch(CRII_CONFIG.API_BASE + '/settings');
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/settings?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       if (res.ok) {
         const settings = await res.json();
         if (Array.isArray(settings.cohorts)) {
@@ -951,7 +969,11 @@ class CriiApiClient {
     // 1. Fetch directly from Cloudflare D1 SQL backend
     try {
       const query = options.includeDrafts ? '?includeDrafts=true' : '';
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/posts${query}`);
+      const sep = query ? '&' : '?';
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/posts${query}${sep}_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       if (res.ok) {
         const remote = await res.json();
         if (Array.isArray(remote)) {
@@ -982,7 +1004,10 @@ class CriiApiClient {
     if (!identifier) return null;
     // Attempt D1 fetch first
     try {
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/posts/${encodeURIComponent(identifier)}`);
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/posts/${encodeURIComponent(identifier)}?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       if (res.ok) {
         const post = await res.json();
         if (post && post.id) return post;
@@ -1151,7 +1176,10 @@ class CriiApiClient {
   async getInternsData() {
     // 1. Fetch live from Cloudflare D1 SQL backend
     try {
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/interns`);
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/interns?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       if (res.ok) {
         const remote = await res.json();
         if (remote && Array.isArray(remote.activeInterns)) {
@@ -1379,7 +1407,10 @@ class CriiApiClient {
   async getDatasets() {
     // 1. Fetch live from Cloudflare D1 SQL backend first
     try {
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/datasets`);
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/datasets?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       if (res.ok) {
         const remote = await res.json();
         if (Array.isArray(remote) && remote.length > 0) {

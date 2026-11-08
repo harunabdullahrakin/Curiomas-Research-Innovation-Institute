@@ -326,18 +326,18 @@ export function renderPortalPageHtml() {
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              <span>+ Create New Publication</span>
+              <span>Create New Publication</span>
             </button>
           </div>
 
           <!-- Filter & Search Toolbar -->
-          <div class="data-table-card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+          <div class="data-table-card portal-filter-card">
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <button class="btn btn-sm btn-secondary active" id="filterPostsAll" onclick="filterPostsList('all')">All Articles</button>
               <button class="btn btn-sm btn-secondary" id="filterPostsPub" onclick="filterPostsList('published')">Published</button>
               <button class="btn btn-sm btn-secondary" id="filterPostsDraft" onclick="filterPostsList('draft')">Drafts</button>
             </div>
-            <div style="min-width: 240px; flex: 1; max-width: 380px;">
+            <div style="min-width: 200px; flex: 1; max-width: 380px;">
               <input type="text" id="searchPostsInput" class="form-input" placeholder="Search by title, author, or keyword..." style="padding: 0.45rem 0.85rem; font-size: 0.85rem;">
             </div>
           </div>
@@ -695,13 +695,13 @@ export function renderPortalPageHtml() {
         </div>
 
         <!-- Filter & Search Toolbar -->
-        <div class="data-table-card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+        <div class="data-table-card portal-filter-card">
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button class="btn btn-sm btn-secondary active" id="filterRosterAll" onclick="filterRosterList('all')">All Roster</button>
             <button class="btn btn-sm btn-secondary" id="filterRosterTeam" onclick="filterRosterList('team')">Core Leadership Team</button>
             <button class="btn btn-sm btn-secondary" id="filterRosterFellows" onclick="filterRosterList('fellows')">Research Fellows & Interns</button>
           </div>
-          <div style="min-width: 240px; flex: 1; max-width: 360px;">
+          <div style="min-width: 200px; flex: 1; max-width: 360px;">
             <input type="text" id="searchRosterInput" class="form-input" placeholder="Search by name, role, or division..." style="padding: 0.45rem 0.85rem; font-size: 0.85rem;">
           </div>
         </div>
@@ -931,7 +931,7 @@ export function renderPortalPageHtml() {
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem; max-width: 1040px;">
+        <div class="portal-settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.5rem; max-width: 1040px; width: 100%;">
           <!-- 1. Hero Section Appearance, Multi-Image Background & Typography Engine -->
           <div class="data-table-card" style="padding: 2rem;">
             <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-primary);">Hero Section Appearance & Engine</h3>
