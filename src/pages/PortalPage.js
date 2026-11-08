@@ -326,26 +326,25 @@ export function renderPortalPageHtml() {
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              <span>Create New Publication</span>
+              <span>+ Create New Publication</span>
             </button>
           </div>
 
           <!-- Filter & Search Toolbar -->
-          <div class="data-table-card portal-filter-card">
+          <div class="data-table-card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <button class="btn btn-sm btn-secondary active" id="filterPostsAll" onclick="filterPostsList('all')">All Articles</button>
               <button class="btn btn-sm btn-secondary" id="filterPostsPub" onclick="filterPostsList('published')">Published</button>
               <button class="btn btn-sm btn-secondary" id="filterPostsDraft" onclick="filterPostsList('draft')">Drafts</button>
             </div>
-            <div style="min-width: 200px; flex: 1; max-width: 380px;">
+            <div style="min-width: 240px; flex: 1; max-width: 380px;">
               <input type="text" id="searchPostsInput" class="form-input" placeholder="Search by title, author, or keyword..." style="padding: 0.45rem 0.85rem; font-size: 0.85rem;">
             </div>
           </div>
 
-          <!-- Existing Posts View: Desktop Table + Mobile Cards Grid -->
-          <div class="data-table-card portal-posts-container">
-            <!-- Desktop / Tablet Table View -->
-            <div class="table-wrapper portal-posts-desktop-table">
+          <!-- Existing Posts Table Card -->
+          <div class="data-table-card">
+            <div class="table-wrapper">
               <table class="admin-table">
                 <thead>
                   <tr>
@@ -359,9 +358,6 @@ export function renderPortalPageHtml() {
                 <tbody id="portalPostsTbody"></tbody>
               </table>
             </div>
-
-            <!-- Mobile Cards Grid View -->
-            <div id="portalPostsMobileGrid" class="portal-posts-mobile-grid"></div>
           </div>
         </div>
 
@@ -393,17 +389,11 @@ export function renderPortalPageHtml() {
 
             <!-- Editor Sub-navigation Tabs -->
             <div class="blogger-tabs">
-              <button type="button" class="blogger-tab-btn active" data-subtab="doc" title="Word-style document editor with ribbon and typography">
+              <button type="button" class="blogger-tab-btn active" data-subtab="write">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
                 </svg>
-                <span>Document Editor</span>
-              </button>
-              <button type="button" class="blogger-tab-btn" data-subtab="blocks" title="Modular structured block builder">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
-                </svg>
-                <span>Modular Blocks</span>
+                <span>Write</span>
               </button>
               <button type="button" class="blogger-tab-btn" data-subtab="details">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -701,13 +691,13 @@ export function renderPortalPageHtml() {
         </div>
 
         <!-- Filter & Search Toolbar -->
-        <div class="data-table-card portal-filter-card">
+        <div class="data-table-card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button class="btn btn-sm btn-secondary active" id="filterRosterAll" onclick="filterRosterList('all')">All Roster</button>
             <button class="btn btn-sm btn-secondary" id="filterRosterTeam" onclick="filterRosterList('team')">Core Leadership Team</button>
             <button class="btn btn-sm btn-secondary" id="filterRosterFellows" onclick="filterRosterList('fellows')">Research Fellows & Interns</button>
           </div>
-          <div style="min-width: 200px; flex: 1; max-width: 360px;">
+          <div style="min-width: 240px; flex: 1; max-width: 360px;">
             <input type="text" id="searchRosterInput" class="form-input" placeholder="Search by name, role, or division..." style="padding: 0.45rem 0.85rem; font-size: 0.85rem;">
           </div>
         </div>

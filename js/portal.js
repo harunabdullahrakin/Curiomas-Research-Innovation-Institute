@@ -369,76 +369,13 @@ function updateBloggerStatusUI() {
   }
 }
 
-let lastActiveEditorMode = 'doc';
-
 function switchBloggerSubtab(subtab) {
   currentEditorSubtab = subtab;
-  const isEditing = (subtab === 'doc' || subtab === 'blocks' || subtab === 'write');
+  document.getElementById('bloggerPaneWrite').style.display = subtab === 'write' ? 'block' : 'none';
+  document.getElementById('bloggerPaneDetails').style.display = subtab === 'details' ? 'block' : 'none';
+  document.getElementById('bloggerPanePreview').style.display = subtab === 'preview' ? 'block' : 'none';
 
-  const paneWrite = document.getElementById('bloggerPaneWrite');
-  const paneDetails = document.getElementById('bloggerPaneDetails');
-  const panePreview = document.getElementById('bloggerPanePreview');
-
-  if (paneWrite) paneWrite.style.display = isEditing ? 'block' : 'none';
-  if (paneDetails) paneDetails.style.display = subtab === 'details' ? 'block' : 'none';
-  if (panePreview) panePreview.style.display = subtab === 'preview' ? 'block' : 'none';
-
-  // Synchronize active state in .blogger-tabs
-  document.querySelectorAll('.blogger-tab-btn').forEach(btn => {
-    const btnSub = btn.dataset.subtab;
-    const match = (btnSub === subtab) || (btnSub === 'doc' && subtab === 'write');
-    btn.classList.toggle('active', Boolean(match));
-  });
-
-  const getCleanDocHtml = () => {
-    if (!window.CRII_WORD) return '';
-    return (window.CRII_WORD.getCleanHtml ? window.CRII_WORD.getCleanHtml() : (window.CRII_WORD.getHtml ? window.CRII_WORD.getHtml() : '')) || '';
-  };
-
-  if (subtab === 'doc') {
-    if (window.CRII_WORD) {
-      // If we are switching from blocks into doc, convert current blocks into doc
-      if (lastActiveEditorMode === 'blocks' && currentPostBlocks && currentPostBlocks.length > 0) {
-        window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
-      }
-      window.CRII_WORD.setMode('doc');
-      lastActiveEditorMode = 'doc';
-    }
-  } else if (subtab === 'blocks' || subtab === 'write') {
-    if (window.CRII_WORD) {
-      // If we are switching from doc into blocks, convert doc into blocks
-      if (lastActiveEditorMode === 'doc') {
-        const cleanHtml = getCleanDocHtml();
-        if (cleanHtml && cleanHtml.trim()) {
-          currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
-          renderBlockStack();
-        }
-      }
-      window.CRII_WORD.setMode('blocks');
-      lastActiveEditorMode = 'blocks';
-    }
-  } else if (subtab === 'details') {
-    if (window.CRII_WORD) {
-      if (lastActiveEditorMode === 'doc') {
-        const cleanHtml = getCleanDocHtml();
-        if (cleanHtml && cleanHtml.trim()) {
-          currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
-        }
-      } else if (currentPostBlocks && currentPostBlocks.length > 0) {
-        window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
-      }
-    }
-  } else if (subtab === 'preview') {
-    if (window.CRII_WORD) {
-      if (lastActiveEditorMode === 'doc') {
-        const cleanHtml = getCleanDocHtml();
-        if (cleanHtml && cleanHtml.trim()) {
-          currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
-        }
-      } else if (currentPostBlocks && currentPostBlocks.length > 0) {
-        window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
-      }
-    }
+  if (subtab === 'preview') {
     renderBloggerLiveReaderPreview();
   }
 }
@@ -470,36 +407,17 @@ function openBloggerEditor(postId) {
     document.getElementById('bloggerTagsInput').value = (p.tags || []).join(', ');
     updateCoverPreview(p.coverImage || "");
 
-    // Load blocks and synchronize bidirectional with Document Editor
+    // Load blocks
     if (Array.isArray(p.blocks) && p.blocks.length > 0) {
       currentPostBlocks = JSON.parse(JSON.stringify(p.blocks));
-      if (window.CRII_WORD) {
-        if (p.content && window.CriiDoc && window.CriiDoc.isDoc(p.content)) {
-          window.CRII_WORD.setHtml(p.content.slice(window.CriiDoc.MARK.length));
-        } else {
-          window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
-        }
-      }
-    } else if (p.content && window.CriiDoc && window.CriiDoc.isDoc(p.content)) {
-      const cleanHtml = p.content.slice(window.CriiDoc.MARK.length);
-      if (window.CRII_WORD) {
-        window.CRII_WORD.setHtml(cleanHtml);
-        currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
-      } else {
-        currentPostBlocks = convertContentToInitialBlocks(cleanHtml);
-      }
     } else {
+      // Convert legacy content string to initial blocks
       currentPostBlocks = convertContentToInitialBlocks(p.content || "");
-      if (window.CRII_WORD) {
-        window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
-      }
     }
     updateBloggerStatusUI();
     renderBlockStack();
-    if (window.CRII_WORD && typeof window.CRII_WORD.load === 'function') {
-      window.CRII_WORD.load(p, () => currentPostBlocks);
-    }
-    switchBloggerSubtab('doc');
+    if (window.CRII_WORD) window.CRII_WORD.load(p, () => currentPostBlocks);
+    switchBloggerSubtab('write');
   };
 
   if (post) {
@@ -534,13 +452,8 @@ function openBloggerEditor(postId) {
     ];
     updateBloggerStatusUI();
     renderBlockStack();
-    if (window.CRII_WORD) {
-      window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
-      if (typeof window.CRII_WORD.load === 'function') {
-        window.CRII_WORD.load(null, () => currentPostBlocks);
-      }
-    }
-    switchBloggerSubtab('doc');
+    if (window.CRII_WORD) window.CRII_WORD.load(null, () => currentPostBlocks);
+    switchBloggerSubtab('write');
   }
 }
 window.openBloggerEditor = openBloggerEditor;
@@ -697,10 +610,7 @@ function renderBlockStack() {
     stack.innerHTML = `
       <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
         <p style="margin-bottom: 0.5rem; font-weight: 600;">No blocks in this publication yet.</p>
-        <p style="font-size: 0.85rem; margin-bottom: 1rem;">Click "Add a Block" below or insert a standard template to start composing.</p>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="insertPaperTemplate('research')">
-          📋 Insert Standard Research Template
-        </button>
+        <p style="font-size: 0.85rem;">Click "Add a Block" below to start composing.</p>
       </div>
     `;
     updateEstimatedReadingTime();
@@ -709,37 +619,13 @@ function renderBlockStack() {
 
   stack.innerHTML = currentPostBlocks.map((block, idx) => {
     return `
-      <div class="blogger-block-card" data-block-id="${block.id}" data-block-index="${idx}">
+      <div class="blogger-block-card" data-block-id="${block.id}">
         <div class="blogger-block-header">
           <div class="blogger-block-type-badge">
             ${getBlockTypeIcon(block.type)}
             <span>${block.type}</span>
           </div>
-
-          <!-- Type Switcher Dropdown (Doc Editor parity in Block Builder) -->
-          <div style="display:flex; align-items:center; gap:0.4rem;">
-            <select class="form-select block-convert-select" title="Convert to another block type" onchange="convertBlockType(${idx}, this.value)" style="font-size:0.75rem; padding:0.2rem 0.5rem; height:26px; border-radius:6px; cursor:pointer;">
-              <option value="text" ${block.type === 'text' ? 'selected' : ''}>Paragraph</option>
-              <option value="heading" ${block.type === 'heading' ? 'selected' : ''}>Heading (H2)</option>
-              <option value="subheading" ${block.type === 'subheading' ? 'selected' : ''}>Subheading (H3)</option>
-              <option value="quote" ${block.type === 'quote' ? 'selected' : ''}>Quote</option>
-              <option value="callout" ${block.type === 'callout' ? 'selected' : ''}>Callout</option>
-              <option value="code" ${block.type === 'code' ? 'selected' : ''}>Code</option>
-              <option value="math" ${block.type === 'math' ? 'selected' : ''}>Math (LaTeX)</option>
-              <option value="image" ${block.type === 'image' ? 'selected' : ''}>Image</option>
-              <option value="table" ${block.type === 'table' ? 'selected' : ''}>Table</option>
-              <option value="timeline" ${block.type === 'timeline' ? 'selected' : ''}>Timeline</option>
-              <option value="music" ${block.type === 'music' ? 'selected' : ''}>Soundtrack</option>
-              <option value="video" ${block.type === 'video' ? 'selected' : ''}>Video</option>
-              <option value="list" ${block.type === 'list' ? 'selected' : ''}>List</option>
-              <option value="divider" ${block.type === 'divider' ? 'selected' : ''}>Divider</option>
-            </select>
-          </div>
-
           <div class="blogger-block-actions">
-            <button type="button" class="block-tool-btn" title="Duplicate Block" onclick="duplicateBlock(${idx})">
-              ⧉
-            </button>
             <button type="button" class="block-tool-btn" title="Move Up" onclick="moveBlock(${idx}, -1)" ${idx === 0 ? 'disabled style="opacity:0.3;"' : ''}>
               ▲
             </button>
@@ -772,7 +658,6 @@ function getBlockTypeIcon(type) {
     list: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/></svg>',
     callout: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/></svg>',
     table: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>',
-    math: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 7V4H6l6 8-6 8h12v-3"/></svg>',
     timeline: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
     music: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
     divider: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/></svg>',
@@ -781,42 +666,16 @@ function getBlockTypeIcon(type) {
   return icons[type] || '';
 }
 
-function getRichToolbarHtml(idx) {
-  return `
-    <div class="block-rich-toolbar" data-block-index="${idx}" style="display:flex; align-items:center; gap:2px; padding:3px 6px; background:var(--bg-primary); border:1px solid var(--border-color); border-radius:6px; margin-bottom:4px; flex-wrap:wrap;">
-      <button type="button" class="rich-tool-btn" title="Bold (Ctrl+B)" onclick="applyBlockFormatting(${idx}, 'bold')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-primary);"><b>B</b></button>
-      <button type="button" class="rich-tool-btn" title="Italic (Ctrl+I)" onclick="applyBlockFormatting(${idx}, 'italic')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-primary);"><i>I</i></button>
-      <button type="button" class="rich-tool-btn" title="Underline (Ctrl+U)" onclick="applyBlockFormatting(${idx}, 'underline')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-primary);"><u>U</u></button>
-      <button type="button" class="rich-tool-btn" title="Strikethrough" onclick="applyBlockFormatting(${idx}, 'strike')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-primary);"><s>S</s></button>
-      <button type="button" class="rich-tool-btn" title="Inline Code" onclick="applyBlockFormatting(${idx}, 'code')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-primary);"><code>&lt;&gt;</code></button>
-      <button type="button" class="rich-tool-btn" title="LaTeX Formula ($...$)" onclick="applyBlockFormatting(${idx}, 'math')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-primary);">∑</button>
-      <button type="button" class="rich-tool-btn" title="Insert Link" onclick="applyBlockFormatting(${idx}, 'link')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-primary);">🔗</button>
-      <button type="button" class="rich-tool-btn" title="Highlight" onclick="applyBlockFormatting(${idx}, 'highlight')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-primary);">🖍️</button>
-      <button type="button" class="rich-tool-btn" title="Clear Formatting" onclick="applyBlockFormatting(${idx}, 'clear')" style="padding:2px 6px; font-size:0.75rem; border:none; background:none; cursor:pointer; border-radius:3px; color:var(--text-muted);">⌫</button>
-    </div>
-  `;
-}
-
 function renderBlockEditorFields(block, idx) {
   switch (block.type) {
     case 'text':
       return `
-        <div style="display:flex; flex-direction:column; gap:0.4rem;">
-          ${getRichToolbarHtml(idx)}
-          <textarea class="form-textarea block-textarea-input" data-block-index="${idx}" style="min-height: 85px; font-size: 0.95rem; line-height: 1.6;" placeholder="Type regular paragraph text (supports markdown, HTML, LaTeX)..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
-        </div>
+        <textarea class="form-textarea" style="min-height: 85px; font-size: 0.95rem; line-height: 1.6;" placeholder="Type regular paragraph text..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
       `;
 
     case 'heading':
       return `
-        <div style="display:flex; gap:0.5rem; align-items:center;">
-          <select class="form-select" style="max-width:85px; padding:0.3rem 0.5rem; font-size:0.85rem;" onchange="updateBlockContent(${idx}, 'level', parseInt(this.value, 10))">
-            <option value="1" ${block.level === 1 ? 'selected' : ''}>H1</option>
-            <option value="2" ${!block.level || block.level === 2 ? 'selected' : ''}>H2</option>
-            <option value="3" ${block.level === 3 ? 'selected' : ''}>H3</option>
-          </select>
-          <input type="text" class="form-input" style="flex:1; font-size: 1.15rem; font-weight: 700;" placeholder="Section Heading..." value="${escapeHtml(block.content || '')}" oninput="updateBlockContent(${idx}, 'content', this.value)">
-        </div>
+        <input type="text" class="form-input" style="font-size: 1.15rem; font-weight: 700;" placeholder="Section Heading..." value="${escapeHtml(block.content || '')}" oninput="updateBlockContent(${idx}, 'content', this.value)">
       `;
 
     case 'subheading':
@@ -851,7 +710,6 @@ function renderBlockEditorFields(block, idx) {
               <option value="cpp" ${block.language === 'cpp' ? 'selected' : ''}>C++</option>
               <option value="sql" ${block.language === 'sql' ? 'selected' : ''}>SQL</option>
               <option value="bash" ${block.language === 'bash' ? 'selected' : ''}>Bash</option>
-              <option value="json" ${block.language === 'json' ? 'selected' : ''}>JSON</option>
             </select>
           </div>
           <textarea class="form-textarea" style="font-family:monospace; min-height:100px; font-size:0.85rem;" placeholder="Code snippet..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
@@ -860,35 +718,26 @@ function renderBlockEditorFields(block, idx) {
 
     case 'quote':
       return `
-        <div style="display:flex; flex-direction:column; gap:0.4rem;">
-          ${getRichToolbarHtml(idx)}
-          <textarea class="form-textarea block-textarea-input" data-block-index="${idx}" style="font-style:italic; min-height:70px;" placeholder="Quote text..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <textarea class="form-textarea" style="font-style:italic; min-height:70px;" placeholder="Quote text..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
           <input type="text" class="form-input" placeholder="Author / Citation..." value="${escapeHtml(block.author || '')}" oninput="updateBlockContent(${idx}, 'author', this.value)">
         </div>
       `;
 
     case 'list':
       return `
-        <div style="display:flex; flex-direction:column; gap:0.4rem;">
-          ${getRichToolbarHtml(idx)}
-          <textarea class="form-textarea block-textarea-input" data-block-index="${idx}" style="min-height:80px;" placeholder="Enter items, one per line..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
-        </div>
+        <textarea class="form-textarea" style="min-height:80px;" placeholder="Enter items, one per line..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
       `;
 
     case 'callout':
       return `
         <div style="display:flex; flex-direction:column; gap:0.4rem;">
-          <div style="display:flex; gap:0.5rem; align-items:center;">
-            <select class="form-select" style="max-width:150px; font-size:0.8rem;" onchange="updateBlockContent(${idx}, 'style', this.value)">
-              <option value="note" ${block.style === 'note' ? 'selected' : ''}>Note / Info</option>
-              <option value="tip" ${block.style === 'tip' ? 'selected' : ''}>Tip</option>
-              <option value="warning" ${block.style === 'warning' ? 'selected' : ''}>Warning</option>
-              <option value="important" ${block.style === 'important' ? 'selected' : ''}>Important</option>
-              <option value="success" ${block.style === 'success' ? 'selected' : ''}>Success</option>
-            </select>
-            ${getRichToolbarHtml(idx)}
-          </div>
-          <textarea class="form-textarea block-textarea-input" data-block-index="${idx}" style="min-height:70px;" placeholder="Callout message..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
+          <select class="form-select" style="max-width:160px; font-size:0.8rem;" onchange="updateBlockContent(${idx}, 'style', this.value)">
+            <option value="note" ${block.style === 'note' ? 'selected' : ''}>Note / Info</option>
+            <option value="important" ${block.style === 'important' ? 'selected' : ''}>Important</option>
+            <option value="caution" ${block.style === 'caution' ? 'selected' : ''}>Caution / Warning</option>
+          </select>
+          <textarea class="form-textarea" style="min-height:70px;" placeholder="Callout message..." oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>
         </div>
       `;
 
@@ -896,14 +745,6 @@ function renderBlockEditorFields(block, idx) {
       return `
         <div style="display:flex; flex-direction:column; gap:0.4rem;">
           <textarea class="form-textarea" style="font-family:monospace; min-height:80px; font-size:0.82rem;" placeholder="Header 1 | Header 2&#10;Row 1 Col 1 | Row 1 Col 2" oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || 'Metric | Value\nSampling | 120 nm\nSNR | 24.5 dB')}</textarea>
-        </div>
-      `;
-
-    case 'math':
-      return `
-        <div style="display:flex; flex-direction:column; gap:0.4rem;">
-          <textarea class="form-textarea" style="font-family:monospace; min-height:75px; font-size:0.9rem;" placeholder="LaTeX formula (e.g. \\mathcal{L} = \\int \\psi(x) dx)..." oninput="updateBlockContent(${idx}, 'content', this.value); updateBlockMathPreview(${idx}, this.value)">${escapeHtml(block.content || '')}</textarea>
-          <div id="blockMathPreview_${idx}" style="background:var(--bg-primary); padding:0.75rem 1rem; border-radius:8px; border:1px solid var(--border-color); text-align:center; font-family:monospace; color:var(--accent-primary); font-size:0.95rem; overflow-x:auto;">$$${escapeHtml(block.content || '\\psi(x)')}$$</div>
         </div>
       `;
 
@@ -918,9 +759,8 @@ function renderBlockEditorFields(block, idx) {
     case 'music':
       return `
         <div style="display:flex; flex-direction:column; gap:0.5rem;">
-          <input type="text" class="form-input" placeholder="Track / Audio link (Spotify, YouTube, or MP3 URL)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
-          <input type="text" class="form-input" placeholder="Soundtrack Title / Name..." value="${escapeHtml(block.content || '')}" oninput="updateBlockContent(${idx}, 'content', this.value)">
-          <input type="text" class="form-input" placeholder="Opinion or research soundscape notes..." value="${escapeHtml(block.opinion || '')}" oninput="updateBlockContent(${idx}, 'opinion', this.value)">
+          <input type="text" class="form-input" placeholder="Track / Audio link (Spotify or YT URL)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
+          <input type="text" class="form-input" placeholder="Opinion or research soundscape notes..." value="${escapeHtml(block.content || '')}" oninput="updateBlockContent(${idx}, 'content', this.value)">
         </div>
       `;
 
@@ -938,118 +778,6 @@ function renderBlockEditorFields(block, idx) {
       return `<textarea class="form-textarea" oninput="updateBlockContent(${idx}, 'content', this.value)">${escapeHtml(block.content || '')}</textarea>`;
   }
 }
-
-window.applyBlockFormatting = function(idx, action) {
-  const card = document.querySelector(`.blogger-block-card[data-block-index="${idx}"]`);
-  const input = card ? card.querySelector('textarea, input[type="text"]') : null;
-  if (!input) return;
-
-  const start = input.selectionStart || 0;
-  const end = input.selectionEnd || 0;
-  const val = input.value || '';
-  const selected = val.substring(start, end);
-
-  let replacement = '';
-  switch (action) {
-    case 'bold':
-      replacement = `**${selected || 'bold text'}**`;
-      break;
-    case 'italic':
-      replacement = `*${selected || 'italic text'}*`;
-      break;
-    case 'underline':
-      replacement = `<u>${selected || 'underlined text'}</u>`;
-      break;
-    case 'strike':
-      replacement = `~~${selected || 'struck text'}~~`;
-      break;
-    case 'code':
-      replacement = `\`${selected || 'code'}\``;
-      break;
-    case 'math':
-      replacement = `$${selected || '\\psi(x)'}$`;
-      break;
-    case 'highlight':
-      replacement = `<mark>${selected || 'highlighted'}</mark>`;
-      break;
-    case 'link': {
-      const url = prompt('Enter URL for link:', 'https://');
-      if (!url) return;
-      replacement = `[${selected || 'link text'}](${url})`;
-      break;
-    }
-    case 'clear':
-      replacement = selected.replace(/[*_~`]|<\/?(u|mark|b|i|strong|em)>/gi, '');
-      break;
-    default:
-      return;
-  }
-
-  input.value = val.substring(0, start) + replacement + val.substring(end);
-  input.focus();
-  input.selectionStart = start;
-  input.selectionEnd = start + replacement.length;
-  updateBlockContent(idx, 'content', input.value);
-};
-
-window.convertBlockType = function(idx, newType) {
-  if (!currentPostBlocks[idx] || currentPostBlocks[idx].type === newType) return;
-  const b = currentPostBlocks[idx];
-  b.type = newType;
-  if (newType === 'heading' && !b.level) b.level = 2;
-  if (newType === 'callout' && !b.style) b.style = 'note';
-  if (newType === 'code' && !b.language) b.language = 'python';
-  if (newType === 'quote' && !b.author) b.author = 'CRII Fellow';
-  renderBlockStack();
-  if (window.CRII_WORD && window.CRII_WORD.getMode() === 'doc') {
-    window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
-  }
-};
-
-window.duplicateBlock = function(idx) {
-  if (!currentPostBlocks[idx]) return;
-  const clone = JSON.parse(JSON.stringify(currentPostBlocks[idx]));
-  clone.id = `b-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  currentPostBlocks.splice(idx + 1, 0, clone);
-  renderBlockStack();
-};
-
-window.updateBlockMathPreview = function(idx, val) {
-  const el = document.getElementById(`blockMathPreview_${idx}`);
-  if (el) {
-    el.innerText = `$$${val || '\\psi(x)'}$$`;
-    if (window.CriiDoc && typeof window.CriiDoc.renderMath === 'function') {
-      window.CriiDoc.renderMath(el);
-    }
-  }
-};
-
-window.insertPaperTemplate = function(templateType) {
-  const base = Date.now();
-  if (templateType === 'research') {
-    currentPostBlocks = [
-      { id: `b-${base}-1`, type: 'heading', level: 2, content: '1. Introduction & Scientific Context' },
-      { id: `b-${base}-2`, type: 'text', content: 'Introduce research questions, hypotheses, open problem statements, and scientific significance.' },
-      { id: `b-${base}-3`, type: 'callout', style: 'note', content: 'Open Science Principle: All pipeline scripts, raw transit observations, and calibrations are reproducible.' },
-      { id: `b-${base}-4`, type: 'heading', level: 2, content: '2. Materials, Methods & Computational Pipeline' },
-      { id: `b-${base}-5`, type: 'code', language: 'python', content: '# Data reduction pipeline and statistical estimation\nimport numpy as np\nimport scipy.stats as stats\n\ndef compute_transit_depth(flux, baseline):\n    return np.mean(baseline) - np.min(flux)' },
-      { id: `b-${base}-6`, type: 'heading', level: 2, content: '3. Empirical Results & Mathematical Models' },
-      { id: `b-${base}-7`, type: 'math', content: '\\Delta F = \\left(\\frac{R_p}{R_*}\\right)^2 = \\int_0^1 I(\\mu) \\, 2\\pi r \\, dr' },
-      { id: `b-${base}-8`, type: 'table', content: 'Parameter | Prior | Posterior Mean | 95% Credible Interval\nRadius Ratio (Rp/R*) | Uniform(0, 0.2) | 0.0842 | [0.0815, 0.0869]\nOrbital Period (days) | Gaussian(3.42, 0.05) | 3.4218 | [3.4215, 3.4221]\nImpact Parameter (b) | Uniform(0, 1) | 0.312 | [0.285, 0.339]' },
-      { id: `b-${base}-9`, type: 'heading', level: 2, content: '4. Discussion & Comparative Analysis' },
-      { id: `b-${base}-10`, type: 'text', content: 'Contextualize the findings with existing literature, address limitations, and outline subsequent inquiry tracks.' },
-      { id: `b-${base}-11`, type: 'quote', content: 'Reproducibility is the foundational cornerstone of authentic student scholarship.', author: 'CRII Fellow' },
-      { id: `b-${base}-12`, type: 'divider' },
-      { id: `b-${base}-13`, type: 'heading', level: 2, content: '5. References & Data Availability' },
-      { id: `b-${base}-14`, type: 'list', content: '- Astrobiology Data Registry: doi:10.5281/zenodo.crii.2026\n- CRII Open Repository: https://github.com/curiomas-crii\n- Open Science Framework Verification Dataset #CRII-2026-08' }
-    ];
-  }
-  renderBlockStack();
-  if (window.CRII_WORD) {
-    window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
-  }
-  window.showToast('Scientific research paper template applied!', 'success');
-};
 
 window.updateBlockContent = function(index, key, val) {
   if (currentPostBlocks[index]) {
@@ -1090,7 +818,6 @@ window.insertBlock = function(type) {
     content: ''
   };
 
-  if (type === 'heading') newBlock.level = 2;
   if (type === 'image') newBlock.url = '';
   if (type === 'code') newBlock.language = 'python';
   if (type === 'quote') newBlock.author = '';
@@ -1106,67 +833,45 @@ window.insertBlock = function(type) {
 
 function updateEstimatedReadingTime() {
   let wordCount = 0;
-  let charCount = 0;
   currentPostBlocks.forEach(b => {
-    const text = String(b.content || '');
-    if (text.trim()) {
-      wordCount += text.trim().split(/\s+/).length;
-      charCount += text.length;
-    }
+    if (b.content) wordCount += b.content.split(/\s+/).length;
   });
   const minutes = Math.max(1, Math.ceil(wordCount / 180));
   const badge = document.getElementById('bloggerReadTimeBadge');
-  if (badge) {
-    badge.innerText = `${wordCount} words • ${minutes} min read`;
-    badge.title = `${charCount} characters across ${currentPostBlocks.length} blocks`;
-  }
+  if (badge) badge.innerText = `${minutes} min read`;
 }
 
 // Convert blocks to Markdown/HTML for public reader
 function compileBlocksToContent(blocks) {
-  if (window.CRII_WORD && typeof window.CRII_WORD.blocksToHtml === 'function') {
-    return window.CRII_WORD.blocksToHtml(blocks);
-  }
   return blocks.map(b => {
     switch (b.type) {
       case 'heading':
-        return `<h${b.level || 2} data-block-type="heading">${escapeHtml(b.content || '')}</h${b.level || 2}>`;
+        return `## ${b.content || ''}`;
       case 'subheading':
-        return `<h3 data-block-type="subheading">${escapeHtml(b.content || '')}</h3>`;
+        return `### ${b.content || ''}`;
       case 'image':
-        return b.url ? `<figure class="doc-figure" data-block-type="image" data-url="${escapeHtml(b.url)}"><img src="${escapeHtml(b.url)}" alt="${escapeHtml(b.caption || '')}"><figcaption class="doc-caption">${escapeHtml(b.caption || '')}</figcaption></figure>` : '';
+        return `![${b.caption || 'Research Image'}](${b.url || ''})\n*${b.caption || ''}*`;
       case 'code':
-        return `<pre class="doc-code" data-block-type="code" data-language="${escapeHtml(b.language || 'python')}"><code class="language-${escapeHtml(b.language || 'python')}">${escapeHtml(b.content || '')}</code></pre>`;
+        return `\`\`\`${b.language || 'text'}\n${b.content || ''}\n\`\`\``;
       case 'quote':
-        return `<blockquote class="doc-quote" data-block-type="quote" data-author="${escapeHtml(b.author || '')}"><p>${escapeHtml(b.content || '')}</p>${b.author ? `<footer>— ${escapeHtml(b.author)}</footer>` : ''}</blockquote>`;
+        return `> ${b.content || ''}\n> — *${b.author || 'CRII'}*`;
       case 'callout':
-        return `<div class="doc-callout doc-callout-${b.style || 'note'}" data-block-type="callout" data-callout="${b.style || 'note'}"><p><strong>${(b.style || 'Note').toUpperCase()}</strong></p><p>${escapeHtml(b.content || '')}</p></div>`;
+        return `> [!${(b.style || 'NOTE').toUpperCase()}]\n> ${b.content || ''}`;
       case 'list':
-        return `<ul class="doc-list" data-block-type="list">${(b.content || '').split('\n').filter(Boolean).map(item => `<li>${escapeHtml(item.replace(/^[-*]\s*/, ''))}</li>`).join('')}</ul>`;
+        return (b.content || '').split('\n').map(item => `- ${item}`).join('\n');
       case 'divider':
-        return `<hr class="doc-divider" data-block-type="divider">`;
+        return `---`;
       case 'video':
-        return `<div class="doc-video doc-video-wrapper" data-block-type="video" data-url="${escapeHtml(b.url || '')}"><iframe src="${formatVideoEmbedUrl(b.url || '')}" frameborder="0" allowfullscreen></iframe></div>`;
+        return `<div class="video-embed"><iframe src="${formatVideoEmbedUrl(b.url || '')}" frameborder="0" allowfullscreen></iframe></div>`;
       case 'timeline':
-        return `<div class="doc-timeline" data-block-type="timeline" data-date="${escapeHtml(b.date || '')}"><strong>${escapeHtml(b.date || 'Milestone')}</strong><p>${escapeHtml(b.content || '')}</p></div>`;
+        return `**${b.date || ''}**: ${b.content || ''}`;
       case 'music':
-        return `<div class="doc-music-card doc-audio" data-block-type="music" data-url="${escapeHtml(b.url || '')}" data-content="${escapeHtml(b.content || '')}"><p>🎵 <strong>${escapeHtml(b.content || 'Research Soundtrack')}</strong></p><p><a href="${escapeHtml(b.url || '')}" target="_blank" rel="noopener">${escapeHtml(b.url || '')}</a></p>${b.opinion ? `<p class="doc-music-opinion"><em>${escapeHtml(b.opinion)}</em></p>` : ''}</div>`;
-      case 'math':
-        return `<div class="doc-equation" data-block-type="math" data-latex="${escapeHtml(b.content || '')}"></div>`;
-      case 'table': {
-        const rows = (b.content || '').split('\n').filter(Boolean);
-        let tbl = '<div class="table-wrapper doc-table-wrapper" data-block-type="table"><table class="doc-table admin-table">';
-        rows.forEach((r, rIdx) => {
-          const cells = r.split('|').map(c => c.trim());
-          const tag = rIdx === 0 ? 'th' : 'td';
-          tbl += '<tr>' + cells.map(c => `<${tag}>${escapeHtml(c)}</${tag}>`).join('') + '</tr>';
-        });
-        tbl += '</table></div>';
-        return tbl;
-      }
+        return `🎵 **Soundtrack**: ${b.url || ''} — *${b.content || ''}*`;
+      case 'table':
+        return `<pre>${b.content || ''}</pre>`;
       case 'text':
       default:
-        return `<p data-block-type="text">${escapeHtml(b.content || '')}</p>`;
+        return b.content || '';
     }
   }).join('\n\n');
 }
@@ -1314,7 +1019,7 @@ async function saveCurrentPost() {
 
   const authorsStr = (document.getElementById('bloggerAuthorsInput')?.value || '').trim();
   const doi = (document.getElementById('bloggerDoiInput')?.value || '').trim() || `10.5281/crii.2026.${Math.floor(1000 + Math.random() * 9000)}`;
-  const __docMode = (lastActiveEditorMode === 'doc') || !!(window.CRII_WORD && window.CRII_WORD.getMode() === 'doc');
+  const __docMode = !!(window.CRII_WORD && window.CRII_WORD.getMode() === 'doc');
   const summary = (document.getElementById('bloggerSummaryInput')?.value || '').trim() || (__docMode ? window.CRII_WORD.getExcerpt(220) : '') || title;
   const abstract = (document.getElementById('bloggerAbstractInput')?.value || '').trim() || summary;
   const tagsStr = (document.getElementById('bloggerTagsInput')?.value || '').trim();
@@ -1322,25 +1027,15 @@ async function saveCurrentPost() {
   const editorName = user ? (user.name || user.email || "Administrator") : "Administrator";
 
   let wordCount = 0;
-  let compiledContent = '';
-  let finalBlocks = [];
-
+  let compiledContent;
   if (__docMode) {
     wordCount = window.CRII_WORD.getWordCount();
-    const cleanHtml = window.CRII_WORD.getCleanHtml();
-    compiledContent = window.CriiDoc.MARK + cleanHtml;
-    finalBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
-    currentPostBlocks = finalBlocks;
+    compiledContent = window.CriiDoc.MARK + window.CRII_WORD.getCleanHtml();
   } else {
-    finalBlocks = currentPostBlocks;
     currentPostBlocks.forEach(b => {
       if (b.content) wordCount += String(b.content).split(/\s+/).length;
     });
-    if (window.CRII_WORD && typeof window.CRII_WORD.blocksToHtml === 'function') {
-      compiledContent = window.CriiDoc.MARK + window.CRII_WORD.blocksToHtml(currentPostBlocks);
-    } else {
-      compiledContent = window.CriiDoc.MARK + compileBlocksToContent(currentPostBlocks);
-    }
+    compiledContent = compileBlocksToContent(currentPostBlocks) || summary;
   }
   const readingTime = `${Math.max(1, Math.ceil(wordCount / 180))} min read`;
   const featured = Boolean(document.getElementById('bloggerFeaturedInput')?.checked);
@@ -1359,7 +1054,7 @@ async function saveCurrentPost() {
     summary,
     abstract,
     content: compiledContent,
-    blocks: finalBlocks,
+    blocks: __docMode ? [] : currentPostBlocks,
     tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : ["Research"],
     published: isCurrentPostPublished,
     createdBy: existingPost ? (existingPost.createdBy || existingPost.authors?.[0] || editorName) : editorName,
@@ -1395,11 +1090,10 @@ async function saveCurrentPost() {
   }
 }
 
-// Render Directory Table & Mobile Cards Grid
+// Render Directory Table
 function renderPostsDirectory() {
   const tbody = document.getElementById('portalPostsTbody');
-  const mobileGrid = document.getElementById('portalPostsMobileGrid');
-  if (!tbody && !mobileGrid) return;
+  if (!tbody) return;
 
   const searchVal = (document.getElementById('searchPostsInput')?.value || '').toLowerCase().trim();
 
@@ -1412,111 +1106,57 @@ function renderPostsDirectory() {
     );
   }
 
-  // 1. Render Desktop Table
-  if (tbody) {
-    if (posts.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">No publications found. Click "+ Create New Publication" to publish.</td></tr>`;
-    } else {
-      tbody.innerHTML = posts.map(post => {
-        const isPub = post.published !== false;
-        const coverThumb = post.coverImage || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=120&q=60';
-        const updatedByText = post.updatedBy ? `by ${post.updatedBy}` : 'by Lead Fellow';
-        const updatedDate = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString() : post.date;
-
-        return `
-          <tr>
-            <td>
-              <div style="display:flex; align-items:center; gap:0.85rem;">
-                <img src="${coverThumb}" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid var(--border-color); flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=120&q=60'">
-                <div>
-                  <div style="font-weight:600; color:var(--text-primary); font-size:0.92rem; line-height:1.3;">${escapeHtml(post.title)}</div>
-                  <div style="font-size:0.74rem; color:var(--text-muted); font-family:monospace; margin-top:0.2rem;">/${post.slug || post.id} • ${post.readingTime || '10 min'}</div>
-                </div>
-              </div>
-            </td>
-            <td><span class="badge badge-blue">${post.category}</span></td>
-            <td>
-              <div style="font-size:0.84rem; font-weight:500; color:var(--text-primary);">${updatedDate}</div>
-              <div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(updatedByText)}</div>
-            </td>
-            <td>
-              <span class="status-chip ${isPub ? 'published' : 'draft'}">
-                ${isPub ? 'Published' : 'Draft'}
-              </span>
-            </td>
-            <td style="text-align:right;">
-              <div style="display:inline-flex; gap:0.4rem;">
-                <button class="btn btn-secondary btn-sm" onclick="openBloggerEditor('${post.id}')" title="Edit publication in studio">
-                  Edit
-                </button>
-                <a href="/article?id=${post.id}" target="_blank" class="btn btn-glass btn-sm" title="View public article">
-                  Preview ↗
-                </a>
-                <button class="btn btn-sm btn-icon" title="Toggle status" onclick="togglePublishPost('${post.id}')" style="background:rgba(0,0,0,0.04);">
-                  ${isPub ? 'Hide' : 'Show'}
-                </button>
-                <button class="btn btn-sm btn-icon" title="Delete" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="deletePost('${post.id}')">
-                  ✕
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
+  if (posts.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">No publications found. Click "+ Create New Publication" to publish.</td></tr>`;
+    return;
   }
 
-  // 2. Render Mobile Cards Grid
-  if (mobileGrid) {
-    if (posts.length === 0) {
-      mobileGrid.innerHTML = `<div style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">No publications found. Click "+ Create New Publication" to publish.</div>`;
-    } else {
-      mobileGrid.innerHTML = posts.map(post => {
-        const isPub = post.published !== false;
-        const coverThumb = post.coverImage || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=60';
-        const updatedByText = post.updatedBy ? `by ${post.updatedBy}` : 'by Lead Fellow';
-        const updatedDate = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString() : post.date;
+  tbody.innerHTML = posts.map(post => {
+    const isPub = post.published !== false;
+    const coverThumb = post.coverImage || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=120&q=60';
+    const updatedByText = post.updatedBy ? `by ${post.updatedBy}` : 'by Lead Fellow';
+    const updatedDate = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString() : post.date;
 
-        return `
-          <div class="portal-post-card">
-            <div class="portal-post-card-top">
-              <img src="${coverThumb}" class="portal-post-card-thumb" alt="${escapeHtml(post.title)}" onerror="this.src='https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=60'">
-              <div class="portal-post-card-header-info">
-                <div class="portal-post-card-badges">
-                  <span class="badge badge-blue">${escapeHtml(post.category || 'Science')}</span>
-                  <span class="status-chip ${isPub ? 'published' : 'draft'}">${isPub ? 'Published' : 'Draft'}</span>
-                </div>
-                <h4 class="portal-post-card-title">${escapeHtml(post.title)}</h4>
-                <div class="portal-post-card-slug">/${escapeHtml(post.slug || post.id)} • ${escapeHtml(post.readingTime || '10 min')}</div>
-              </div>
-            </div>
-
-            <div class="portal-post-card-meta">
-              <div class="portal-post-card-meta-item">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                <span>${updatedDate} • ${escapeHtml(updatedByText)}</span>
-              </div>
-            </div>
-
-            <div class="portal-post-card-actions">
-              <button class="btn btn-secondary btn-sm" onclick="openBloggerEditor('${post.id}')" title="Edit publication in studio">
-                Edit
-              </button>
-              <a href="/article?id=${post.id}" target="_blank" class="btn btn-glass btn-sm" title="View public article">
-                Preview ↗
-              </a>
-              <button class="btn btn-secondary btn-sm" onclick="togglePublishPost('${post.id}')" title="Toggle status">
-                ${isPub ? 'Hide' : 'Show'}
-              </button>
-              <button class="btn btn-sm btn-icon" title="Delete" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:none; padding:0.4rem 0.65rem; border-radius:8px;" onclick="deletePost('${post.id}')">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
+    return `
+      <tr>
+        <td>
+          <div style="display:flex; align-items:center; gap:0.85rem;">
+            <img src="${coverThumb}" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid var(--border-color); flex-shrink:0;">
+            <div>
+              <div style="font-weight:600; color:var(--text-primary); font-size:0.92rem; line-height:1.3;">${escapeHtml(post.title)}</div>
+              <div style="font-size:0.74rem; color:var(--text-muted); font-family:monospace; margin-top:0.2rem;">/${post.slug || post.id} • ${post.readingTime || '10 min'}</div>
             </div>
           </div>
-        `;
-      }).join('');
-    }
-  }
+        </td>
+        <td><span class="badge badge-blue">${post.category}</span></td>
+        <td>
+          <div style="font-size:0.84rem; font-weight:500; color:var(--text-primary);">${updatedDate}</div>
+          <div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(updatedByText)}</div>
+        </td>
+        <td>
+          <span class="status-chip ${isPub ? 'published' : 'draft'}">
+            ${isPub ? 'Published' : 'Draft'}
+          </span>
+        </td>
+        <td style="text-align:right;">
+          <div style="display:inline-flex; gap:0.4rem;">
+            <button class="btn btn-secondary btn-sm" onclick="openBloggerEditor('${post.id}')" title="Edit publication in studio">
+              Edit
+            </button>
+            <a href="/article?id=${post.id}" target="_blank" class="btn btn-glass btn-sm" title="View public article">
+              Preview ↗
+            </a>
+            <button class="btn btn-sm btn-icon" title="Toggle status" onclick="togglePublishPost('${post.id}')" style="background:rgba(0,0,0,0.04);">
+              ${isPub ? 'Hide' : 'Show'}
+            </button>
+            <button class="btn btn-sm btn-icon" title="Delete" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="deletePost('${post.id}')">
+              ✕
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 window.renderPostsDirectory = renderPostsDirectory;
 
