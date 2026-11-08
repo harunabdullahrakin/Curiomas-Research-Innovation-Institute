@@ -946,7 +946,7 @@ function renderBloggerLiveReaderPreview() {
         break;
       case 'callout':
         blocksHtml += `
-          <div style="background:rgba(37,99,235,0.08); border-left:4px solid var(--accent-primary); padding:1rem 1.25rem; border-radius:0 10px 10px 0; margin:1.5rem 0;">
+          <div style="background:rgba(234, 88, 12, 0.08); border-left:4px solid var(--accent-primary); padding:1rem 1.25rem; border-radius:0 10px 10px 0; margin:1.5rem 0;">
             <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--accent-primary); margin-bottom:0.3rem;">${(b.style || 'NOTE').toUpperCase()}</div>
             <div style="font-size:0.95rem; color:var(--text-primary);">${escapeHtml(b.content || '')}</div>
           </div>
@@ -1310,7 +1310,7 @@ function renderRosterGrid() {
             Edit Profile
           </button>
           ${(m.email || (m.socials && m.socials.email)) ? `
-          <button class="btn btn-sm btn-icon" style="background:rgba(2,132,199,0.1); color:#0284c7;" onclick="openEmailComposer('${escapeHtml(m.email || m.socials.email)}', '${escapeHtml(m.name)}')" title="Send Email">
+          <button class="btn btn-sm btn-icon" style="background:rgba(234,88,12,0.1); color:#ea580c;" onclick="openEmailComposer('${escapeHtml(m.email || m.socials.email)}', '${escapeHtml(m.name)}')" title="Send Email">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
           </button>` : ''}
           <button class="btn btn-sm btn-icon" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="deleteResearcher('${m.id}')" title="Delete">
@@ -1867,7 +1867,7 @@ function renderApplicationsTable() {
             <button class="btn btn-secondary btn-sm" onclick="reviewApplication('${a.id}')">
               Review
             </button>
-            <button class="btn btn-sm btn-icon" title="Email Candidate via EmailJS" onclick="openEmailComposer('${escapeHtml(a.email)}', '${escapeHtml(a.fullName)}', 'CRII Fellowship Update')" style="background:rgba(37,99,235,0.08); color:var(--accent-primary);">
+            <button class="btn btn-sm btn-icon" title="Email Candidate via EmailJS" onclick="openEmailComposer('${escapeHtml(a.email)}', '${escapeHtml(a.fullName)}', 'CRII Fellowship Update')" style="background:rgba(234,88,12,0.08); color:var(--accent-primary);">
               ✉
             </button>
             <button class="btn btn-sm btn-icon" title="Delete Application Record" onclick="deleteApplicationRow('${a.id}')" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;">
@@ -3226,7 +3226,7 @@ function renderStorageGrid() {
             <img src="${escapeHtml(publicUrl)}" alt="${escapeHtml(item.filename)}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/assets/curiomas-no-bg.png'; this.style.objectFit='contain'; this.style.padding='1.5rem';">
           `}
           <!-- Type Badge -->
-          <span style="position: absolute; top: 8px; right: 8px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: ${isVideo ? 'rgba(245, 158, 11, 0.9)' : 'rgba(37, 99, 235, 0.9)'}; color: #ffffff; backdrop-filter: blur(4px);">
+          <span style="position: absolute; top: 8px; right: 8px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: ${isVideo ? 'rgba(245, 158, 11, 0.9)' : 'rgba(234, 88, 12, 0.9)'}; color: #ffffff; backdrop-filter: blur(4px);">
             ${isVideo ? 'VIDEO' : 'IMAGE'}
           </span>
         </div>
@@ -3391,8 +3391,8 @@ function initStorageDropzone() {
     dropzone.addEventListener(eventName, (e) => {
       e.preventDefault();
       e.stopPropagation();
-      dropzone.style.borderColor = 'var(--accent-primary, #0284c7)';
-      dropzone.style.background = 'rgba(2, 132, 199, 0.05)';
+      dropzone.style.borderColor = 'var(--accent-primary, #ea580c)';
+      dropzone.style.background = 'rgba(234, 88, 12, 0.05)';
     });
   });
 
@@ -3481,7 +3481,7 @@ function initAliasesTab() {
     const suffixEl = document.getElementById('provDomainSuffix');
     if (suffixEl) suffixEl.textContent = '@' + dom;
     if (prevEl) {
-      prevEl.innerHTML = '<strong>' + escapeHtml(handle) + '@' + escapeHtml(dom) + '</strong> &rarr; <span style="color:#2563eb;">' + escapeHtml(fwd) + '</span>';
+      prevEl.innerHTML = '<strong>' + escapeHtml(handle) + '@' + escapeHtml(dom) + '</strong> &rarr; <span style="color:#ea580c;">' + escapeHtml(fwd) + '</span>';
     }
   };
 
@@ -3513,7 +3513,7 @@ async function renderAliasesTab(forceRefresh = false) {
   if (!tbody && !mobileGrid) return;
 
   if (forceRefresh || cachedImprovmxDomains.length === 0) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);"><span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #2563eb; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:0.5rem; vertical-align:middle;"></span> Fetching verified domains from ImprovMX...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);"><span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #ea580c; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:0.5rem; vertical-align:middle;"></span> Fetching verified domains from ImprovMX...</td></tr>';
     
     // Load account limits
     const accRes = await window.CRII_API.getImprovMXAccount(currentImprovmxKeyId);
@@ -3656,7 +3656,7 @@ function renderAliasesTable(aliases) {
         <tr>
           <td>
             <div style="display:flex; align-items:center; gap:0.6rem;">
-              <span style="font-family:monospace; font-weight:700; color:var(--accent-primary, #2563eb); font-size:0.94rem;">
+              <span style="font-family:monospace; font-weight:700; color:var(--accent-primary, #ea580c); font-size:0.94rem;">
                 ${escapeHtml(fullAlias)}
               </span>
               <button type="button" class="btn btn-sm btn-icon" title="Copy email address" onclick="window.copyAliasToClipboard('${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}')">
@@ -3792,7 +3792,7 @@ function openProvisionAliasModal() {
 
   const prevEl = document.getElementById('provRelayPreview');
   if (prevEl) {
-    prevEl.innerHTML = '<strong>handle@' + escapeHtml(currentImprovmxDomain || 'domain.com') + '</strong> &rarr; <span style="color:#2563eb;">researcher@gmail.com</span>';
+    prevEl.innerHTML = '<strong>handle@' + escapeHtml(currentImprovmxDomain || 'domain.com') + '</strong> &rarr; <span style="color:#ea580c;">researcher@gmail.com</span>';
   }
 
   modal.classList.add('active');
@@ -3980,7 +3980,7 @@ async function renderImprovmxKeysList() {
     container.innerHTML = res.keys.map(k => {
       const isSelected = (!currentImprovmxKeyId && k.isDefault) || (currentImprovmxKeyId === k.id);
       return `
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; border:1px solid ${isSelected ? 'var(--accent-primary, #2563eb)' : 'var(--border-color)'}; border-radius:8px; background:var(--bg-surface);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; border:1px solid ${isSelected ? 'var(--accent-primary, #ea580c)' : 'var(--border-color)'}; border-radius:8px; background:var(--bg-surface);">
           <div>
             <div style="font-weight:600; font-size:0.88rem; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem;">
               ${escapeHtml(k.label)}

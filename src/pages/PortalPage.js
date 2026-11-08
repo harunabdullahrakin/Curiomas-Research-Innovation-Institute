@@ -140,7 +140,7 @@ export function renderPortalPageHtml() {
               <polyline points="22,6 12,13 2,6"/>
             </svg>
             <span class="portal-nav-label">Researcher Emails</span>
-            <span class="portal-nav-badge" style="background: rgba(37, 99, 235, 0.15); color: #3b82f6; font-weight: 700;">MX</span>
+            <span class="portal-nav-badge" style="background: rgba(234, 88, 12, 0.15); color: #ea580c; font-weight: 700;">MX</span>
           </button>
           <button class="portal-nav-btn" data-tab="permissions" data-tooltip="Access Control">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -161,7 +161,7 @@ export function renderPortalPageHtml() {
               <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
             </svg>
             <span class="portal-nav-label">Email Dispatcher</span>
-            <span class="portal-nav-badge" style="background: rgba(37, 99, 235, 0.15); color: #2563eb; font-weight: 700;">Gmail</span>
+            <span class="portal-nav-badge" style="background: rgba(234, 88, 12, 0.15); color: #ea580c; font-weight: 700;">Gmail</span>
           </button>
         </div>
 
@@ -463,7 +463,7 @@ export function renderPortalPageHtml() {
               </div>
 
               <!-- Spotlight Feature Toggle -->
-              <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem; background: rgba(37, 99, 235, 0.08); padding: 0.9rem 1.15rem; border-radius: 10px; border: 1.5px solid rgba(37, 99, 235, 0.25); margin-bottom: 1.5rem;">
+              <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem; background: rgba(234, 88, 12, 0.08); padding: 0.9rem 1.15rem; border-radius: 10px; border: 1.5px solid rgba(234, 88, 12, 0.25); margin-bottom: 1.5rem;">
                 <input type="checkbox" id="bloggerFeaturedInput" style="width: 20px; height: 20px; accent-color: var(--accent-primary); cursor: pointer;">
                 <div>
                   <label for="bloggerFeaturedInput" style="font-weight: 700; font-size: 0.94rem; color: var(--text-primary); cursor: pointer; display: block; margin: 0;">
@@ -1010,7 +1010,7 @@ export function renderPortalPageHtml() {
               <span id="improvmxAliasCount" style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">0</span>
               <span id="improvmxAliasLimit" style="font-size: 0.9rem; color: var(--text-muted);">/ 25 Used</span>
             </div>
-            <div id="improvmxPlanTier" style="font-size: 0.74rem; color: var(--accent-primary, #2563eb); font-weight: 600; margin-top: 0.35rem;">
+            <div id="improvmxPlanTier" style="font-size: 0.74rem; color: var(--accent-primary, #ea580c); font-weight: 600; margin-top: 0.35rem;">
               ImprovMX Free Tier
             </div>
           </div>
@@ -1408,7 +1408,7 @@ export function renderPortalPageHtml() {
                 </span>
               </div>
 
-              <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; background: rgba(37,99,235,0.05); padding: 0.75rem; border-radius: 6px; margin-top: 1rem;">
+              <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; background: rgba(234, 88, 12, 0.06); padding: 0.75rem; border-radius: 6px; margin-top: 1rem;">
                 <strong>Template Variables in EmailJS:</strong><br>
                 In your EmailJS template content, you can use: <code>{{to_email}}</code>, <code>{{to_name}}</code>, <code>{{subject}}</code>, <code>{{message}}</code>, <code>{{reply_to}}</code>.
               </div>
@@ -1448,7 +1448,7 @@ export function renderPortalPageHtml() {
         <!-- Metrics Cards -->
         <div class="portal-stats-grid" style="margin-bottom: 2rem;">
           <div class="stat-card">
-            <div class="stat-icon-wrapper" style="background: rgba(37,99,235,0.1); color: #2563eb;">
+            <div class="stat-icon-wrapper" style="background: rgba(234, 88, 12, 0.1); color: #ea580c;">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
             </div>
             <div class="stat-info">
@@ -1505,7 +1505,7 @@ export function renderPortalPageHtml() {
 
           <!-- Drag & Drop Zone -->
           <div id="storageDropzone" class="storage-dropzone" style="margin-top: 1.25rem; border: 2px dashed var(--border-color); border-radius: 12px; padding: 2rem 1.5rem; text-align: center; background: var(--bg-surface); cursor: pointer; transition: all 0.2s ease;">
-            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--accent-primary, #0284c7)" stroke-width="1.8" style="margin-bottom: 0.65rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--accent-primary, #ea580c)" stroke-width="1.8" style="margin-bottom: 0.65rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Drag and drop files here, or click to upload</div>
             <div style="font-size: 0.82rem; color: var(--text-muted);">Supports PNG, JPG, WEBP, SVG, GIF images and MP4, WEBM videos (Up to 100MB per file)</div>
           </div>
@@ -1563,8 +1563,8 @@ export function renderPortalPageHtml() {
           </div>
 
           <!-- Live Preview Box -->
-          <div style="background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 8px; padding: 0.75rem 1rem; margin-top: 0.75rem;">
-            <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary, #2563eb); margin-bottom: 0.2rem;">Relay Preview</div>
+          <div style="background: rgba(234, 88, 12, 0.06); border: 1px solid rgba(234, 88, 12, 0.2); border-radius: 8px; padding: 0.75rem 1rem; margin-top: 0.75rem;">
+            <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary, #ea580c); margin-bottom: 0.2rem;">Relay Preview</div>
             <div id="provRelayPreview" style="font-family: monospace; font-size: 0.85rem; color: var(--text-primary);">
               (handle)@(domain) &rarr; (destination)
             </div>
@@ -1871,7 +1871,7 @@ export function renderPortalPageHtml() {
           </div>
 
           <!-- Core Team Toggle & Ordering -->
-          <div class="form-row" style="align-items: center; padding: 1rem; background: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.15); border-radius: 10px;">
+          <div class="form-row" style="align-items: center; padding: 1rem; background: rgba(234, 88, 12, 0.05); border: 1px solid rgba(234, 88, 12, 0.15); border-radius: 10px;">
             <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 0.6rem;">
               <input type="checkbox" id="resIsTeamMember" style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
               <label for="resIsTeamMember" style="font-weight: 600; font-size: 0.88rem; cursor: pointer; color: var(--text-primary); margin: 0;">
@@ -1908,7 +1908,7 @@ export function renderPortalPageHtml() {
           ✕ Decline & Send Email
         </button>
         <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-          <button id="reviewEmailApplicantBtn" class="btn btn-sm" style="background:rgba(37,99,235,0.08); color:var(--accent-primary); border:1px solid rgba(37,99,235,0.2);">
+          <button id="reviewEmailApplicantBtn" class="btn btn-sm" style="background:rgba(234, 88, 12, 0.08); color:var(--accent-primary); border:1px solid rgba(234, 88, 12, 0.2);">
             ✉ Custom Email
           </button>
           <button id="reviewUnderwayBtn" class="btn btn-secondary btn-sm">Mark Under Review</button>
@@ -1932,7 +1932,7 @@ export function renderPortalPageHtml() {
       </div>
       <form id="emailComposerForm">
         <div class="modal-body">
-          <div class="form-group" style="margin-bottom: 1.15rem; background: rgba(37,99,235,0.04); border: 1px solid rgba(37,99,235,0.12); padding: 0.85rem; border-radius: 8px;">
+          <div class="form-group" style="margin-bottom: 1.15rem; background: rgba(234, 88, 12, 0.04); border: 1px solid rgba(234, 88, 12, 0.12); padding: 0.85rem; border-radius: 8px;">
             <label class="form-label" for="composerTemplateSelect" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
               <span>Quick Template / Preset</span>
               <span style="font-size:0.75rem; color:var(--text-muted);">Auto-fills subject and dispatch body</span>
@@ -1981,7 +1981,7 @@ export function renderPortalPageHtml() {
             <textarea id="composerMessage" class="form-textarea" style="min-height: 150px;" required placeholder="Write your email dispatch to the applicant or team member..."></textarea>
           </div>
 
-          <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.15); padding: 0.85rem 1rem; border-radius: 8px;">
+          <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; background: rgba(234, 88, 12, 0.06); border: 1px solid rgba(234, 88, 12, 0.15); padding: 0.85rem 1rem; border-radius: 8px;">
             <strong>EmailJS Service:</strong> <code>curiomas</code> (connected to <code>curiomas.members@gmail.com</code>)<br>
             Supported parameters in your EmailJS template: <code>{{to_email}}</code>, <code>{{to_name}}</code>, <code>{{subject}}</code>, <code>{{message}}</code>, <code>{{reply_to}}</code>.
           </div>

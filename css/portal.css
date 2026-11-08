@@ -20,6 +20,98 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   --sidebar-collapsed-width: 76px;
 }
 
+/* ==========================================================================
+   ADMIN PANEL THEME: WHITE + ORANGE
+   Clean, crisp white surfaces paired with vibrant Institute Orange.
+   ========================================================================== */
+.portal-layout,
+.page-portal-wrapper,
+#portalDashboardSection,
+#portalAuthSection,
+.modal-overlay {
+  --bg-primary: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.95);
+  --border-color: rgba(226, 232, 240, 0.9);
+  --border-subtle: #e2e8f0;
+  --border-focus: #ea580c;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+
+  --accent-primary: #ea580c;       /* Institute Vibrant Orange */
+  --accent-secondary: #f97316;     /* Bright Orange */
+  --accent-tertiary: #fb923c;      /* Warm Sun Orange */
+  
+  --grad-primary: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  --grad-surface: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --grad-glow: radial-gradient(circle at 50% 0%, rgba(234, 88, 12, 0.12) 0%, transparent 70%);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  
+  --cursor-ring: rgba(234, 88, 12, 0.4);
+  --cursor-dot: #ea580c;
+}
+
+[data-theme="dark"] .portal-layout,
+[data-theme="dark"] .page-portal-wrapper,
+[data-theme="dark"] #portalDashboardSection,
+[data-theme="dark"] #portalAuthSection,
+[data-theme="dark"] .modal-overlay {
+  --accent-primary: #f97316;
+  --accent-secondary: #fb923c;
+  --border-focus: #f97316;
+  --grad-primary: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+}
+
+/* Primary Button Styling for Admin Panel */
+.portal-layout .btn-primary,
+.page-portal-wrapper .btn-primary,
+.modal-overlay .btn-primary,
+#portalDashboardSection .btn-primary {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.28) !important;
+}
+
+.portal-layout .btn-primary:hover,
+.page-portal-wrapper .btn-primary:hover,
+.modal-overlay .btn-primary:hover,
+#portalDashboardSection .btn-primary:hover {
+  background: #c2410c !important;
+  border-color: #c2410c !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.38) !important;
+  transform: translateY(-1px);
+}
+
+.portal-layout .btn-secondary.active,
+.portal-layout .portal-filter-btn.active,
+#portalDashboardSection .btn-secondary.active {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+.portal-layout .form-input:focus,
+.modal-overlay .form-input:focus,
+#portalDashboardSection .form-input:focus,
+.portal-layout select:focus,
+.modal-overlay select:focus,
+.portal-layout textarea:focus,
+.modal-overlay textarea:focus {
+  border-color: #ea580c !important;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.16) !important;
+  outline: none;
+}
+
 .portal-layout {
   display: flex;
   min-height: 100vh;
@@ -61,8 +153,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 .portal-mobile-menu-btn:hover,
 .portal-icon-btn:hover {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.25);
+  background: rgba(234, 88, 12, 0.08);
+  border-color: rgba(234, 88, 12, 0.25);
   color: var(--accent-primary);
 }
 
@@ -149,8 +241,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(37, 99, 235, 0.08);
-  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: rgba(234, 88, 12, 0.08);
+  border: 1px solid rgba(234, 88, 12, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,9 +301,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .portal-sidebar-toggle-btn:hover {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(234, 88, 12, 0.08);
   color: var(--accent-primary);
-  border-color: rgba(37, 99, 235, 0.25);
+  border-color: rgba(234, 88, 12, 0.25);
   transform: scale(1.04);
 }
 
@@ -306,38 +398,38 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .portal-nav-btn:hover {
-  background: rgba(2, 132, 199, 0.06);
+  background: rgba(234, 88, 12, 0.06);
   color: var(--text-primary);
-  border-color: rgba(2, 132, 199, 0.16);
+  border-color: rgba(234, 88, 12, 0.16);
   transform: translateX(2.5px);
 }
 
 .portal-nav-btn:hover svg {
   transform: scale(1.1);
-  stroke: var(--accent-primary, #0284c7);
+  stroke: var(--accent-primary, #ea580c);
 }
 
 [data-theme="dark"] .portal-nav-btn:hover {
-  background: rgba(56, 189, 248, 0.08);
-  border-color: rgba(56, 189, 248, 0.2);
+  background: rgba(249, 115, 22, 0.08);
+  border-color: rgba(249, 115, 22, 0.2);
 }
 
 .portal-nav-btn.active {
-  background: linear-gradient(90deg, rgba(2, 132, 199, 0.12) 0%, rgba(2, 132, 199, 0.03) 100%) !important;
-  color: var(--accent-primary, #0284c7) !important;
-  border-color: rgba(2, 132, 199, 0.3) !important;
+  background: linear-gradient(90deg, rgba(234, 88, 12, 0.12) 0%, rgba(234, 88, 12, 0.03) 100%) !important;
+  color: var(--accent-primary, #ea580c) !important;
+  border-color: rgba(234, 88, 12, 0.3) !important;
   font-weight: 600;
-  box-shadow: inset 3.5px 0 0 var(--accent-primary, #0284c7), 0 2px 8px rgba(2, 132, 199, 0.08);
+  box-shadow: inset 3.5px 0 0 var(--accent-primary, #ea580c), 0 2px 8px rgba(234, 88, 12, 0.08);
 }
 
 .portal-nav-btn.active svg {
-  stroke: var(--accent-primary, #0284c7) !important;
+  stroke: var(--accent-primary, #ea580c) !important;
 }
 
 [data-theme="dark"] .portal-nav-btn.active {
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.16) 0%, rgba(56, 189, 248, 0.04) 100%) !important;
-  color: #38bdf8 !important;
-  border-color: rgba(56, 189, 248, 0.35) !important;
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.16) 0%, rgba(249, 115, 22, 0.04) 100%) !important;
+  color: #f97316 !important;
+  border-color: rgba(249, 115, 22, 0.35) !important;
 }
 
 .portal-nav-badge {
@@ -345,10 +437,10 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   font-size: 0.72rem;
   padding: 0.15rem 0.5rem;
   border-radius: 9999px;
-  background: rgba(2, 132, 199, 0.12);
-  color: var(--accent-primary, #0284c7);
+  background: rgba(234, 88, 12, 0.12);
+  color: var(--accent-primary, #ea580c);
   font-weight: 700;
-  border: 1px solid rgba(2, 132, 199, 0.25);
+  border: 1px solid rgba(234, 88, 12, 0.25);
   transition: all 0.2s ease;
 }
 
@@ -360,12 +452,12 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .storage-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
-  border-color: rgba(2, 132, 199, 0.35) !important;
+  border-color: rgba(234, 88, 12, 0.35) !important;
 }
 
 .storage-dropzone.dragover {
-  border-color: var(--accent-primary, #0284c7) !important;
-  background: rgba(2, 132, 199, 0.08) !important;
+  border-color: var(--accent-primary, #ea580c) !important;
+  background: rgba(234, 88, 12, 0.08) !important;
   transform: scale(1.01);
 }
 
@@ -403,7 +495,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
   user-select: none;
 }
 
@@ -468,8 +560,8 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .portal-user-action-btn:hover {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.2);
+  background: rgba(234, 88, 12, 0.08);
+  border-color: rgba(234, 88, 12, 0.2);
   color: var(--accent-primary);
 }
 
@@ -493,7 +585,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 .portal-public-link:hover {
   background: var(--bg-surface);
   color: var(--accent-primary);
-  border-color: rgba(37, 99, 235, 0.3);
+  border-color: rgba(234, 88, 12, 0.3);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }
@@ -828,7 +920,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   place-items: center;
   color: #fff;
   margin: 0 auto 1.5rem;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.25);
 }
 
 .auth-title {
@@ -877,7 +969,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .autz-logo-badge {
-  background: #2563eb;
+  background: #ea580c;
   color: #ffffff;
   font-weight: 800;
   padding: 0.2rem 0.5rem;
@@ -966,7 +1058,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .blogger-title-input:focus {
-  background: rgba(37, 99, 235, 0.05);
+  background: rgba(234, 88, 12, 0.05);
   box-shadow: 0 0 0 1px var(--accent-primary);
 }
 
@@ -1031,7 +1123,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .blogger-block-card:hover {
-  border-color: rgba(37, 99, 235, 0.4);
+  border-color: rgba(234, 88, 12, 0.4);
   box-shadow: var(--shadow-sm);
 }
 
@@ -1096,7 +1188,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 .blogger-add-block-zone:hover {
   border-color: var(--accent-primary);
-  background: rgba(37, 99, 235, 0.04);
+  background: rgba(234, 88, 12, 0.04);
 }
 
 /* Block Picker Grid Modal */
@@ -1123,7 +1215,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 .block-picker-item:hover {
   border-color: var(--accent-primary);
-  background: rgba(37, 99, 235, 0.06);
+  background: rgba(234, 88, 12, 0.06);
   transform: translateY(-2px);
   color: var(--accent-primary);
 }
@@ -1187,9 +1279,9 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 }
 
 .badge-core-team {
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(234, 88, 12, 0.12);
   color: var(--accent-primary);
-  border: 1px solid rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(234, 88, 12, 0.25);
   font-size: 0.72rem;
   font-weight: 700;
   padding: 0.15rem 0.5rem;
@@ -1906,7 +1998,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
 
 .cohort-manage-meta code {
   color: var(--accent-primary);
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(234, 88, 12, 0.08);
   padding: 2px 5px;
   border-radius: 4px;
 }
@@ -2352,7 +2444,7 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   .portal-alias-handle {
     font-size: 0.96rem;
     font-weight: 700;
-    color: var(--accent-primary, #2563eb);
+    color: var(--accent-primary, #ea580c);
     font-family: monospace;
     word-break: break-all;
   }
