@@ -342,9 +342,10 @@ export function renderPortalPageHtml() {
             </div>
           </div>
 
-          <!-- Existing Posts Table Card -->
-          <div class="data-table-card">
-            <div class="table-wrapper">
+          <!-- Existing Posts View: Desktop Table + Mobile Cards Grid -->
+          <div class="data-table-card portal-posts-container">
+            <!-- Desktop / Tablet Table View -->
+            <div class="table-wrapper portal-posts-desktop-table">
               <table class="admin-table">
                 <thead>
                   <tr>
@@ -358,6 +359,9 @@ export function renderPortalPageHtml() {
                 <tbody id="portalPostsTbody"></tbody>
               </table>
             </div>
+
+            <!-- Mobile Cards Grid View -->
+            <div id="portalPostsMobileGrid" class="portal-posts-mobile-grid"></div>
           </div>
         </div>
 

@@ -1075,10 +1075,11 @@ async function saveCurrentPost() {
   }
 }
 
-// Render Directory Table
+// Render Directory Table & Mobile Cards Grid
 function renderPostsDirectory() {
   const tbody = document.getElementById('portalPostsTbody');
-  if (!tbody) return;
+  const mobileGrid = document.getElementById('portalPostsMobileGrid');
+  if (!tbody && !mobileGrid) return;
 
   const searchVal = (document.getElementById('searchPostsInput')?.value || '').toLowerCase().trim();
 
@@ -1091,57 +1092,111 @@ function renderPostsDirectory() {
     );
   }
 
-  if (posts.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">No publications found. Click "+ Create New Publication" to publish.</td></tr>`;
-    return;
+  // 1. Render Desktop Table
+  if (tbody) {
+    if (posts.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">No publications found. Click "+ Create New Publication" to publish.</td></tr>`;
+    } else {
+      tbody.innerHTML = posts.map(post => {
+        const isPub = post.published !== false;
+        const coverThumb = post.coverImage || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=120&q=60';
+        const updatedByText = post.updatedBy ? `by ${post.updatedBy}` : 'by Lead Fellow';
+        const updatedDate = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString() : post.date;
+
+        return `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:0.85rem;">
+                <img src="${coverThumb}" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid var(--border-color); flex-shrink:0;" onerror="this.src='https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=120&q=60'">
+                <div>
+                  <div style="font-weight:600; color:var(--text-primary); font-size:0.92rem; line-height:1.3;">${escapeHtml(post.title)}</div>
+                  <div style="font-size:0.74rem; color:var(--text-muted); font-family:monospace; margin-top:0.2rem;">/${post.slug || post.id} • ${post.readingTime || '10 min'}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge badge-blue">${post.category}</span></td>
+            <td>
+              <div style="font-size:0.84rem; font-weight:500; color:var(--text-primary);">${updatedDate}</div>
+              <div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(updatedByText)}</div>
+            </td>
+            <td>
+              <span class="status-chip ${isPub ? 'published' : 'draft'}">
+                ${isPub ? 'Published' : 'Draft'}
+              </span>
+            </td>
+            <td style="text-align:right;">
+              <div style="display:inline-flex; gap:0.4rem;">
+                <button class="btn btn-secondary btn-sm" onclick="openBloggerEditor('${post.id}')" title="Edit publication in studio">
+                  Edit
+                </button>
+                <a href="/article?id=${post.id}" target="_blank" class="btn btn-glass btn-sm" title="View public article">
+                  Preview ↗
+                </a>
+                <button class="btn btn-sm btn-icon" title="Toggle status" onclick="togglePublishPost('${post.id}')" style="background:rgba(0,0,0,0.04);">
+                  ${isPub ? 'Hide' : 'Show'}
+                </button>
+                <button class="btn btn-sm btn-icon" title="Delete" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="deletePost('${post.id}')">
+                  ✕
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
   }
 
-  tbody.innerHTML = posts.map(post => {
-    const isPub = post.published !== false;
-    const coverThumb = post.coverImage || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=120&q=60';
-    const updatedByText = post.updatedBy ? `by ${post.updatedBy}` : 'by Lead Fellow';
-    const updatedDate = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString() : post.date;
+  // 2. Render Mobile Cards Grid
+  if (mobileGrid) {
+    if (posts.length === 0) {
+      mobileGrid.innerHTML = `<div style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">No publications found. Click "+ Create New Publication" to publish.</div>`;
+    } else {
+      mobileGrid.innerHTML = posts.map(post => {
+        const isPub = post.published !== false;
+        const coverThumb = post.coverImage || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=60';
+        const updatedByText = post.updatedBy ? `by ${post.updatedBy}` : 'by Lead Fellow';
+        const updatedDate = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString() : post.date;
 
-    return `
-      <tr>
-        <td>
-          <div style="display:flex; align-items:center; gap:0.85rem;">
-            <img src="${coverThumb}" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid var(--border-color); flex-shrink:0;">
-            <div>
-              <div style="font-weight:600; color:var(--text-primary); font-size:0.92rem; line-height:1.3;">${escapeHtml(post.title)}</div>
-              <div style="font-size:0.74rem; color:var(--text-muted); font-family:monospace; margin-top:0.2rem;">/${post.slug || post.id} • ${post.readingTime || '10 min'}</div>
+        return `
+          <div class="portal-post-card">
+            <div class="portal-post-card-top">
+              <img src="${coverThumb}" class="portal-post-card-thumb" alt="${escapeHtml(post.title)}" onerror="this.src='https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=60'">
+              <div class="portal-post-card-header-info">
+                <div class="portal-post-card-badges">
+                  <span class="badge badge-blue">${escapeHtml(post.category || 'Science')}</span>
+                  <span class="status-chip ${isPub ? 'published' : 'draft'}">${isPub ? 'Published' : 'Draft'}</span>
+                </div>
+                <h4 class="portal-post-card-title">${escapeHtml(post.title)}</h4>
+                <div class="portal-post-card-slug">/${escapeHtml(post.slug || post.id)} • ${escapeHtml(post.readingTime || '10 min')}</div>
+              </div>
+            </div>
+
+            <div class="portal-post-card-meta">
+              <div class="portal-post-card-meta-item">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span>${updatedDate} • ${escapeHtml(updatedByText)}</span>
+              </div>
+            </div>
+
+            <div class="portal-post-card-actions">
+              <button class="btn btn-secondary btn-sm" onclick="openBloggerEditor('${post.id}')" title="Edit publication in studio">
+                Edit
+              </button>
+              <a href="/article?id=${post.id}" target="_blank" class="btn btn-glass btn-sm" title="View public article">
+                Preview ↗
+              </a>
+              <button class="btn btn-secondary btn-sm" onclick="togglePublishPost('${post.id}')" title="Toggle status">
+                ${isPub ? 'Hide' : 'Show'}
+              </button>
+              <button class="btn btn-sm btn-icon" title="Delete" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:none; padding:0.4rem 0.65rem; border-radius:8px;" onclick="deletePost('${post.id}')">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
             </div>
           </div>
-        </td>
-        <td><span class="badge badge-blue">${post.category}</span></td>
-        <td>
-          <div style="font-size:0.84rem; font-weight:500; color:var(--text-primary);">${updatedDate}</div>
-          <div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(updatedByText)}</div>
-        </td>
-        <td>
-          <span class="status-chip ${isPub ? 'published' : 'draft'}">
-            ${isPub ? 'Published' : 'Draft'}
-          </span>
-        </td>
-        <td style="text-align:right;">
-          <div style="display:inline-flex; gap:0.4rem;">
-            <button class="btn btn-secondary btn-sm" onclick="openBloggerEditor('${post.id}')" title="Edit publication in studio">
-              Edit
-            </button>
-            <a href="/article?id=${post.id}" target="_blank" class="btn btn-glass btn-sm" title="View public article">
-              Preview ↗
-            </a>
-            <button class="btn btn-sm btn-icon" title="Toggle status" onclick="togglePublishPost('${post.id}')" style="background:rgba(0,0,0,0.04);">
-              ${isPub ? 'Hide' : 'Show'}
-            </button>
-            <button class="btn btn-sm btn-icon" title="Delete" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="deletePost('${post.id}')">
-              ✕
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+        `;
+      }).join('');
+    }
+  }
 }
 window.renderPostsDirectory = renderPostsDirectory;
 
@@ -2176,7 +2231,7 @@ function initAccessControl() {
 
       window.showToast(`User ${email} authorized and saved successfully!`, 'success');
       form.reset();
-      renderAllowedUsersTable();
+      await renderAllowedUsersTable();
     } catch (err) {
       window.showToast('Failed to authorize account: ' + err.message, 'error');
     } finally {
@@ -2188,18 +2243,18 @@ function initAccessControl() {
   });
 }
 
-function renderAllowedUsersTable() {
+async function renderAllowedUsersTable() {
   const tbody = document.getElementById('allowedUsersTbody');
   if (!tbody) return;
 
-  const users = window.CRII_API.getAllowedUsers();
-  tbody.innerHTML = users.map(u => `
+  const users = await window.CRII_API.getAllowedUsers();
+  tbody.innerHTML = (users || []).map(u => `
     <tr>
       <td>
-        <div style="font-weight:600; color:var(--text-primary);">${escapeHtml(u.name)}</div>
-        <div style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">${escapeHtml(u.email)}</div>
+        <div style="font-weight:600; color:var(--text-primary);">${escapeHtml(u.name || '')}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">${escapeHtml(u.email || '')}</div>
       </td>
-      <td><span class="status-chip published">${escapeHtml(u.role)}</span></td>
+      <td><span class="status-chip published">${escapeHtml(u.role || 'Research Fellow')}</span></td>
       <td>${escapeHtml(u.division || 'Scientific Division')}</td>
       <td>${u.addedDate || '2026-09-24'}</td>
       <td>
@@ -2221,7 +2276,7 @@ window.removeAllowedEmail = async function(email) {
       return;
     }
     window.showToast('User permission revoked', 'info');
-    renderAllowedUsersTable();
+    await renderAllowedUsersTable();
   }
 };
 

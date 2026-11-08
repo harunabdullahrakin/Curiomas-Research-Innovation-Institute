@@ -84,14 +84,6 @@ class CriiApiClient {
           division: "Institute Executive Council",
           addedDate: "2026-09-24",
           status: "Active"
-        },
-        {
-          email: "admin@curiomas.org",
-          name: "CRII Administration",
-          role: "Institute Admin",
-          division: "Operations & Governance",
-          addedDate: "2026-09-24",
-          status: "Active"
         }
       ];
       localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(defaultAllowed));
@@ -600,7 +592,22 @@ class CriiApiClient {
     window.location.reload();
   }
 
-  getAllowedUsers() {
+  async getAllowedUsers() {
+    // 1. Fetch directly from Cloudflare D1 SQL backend first
+    try {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users`);
+      if (res.ok) {
+        const remoteUsers = await res.json();
+        if (Array.isArray(remoteUsers)) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(remoteUsers));
+          return remoteUsers;
+        }
+      }
+    } catch (e) {
+      console.warn("D1 users fetch error, falling back to cache:", e);
+    }
+
+    // 2. Cache fallback
     let users = [];
     try {
       const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
@@ -618,21 +625,11 @@ class CriiApiClient {
           division: "Institute Executive Council",
           status: "Active",
           addedDate: "2026-01-01"
-        },
-        {
-          email: "admin@curiomas.org",
-          name: "CRII Administration",
-          role: "Institute Admin",
-          division: "Operations & Governance",
-          status: "Active",
-          addedDate: "2026-01-01"
         }
       ];
       localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
     }
 
-    // Background sync from remote D1 (merges non-destructively)
-    this.syncAllowedUsersFromDb().catch(() => {});
     return users;
   }
 
@@ -641,27 +638,9 @@ class CriiApiClient {
       const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users`);
       if (res.ok) {
         const remoteUsers = await res.json();
-        if (Array.isArray(remoteUsers) && remoteUsers.length > 0) {
-          const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
-          const localUsers = raw ? JSON.parse(raw) : [];
-
-          // Merge by email: Remote users + any locally added users
-          const userMap = new Map();
-          remoteUsers.forEach(u => {
-            if (u && u.email) userMap.set(u.email.toLowerCase().trim(), u);
-          });
-          localUsers.forEach(u => {
-            if (u && u.email) {
-              const k = u.email.toLowerCase().trim();
-              if (!userMap.has(k)) {
-                userMap.set(k, u);
-              }
-            }
-          });
-
-          const merged = Array.from(userMap.values());
-          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(merged));
-          return merged;
+        if (Array.isArray(remoteUsers)) {
+          localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(remoteUsers));
+          return remoteUsers;
         }
       }
     } catch (e) {
@@ -700,7 +679,7 @@ class CriiApiClient {
     // Sync to Cloudflare D1 SQL backend
     try {
       const token = this.getAuthToken();
-      await fetch(`${CRII_CONFIG.API_BASE}/auth/users`, {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/auth/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -708,6 +687,10 @@ class CriiApiClient {
         },
         body: JSON.stringify(newRecord)
       });
+      if (res.ok) {
+        const saved = await res.json();
+        if (saved && saved.user) Object.assign(newRecord, saved.user);
+      }
     } catch (e) {
       console.warn("D1 users sync error (safely retained locally):", e);
     }
@@ -721,12 +704,13 @@ class CriiApiClient {
       return { success: false, error: "Cannot remove primary Super Admin account." };
     }
 
+    // 1. Update local storage
     const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS);
     let users = raw ? JSON.parse(raw) : [];
-    users = users.filter(u => u.email.toLowerCase().trim() !== targetEmail);
+    users = users.filter(u => u && u.email && u.email.toLowerCase().trim() !== targetEmail);
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.ALLOWED_USERS, JSON.stringify(users));
 
-    // Sync removal to Cloudflare D1 SQL backend
+    // 2. Await Cloudflare D1 SQL deletion
     try {
       const token = this.getAuthToken();
       await fetch(`${CRII_CONFIG.API_BASE}/auth/users?email=${encodeURIComponent(targetEmail)}`, {
