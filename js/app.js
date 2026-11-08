@@ -1388,6 +1388,27 @@ async function initHomeTeam() {
 }
 
 
+function getDivisionKeywords(div) {
+  if (div.keywords && Array.isArray(div.keywords) && div.keywords.length > 0) {
+    return div.keywords;
+  }
+  const title = (div.title || '').toLowerCase();
+  const desc = (div.desc || '').toLowerCase();
+  if (title.includes('tech') || title.includes('computer') || title.includes('artificial') || desc.includes('robot') || desc.includes('intelligence')) {
+    return ['Autonomous AI', 'Robotics', 'Cybernetics'];
+  }
+  if (title.includes('bio') || title.includes('genom') || title.includes('living') || desc.includes('cell') || desc.includes('molecular')) {
+    return ['Genomics', 'Molecular Bio', 'Biophysics'];
+  }
+  if (title.includes('physic') || title.includes('quantum') || title.includes('matter') || desc.includes('space') || desc.includes('mechanics')) {
+    return ['Quantum Matter', 'Astrophysics', 'Thermodynamics'];
+  }
+  if (title.includes('chem') || title.includes('material') || title.includes('organic') || desc.includes('nanochem') || desc.includes('properties')) {
+    return ['Materials Science', 'Nanochemistry', 'Biochemistry'];
+  }
+  return ['Frontier Science', 'Open Datasets', 'Peer-Reviewed'];
+}
+
 async function initDivisions() {
   const container = document.getElementById('homeDivisionsContainer') || document.querySelector('.divisions-cards-grid');
   if (!container || !window.CRII_API) return;
@@ -1395,19 +1416,48 @@ async function initDivisions() {
   try {
     const divisions = await window.CRII_API.getDivisions();
     if (divisions && Array.isArray(divisions) && divisions.length > 0) {
-      container.innerHTML = divisions.map(div => `
-        <a href="${div.link || '/research'}" class="division-card">
-          <div class="division-card-media">
-            <img src="${div.image || 'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80'}" alt="${div.title}" loading="lazy">
-          </div>
-          <div class="division-card-tag">
-            <span>${div.tag || (div.number ? div.number + ' / RESEARCH DIVISION' : 'RESEARCH DIVISION')}</span>
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-          </div>
-          <h3 class="division-card-title">${div.title}</h3>
-          <p class="division-card-desc">${div.desc || ''}</p>
-        </a>
-      `).join('');
+      container.innerHTML = divisions.map((div, i) => {
+        const num = div.number || String(i + 1).padStart(2, '0');
+        const tagText = div.tag || `${num} / RESEARCH DIVISION`;
+        const keywords = getDivisionKeywords(div);
+        const imageUrl = div.image || 'https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80';
+        const titleText = div.title || 'Research Division';
+        const descText = div.desc || '';
+        const linkUrl = div.link || '/research';
+
+        return `
+          <a href="${linkUrl}" class="division-card" data-division-index="${i}">
+            <div class="division-card-media">
+              <img src="${imageUrl}" alt="${titleText}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1543722530-d2c3201371e7?auto=format&fit=crop&w=800&q=80'">
+              <div class="division-card-overlay"></div>
+              <div class="division-card-media-tag">
+                <span class="division-dot"></span>
+                <span>${tagText}</span>
+              </div>
+              <div class="division-card-corner-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+              </div>
+            </div>
+            <div class="division-card-body">
+              <div class="division-card-content-top">
+                <h3 class="division-card-title">${titleText}</h3>
+                <p class="division-card-desc">${descText}</p>
+              </div>
+              <div class="division-card-content-bottom">
+                <div class="division-card-pills">
+                  ${keywords.map(kw => `<span class="division-pill">${kw}</span>`).join('')}
+                </div>
+                <div class="division-card-footer">
+                  <span class="division-card-action-text">Explore Division</span>
+                  <div class="division-card-arrow-wrap">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join('');
       if (window.refreshScrollAnimations) window.refreshScrollAnimations();
     } else {
       container.innerHTML = `

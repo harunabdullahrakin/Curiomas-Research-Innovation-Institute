@@ -1329,7 +1329,13 @@ export function renderPortalPageHtml() {
 
               <div class="form-group">
                 <label class="form-label" for="settingLogoUrl">Institute Logo Image URL (Optional)</label>
-                <input type="url" id="settingLogoUrl" class="form-input" placeholder="https://example.com/logo.png">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <input type="url" id="settingLogoUrl" class="form-input" placeholder="Paste logo URL or click Upload..." style="flex: 1;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerFieldMediaUpload('settingLogoUrl', 'image/*')" title="Upload logo to Cloudflare R2" style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Upload</span>
+                  </button>
+                </div>
                 <span style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
                   Replaces the default quantum vector emblem in the navbar.
                 </span>
@@ -1494,45 +1500,49 @@ export function renderPortalPageHtml() {
         </div>
 
         <!-- Metrics Cards -->
-        <div class="portal-stats-grid" style="margin-bottom: 2rem;">
-          <div class="stat-card">
-            <div class="stat-icon-wrapper" style="background: rgba(234, 88, 12, 0.1); color: #ea580c;">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+          <div class="metric-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+              <span class="metric-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Total Stored Objects</span>
+              <div style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; border-radius: 10px; background: rgba(234, 88, 12, 0.12); color: #ea580c; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              </div>
             </div>
-            <div class="stat-info">
-              <span class="stat-label">Total Stored Objects</span>
-              <span class="stat-value" id="storageTotalCount">0</span>
-            </div>
+            <div id="storageTotalCount" class="metric-val" style="font-size: 2.1rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.35rem; font-family: var(--font-display);">0</div>
+            <div class="metric-desc" style="font-size: 0.8rem; color: var(--text-muted);">Indexed in Cloudflare R2 bucket</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon-wrapper" style="background: rgba(16,185,129,0.1); color: #10b981;">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
+          <div class="metric-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+              <span class="metric-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Storage Used</span>
+              <div style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
+              </div>
             </div>
-            <div class="stat-info">
-              <span class="stat-label">Storage Used</span>
-              <span class="stat-value" id="storageTotalSize">0 MB</span>
-            </div>
+            <div id="storageTotalSize" class="metric-val" style="font-size: 2.1rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.35rem; font-family: var(--font-display);">0 MB</div>
+            <div class="metric-desc" style="font-size: 0.8rem; color: var(--text-muted);">Aggregate R2 payload size</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon-wrapper" style="background: rgba(245,158,11,0.1); color: #f59e0b;">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect width="15" height="14" x="1" y="5" rx="2" ry="2"/></svg>
+          <div class="metric-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+              <span class="metric-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Video Files</span>
+              <div style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.12); color: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect width="15" height="14" x="1" y="5" rx="2" ry="2"/></svg>
+              </div>
             </div>
-            <div class="stat-info">
-              <span class="stat-label">Video Files</span>
-              <span class="stat-value" id="storageVideoCount">0</span>
-            </div>
+            <div id="storageVideoCount" class="metric-val" style="font-size: 2.1rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.35rem; font-family: var(--font-display);">0</div>
+            <div class="metric-desc" style="font-size: 0.8rem; color: var(--text-muted);">MP4 & WEBM background streams</div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon-wrapper" style="background: rgba(139,92,246,0.1); color: #8b5cf6;">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6Z"/></svg>
+          <div class="metric-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+              <span class="metric-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Image Files</span>
+              <div style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; border-radius: 10px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6Z"/></svg>
+              </div>
             </div>
-            <div class="stat-info">
-              <span class="stat-label">Image Files</span>
-              <span class="stat-value" id="storageImageCount">0</span>
-            </div>
+            <div id="storageImageCount" class="metric-val" style="font-size: 2.1rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.35rem; font-family: var(--font-display);">0</div>
+            <div class="metric-desc" style="font-size: 0.8rem; color: var(--text-muted);">WEBP, PNG, JPG & SVG graphics</div>
           </div>
         </div>
 
@@ -2032,7 +2042,13 @@ export function renderPortalPageHtml() {
 
           <div class="form-group">
             <label class="form-label" for="resAvatarInput">Profile Photo (PFP URL)</label>
-            <input type="url" id="resAvatarInput" class="form-input" placeholder="https://images.unsplash.com/...">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="url" id="resAvatarInput" class="form-input" placeholder="Paste image URL or click Upload..." style="flex: 1;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerFieldMediaUpload('resAvatarInput', 'image/*')" title="Upload photo to Cloudflare R2" style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload</span>
+              </button>
+            </div>
             <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem; flex-wrap: wrap; font-size: 0.72rem;">
               <span style="color: var(--text-muted); align-self: center;">Avatar Presets:</span>
               <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="document.getElementById('resAvatarInput').value='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'">Avatar 1</button>
@@ -2247,7 +2263,13 @@ export function renderPortalPageHtml() {
 
           <div class="form-group" style="margin-bottom: 1.25rem;">
             <label class="form-label" for="divisionImageInput">Cover Image URL *</label>
-            <input type="url" id="divisionImageInput" class="form-input" required placeholder="https://images.unsplash.com/...">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="url" id="divisionImageInput" class="form-input" required placeholder="Paste banner URL or click Upload..." style="flex: 1;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerFieldMediaUpload('divisionImageInput', 'image/*')" title="Upload banner image to Cloudflare R2" style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload</span>
+              </button>
+            </div>
             <div style="display:flex; gap:0.4rem; margin-top:0.45rem; flex-wrap:wrap; font-size:0.75rem;">
               <span style="color:var(--text-muted); align-self:center;">Image Presets:</span>
               <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80'">Quantum</button>
@@ -2312,7 +2334,13 @@ export function renderPortalPageHtml() {
 
           <div class="form-group" style="margin-bottom: 1.25rem;">
             <label class="form-label" for="cohortImageInput">Card Media / Photo URL *</label>
-            <input type="url" id="cohortImageInput" class="form-input" required placeholder="https://images.unsplash.com/...">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="url" id="cohortImageInput" class="form-input" required placeholder="Paste cover URL or click Upload..." style="flex: 1;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerFieldMediaUpload('cohortImageInput', 'image/*')" title="Upload cover image to Cloudflare R2" style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload</span>
+              </button>
+            </div>
             <div style="display:flex; gap:0.4rem; margin-top:0.45rem; flex-wrap:wrap; font-size:0.75rem;">
               <span style="color:var(--text-muted); align-self:center;">Presets:</span>
               <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=800&q=80'">Lab Undergrad</button>

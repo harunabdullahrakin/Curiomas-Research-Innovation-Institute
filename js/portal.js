@@ -777,7 +777,13 @@ function renderBlockEditorFields(block, idx) {
     case 'video':
       return `
         <div style="display:flex; flex-direction:column; gap:0.5rem;">
-          <input type="url" class="form-input" placeholder="YouTube or MP4 Video URL (e.g. https://www.youtube.com/watch?v=...)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="url" id="blockVideoInput_${idx}" class="form-input" style="flex:1;" placeholder="YouTube or MP4 Video URL (https://... or upload MP4)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerBlockVideoUpload(${idx})" title="Upload MP4/WEBM video to Cloudflare R2" style="white-space:nowrap; display:flex; align-items:center; gap:0.35rem;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload Video</span>
+            </button>
+          </div>
         </div>
       `;
 
@@ -3457,6 +3463,99 @@ function initStorageDropzone() {
   });
 }
 window.initStorageDropzone = initStorageDropzone;
+
+// Universal Cloudflare R2 Field Media Uploader for all admin inputs
+window.triggerFieldMediaUpload = function(targetInputId, acceptTypes = 'image/*', previewImgId = null, callback = null) {
+  const hiddenInput = document.createElement('input');
+  hiddenInput.type = 'file';
+  hiddenInput.accept = acceptTypes;
+  hiddenInput.style.display = 'none';
+
+  hiddenInput.onchange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const targetInput = document.getElementById(targetInputId);
+    let originalPlaceholder = '';
+    if (targetInput) {
+      originalPlaceholder = targetInput.placeholder || '';
+      targetInput.placeholder = `Uploading "${file.name}" to Cloudflare R2...`;
+      targetInput.disabled = true;
+    }
+
+    if (window.showToast) {
+      window.showToast(`Uploading "${file.name}" to Cloudflare R2...`, 'info');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('source', 'field_uploader');
+
+    try {
+      const res = await fetch('/api/storage', {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Upload failed');
+
+      const uploadedUrl = data.url || (data.item && data.item.url) || (`/api/images/${data.item.key.replace(/^uploads\//, '')}`);
+
+      if (targetInput) {
+        targetInput.value = uploadedUrl;
+        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      if (previewImgId) {
+        const previewEl = document.getElementById(previewImgId);
+        if (previewEl) {
+          previewEl.src = uploadedUrl;
+          previewEl.style.display = 'block';
+        }
+      }
+
+      if (typeof callback === 'function') {
+        callback(uploadedUrl, data.item);
+      }
+
+      if (window.showToast) {
+        window.showToast('Media uploaded to Cloudflare R2 and URL attached!', 'success');
+      }
+
+      if (typeof window.renderStorageTab === 'function') {
+        const tabEl = document.getElementById('tab-storage');
+        if (tabEl && tabEl.style.display !== 'none') {
+          window.renderStorageTab();
+        }
+      }
+    } catch (err) {
+      console.error('Field media upload error:', err);
+      if (window.showToast) {
+        window.showToast(`Upload failed: ${err.message}`, 'error');
+      }
+    } finally {
+      if (targetInput) {
+        targetInput.placeholder = originalPlaceholder;
+        targetInput.disabled = false;
+      }
+      hiddenInput.remove();
+    }
+  };
+
+  document.body.appendChild(hiddenInput);
+  hiddenInput.click();
+  setTimeout(() => hiddenInput.remove(), 60000);
+};
+
+window.triggerBlockVideoUpload = function(blockIndex) {
+  window.triggerFieldMediaUpload(`blockVideoInput_${blockIndex}`, 'video/mp4,video/webm,video/*', null, (url) => {
+    if (typeof window.updateBlockContent === 'function') {
+      window.updateBlockContent(blockIndex, 'url', url);
+    }
+  });
+};
 
 // =============================================================================
 // IMPROVMX RESEARCHER EMAIL ALIASES MANAGEMENT

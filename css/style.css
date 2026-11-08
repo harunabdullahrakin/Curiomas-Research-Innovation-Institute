@@ -2230,65 +2230,276 @@ body {
 .divisions-cards-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.75rem;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .divisions-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .divisions-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
 }
 
 .division-card {
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.25s ease;
+  display: flex !important;
+  flex-direction: column !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.09) !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.25s ease !important;
+  position: relative !important;
 }
 
 .division-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px) !important;
+  box-shadow: 0 20px 38px -8px rgba(234, 88, 12, 0.14), 0 8px 18px -4px rgba(15, 23, 42, 0.06) !important;
+  border-color: rgba(234, 88, 12, 0.5) !important;
 }
 
+[data-theme="dark"] .division-card {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .division-card:hover {
+  border-color: rgba(234, 88, 12, 0.65) !important;
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.65), 0 0 22px rgba(234, 88, 12, 0.15) !important;
+}
+
+/* 1. Full-Bleed Media Header */
 .division-card-media {
-  width: 100%;
-  aspect-ratio: 16 / 11;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 1rem;
-  background: #e2e8f0;
+  width: 100% !important;
+  height: 185px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: #090f1d !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
 }
 
 .division-card-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .division-card:hover .division-card-media img {
-  transform: scale(1.05);
+  transform: scale(1.07) !important;
 }
 
-.division-card-tag {
+.division-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.65) 100%);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.division-card:hover .division-card-overlay {
+  opacity: 0.85;
+}
+
+/* Floating Tag on Media */
+.division-card-media-tag {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(15, 23, 42, 0.82);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.division-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ea580c;
+  display: inline-block;
+  box-shadow: 0 0 6px #ea580c;
+}
+
+/* Floating Top-Right Corner Action Circle */
+.division-card-corner-arrow {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  color: #0f172a;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #78716c;
-  margin-bottom: 0.65rem;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2;
+}
+
+.division-card:hover .division-card-corner-arrow {
+  background: #ea580c;
+  color: #ffffff;
+  transform: translate(2px, -2px) scale(1.06);
+}
+
+/* 2. Card Body Content */
+.division-card-body {
+  padding: 1.35rem 1.4rem 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  justify-content: space-between !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
 }
 
 .division-card-title {
-  font-size: 1.35rem;
-  font-weight: 600;
-  line-height: 1.25;
-  color: #18281e;
-  margin: 0 0 0.5rem 0;
+  font-size: 1.28rem !important;
+  font-weight: 700 !important;
+  line-height: 1.28 !important;
+  color: #0f172a !important;
+  margin: 0 0 0.55rem 0 !important;
+  letter-spacing: -0.02em !important;
+  font-family: 'Space Grotesk', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  transition: color 0.2s ease !important;
+}
+
+[data-theme="dark"] .division-card-title {
+  color: #f8fafc !important;
+}
+
+.division-card:hover .division-card-title {
+  color: #ea580c !important;
 }
 
 .division-card-desc {
-  font-size: 0.88rem;
-  line-height: 1.55;
-  color: #57534e;
-  margin: 0;
+  font-size: 0.86rem !important;
+  line-height: 1.55 !important;
+  color: #64748b !important;
+  margin: 0 0 1rem 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  min-height: 3.95em;
+}
+
+[data-theme="dark"] .division-card-desc {
+  color: #94a3b8 !important;
+}
+
+/* 3. Research Focus Pills */
+.division-card-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.15rem;
+}
+
+.division-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.04);
+  color: #64748b;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.division-card:hover .division-pill {
+  background: rgba(234, 88, 12, 0.08);
+  color: #ea580c;
+  border-color: rgba(234, 88, 12, 0.22);
+}
+
+[data-theme="dark"] .division-pill {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .division-card:hover .division-pill {
+  background: rgba(234, 88, 12, 0.15);
+  color: #fb923c;
+  border-color: rgba(234, 88, 12, 0.3);
+}
+
+/* 4. Card Bottom Footer */
+.division-card-footer {
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+[data-theme="dark"] .division-card-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.division-card-action-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+  transition: color 0.2s ease;
+}
+
+[data-theme="dark"] .division-card-action-text {
+  color: #f8fafc;
+}
+
+.division-card:hover .division-card-action-text {
+  color: #ea580c;
+}
+
+.division-card-arrow-wrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ea580c;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.division-card:hover .division-card-arrow-wrap {
+  transform: translateX(4px);
 }
 
 /* 4. Editorial Section (Warm Cream) */
