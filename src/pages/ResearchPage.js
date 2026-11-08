@@ -21,7 +21,7 @@ export function renderResearchPageHtml() {
       <main class="mockup-page-content">
         <div class="mockup-container">
           <!-- Catalog Toggle Buttons -->
-          <div style="display: flex; justify-content: center; gap: 0.85rem; margin-bottom: 2.75rem;">
+          <div class="research-catalog-tabs">
             <button class="btn btn-primary catalog-tab active" data-tab="papers" style="padding: 0.75rem 1.75rem; border-radius: 9999px;">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
               <span>Research Papers & Preprints</span>

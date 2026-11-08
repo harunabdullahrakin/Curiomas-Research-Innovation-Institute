@@ -825,6 +825,7 @@ export function renderPortalPageHtml() {
                   <th>Version</th>
                   <th>Lead Researcher</th>
                   <th>License</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="portalDatasetsTbody"></tbody>

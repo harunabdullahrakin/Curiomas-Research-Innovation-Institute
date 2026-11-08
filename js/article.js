@@ -1,6 +1,17 @@
+function formatSafeDate(d, fallback = '2026') {
+  if (!d) return fallback;
+  try {
+    const parsed = new Date(d);
+    if (isNaN(parsed.getTime())) return String(d);
+    return parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch (e) {
+    return String(d) || fallback;
+  }
+}
+
 async function initArticleReader(explicitId = null) {
   const urlParams = new URLSearchParams(window.location.search);
-  const identifier = explicitId || urlParams.get('id') || urlParams.get('slug');
+  let identifier = (explicitId || urlParams.get('id') || urlParams.get('slug') || '').trim();
 
   const container = document.getElementById('articleContainer');
   if (!container) return;
@@ -32,7 +43,20 @@ async function initArticleReader(explicitId = null) {
       if (res.ok) post = await res.json();
     }
   } catch (err) {
-    console.error('Failed to load article:', err);
+    console.error('Failed to load article from API:', err);
+  }
+
+  // Fallback to checking cached posts in localStorage if API missed
+  if (!post) {
+    try {
+      const local = localStorage.getItem('crii_posts_v2');
+      if (local) {
+        const posts = JSON.parse(local);
+        if (Array.isArray(posts)) {
+          post = posts.find(p => p.id === identifier || p.slug === identifier || p.id === identifier.replace(/\s+/g, '-'));
+        }
+      }
+    } catch (e) {}
   }
 
   if (!post) {
@@ -46,14 +70,23 @@ async function initArticleReader(explicitId = null) {
     return;
   }
 
-  renderArticle(post, container);
-  initScrollProgress();
+  try {
+    renderArticle(post, container);
+    initScrollProgress();
+  } catch (renderErr) {
+    console.error('Error rendering article, using safe fallback:', renderErr);
+    container.innerHTML = `
+      <div style="margin-bottom: 2.75rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 1.25rem; color: #0f172a;">${escapeHtml(post.title || 'Publication')}</h1>
+        <div style="font-size: 1rem; color: #475569; margin-bottom: 2rem;"><strong>Authors:</strong> ${(post.authors && post.authors.length) ? post.authors.join(' • ') : 'CRII Fellow'}</div>
+        <article style="line-height: 1.8; font-size: 1.1rem; color: #334155;">
+          ${escapeHtml(post.content || post.summary || '')}
+        </article>
+      </div>
+    `;
+  }
 }
 window.initArticleReader = initArticleReader;
-
-document.addEventListener('DOMContentLoaded', async () => {
-  await initArticleReader();
-});
 
 function renderArticle(post, container) {
   document.title = `${post.title || 'Publication'} — CRII Publications`;
@@ -66,12 +99,12 @@ function renderArticle(post, container) {
   const authorsList = (post.authors && post.authors.length) ? post.authors.join(' • ') : 'CRII Researcher';
   const readTime = post.readingTime || '5 min read';
   const doi = post.doi ? `DOI: ${post.doi}` : 'DOI: 10.5281/crii.2026';
-  const dateStr = post.date || (post.createdAt ? new Date(post.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '2026');
+  const dateStr = formatSafeDate(post.date || post.createdAt);
 
   let updatedNotice = '';
   if (post.isEdited || (post.updatedBy && post.updatedAt)) {
     const editor = post.updatedBy || 'CRII Researcher';
-    const updatedDate = new Date(post.updatedAt || Date.now()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    const updatedDate = formatSafeDate(post.updatedAt);
     updatedNotice = `Last edited by ${editor} on ${updatedDate}`;
   } else {
     const creator = post.createdBy || authorsList.split('•')[0].trim();
@@ -99,12 +132,14 @@ function renderArticle(post, container) {
   }
 
   let contentBodyHtml = '';
+  const contentStr = typeof post.content === 'string' ? post.content : (post.summary || '');
   if (Array.isArray(post.blocks) && post.blocks.length > 0) {
     contentBodyHtml = post.blocks.map(b => renderBlockToHtml(b)).join('');
-  } else if (window.CriiDoc && window.CriiDoc.isDoc(post.content)) {
-    contentBodyHtml = '<div class="crii-doc">' + window.CriiDoc.sanitize(post.content.slice(window.CriiDoc.MARK.length)) + '</div>';
+  } else if (window.CriiDoc && (window.CriiDoc.isDoc(contentStr) || /<[a-z][\s\S]*>/i.test(contentStr))) {
+    const rawHtml = window.CriiDoc.isDoc(contentStr) ? contentStr.slice(window.CriiDoc.MARK.length) : contentStr;
+    contentBodyHtml = '<div class="crii-doc">' + window.CriiDoc.sanitize(rawHtml) + '</div>';
   } else {
-    contentBodyHtml = parseMarkdownContent(post.content || '');
+    contentBodyHtml = parseMarkdownContent(contentStr);
   }
 
   let tagsHtml = '';

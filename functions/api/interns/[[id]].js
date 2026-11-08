@@ -67,6 +67,35 @@ async function ensureAppTable(db) {
   await db.prepare("ALTER TABLE applications ADD COLUMN customFields_json TEXT").run().catch(() => {});
 }
 
+async function ensureInternsTable(db) {
+  if (!db) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS interns (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        avatar TEXT,
+        university TEXT,
+        degree TEXT,
+        division TEXT NOT NULL,
+        role TEXT NOT NULL,
+        cohort TEXT,
+        status TEXT NOT NULL DEFAULT 'Active',
+        bio TEXT,
+        socials_json TEXT DEFAULT '{}',
+        projects_json TEXT DEFAULT '[]',
+        isTeamMember INTEGER NOT NULL DEFAULT 0,
+        orderIndex INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT,
+        updatedAt TEXT
+      )
+    `).run().catch(() => {});
+    await db.prepare("CREATE INDEX IF NOT EXISTS idx_interns_status ON interns(status)").run().catch(() => {});
+    await db.prepare("CREATE INDEX IF NOT EXISTS idx_interns_team ON interns(isTeamMember)").run().catch(() => {});
+  } catch (e) {}
+}
+
 export async function onRequestGet(context) {
   const { env, request } = context;
   const url = new URL(request.url);
@@ -75,12 +104,14 @@ export async function onRequestGet(context) {
   if (env && env.DB) {
     try {
       await ensureAppTable(env.DB);
+      await ensureInternsTable(env.DB);
       let query = "SELECT * FROM interns";
       if (teamOnly) {
         query += " WHERE isTeamMember = 1";
       }
       query += " ORDER BY isTeamMember DESC, orderIndex ASC, name ASC";
-      const { results: interns } = await env.DB.prepare(query).all();
+      let { results: interns } = await env.DB.prepare(query).all();
+      if (!interns) interns = [];
 
       let applications = [];
       try {
@@ -213,6 +244,7 @@ export async function onRequestPost(context) {
     const nowIso = new Date().toISOString();
 
     if (env && env.DB) {
+      await ensureInternsTable(env.DB);
       const sql = `
         INSERT INTO interns (
           id, name, email, avatar, university, degree, division, role,

@@ -745,25 +745,26 @@ class CriiApiClient {
 
   // --- RESEARCH DIVISIONS MANAGEMENT (D1 SYNCED) ---
   async getDivisions() {
-    try {
-      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS);
-      if (raw !== null) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter(d => !CRII_LEGACY_PURGED_DIVISION_IDS.includes(d.id));
-        }
-      }
-    } catch (e) {}
-
-    // Fallback to fetch from D1 settings
+    // 1. Fetch directly from Cloudflare D1 settings backend first
     try {
       const res = await fetch(CRII_CONFIG.API_BASE + '/settings');
       if (res.ok) {
         const settings = await res.json();
-        if (Array.isArray(settings.divisions) && settings.divisions.length > 0) {
+        if (Array.isArray(settings.divisions)) {
           const filtered = settings.divisions.filter(d => !CRII_LEGACY_PURGED_DIVISION_IDS.includes(d.id));
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS, JSON.stringify(filtered));
           return filtered;
+        }
+      }
+    } catch (e) {}
+
+    // 2. Cache fallback
+    try {
+      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DIVISIONS);
+      if (raw !== null) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(d => !CRII_LEGACY_PURGED_DIVISION_IDS.includes(d.id));
         }
       }
     } catch (e) {}
@@ -842,17 +843,7 @@ class CriiApiClient {
 
   // --- WHO CAN JOIN US? / COHORT PROFILES (D1 SQL SYNCED) ---
   async getCohorts() {
-    try {
-      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.COHORTS);
-      if (raw !== null) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(c => !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.id) && !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.title));
-        }
-      }
-    } catch (e) {}
-
-    // Fallback to fetch from D1 settings
+    // 1. Fetch directly from Cloudflare D1 settings backend first
     try {
       const res = await fetch(CRII_CONFIG.API_BASE + '/settings');
       if (res.ok) {
@@ -861,6 +852,17 @@ class CriiApiClient {
           const filtered = settings.cohorts.filter(c => !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.id) && !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.title));
           localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.COHORTS, JSON.stringify(filtered));
           return filtered;
+        }
+      }
+    } catch (e) {}
+
+    // 2. Cache fallback
+    try {
+      const raw = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.COHORTS);
+      if (raw !== null) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(c => !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.id) && !CRII_LEGACY_PURGED_COHORT_IDS.includes(c.title));
         }
       }
     } catch (e) {}
@@ -1391,15 +1393,7 @@ class CriiApiClient {
 
   // --- DATASETS (OPEN REPRODUCIBLE DATA) ---
   async getDatasets() {
-    let localDatasets = [];
-    try {
-      const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DATASETS);
-      localDatasets = local ? JSON.parse(local) : [];
-      if (!Array.isArray(localDatasets)) localDatasets = [];
-    } catch (e) {
-      localDatasets = [];
-    }
-
+    // 1. Fetch live from Cloudflare D1 SQL backend first
     try {
       const res = await fetch(`${CRII_CONFIG.API_BASE}/datasets`);
       if (res.ok) {
@@ -1411,6 +1405,16 @@ class CriiApiClient {
       }
     } catch (e) {
       console.warn("Datasets fetch error:", e);
+    }
+
+    // 2. Cache fallback
+    let localDatasets = [];
+    try {
+      const local = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.DATASETS);
+      localDatasets = local ? JSON.parse(local) : [];
+      if (!Array.isArray(localDatasets)) localDatasets = [];
+    } catch (e) {
+      localDatasets = [];
     }
 
     if (localDatasets.length > 0) {
@@ -1471,18 +1475,47 @@ class CriiApiClient {
       updated: new Date().toISOString().split('T')[0],
       version: datasetData.version || "v1.0.0"
     };
-    datasets.unshift(newRecord);
+
+    const existingIdx = datasets.findIndex(d => d.id === newRecord.id);
+    if (existingIdx >= 0) {
+      datasets[existingIdx] = newRecord;
+    } else {
+      datasets.unshift(newRecord);
+    }
     localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DATASETS, JSON.stringify(datasets));
 
     try {
-      await fetch(`${CRII_CONFIG.API_BASE}/datasets`, {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/datasets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRecord)
       });
-    } catch (e) {}
+      if (res.ok) {
+        const saved = await res.json();
+        Object.assign(newRecord, saved);
+      }
+    } catch (e) {
+      console.warn("Failed to save dataset to D1:", e);
+    }
 
     return newRecord;
+  }
+
+  async deleteDataset(id) {
+    if (!id) return true;
+    let datasets = await this.getDatasets();
+    datasets = datasets.filter(d => d.id !== id);
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.DATASETS, JSON.stringify(datasets));
+
+    try {
+      await fetch(`${CRII_CONFIG.API_BASE}/datasets/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+    } catch (e) {
+      console.warn("Failed to delete dataset from D1:", e);
+    }
+
+    return true;
   }
 
   // --- STATS ---

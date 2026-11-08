@@ -33,13 +33,65 @@ function safeJsonParse(str, fallback) {
   }
 }
 
+async function ensurePostsTable(db) {
+  if (!db) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS posts (
+        id TEXT PRIMARY KEY,
+        slug TEXT UNIQUE NOT NULL,
+        title TEXT NOT NULL,
+        coverImage TEXT,
+        category TEXT NOT NULL,
+        authors_json TEXT NOT NULL DEFAULT '["CRII Fellow"]',
+        date TEXT NOT NULL,
+        updatedAt TEXT,
+        updatedBy TEXT,
+        readingTime TEXT DEFAULT '10 min read',
+        doi TEXT,
+        summary TEXT NOT NULL,
+        abstract TEXT,
+        content TEXT NOT NULL,
+        blocks_json TEXT,
+        tags_json TEXT DEFAULT '["Research"]',
+        published INTEGER NOT NULL DEFAULT 1,
+        featured INTEGER NOT NULL DEFAULT 0,
+        downloads INTEGER NOT NULL DEFAULT 0,
+        citations INTEGER NOT NULL DEFAULT 0
+      )
+    `).run().catch(() => {});
+
+    await db.prepare("CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug)").run().catch(() => {});
+    await db.prepare("CREATE INDEX IF NOT EXISTS idx_posts_published ON posts(published)").run().catch(() => {});
+    await db.prepare("CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category)").run().catch(() => {});
+
+    // Ensure columns exist on older schemas
+    await db.prepare("ALTER TABLE posts ADD COLUMN blocks_json TEXT").run().catch(() => {});
+    await db.prepare("ALTER TABLE posts ADD COLUMN tags_json TEXT").run().catch(() => {});
+    await db.prepare("ALTER TABLE posts ADD COLUMN featured INTEGER DEFAULT 0").run().catch(() => {});
+    await db.prepare("ALTER TABLE posts ADD COLUMN published INTEGER DEFAULT 1").run().catch(() => {});
+  } catch (e) {
+    console.error("ensurePostsTable error:", e);
+  }
+}
+
 export async function onRequestGet(context) {
   const { params, request, env } = context;
-  const idOrSlug = params.id ? params.id[0] : null;
+  let idOrSlug = null;
+  if (params && params.id) {
+    idOrSlug = Array.isArray(params.id) ? params.id.join('/') : String(params.id);
+  }
+  if (!idOrSlug) {
+    const url = new URL(request.url);
+    idOrSlug = url.searchParams.get("id") || url.searchParams.get("slug");
+  }
+  if (idOrSlug) idOrSlug = idOrSlug.trim();
 
   // 1. Cloudflare D1 SQL implementation
   if (env && env.DB) {
     try {
+      await ensurePostsTable(env.DB);
+
       // Load tombstone of deleted post IDs
       let deletedIds = new Set(PURGED_POST_IDS);
       try {
@@ -50,43 +102,17 @@ export async function onRequestGet(context) {
         }
       } catch (e) {}
 
-      // One-time initialization of seed posts into SQL database
-      let isInitialized = false;
-      try {
-        const initRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'posts_initialized'").first();
-        if (initRow) isInitialized = true;
-      } catch (e) {}
-
-      if (!isInitialized) {
-        try {
-          const countRow = await env.DB.prepare("SELECT COUNT(*) as count FROM posts").first();
-          if (!countRow || countRow.count === 0) {
-            for (const sp of SEED_POSTS) {
-              if (deletedIds.has(sp.id)) continue;
-              await env.DB.prepare(`
-                INSERT OR IGNORE INTO posts (id, slug, title, category, coverImage, authors_json, tags_json, readingTime, doi, date, summary, abstract, content, published, featured)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              `).bind(
-                sp.id, sp.slug, sp.title, sp.category, sp.coverImage || "",
-                JSON.stringify(sp.authors || []), JSON.stringify(sp.tags || []),
-                sp.readingTime || "5 min read", sp.doi || "", sp.date || new Date().toISOString().split("T")[0],
-                sp.summary || "", sp.abstract || "", sp.content || "",
-                sp.published !== false ? 1 : 0, sp.featured ? 1 : 0
-              ).run();
-            }
-          }
-          await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value_json, updatedAt, updatedBy) VALUES ('posts_initialized', 'true', datetime('now'), 'system')").run();
-          isInitialized = true;
-        } catch (e) {}
-      }
-
       if (idOrSlug) {
         if (deletedIds.has(idOrSlug)) {
           return new Response(JSON.stringify({ error: "Post deleted" }), {
             status: 404,
-            headers: { "Content-Type": "application/json" }
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache, no-store, must-revalidate"
+            }
           });
         }
+
         const stmt = env.DB.prepare(
           "SELECT * FROM posts WHERE id = ? OR slug = ? LIMIT 1"
         );
@@ -99,12 +125,38 @@ export async function onRequestGet(context) {
             });
           }
           return new Response(JSON.stringify(formatSqlRow(row)), {
-            headers: { "Content-Type": "application/json" }
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache, no-store, must-revalidate"
+            }
           });
         }
+
+        // Secondary fallback to settings store
+        try {
+          const storeRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'posts_store'").first();
+          if (storeRow && storeRow.value_json) {
+            const list = JSON.parse(storeRow.value_json);
+            if (Array.isArray(list)) {
+              const found = list.find(p => p.id === idOrSlug || p.slug === idOrSlug);
+              if (found && !deletedIds.has(found.id)) {
+                return new Response(JSON.stringify(found), {
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Cache-Control": "no-cache, no-store, must-revalidate"
+                  }
+                });
+              }
+            }
+          }
+        } catch (e) {}
+
         return new Response(JSON.stringify({ error: "Post not found" }), {
           status: 404,
-          headers: { "Content-Type": "application/json" }
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate"
+          }
         });
       }
 
@@ -128,14 +180,46 @@ export async function onRequestGet(context) {
       if (conditions.length > 0) {
         query += " WHERE " + conditions.join(" AND ");
       }
-      query += " ORDER BY date DESC";
+      query += " ORDER BY date DESC, createdAt DESC";
 
-      const stmt = env.DB.prepare(query);
-      const { results } = binds.length > 0 ? await stmt.bind(...binds).all() : await stmt.all();
+      let results = [];
+      try {
+        const stmt = env.DB.prepare(query);
+        const res = binds.length > 0 ? await stmt.bind(...binds).all() : await stmt.all();
+        results = res.results || [];
+      } catch (e) {
+        // Retry without createdAt if column absent
+        query = query.replace(", createdAt DESC", "");
+        const stmt = env.DB.prepare(query);
+        const res = binds.length > 0 ? await stmt.bind(...binds).all() : await stmt.all();
+        results = res.results || [];
+      }
+
       let formatted = (results || []).map(formatSqlRow).filter(p => !deletedIds.has(p.id));
 
+      // Merge with posts_store if posts table missed any
+      try {
+        const storeRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'posts_store'").first();
+        if (storeRow && storeRow.value_json) {
+          const list = JSON.parse(storeRow.value_json);
+          if (Array.isArray(list)) {
+            const existingIds = new Set(formatted.map(p => p.id));
+            for (const sp of list) {
+              if (!existingIds.has(sp.id) && !deletedIds.has(sp.id)) {
+                if (includeDrafts || sp.published !== false) {
+                  formatted.push(sp);
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {}
+
       return new Response(JSON.stringify(formatted), {
-        headers: { "Content-Type": "application/json" }
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate"
+        }
       });
     } catch (err) {
       console.error("D1 SQL Error:", err);
@@ -158,17 +242,10 @@ export async function onRequestGet(context) {
     });
   }
 
-  const url = new URL(request.url);
-  const category = url.searchParams.get("category");
-  let filtered = posts;
-  if (category) {
-    filtered = filtered.filter(p => p.category.toLowerCase().includes(category.toLowerCase()));
-  }
-
-  return new Response(JSON.stringify(filtered), {
+  return new Response(JSON.stringify(posts), {
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=30"
+      "Cache-Control": "no-cache, no-store, must-revalidate"
     }
   });
 }
@@ -207,6 +284,8 @@ export async function onRequestPost(context) {
 
     // 1. Save to Cloudflare D1 SQL Database with automatic slug deduplication
     if (env && env.DB) {
+      await ensurePostsTable(env.DB);
+
       // Check if another article uses this slug
       let finalSlug = slug;
       let counter = 1;
@@ -254,6 +333,46 @@ export async function onRequestPost(context) {
         updatedAt, updatedBy, readingTime, doi, summary, abstract,
         content, blocksJson, tagsJson, published, featured, downloads, citations
       ).run();
+
+      // Dual-persistence into settings 'posts_store'
+      try {
+        const storeRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'posts_store'").first();
+        let list = [];
+        if (storeRow && storeRow.value_json) {
+          try { list = JSON.parse(storeRow.value_json); } catch(e){}
+        }
+        if (!Array.isArray(list)) list = [];
+        list = list.filter(p => p.id !== id);
+        const postObj = {
+          ...data,
+          id,
+          slug,
+          title,
+          category,
+          date,
+          updatedAt,
+          updatedBy,
+          coverImage,
+          readingTime,
+          doi,
+          summary,
+          abstract,
+          content,
+          blocks: data.blocks || [],
+          tags: Array.isArray(data.tags) ? data.tags : ["Research"],
+          authors: Array.isArray(data.authors) ? data.authors : [data.authors || "CRII Fellow"],
+          published: Boolean(published),
+          featured: Boolean(featured),
+          downloads,
+          citations
+        };
+        list.unshift(postObj);
+        await env.DB.prepare(`
+          INSERT INTO settings (key, value_json, updatedAt, updatedBy)
+          VALUES ('posts_store', ?, ?, ?)
+          ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updatedAt=excluded.updatedAt;
+        `).bind(JSON.stringify(list.slice(0, 500)), updatedAt, updatedBy).run().catch(() => {});
+      } catch (e) {}
     }
 
     const saved = {
@@ -279,7 +398,10 @@ export async function onRequestPost(context) {
 
     return new Response(JSON.stringify(saved), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
     });
   } catch (err) {
     console.error("Failed to create/update post in D1:", err);
@@ -291,15 +413,34 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestDelete(context) {
-  const { params, env } = context;
-  const id = params.id ? params.id[0] : null;
+  const { params, request, env } = context;
+
+  let id = null;
+  if (params && params.id) {
+    id = Array.isArray(params.id) ? params.id.join('/') : String(params.id);
+  }
+  if (!id) {
+    const url = new URL(request.url);
+    id = url.searchParams.get("id");
+  }
+  if (!id) {
+    try {
+      const body = await request.json();
+      id = body.id;
+    } catch (e) {}
+  }
 
   if (!id) {
-    return new Response(JSON.stringify({ error: "Missing ID" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "Missing publication ID" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 
   if (env && env.DB) {
     try {
+      await ensurePostsTable(env.DB);
+
       // Record in tombstone
       let deletedList = [];
       try {
@@ -315,15 +456,29 @@ export async function onRequestDelete(context) {
         await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value_json, updatedAt, updatedBy) VALUES ('deleted_posts', ?, datetime('now'), 'system')").bind(JSON.stringify(deletedList)).run();
       }
 
-      await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value_json, updatedAt, updatedBy) VALUES ('posts_initialized', 'true', datetime('now'), 'system')").run();
       await env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(id).run();
+
+      // Also remove from posts_store
+      try {
+        const storeRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'posts_store'").first();
+        if (storeRow && storeRow.value_json) {
+          let list = JSON.parse(storeRow.value_json);
+          if (Array.isArray(list)) {
+            list = list.filter(p => p.id !== id);
+            await env.DB.prepare("UPDATE settings SET value_json = ?, updatedAt = datetime('now') WHERE key = 'posts_store'").bind(JSON.stringify(list)).run();
+          }
+        }
+      } catch (e) {}
     } catch (e) {
       console.error("D1 delete error:", e);
     }
   }
 
   return new Response(JSON.stringify({ success: true, id }), {
-    headers: { "Content-Type": "application/json" }
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate"
+    }
   });
 }
 

@@ -2121,16 +2121,34 @@ function renderDatasetsTable() {
     <tr>
       <td>
         <div style="font-weight:600; color:var(--text-primary);">${escapeHtml(d.title)}</div>
-        <div style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(d.format)} • ${escapeHtml(d.size)}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(d.format || '')} • ${escapeHtml(d.size || '')}</div>
       </td>
-      <td><span class="badge badge-blue">${escapeHtml(d.category)}</span></td>
-      <td><span class="status-chip published">${escapeHtml(d.version)}</span></td>
-      <td>${escapeHtml(d.lead)}</td>
-      <td><span style="font-size:0.78rem; font-family:monospace;">${escapeHtml(d.license)}</span></td>
+      <td><span class="badge badge-blue">${escapeHtml(d.category || 'Science')}</span></td>
+      <td><span class="status-chip published">${escapeHtml(d.version || 'v1.0')}</span></td>
+      <td>${escapeHtml(d.lead || d.leadResearcher || 'CRII Fellow')}</td>
+      <td><span style="font-size:0.78rem; font-family:monospace;">${escapeHtml(d.license || 'CC-BY 4.0')}</span></td>
+      <td>
+        <button class="btn btn-sm btn-icon" title="Delete Dataset" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:none; padding:0.35rem 0.65rem; border-radius:8px; cursor:pointer;" onclick="deleteDataset('${d.id}')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </td>
     </tr>
   `).join('');
 }
 window.renderDatasetsTable = renderDatasetsTable;
+
+window.deleteDataset = async function(id) {
+  if (!id) return;
+  if (window.confirm('Are you sure you want to permanently delete this scientific dataset?')) {
+    try {
+      await window.CRII_API.deleteDataset(id);
+      if (window.showToast) window.showToast('Dataset deleted from catalog.', 'info');
+      await refreshDashboardData();
+    } catch (err) {
+      window.alert('Failed to delete dataset: ' + (err.message || err));
+    }
+  }
+};
 
 function initAccessControl() {
   const form = document.getElementById('addAllowedUserForm');
