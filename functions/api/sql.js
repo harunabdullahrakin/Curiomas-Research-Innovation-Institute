@@ -410,6 +410,23 @@ export async function onRequestPost(context) {
       const changes = result.meta?.changes !== undefined ? result.meta.changes : 0;
       const lastRowId = result.meta?.last_row_id;
 
+
+    // If divisions table was modified, synchronize settings table as well
+    if (rawQuery.toLowerCase().includes('divisions')) {
+      try {
+        const divRows = await env.DB.prepare("SELECT * FROM divisions ORDER BY orderIndex ASC, number ASC").all();
+        if (divRows && divRows.results) {
+          await env.DB.prepare(`
+            INSERT INTO settings (key, value_json, updatedAt, updatedBy)
+            VALUES ('divisions', ?, datetime('now'), 'D1 SQL Studio')
+            ON CONFLICT(key) DO UPDATE SET
+              value_json = excluded.value_json,
+              updatedAt = excluded.updatedAt,
+              updatedBy = excluded.updatedBy;
+          `).bind(JSON.stringify(divRows.results)).run().catch(() => {});
+        }
+      } catch (e) {}
+    }
       return new Response(JSON.stringify({
         success: true,
         statementCount: 1,
@@ -455,6 +472,23 @@ export async function onRequestPost(context) {
       }
     });
 
+
+    // If divisions table was modified, synchronize settings table as well
+    if (rawQuery.toLowerCase().includes('divisions')) {
+      try {
+        const divRows = await env.DB.prepare("SELECT * FROM divisions ORDER BY orderIndex ASC, number ASC").all();
+        if (divRows && divRows.results) {
+          await env.DB.prepare(`
+            INSERT INTO settings (key, value_json, updatedAt, updatedBy)
+            VALUES ('divisions', ?, datetime('now'), 'D1 SQL Studio')
+            ON CONFLICT(key) DO UPDATE SET
+              value_json = excluded.value_json,
+              updatedAt = excluded.updatedAt,
+              updatedBy = excluded.updatedBy;
+          `).bind(JSON.stringify(divRows.results)).run().catch(() => {});
+        }
+      } catch (e) {}
+    }
     return new Response(JSON.stringify({
       success: true,
       statementCount: statements.length,

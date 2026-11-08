@@ -4276,6 +4276,13 @@ async function runSqlQuery() {
     // Refresh row counts in schema if modifications occurred
     if (res.changes && res.changes > 0) {
       loadSqlSchema();
+      if (query.toLowerCase().includes('divisions') && window.CRII_API) {
+        window.CRII_API.getDivisions().then(divs => {
+          if (typeof window.renderDivisionsTab === 'function') {
+            window.renderDivisionsTab();
+          }
+        }).catch(() => {});
+      }
     }
 
     // Display Results Table
@@ -4363,11 +4370,15 @@ function insertSqlPreset(preset) {
     case 'selectInterns':
       queryInput.value = `SELECT id, name, role, division, status, degree FROM interns ORDER BY orderIndex ASC LIMIT 25;`;
       break;
+    case 'selectDivisions':
+      queryInput.value = `SELECT id, number, tag, title, desc, link, orderIndex FROM divisions ORDER BY orderIndex ASC;`;
+      break;
     case 'tableCounts':
       queryInput.value = `SELECT 'posts' as table_name, count(*) as total_rows FROM posts
 UNION ALL SELECT 'interns', count(*) FROM interns
 UNION ALL SELECT 'applications', count(*) FROM applications
 UNION ALL SELECT 'allowed_users', count(*) FROM allowed_users
+UNION ALL SELECT 'divisions', count(*) FROM divisions
 UNION ALL SELECT 'settings', count(*) FROM settings;`;
       break;
     case 'templateInsertPost':
@@ -4405,6 +4416,75 @@ VALUES (
   'Active',
   0,
   10,
+  datetime('now')
+);`;
+      break;
+    case 'templateInsertDivision':
+      queryInput.value = `-- Bulk Insert Research Division Template
+INSERT INTO divisions (id, number, tag, title, desc, image, link, orderIndex, createdAt, updatedAt)
+VALUES (
+  'div-' || lower(hex(randomblob(4))),
+  '04',
+  '04 / RESEARCH DIVISION',
+  'Artificial Intelligence & Autonomous Systems',
+  'Investigating multi-agent networks, neural foundation models, and autonomous scientific discovery.',
+  'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  4,
+  datetime('now'),
+  datetime('now')
+);`;
+      break;
+    case 'templateBulkDivisions':
+      queryInput.value = `-- Bulk Insert 4 Institute Research Divisions
+INSERT INTO divisions (id, number, tag, title, desc, image, link, orderIndex, createdAt, updatedAt)
+VALUES 
+(
+  'div-ai-autonomous-agents',
+  '04',
+  '04 / RESEARCH DIVISION',
+  'Artificial Intelligence & Autonomous Scientific Systems',
+  'Research into multi-agent systems, deep reinforcement learning, foundation models, and autonomous theorem discovery.',
+  'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  4,
+  datetime('now'),
+  datetime('now')
+),
+(
+  'div-computational-genomics',
+  '05',
+  '05 / RESEARCH DIVISION',
+  'Synthetic Biology & Molecular Biophysics',
+  'High-throughput genomic sequencing, molecular dynamics simulations, and structural biomolecular modeling.',
+  'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  5,
+  datetime('now'),
+  datetime('now')
+),
+(
+  'div-climate-planetary-systems',
+  '06',
+  '06 / RESEARCH DIVISION',
+  'Planetary Geophysics & Climate Systems',
+  'Computational atmospheric thermodynamics, oceanographic forecasting, and geophysical simulation models.',
+  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  6,
+  datetime('now'),
+  datetime('now')
+),
+(
+  'div-cognitive-neuroscience',
+  '07',
+  '07 / RESEARCH DIVISION',
+  'Cognitive Neuroscience & Neural Interfaces',
+  'Neural coding, brain-computer interface paradigms, electrophysiology, and computational cognitive modeling.',
+  'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  7,
+  datetime('now'),
   datetime('now')
 );`;
       break;

@@ -1574,6 +1574,10 @@ export function renderPortalPageHtml() {
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
               <span>Prompt: Bulk Researchers</span>
             </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="window.copyAiPrompt('bulkDivisions')">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>
+              <span>Prompt: Bulk Divisions</span>
+            </button>
           </div>
         </div>
 
@@ -1614,9 +1618,12 @@ export function renderPortalPageHtml() {
                   <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Presets:</span>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('selectPosts')">Posts (20)</button>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('selectInterns')">Researchers</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('selectDivisions')">Divisions</button>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('tableCounts')">All Row Counts</button>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateInsertPost')">+ Insert Post</button>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateInsertIntern')">+ Insert Fellow</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateInsertDivision')">+ Insert Division</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateBulkDivisions')" style="background: rgba(234, 88, 12, 0.1); color: #ea580c; border-color: rgba(234, 88, 12, 0.3);">Bulk Insert 4 Divisions</button>
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                   <button type="button" class="btn btn-xs btn-secondary" onclick="window.formatSqlQuery()" title="Format SQL query">Format</button>

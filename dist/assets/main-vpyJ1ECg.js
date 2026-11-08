@@ -935,7 +935,7 @@ Incoming messages to this address will no longer be relayed.`)){window.showToast
         `),a&&(a.style.display=`none`);return}if(kt=t,window._criiLastSqlResults=t,n&&(n.className=`sql-status-badge success`,n.innerHTML=`
         <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
         <span>Success (${t.statementCount>1?`${t.statementCount} statements executed`:`1 statement executed`}${t.changes?`, ${t.changes} rows affected`:``} in ${t.duration||0}ms)</span>
-      `),t.changes&&t.changes>0&&Mt(),a&&s){a.style.display=`block`;let e=t.rows||[],n=t.columns||(e.length>0?Object.keys(e[0]):[]);if(o&&(o.textContent=e.length>0?`${e.length} rows returned in ${t.duration||0}ms`:t.changes?`${t.changes} rows affected in ${t.duration||0}ms`:`Executed in ${t.duration||0}ms`),e.length===0)s.innerHTML=`
+      `),t.changes&&t.changes>0&&(Mt(),e.toLowerCase().includes(`divisions`)&&window.CRII_API&&window.CRII_API.getDivisions().then(e=>{typeof window.renderDivisionsTab==`function`&&window.renderDivisionsTab()}).catch(()=>{})),a&&s){a.style.display=`block`;let e=t.rows||[],n=t.columns||(e.length>0?Object.keys(e[0]):[]);if(o&&(o.textContent=e.length>0?`${e.length} rows returned in ${t.duration||0}ms`:t.changes?`${t.changes} rows affected in ${t.duration||0}ms`:`Executed in ${t.duration||0}ms`),e.length===0)s.innerHTML=`
           <div style="padding: 2.5rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
             <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#10b981" stroke-width="2" style="margin-bottom: 0.5rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Command Executed Successfully</div>
@@ -944,10 +944,11 @@ Incoming messages to this address will no longer be relayed.`)){window.showToast
         `;else{let t=`<table class="sql-table"><thead><tr>`;n.forEach(e=>{t+=`<th>${V(e)}</th>`}),t+=`</tr></thead><tbody>`,e.forEach(e=>{t+=`<tr>`,n.forEach(n=>{let r=e[n];r=r==null?`<span style="color: #94a3b8; font-style: italic;">null</span>`:typeof r==`object`?`<span title="${V(JSON.stringify(r))}">${V(JSON.stringify(r))}</span>`:V(String(r)),t+=`<td>${r}</td>`}),t+=`</tr>`}),t+=`</tbody></table>`,s.innerHTML=t}}window.showToast(`SQL executed successfully!`,`success`)}catch(e){r&&i&&(r.style.display=`block`,i.textContent=e.message||`Execution error`)}finally{t&&(t.disabled=!1,t.innerHTML=`
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         <span>Execute SQL</span>
-      `)}}}window.runSqlQuery=Ft;function It(e){let t=document.getElementById(`sqlQueryInput`);if(!t)return;let n=J||`posts`;switch(e){case`selectPosts`:t.value=`SELECT id, slug, title, category, date, published FROM posts ORDER BY date DESC LIMIT 20;`;break;case`selectInterns`:t.value=`SELECT id, name, role, division, status, degree FROM interns ORDER BY orderIndex ASC LIMIT 25;`;break;case`tableCounts`:t.value=`SELECT 'posts' as table_name, count(*) as total_rows FROM posts
+      `)}}}window.runSqlQuery=Ft;function It(e){let t=document.getElementById(`sqlQueryInput`);if(!t)return;let n=J||`posts`;switch(e){case`selectPosts`:t.value=`SELECT id, slug, title, category, date, published FROM posts ORDER BY date DESC LIMIT 20;`;break;case`selectInterns`:t.value=`SELECT id, name, role, division, status, degree FROM interns ORDER BY orderIndex ASC LIMIT 25;`;break;case`selectDivisions`:t.value=`SELECT id, number, tag, title, desc, link, orderIndex FROM divisions ORDER BY orderIndex ASC;`;break;case`tableCounts`:t.value=`SELECT 'posts' as table_name, count(*) as total_rows FROM posts
 UNION ALL SELECT 'interns', count(*) FROM interns
 UNION ALL SELECT 'applications', count(*) FROM applications
 UNION ALL SELECT 'allowed_users', count(*) FROM allowed_users
+UNION ALL SELECT 'divisions', count(*) FROM divisions
 UNION ALL SELECT 'settings', count(*) FROM settings;`;break;case`templateInsertPost`:t.value=`-- Bulk Insert Publication Template
 INSERT INTO posts (id, slug, title, coverImage, category, authors_json, date, readingTime, summary, content, tags_json, published, featured)
 VALUES (
@@ -979,6 +980,69 @@ VALUES (
   'Active',
   0,
   10,
+  datetime('now')
+);`;break;case`templateInsertDivision`:t.value=`-- Bulk Insert Research Division Template
+INSERT INTO divisions (id, number, tag, title, desc, image, link, orderIndex, createdAt, updatedAt)
+VALUES (
+  'div-' || lower(hex(randomblob(4))),
+  '04',
+  '04 / RESEARCH DIVISION',
+  'Artificial Intelligence & Autonomous Systems',
+  'Investigating multi-agent networks, neural foundation models, and autonomous scientific discovery.',
+  'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  4,
+  datetime('now'),
+  datetime('now')
+);`;break;case`templateBulkDivisions`:t.value=`-- Bulk Insert 4 Institute Research Divisions
+INSERT INTO divisions (id, number, tag, title, desc, image, link, orderIndex, createdAt, updatedAt)
+VALUES 
+(
+  'div-ai-autonomous-agents',
+  '04',
+  '04 / RESEARCH DIVISION',
+  'Artificial Intelligence & Autonomous Scientific Systems',
+  'Research into multi-agent systems, deep reinforcement learning, foundation models, and autonomous theorem discovery.',
+  'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  4,
+  datetime('now'),
+  datetime('now')
+),
+(
+  'div-computational-genomics',
+  '05',
+  '05 / RESEARCH DIVISION',
+  'Synthetic Biology & Molecular Biophysics',
+  'High-throughput genomic sequencing, molecular dynamics simulations, and structural biomolecular modeling.',
+  'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  5,
+  datetime('now'),
+  datetime('now')
+),
+(
+  'div-climate-planetary-systems',
+  '06',
+  '06 / RESEARCH DIVISION',
+  'Planetary Geophysics & Climate Systems',
+  'Computational atmospheric thermodynamics, oceanographic forecasting, and geophysical simulation models.',
+  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  6,
+  datetime('now'),
+  datetime('now')
+),
+(
+  'div-cognitive-neuroscience',
+  '07',
+  '07 / RESEARCH DIVISION',
+  'Cognitive Neuroscience & Neural Interfaces',
+  'Neural coding, brain-computer interface paradigms, electrophysiology, and computational cognitive modeling.',
+  'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80',
+  '/research',
+  7,
+  datetime('now'),
   datetime('now')
 );`;break;case`selectFromSelected`:t.value=`SELECT * FROM "${n}" LIMIT 25;`;break;case`countSelected`:t.value=`SELECT COUNT(*) AS total_rows FROM "${n}";`}t.focus()}window.insertSqlPreset=It;function Lt(e){if(!q||!q.aiPromptTemplates){window.showToast(`Please wait for database schema to load.`,`warning`);return}let t=q.aiPromptTemplates[e]||q.aiPromptTemplates.fullSchemaPrompt;t&&(navigator.clipboard?navigator.clipboard.writeText(t).then(()=>{window.showToast(`AI Bulk Data Prompt copied! Paste into ChatGPT or Claude with your raw data.`,`success`)}).catch(()=>{window.prompt(`Copy AI Bulk Data Prompt:`,t)}):window.prompt(`Copy AI Bulk Data Prompt:`,t))}window.copyAiPrompt=Lt;function Rt(){let e=q?.tables?.find(e=>e.name===J);!e||!e.sql?window.showToast(`No DDL available for selected table`,`info`):navigator.clipboard&&navigator.clipboard.writeText(e.sql+`;`).then(()=>{window.showToast(`DDL for "${e.name}" copied to clipboard!`,`success`)})}window.copySelectedTableDdl=Rt;function Y(){let e=document.getElementById(`sqlQueryInput`);if(!e||!e.value)return;let t=e.value.trim();[`SELECT`,`FROM`,`WHERE`,`INSERT INTO`,`VALUES`,`UPDATE`,`SET`,`DELETE FROM`,`ORDER BY`,`GROUP BY`,`LIMIT`,`JOIN`,`LEFT JOIN`,`INNER JOIN`,`AND`,`OR`,`UNION ALL`,`UNION`,`CREATE TABLE`,`DROP TABLE`,`ALTER TABLE`].forEach(e=>{let n=RegExp(`\\b`+e.replace(` `,`\\s+`)+`\\b`,`gi`);t=t.replace(n,e)}),e.value=t,window.showToast(`SQL keywords formatted`,`info`)}window.formatSqlQuery=Y;function X(){let e=document.getElementById(`sqlQueryInput`);e&&(e.value=``)}window.clearSqlEditor=X;function zt(){if(!kt||!kt.rows||kt.rows.length===0){window.showToast(`No results to export`,`warning`);return}let e=kt.rows,t=kt.columns||Object.keys(e[0]),n=t.map(e=>`"${e.replace(/"/g,`""`)}"`).join(`,`)+`
 `;e.forEach(e=>{let r=t.map(t=>{let n=e[t];return n==null?`""`:(typeof n==`object`&&(n=JSON.stringify(n)),`"${String(n).replace(/"/g,`""`)}"`)}).join(`,`);n+=r+`
@@ -4064,6 +4128,10 @@ VALUES (
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
               <span>Prompt: Bulk Researchers</span>
             </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="window.copyAiPrompt('bulkDivisions')">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>
+              <span>Prompt: Bulk Divisions</span>
+            </button>
           </div>
         </div>
 
@@ -4104,9 +4172,12 @@ VALUES (
                   <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Presets:</span>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('selectPosts')">Posts (20)</button>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('selectInterns')">Researchers</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('selectDivisions')">Divisions</button>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('tableCounts')">All Row Counts</button>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateInsertPost')">+ Insert Post</button>
                   <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateInsertIntern')">+ Insert Fellow</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateInsertDivision')">+ Insert Division</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateBulkDivisions')" style="background: rgba(234, 88, 12, 0.1); color: #ea580c; border-color: rgba(234, 88, 12, 0.3);">Bulk Insert 4 Divisions</button>
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                   <button type="button" class="btn btn-xs btn-secondary" onclick="window.formatSqlQuery()" title="Format SQL query">Format</button>

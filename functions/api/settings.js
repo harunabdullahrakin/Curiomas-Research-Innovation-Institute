@@ -84,6 +84,14 @@ export async function onRequestGet(context) {
         }
       }
 
+      // If dedicated D1 divisions table has records, prioritize them
+      try {
+        const divRows = await env.DB.prepare("SELECT * FROM divisions ORDER BY orderIndex ASC, number ASC").all();
+        if (divRows && divRows.results && divRows.results.length > 0) {
+          settings.divisions = divRows.results;
+        }
+      } catch (divErr) {}
+
       // Synchronize EmailJS Template ID across both emailjs and branding keys
       const savedTplId = (settings.emailjs && settings.emailjs.templateId) ||
                          (settings.branding && settings.branding.emailjsTemplateId) || "";
@@ -142,6 +150,58 @@ export async function onRequestPost(context) {
           updatedAt=excluded.updatedAt,
           updatedBy=excluded.updatedBy;
       `).bind(key, valueJson, updatedAt, updatedBy).run();
+
+      // If divisions are updated via settings, also sync dedicated divisions table
+      if (key === 'divisions' && Array.isArray(payload.value)) {
+        try {
+          await env.DB.prepare(`
+            CREATE TABLE IF NOT EXISTS divisions (
+              id TEXT PRIMARY KEY,
+              number TEXT NOT NULL,
+              tag TEXT NOT NULL,
+              title TEXT NOT NULL,
+              desc TEXT,
+              image TEXT,
+              link TEXT DEFAULT '/research',
+              orderIndex INTEGER DEFAULT 0,
+              createdAt TEXT,
+              updatedAt TEXT
+            )
+          `).run().catch(() => {});
+
+          for (let i = 0; i < payload.value.length; i++) {
+            const div = payload.value[i];
+            const divId = div.id || ('div-' + Math.random().toString(36).substring(2, 9));
+            const divNum = div.number || String(i + 1).padStart(2, '0');
+            const divTag = div.tag || (divNum + ' / RESEARCH DIVISION');
+            const divTitle = div.title || 'Untitled Division';
+            const divDesc = div.desc || '';
+            const divImg = div.image || '';
+            const divLink = div.link || '/research';
+            const divOrder = div.orderIndex !== undefined ? div.orderIndex : (i + 1);
+
+            await env.DB.prepare(`
+              INSERT INTO divisions (id, number, tag, title, desc, image, link, orderIndex, createdAt, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+              ON CONFLICT(id) DO UPDATE SET
+                number = excluded.number,
+                tag = excluded.tag,
+                title = excluded.title,
+                desc = excluded.desc,
+                image = excluded.image,
+                link = excluded.link,
+                orderIndex = excluded.orderIndex,
+                updatedAt = datetime('now')
+            `).bind(divId, divNum, divTag, divTitle, divDesc, divImg, divLink, divOrder).run().catch(() => {});
+          }
+
+          const activeIds = payload.value.map(d => d.id).filter(Boolean);
+          if (activeIds.length > 0) {
+            const placeholders = activeIds.map(() => '?').join(',');
+            await env.DB.prepare(`DELETE FROM divisions WHERE id NOT IN (${placeholders})`).bind(...activeIds).run().catch(() => {});
+          }
+        } catch (syncErr) {}
+      }
 
       // If emailjs template is updated, also ensure branding key stores it
       if (key === "emailjs" && payload.value && payload.value.templateId) {

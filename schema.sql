@@ -106,6 +106,23 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE INDEX IF NOT EXISTS idx_sessions_email ON sessions(email);
 CREATE INDEX IF NOT EXISTS idx_sessions_expiresAt ON sessions(expiresAt);
 
+
+-- 7. Institute Research Divisions Table
+CREATE TABLE IF NOT EXISTS divisions (
+  id TEXT PRIMARY KEY,
+  number TEXT NOT NULL,
+  tag TEXT NOT NULL,
+  title TEXT NOT NULL,
+  desc TEXT,
+  image TEXT,
+  link TEXT DEFAULT '/research',
+  orderIndex INTEGER DEFAULT 0,
+  createdAt TEXT,
+  updatedAt TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_divisions_order ON divisions(orderIndex);
+
 -- ==============================================================================
 -- Initial Production Seed Data
 -- ==============================================================================
