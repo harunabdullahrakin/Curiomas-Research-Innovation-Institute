@@ -22,18 +22,18 @@ export function renderResearchPageHtml() {
         <div class="mockup-container">
           <!-- Catalog Toggle Buttons -->
           <div class="research-catalog-tabs">
-            <button class="btn btn-primary catalog-tab active" data-tab="papers" style="padding: 0.75rem 1.75rem; border-radius: 9999px;">
+            <button class="btn btn-primary catalog-tab active" data-tab="papers">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
               <span>Research Papers & Preprints</span>
             </button>
-            <button class="btn btn-secondary catalog-tab" data-tab="datasets" style="padding: 0.75rem 1.75rem; border-radius: 9999px;">
+            <button class="btn btn-secondary catalog-tab" data-tab="datasets">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
               <span>Open Scientific Datasets</span>
             </button>
           </div>
 
           <!-- Filter Bar -->
-          <div class="filter-bar" style="background: #ffffff; border: 1px solid #e5dfd5; border-radius: 14px; padding: 1.25rem; margin-bottom: 3rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+          <div class="filter-bar research-filter-card">
             <div class="search-input-group">
               <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>

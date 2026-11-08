@@ -356,11 +356,46 @@ function updateBloggerStatusUI() {
 
 function switchBloggerSubtab(subtab) {
   currentEditorSubtab = subtab;
-  document.getElementById('bloggerPaneWrite').style.display = subtab === 'write' ? 'block' : 'none';
-  document.getElementById('bloggerPaneDetails').style.display = subtab === 'details' ? 'block' : 'none';
-  document.getElementById('bloggerPanePreview').style.display = subtab === 'preview' ? 'block' : 'none';
+  const isEditing = (subtab === 'doc' || subtab === 'blocks' || subtab === 'write');
 
-  if (subtab === 'preview') {
+  const paneWrite = document.getElementById('bloggerPaneWrite');
+  const paneDetails = document.getElementById('bloggerPaneDetails');
+  const panePreview = document.getElementById('bloggerPanePreview');
+
+  if (paneWrite) paneWrite.style.display = isEditing ? 'block' : 'none';
+  if (paneDetails) paneDetails.style.display = subtab === 'details' ? 'block' : 'none';
+  if (panePreview) panePreview.style.display = subtab === 'preview' ? 'block' : 'none';
+
+  // Synchronize active state in .blogger-tabs
+  document.querySelectorAll('.blogger-tab-btn').forEach(btn => {
+    const btnSub = btn.dataset.subtab;
+    const match = (btnSub === subtab) || (btnSub === 'doc' && subtab === 'write');
+    btn.classList.toggle('active', Boolean(match));
+  });
+
+  if (subtab === 'doc') {
+    if (window.CRII_WORD) {
+      if (currentPostBlocks && currentPostBlocks.length > 0) {
+        window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
+      }
+      window.CRII_WORD.setMode('doc');
+    }
+  } else if (subtab === 'blocks' || subtab === 'write') {
+    if (window.CRII_WORD) {
+      const cleanHtml = window.CRII_WORD.getHtml();
+      if (cleanHtml && cleanHtml.trim()) {
+        currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
+        renderBlockStack();
+      }
+      window.CRII_WORD.setMode('blocks');
+    }
+  } else if (subtab === 'preview') {
+    if (window.CRII_WORD) {
+      const cleanHtml = window.CRII_WORD.getHtml();
+      if (cleanHtml && cleanHtml.trim()) {
+        currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
+      }
+    }
     renderBloggerLiveReaderPreview();
   }
 }
@@ -421,7 +456,7 @@ function openBloggerEditor(postId) {
     if (window.CRII_WORD && typeof window.CRII_WORD.load === 'function') {
       window.CRII_WORD.load(p, () => currentPostBlocks);
     }
-    switchBloggerSubtab('write');
+    switchBloggerSubtab('doc');
   };
 
   if (post) {
@@ -462,7 +497,7 @@ function openBloggerEditor(postId) {
         window.CRII_WORD.load(null, () => currentPostBlocks);
       }
     }
-    switchBloggerSubtab('write');
+    switchBloggerSubtab('doc');
   }
 }
 window.openBloggerEditor = openBloggerEditor;

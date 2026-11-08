@@ -393,11 +393,17 @@ export function renderPortalPageHtml() {
 
             <!-- Editor Sub-navigation Tabs -->
             <div class="blogger-tabs">
-              <button type="button" class="blogger-tab-btn active" data-subtab="write">
+              <button type="button" class="blogger-tab-btn active" data-subtab="doc" title="Word-style document editor with ribbon and typography">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
-                <span>Write</span>
+                <span>Document Editor</span>
+              </button>
+              <button type="button" class="blogger-tab-btn" data-subtab="blocks" title="Modular structured block builder">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
+                </svg>
+                <span>Modular Blocks</span>
               </button>
               <button type="button" class="blogger-tab-btn" data-subtab="details">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

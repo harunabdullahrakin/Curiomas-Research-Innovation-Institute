@@ -1816,6 +1816,14 @@
 
     modeBar.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
 
+    // Also sync the blogger-tab-btn in the topbar
+    document.querySelectorAll('.blogger-tab-btn').forEach(btn => {
+      const sub = btn.dataset.subtab;
+      if (sub === 'doc' || sub === 'blocks') {
+        btn.classList.toggle('active', sub === m);
+      }
+    });
+
     // Show appropriate conversion button
     const toDocBtn = modeBar.querySelector('.we-convert-blocks-btn');
     const toBlocksBtn = modeBar.querySelector('.we-convert-doc-btn');
