@@ -313,6 +313,39 @@ OUTPUT INSTRUCTIONS:
 - Return ONLY valid SQLite INSERT INTO interns (...) VALUES (...); statements separated by semicolons.
 - Ready to paste directly into CRII D1 SQL Studio.`,
 
+      bulkDivisions: `You are generating bulk SQL INSERT statements for the Cloudflare D1 database table "divisions" of Curiomas Research & Innovation Institute (CRII).
+
+TABLE SCHEMA:
+${tables.find(t => t.name === 'divisions')?.sql || `CREATE TABLE IF NOT EXISTS divisions (
+  id TEXT PRIMARY KEY,
+  number TEXT NOT NULL,
+  tag TEXT NOT NULL,
+  title TEXT NOT NULL,
+  desc TEXT,
+  image TEXT,
+  link TEXT DEFAULT '/research',
+  orderIndex INTEGER DEFAULT 0,
+  createdAt TEXT,
+  updatedAt TEXT
+);`}
+
+DATA CONSTRAINTS & FORMATTING RULES:
+1. "id": Unique string identifier, e.g. 'div-space-astrophysics', 'div-quantum-physics', 'div-synthetic-biology' or 'div-' || hex(randomblob(4)).
+2. "number": 2-digit zero-padded number, e.g. '01', '02', '03', '04', '05'...
+3. "tag": Format like '01 / RESEARCH DIVISION' or '04 / APPLIED AI'.
+4. "title": Formal name of the research division (e.g. 'Artificial Intelligence & Autonomous Scientific Systems', 'Planetary Geophysics & Climate Systems').
+5. "desc": 1-2 sentence description explaining the scope and scientific objectives of the division.
+6. "image": Valid high-resolution image URL (Unsplash or OpenAI CDN image URL).
+7. "link": Default '/research' or division-specific page link.
+8. "orderIndex": Integer sequence for sorting (1, 2, 3, 4...).
+9. "createdAt": ISO-8601 string or datetime('now').
+10. "updatedAt": ISO-8601 string or datetime('now').
+
+OUTPUT INSTRUCTIONS:
+- Return ONLY valid SQLite INSERT INTO divisions (id, number, tag, title, desc, image, link, orderIndex, createdAt, updatedAt) VALUES (...); statements separated by semicolons.
+- Properly escape single quotes inside SQL strings by doubling them (e.g. 'Earth''s atmosphere').
+- Ready to paste directly into CRII D1 SQL Studio.`,
+
       fullSchemaPrompt: `You are an AI assistant generating bulk SQLite data for Curiomas Research & Innovation Institute (CRII).
 
 LIVE CLOUDFLARE D1 DATABASE SCHEMA:
