@@ -602,6 +602,45 @@ export function renderPortalPageHtml() {
           </div>
 
           <form id="appFormSettingsForm" onsubmit="handleSaveAppFormSettings(event)">
+            <!-- Application Status Master Toggle Card -->
+            <div style="background: var(--bg-surface); border: 1.5px solid var(--border-color); border-radius: 12px; padding: 1.4rem 1.6rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.15rem;">
+                <div>
+                  <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.65rem;">
+                    <span>Fellowship Applications Status</span>
+                    <span id="appStatusIndicator" class="portal-nav-badge" style="background: rgba(16,185,129,0.15); color: #10b981; font-weight: 700; font-size: 0.78rem;">Open (Accepting Submissions)</span>
+                  </div>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    Toggle whether prospective researchers can apply on <code>/team#apply</code>. If turned off, a closed notice is shown instead of the application form.
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <label style="display: inline-flex; align-items: center; cursor: pointer; gap: 0.6rem; user-select: none; background: var(--bg-primary); padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid var(--border-color);">
+                    <input type="checkbox" id="appFormIsOpen" checked onchange="window.handleToggleAppStatus(this.checked)" style="width: 18px; height: 18px; accent-color: #ea580c; cursor: pointer;">
+                    <span style="font-weight: 700; font-size: 0.92rem; color: var(--text-primary);">Accepting Applications</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Closed Message Notice -->
+              <div id="appClosedMessageContainer" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-color); margin-bottom: 1rem;">
+                <label class="form-label" for="appFormClosedMessage" style="font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; display: block;">Message to Display When Applications Are Closed:</label>
+                <textarea id="appFormClosedMessage" class="form-textarea" rows="2" style="font-size: 0.9rem;" placeholder="e.g. Applications for the current fellowship cohort are currently closed. Follow our updates for announcements regarding the next cohort."></textarea>
+              </div>
+
+              <!-- Curiosity Gateway Toggle -->
+              <div style="padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                  <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Interactive Curiosity Discovery Gateway</div>
+                  <div style="font-size: 0.82rem; color: var(--text-muted);">Asks for candidate identity first, animates research track matching, then reveals the personalized dossier.</div>
+                </div>
+                <label style="display: inline-flex; align-items: center; cursor: pointer; gap: 0.5rem;">
+                  <input type="checkbox" id="appFormCuriosityGateway" checked style="width: 17px; height: 17px; accent-color: #ea580c; cursor: pointer;">
+                  <span style="font-size: 0.86rem; font-weight: 600; color: var(--text-secondary);">Enable Interactive Curiosity Flow</span>
+                </label>
+              </div>
+            </div>
+
             <!-- Standard Form Fields Toggles -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
               <div class="form-group" style="background:var(--bg-secondary); padding:1rem; border-radius:8px; border:1px solid var(--border-color);">

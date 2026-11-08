@@ -3055,9 +3055,45 @@ function initApplicationFormBuilder() {
     if (reqEl) reqEl.checked = fields[key].required === true;
   });
 
+  // Master Status Toggle
+  const isOpen = currentAppFormConfig.isOpen !== false;
+  const openEl = document.getElementById('appFormIsOpen');
+  if (openEl) openEl.checked = isOpen;
+  handleToggleAppStatus(isOpen);
+
+  const msgEl = document.getElementById('appFormClosedMessage');
+  if (msgEl) {
+    msgEl.value = currentAppFormConfig.closedMessage || "Applications for the current Student Research Fellowship cohort are currently closed. The Institute Research Council is reviewing candidate dossiers. Please check back for announcements regarding the next cohort.";
+  }
+
+  const gatewayEl = document.getElementById('appFormCuriosityGateway');
+  if (gatewayEl) {
+    gatewayEl.checked = currentAppFormConfig.enableCuriosityGateway !== false;
+  }
+
   renderCustomFieldsBuilder();
 }
 window.initApplicationFormBuilder = initApplicationFormBuilder;
+
+function handleToggleAppStatus(isOpen) {
+  const indicator = document.getElementById('appStatusIndicator');
+  const closedContainer = document.getElementById('appClosedMessageContainer');
+  if (indicator) {
+    if (isOpen) {
+      indicator.textContent = 'Open (Accepting Submissions)';
+      indicator.style.background = 'rgba(16,185,129,0.15)';
+      indicator.style.color = '#10b981';
+    } else {
+      indicator.textContent = 'Closed (Submissions Paused)';
+      indicator.style.background = 'rgba(234,88,12,0.15)';
+      indicator.style.color = '#ea580c';
+    }
+  }
+  if (closedContainer) {
+    closedContainer.style.display = isOpen ? 'none' : 'block';
+  }
+}
+window.handleToggleAppStatus = handleToggleAppStatus;
 
 function updateCustomFieldProp(idx, prop, val) {
   if (!currentAppFormConfig || !currentAppFormConfig.customFields[idx]) return;
@@ -3104,9 +3140,13 @@ async function handleSaveAppFormSettings(e) {
     };
   });
 
+  config.isOpen = document.getElementById('appFormIsOpen')?.checked !== false;
+  config.closedMessage = (document.getElementById('appFormClosedMessage')?.value || '').trim() || "Applications for the current Student Research Fellowship cohort are currently closed. The Institute Research Council is reviewing candidate dossiers. Please check back for announcements regarding the next cohort.";
+  config.enableCuriosityGateway = document.getElementById('appFormCuriosityGateway')?.checked !== false;
+
   await window.CRII_API.saveApplicationFormConfig(config);
   if (window.showToast) {
-    window.showToast('Application form settings & custom questions saved to database!', 'success');
+    window.showToast('Application form settings & status saved to database!', 'success');
   }
 }
 window.handleSaveAppFormSettings = handleSaveAppFormSettings;

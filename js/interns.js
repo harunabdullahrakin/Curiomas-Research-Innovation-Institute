@@ -137,14 +137,141 @@ function renderMemberCard(member) {
 
 async function initApplicationForm() {
   const form = document.getElementById('internApplicationForm');
-  if (!form) return;
+  const closedCard = document.getElementById('fellowshipClosedCard');
+  const openContainer = document.getElementById('fellowshipOpenContainer');
+  const inviteCard = document.getElementById('fellowshipInviteCard');
+  const gatewayCard = document.getElementById('fellowshipGatewayCard');
+  const loaderCard = document.getElementById('fellowshipCuriosityLoader');
+  const formCard = document.getElementById('applicationFormCard');
+  const closedMsgEl = document.getElementById('fellowshipClosedMessageText');
 
   // 1. Sync latest database settings for divisions, cohorts, and form configuration
   if (window.CRII_API && window.CRII_API.syncSettingsFromDb) {
     try { await window.CRII_API.syncSettingsFromDb(); } catch(e){}
   }
 
-  // 2. Populate Real Divisions into Preferred Division dropdown
+  // 2. Read live application form configuration
+  const formConfig = (window.CRII_API && window.CRII_API.getApplicationFormConfig)
+    ? window.CRII_API.getApplicationFormConfig()
+    : { isOpen: true, enableCuriosityGateway: true };
+
+  const isAppOpen = formConfig.isOpen !== false;
+
+  if (!isAppOpen) {
+    // If applications are turned OFF
+    if (closedCard) closedCard.style.display = 'block';
+    if (openContainer) openContainer.style.display = 'none';
+    if (closedMsgEl && formConfig.closedMessage) {
+      closedMsgEl.textContent = formConfig.closedMessage;
+    }
+    const subTitle = document.getElementById('fellowshipSectionSubtitle');
+    if (subTitle) {
+      subTitle.textContent = "Cohort candidate applications are currently paused. The Institute Research Council is reviewing submitted dossiers.";
+    }
+    return;
+  } else {
+    // If applications are turned ON
+    if (closedCard) closedCard.style.display = 'none';
+    if (openContainer) openContainer.style.display = 'block';
+
+    // If curious gateway is disabled in admin, jump straight to form
+    if (formConfig.enableCuriosityGateway === false) {
+      if (inviteCard) inviteCard.style.display = 'none';
+      if (gatewayCard) gatewayCard.style.display = 'none';
+      if (formCard) formCard.style.display = 'block';
+    } else {
+      if (inviteCard) inviteCard.style.display = 'block';
+      if (gatewayCard) gatewayCard.style.display = 'none';
+      if (formCard) formCard.style.display = 'none';
+    }
+  }
+
+  // Window helper functions for interactive discovery journey
+  window.startCuriousApplication = function() {
+    if (inviteCard) inviteCard.style.display = 'none';
+    if (gatewayCard) {
+      gatewayCard.style.display = 'block';
+      const nameInput = document.getElementById('curiousNameInput');
+      if (nameInput) nameInput.focus();
+    }
+  };
+
+  window.backToFellowshipInvite = function() {
+    if (gatewayCard) gatewayCard.style.display = 'none';
+    if (inviteCard) inviteCard.style.display = 'block';
+  };
+
+  window.proceedFromCuriousGateway = function() {
+    const nameInput = document.getElementById('curiousNameInput');
+    const emailInput = document.getElementById('curiousEmailInput');
+    const name = (nameInput?.value || '').trim();
+    const email = (emailInput?.value || '').trim();
+
+    if (!name) {
+      alert('Please enter your full name or preferred research title.');
+      nameInput?.focus();
+      return;
+    }
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      alert('Please enter a valid email address so the council can contact you.');
+      emailInput?.focus();
+      return;
+    }
+
+    // Set badges and form fields
+    const appFullName = document.getElementById('appFullName');
+    const appEmail = document.getElementById('appEmail');
+    const dossierNameBadge = document.getElementById('dossierNameBadge');
+    const dossierEmailBadge = document.getElementById('dossierEmailBadge');
+
+    if (appFullName) appFullName.value = name;
+    if (appEmail) appEmail.value = email;
+    if (dossierNameBadge) dossierNameBadge.textContent = name;
+    if (dossierEmailBadge) dossierEmailBadge.textContent = email;
+
+    // Show curiosity loader animation
+    if (gatewayCard) gatewayCard.style.display = 'none';
+    if (loaderCard) {
+      loaderCard.style.display = 'block';
+      const titleEl = document.getElementById('curiosityLoaderTitle');
+      const subEl = document.getElementById('curiosityLoaderSubtitle');
+
+      if (titleEl) titleEl.textContent = `Initializing research dossier for ${name}...`;
+      if (subEl) subEl.textContent = "Connecting candidate identity to CRII Open Science Core...";
+
+      setTimeout(() => {
+        if (titleEl) titleEl.textContent = "Cross-referencing active computational tracks...";
+        if (subEl) subEl.textContent = "Accessing live research division catalogs & mentor availability...";
+      }, 450);
+
+      setTimeout(() => {
+        if (titleEl) titleEl.textContent = "Dossier synthesized! Opening application...";
+        if (subEl) subEl.textContent = "Please complete your research background and curiosity statement below.";
+      }, 950);
+
+      setTimeout(() => {
+        if (loaderCard) loaderCard.style.display = 'none';
+        if (formCard) {
+          formCard.style.display = 'block';
+          const univInput = document.getElementById('appUniversity');
+          if (univInput) univInput.focus();
+        }
+      }, 1400);
+    } else {
+      if (formCard) formCard.style.display = 'block';
+    }
+  };
+
+  window.backToCuriousGateway = function() {
+    if (formCard) formCard.style.display = 'none';
+    if (gatewayCard) {
+      gatewayCard.style.display = 'block';
+      const nameInput = document.getElementById('curiousNameInput');
+      if (nameInput) nameInput.focus();
+    }
+  };
+
+  // 3. Populate Real Divisions into Preferred Division dropdown (from live D1)
   const divSelect = document.getElementById('appDivision');
   if (divSelect && window.CRII_API) {
     try {
@@ -167,7 +294,7 @@ async function initApplicationForm() {
     }
   }
 
-  // 3. Populate Real Cohorts & Grades into Academic Level dropdown
+  // 4. Populate Real Cohorts & Grades into Academic Level dropdown
   const levelSelect = document.getElementById('appLevel');
   if (levelSelect && window.CRII_API) {
     try {
@@ -193,80 +320,78 @@ async function initApplicationForm() {
     }
   }
 
-  // 4. Apply Application Form Settings (Visibility, Required status, Custom fields)
-  if (window.CRII_API && window.CRII_API.getApplicationFormConfig) {
-    const formConfig = window.CRII_API.getApplicationFormConfig();
-    if (formConfig && formConfig.fields) {
-      const f = formConfig.fields;
-      const applyFieldConfig = (id, fieldKey) => {
-        const input = document.getElementById(id);
-        if (!input) return;
-        const group = input.closest('.form-group');
-        const cfg = f[fieldKey];
-        if (!cfg) return;
-        if (group && cfg.visible === false) {
-          group.style.display = 'none';
-          input.required = false;
-        } else {
-          if (group) group.style.display = '';
-          input.required = cfg.required === true;
-        }
-      };
-
-      applyFieldConfig('appUniversity', 'university');
-      applyFieldConfig('appFieldOfStudy', 'fieldOfStudy');
-      applyFieldConfig('appDivision', 'division');
-      applyFieldConfig('appLevel', 'academicLevel');
-      applyFieldConfig('appPortfolio', 'portfolio');
-      applyFieldConfig('appStatement', 'statement');
-    }
-
-    // Render Custom Fields
-    const customContainer = document.getElementById('appCustomFieldsContainer');
-    if (customContainer) {
-      if (Array.isArray(formConfig.customFields) && formConfig.customFields.length > 0) {
-        customContainer.innerHTML = formConfig.customFields.map((cf, idx) => {
-          const inputId = `appCustom_${idx}`;
-          let inputHtml = '';
-          if (cf.type === 'textarea') {
-            inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}"></textarea>`;
-          } else if (cf.type === 'select') {
-            const opts = Array.isArray(cf.options) ? cf.options : [];
-            inputHtml = `
-              <select id="${inputId}" class="form-select" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''}>
-                <option value="">Select option...</option>
-                ${opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}
-              </select>
-            `;
-          } else if (cf.type === 'number') {
-            inputHtml = `<input type="number" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
-          } else {
-            inputHtml = `<input type="text" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
-          }
-
-          return `
-            <div class="form-group" style="margin-bottom:1.25rem;">
-              <label class="form-label" for="${inputId}" style="font-weight:600;">
-                ${escapeHtml(cf.label)} ${cf.required ? '*' : ''}
-              </label>
-              ${inputHtml}
-            </div>
-          `;
-        }).join('');
+  // 5. Apply Application Form Settings (Visibility, Required status, Custom fields)
+  if (formConfig && formConfig.fields) {
+    const f = formConfig.fields;
+    const applyFieldConfig = (id, fieldKey) => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      const group = input.closest('.form-group');
+      const cfg = f[fieldKey];
+      if (!cfg) return;
+      if (group && cfg.visible === false) {
+        group.style.display = 'none';
+        input.required = false;
       } else {
-        customContainer.innerHTML = '';
+        if (group) group.style.display = '';
+        input.required = cfg.required === true;
       }
+    };
+
+    applyFieldConfig('appUniversity', 'university');
+    applyFieldConfig('appFieldOfStudy', 'fieldOfStudy');
+    applyFieldConfig('appDivision', 'division');
+    applyFieldConfig('appLevel', 'academicLevel');
+    applyFieldConfig('appPortfolio', 'portfolio');
+    applyFieldConfig('appStatement', 'statement');
+  }
+
+  // Render Custom Fields
+  const customContainer = document.getElementById('appCustomFieldsContainer');
+  if (customContainer) {
+    if (Array.isArray(formConfig.customFields) && formConfig.customFields.length > 0) {
+      customContainer.innerHTML = formConfig.customFields.map((cf, idx) => {
+        const inputId = `appCustom_${idx}`;
+        let inputHtml = '';
+        if (cf.type === 'textarea') {
+          inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}"></textarea>`;
+        } else if (cf.type === 'select') {
+          const opts = Array.isArray(cf.options) ? cf.options : [];
+          inputHtml = `
+            <select id="${inputId}" class="form-select" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''}>
+              <option value="">Select option...</option>
+              ${opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}
+            </select>
+          `;
+        } else if (cf.type === 'number') {
+          inputHtml = `<input type="number" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
+        } else {
+          inputHtml = `<input type="text" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
+        }
+
+        return `
+          <div class="form-group" style="margin-bottom:1.25rem;">
+            <label class="form-label" for="${inputId}" style="font-weight:600;">
+              ${escapeHtml(cf.label)} ${cf.required ? '*' : ''}
+            </label>
+            ${inputHtml}
+          </div>
+        `;
+      }).join('');
+    } else {
+      customContainer.innerHTML = '';
     }
   }
 
-  // 5. Submission Handler
+  // 6. Submission Handler
+  if (!form) return;
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerHTML = 'Submitting Application...';
+      submitBtn.innerHTML = 'Transmitting Research Dossier...';
     }
 
     // Extract custom fields
@@ -277,8 +402,8 @@ async function initApplicationForm() {
     });
 
     const formData = {
-      fullName: document.getElementById('appFullName')?.value.trim() || 'Fellow Applicant',
-      email: document.getElementById('appEmail')?.value.trim() || '',
+      fullName: document.getElementById('appFullName')?.value.trim() || document.getElementById('curiousNameInput')?.value.trim() || 'Fellow Applicant',
+      email: document.getElementById('appEmail')?.value.trim() || document.getElementById('curiousEmailInput')?.value.trim() || '',
       university: document.getElementById('appUniversity')?.value.trim() || '',
       fieldOfStudy: document.getElementById('appFieldOfStudy')?.value.trim() || '',
       preferredDivision: document.getElementById('appDivision')?.value || 'General Science',
@@ -294,22 +419,26 @@ async function initApplicationForm() {
       const formCard = document.getElementById('applicationFormCard');
       if (formCard) {
         formCard.innerHTML = `
-          <div style="text-align:center; padding:3rem 1.5rem;">
-            <div style="width:56px; height:56px; border-radius:50%; background:rgba(16, 185, 129, 0.1); border:1px solid #10b981; color:#059669; display:grid; place-items:center; margin:0 auto 1.5rem;">
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <div style="text-align:center; padding:3.5rem 1.5rem; animation: fadeIn 0.4s ease;">
+            <div style="width:64px; height:64px; border-radius:50%; background:rgba(16, 185, 129, 0.12); border:1.5px solid #10b981; color:#059669; display:grid; place-items:center; margin:0 auto 1.5rem;">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 6 9 17l-5-5"/>
               </svg>
             </div>
-            <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:var(--text-primary);">Application Received</h2>
-            <p style="color:var(--text-secondary); max-width:540px; margin:0 auto 1.5rem; line-height:1.6;">
-              Thank you, <strong>${escapeHtml(res.fullName)}</strong>. Your research application for the 
-              <span style="color:var(--accent-primary); font-weight:600;">${escapeHtml(res.preferredDivision)}</span> track has been submitted to the admissions review board.
-            </p>
-            <div style="background:var(--bg-primary); padding:0.85rem 1.25rem; border-radius:10px; border:1px solid var(--border-color); display:inline-block; font-family:monospace; font-size:0.88rem; color:var(--accent-primary); margin-bottom:2rem;">
-              Application Reference: ${res.id}
+            <div style="display:inline-block; padding:0.25rem 0.85rem; border-radius:9999px; background:rgba(16,185,129,0.1); color:#059669; font-weight:700; font-size:0.8rem; margin-bottom:0.75rem;">
+              Dossier Transmitted Successfully
             </div>
-            <div>
-              <a href="/research" class="btn btn-secondary">Explore Research Papers</a>
+            <h2 style="font-size:2rem; margin-bottom:0.75rem; color:var(--text-primary); font-family:var(--font-display);">Welcome to the Cohort Queue</h2>
+            <p style="color:var(--text-secondary); max-width:540px; margin:0 auto 1.5rem; line-height:1.65; font-size:1.02rem;">
+              Thank you, <strong>${escapeHtml(res.fullName)}</strong>. Your research application for the 
+              <span style="color:var(--accent-primary, #ea580c); font-weight:700;">${escapeHtml(res.preferredDivision)}</span> track has been entered into the admissions queue.
+            </p>
+            <div style="background:#faf8f5; padding:0.95rem 1.5rem; border-radius:12px; border:1px solid #d4c8b6; display:inline-block; font-family:monospace; font-size:0.92rem; color:#1a221b; margin-bottom:2.25rem;">
+              Application Reference: <strong style="color:#ea580c;">${res.id}</strong>
+            </div>
+            <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
+              <a href="/research" class="mockup-btn-dark-green" style="padding:0.85rem 1.75rem; text-decoration:none;">Explore Research Papers</a>
+              <a href="/" class="btn btn-secondary" style="padding:0.85rem 1.5rem; text-decoration:none;">Return to Homepage</a>
             </div>
           </div>
         `;
@@ -342,7 +471,7 @@ async function initApplicationForm() {
       console.error('Error submitting application:', err);
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Submit Research Application';
+        submitBtn.innerHTML = 'Submit Fellowship Application →';
       }
       alert('There was an issue submitting your application. Please check your connection and try again.');
     }

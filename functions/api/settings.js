@@ -43,6 +43,9 @@ const DEFAULT_SETTINGS = {
     logoUrl: ""
   },
   app_form_config: {
+    isOpen: true,
+    closedMessage: "Applications for the current Student Research Fellowship cohort are currently closed. The Institute Research Council is reviewing candidate dossiers. Please check back for announcements regarding the next cohort.",
+    enableCuriosityGateway: true,
     fields: {
       fullName: { label: "Full Legal Name", required: true, visible: true },
       email: { label: "Email Address", required: true, visible: true },
