@@ -1658,6 +1658,47 @@ class CriiApiClient {
       return { error: e.message };
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Cloudflare D1 SQL Studio & AI Schema Generator
+  // ---------------------------------------------------------------------------
+  async getDbSchema() {
+    try {
+      const token = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN);
+      const headers = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      const res = await fetch('/api/sql?action=schema', { headers });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { success: false, error: err.error || 'Failed to fetch database schema' };
+      }
+      return await res.json();
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  async executeSql(query) {
+    try {
+      const token = localStorage.getItem(CRII_CONFIG.STORAGE_KEYS.AUTH_TOKEN);
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      const res = await fetch('/api/sql', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { success: false, error: data.error || 'SQL query execution failed', duration: data.duration };
+      }
+      return data;
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
 }
 
 window.CRII_API = new CriiApiClient();

@@ -239,6 +239,9 @@ function showTab(tabName) {
   if (tabName === 'aliases' && typeof window.renderAliasesTab === 'function') {
     window.renderAliasesTab();
   }
+  if (tabName === 'sql' && typeof window.renderSqlStudioTab === 'function') {
+    window.renderSqlStudioTab();
+  }
   if (tabName === 'cohorts') {
     if (typeof window.renderCohortsTab === 'function') window.renderCohortsTab();
     if (typeof window.initApplicationFormBuilder === 'function') window.initApplicationFormBuilder();
@@ -4074,3 +4077,447 @@ function copyAliasToClipboard(email) {
   }
 }
 window.copyAliasToClipboard = copyAliasToClipboard;
+
+
+// =============================================================================
+// CLOUDFLARE D1 SQL STUDIO & DB SCHEMA EXPLORER
+// =============================================================================
+
+let _criiDbSchema = null;
+let _criiSelectedTable = null;
+let _criiLastSqlResults = null;
+let _criiSqlInitialized = false;
+
+async function renderSqlStudioTab() {
+  if (!_criiSqlInitialized) {
+    _criiSqlInitialized = true;
+    const queryInput = document.getElementById('sqlQueryInput');
+    if (queryInput) {
+      queryInput.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          runSqlQuery();
+        }
+      });
+    }
+  }
+
+  await loadSqlSchema();
+}
+window.renderSqlStudioTab = renderSqlStudioTab;
+
+async function loadSqlSchema() {
+  const listContainer = document.getElementById('sqlTableListContainer');
+  const countBadge = document.getElementById('sqlTableCountBadge');
+  const refreshBtn = document.getElementById('sqlRefreshSchemaBtn');
+
+  if (refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = `
+      <svg class="portal-spinner" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+      <span>Loading Schema...</span>
+    `;
+  }
+
+  try {
+    const res = await window.CRII_API.getDbSchema();
+    if (!res || !res.success) {
+      if (listContainer) {
+        listContainer.innerHTML = `<div style="padding: 1rem; color: #ef4444; font-size: 0.82rem;">${res?.error || 'Failed to load database schema.'}</div>`;
+      }
+      return;
+    }
+
+    _criiDbSchema = res;
+    window._criiDbSchema = res;
+
+    if (countBadge) {
+      countBadge.textContent = `${res.tables?.length || 0} Tables`;
+    }
+
+    renderSqlTablesList();
+
+    // Default select first table if none selected
+    if (!_criiSelectedTable && res.tables && res.tables.length > 0) {
+      selectSqlTable(res.tables[0].name);
+    }
+  } catch (err) {
+    if (listContainer) {
+      listContainer.innerHTML = `<div style="padding: 1rem; color: #ef4444; font-size: 0.82rem;">Error: ${err.message}</div>`;
+    }
+  } finally {
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <span>Refresh Schema</span>
+      `;
+    }
+  }
+}
+window.loadSqlSchema = loadSqlSchema;
+
+function renderSqlTablesList() {
+  const listContainer = document.getElementById('sqlTableListContainer');
+  if (!listContainer || !_criiDbSchema) return;
+
+  const tables = _criiDbSchema.tables || [];
+  if (tables.length === 0) {
+    listContainer.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.82rem;">No user tables found in database.</div>`;
+    return;
+  }
+
+  let html = '';
+  tables.forEach(tbl => {
+    const isSelected = _criiSelectedTable === tbl.name;
+    const colCount = tbl.columns?.length || 0;
+    const rowCount = tbl.rowCount !== undefined ? tbl.rowCount : 0;
+    
+    html += `
+      <button type="button" class="sql-table-item ${isSelected ? 'active' : ''}" onclick="window.selectSqlTable('${tbl.name}')" title="${colCount} columns, ${rowCount} rows">
+        <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="${isSelected ? '#ea580c' : 'currentColor'}" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          <span class="sql-table-name" style="color: ${isSelected ? '#ea580c' : 'inherit'};">${tbl.name}</span>
+        </div>
+        <span class="sql-table-badge">${rowCount} rows</span>
+      </button>
+    `;
+  });
+
+  listContainer.innerHTML = html;
+}
+window.renderSqlTablesList = renderSqlTablesList;
+
+function selectSqlTable(tableName) {
+  _criiSelectedTable = tableName;
+  renderSqlTablesList();
+
+  const infoBox = document.getElementById('sqlSelectedTableInfo');
+  const nameEl = document.getElementById('sqlSelectedTableName');
+  const rowsEl = document.getElementById('sqlSelectedTableRowCount');
+
+  const tbl = _criiDbSchema?.tables?.find(t => t.name === tableName);
+  if (tbl && infoBox) {
+    infoBox.style.display = 'block';
+    if (nameEl) nameEl.textContent = tbl.name;
+    if (rowsEl) rowsEl.textContent = `${tbl.rowCount || 0} rows, ${tbl.columns?.length || 0} cols`;
+  }
+}
+window.selectSqlTable = selectSqlTable;
+
+async function runSqlQuery() {
+  const queryInput = document.getElementById('sqlQueryInput');
+  const query = (queryInput?.value || '').trim();
+  const executeBtn = document.getElementById('sqlExecuteBtn');
+  const statusEl = document.getElementById('sqlExecutionStatus');
+  const errorContainer = document.getElementById('sqlErrorContainer');
+  const errorMessage = document.getElementById('sqlErrorMessage');
+  const resultsCard = document.getElementById('sqlResultsCard');
+  const resultsSummary = document.getElementById('sqlResultsSummary');
+  const tableContainer = document.getElementById('sqlResultsTableContainer');
+
+  if (!query) {
+    window.showToast('Please enter a SQL query to execute.', 'warning');
+    return;
+  }
+
+  // Hide errors and prior results while executing
+  if (errorContainer) errorContainer.style.display = 'none';
+  if (executeBtn) {
+    executeBtn.disabled = true;
+    executeBtn.innerHTML = `
+      <svg class="portal-spinner" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+      <span>Executing...</span>
+    `;
+  }
+  if (statusEl) {
+    statusEl.className = 'sql-status-badge';
+    statusEl.innerHTML = `
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: #ea580c; animation: pulse 1s infinite;"></span>
+      <span>Executing query on D1...</span>
+    `;
+  }
+
+  try {
+    const res = await window.CRII_API.executeSql(query);
+
+    if (!res || !res.success) {
+      if (errorContainer && errorMessage) {
+        errorContainer.style.display = 'block';
+        errorMessage.textContent = res?.error || 'SQL Query failed to execute.';
+      }
+      if (statusEl) {
+        statusEl.className = 'sql-status-badge error';
+        statusEl.innerHTML = `
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>
+          <span>Failed in ${res?.duration || 0}ms</span>
+        `;
+      }
+      if (resultsCard) resultsCard.style.display = 'none';
+      return;
+    }
+
+    _criiLastSqlResults = res;
+    window._criiLastSqlResults = res;
+
+    // Update status
+    if (statusEl) {
+      statusEl.className = 'sql-status-badge success';
+      const countMsg = res.statementCount > 1 
+        ? `${res.statementCount} statements executed` 
+        : `1 statement executed`;
+      const changeMsg = res.changes ? `, ${res.changes} rows affected` : '';
+      statusEl.innerHTML = `
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+        <span>Success (${countMsg}${changeMsg} in ${res.duration || 0}ms)</span>
+      `;
+    }
+
+    // Refresh row counts in schema if modifications occurred
+    if (res.changes && res.changes > 0) {
+      loadSqlSchema();
+    }
+
+    // Display Results Table
+    if (resultsCard && tableContainer) {
+      resultsCard.style.display = 'block';
+
+      const rows = res.rows || [];
+      const columns = res.columns || (rows.length > 0 ? Object.keys(rows[0]) : []);
+
+      if (resultsSummary) {
+        if (rows.length > 0) {
+          resultsSummary.textContent = `${rows.length} rows returned in ${res.duration || 0}ms`;
+        } else if (res.changes) {
+          resultsSummary.textContent = `${res.changes} rows affected in ${res.duration || 0}ms`;
+        } else {
+          resultsSummary.textContent = `Executed in ${res.duration || 0}ms`;
+        }
+      }
+
+      if (rows.length === 0) {
+        tableContainer.innerHTML = `
+          <div style="padding: 2.5rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#10b981" stroke-width="2" style="margin-bottom: 0.5rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Command Executed Successfully</div>
+            <div>${res.changes ? res.changes + ' row(s) affected.' : 'No rows returned.'} Execution time: ${res.duration || 0}ms</div>
+          </div>
+        `;
+      } else {
+        let tableHtml = `<table class="sql-table"><thead><tr>`;
+        columns.forEach(col => {
+          tableHtml += `<th>${escapeHtml(col)}</th>`;
+        });
+        tableHtml += `</tr></thead><tbody>`;
+
+        rows.forEach(row => {
+          tableHtml += `<tr>`;
+          columns.forEach(col => {
+            let val = row[col];
+            if (val === null || val === undefined) {
+              val = '<span style="color: #94a3b8; font-style: italic;">null</span>';
+            } else if (typeof val === 'object') {
+              val = `<span title="${escapeHtml(JSON.stringify(val))}">${escapeHtml(JSON.stringify(val))}</span>`;
+            } else {
+              val = escapeHtml(String(val));
+            }
+            tableHtml += `<td>${val}</td>`;
+          });
+          tableHtml += `</tr>`;
+        });
+
+        tableHtml += `</tbody></table>`;
+        tableContainer.innerHTML = tableHtml;
+      }
+    }
+
+    window.showToast('SQL executed successfully!', 'success');
+
+  } catch (err) {
+    if (errorContainer && errorMessage) {
+      errorContainer.style.display = 'block';
+      errorMessage.textContent = err.message || 'Execution error';
+    }
+  } finally {
+    if (executeBtn) {
+      executeBtn.disabled = false;
+      executeBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>Execute SQL</span>
+      `;
+    }
+  }
+}
+window.runSqlQuery = runSqlQuery;
+
+function insertSqlPreset(preset) {
+  const queryInput = document.getElementById('sqlQueryInput');
+  if (!queryInput) return;
+
+  const activeTbl = _criiSelectedTable || 'posts';
+
+  switch (preset) {
+    case 'selectPosts':
+      queryInput.value = `SELECT id, slug, title, category, date, published FROM posts ORDER BY date DESC LIMIT 20;`;
+      break;
+    case 'selectInterns':
+      queryInput.value = `SELECT id, name, role, division, status, degree FROM interns ORDER BY orderIndex ASC LIMIT 25;`;
+      break;
+    case 'tableCounts':
+      queryInput.value = `SELECT 'posts' as table_name, count(*) as total_rows FROM posts
+UNION ALL SELECT 'interns', count(*) FROM interns
+UNION ALL SELECT 'applications', count(*) FROM applications
+UNION ALL SELECT 'allowed_users', count(*) FROM allowed_users
+UNION ALL SELECT 'settings', count(*) FROM settings;`;
+      break;
+    case 'templateInsertPost':
+      queryInput.value = `-- Bulk Insert Publication Template
+INSERT INTO posts (id, slug, title, coverImage, category, authors_json, date, readingTime, summary, content, tags_json, published, featured)
+VALUES (
+  'pub-' || lower(hex(randomblob(4))),
+  'spectral-biosignatures-discovery-' || lower(hex(randomblob(2))),
+  'Deep Learning in Astrobiological Spectra and Biosignatures',
+  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+  'Astrophysics',
+  '["Harun Abdullah", "CRII Fellow"]',
+  date('now'),
+  '7 min read',
+  'Investigation of spectral biosignatures across exoplanetary atmospheres using deep reinforcement learning models.',
+  '<p>Comprehensive computational models deployed across high-resolution spectral libraries...</p>',
+  '["Astrophysics", "Deep Learning", "CRII"]',
+  1,
+  0
+);`;
+      break;
+    case 'templateInsertIntern':
+      queryInput.value = `-- Bulk Insert Fellow Template
+INSERT INTO interns (id, name, email, avatar, university, degree, division, role, cohort, status, isTeamMember, orderIndex, createdAt)
+VALUES (
+  'fellow-' || lower(hex(randomblob(4))),
+  'Dr. Sarah Lin',
+  'sarah.lin@example.com',
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+  'MIT',
+  'Ph.D. Computational Biophysics',
+  'Biophysics & Bioengineering',
+  'Senior Research Fellow',
+  'Cohort Alpha',
+  'Active',
+  0,
+  10,
+  datetime('now')
+);`;
+      break;
+    case 'selectFromSelected':
+      queryInput.value = `SELECT * FROM "${activeTbl}" LIMIT 25;`;
+      break;
+    case 'countSelected':
+      queryInput.value = `SELECT COUNT(*) AS total_rows FROM "${activeTbl}";`;
+      break;
+  }
+
+  queryInput.focus();
+}
+window.insertSqlPreset = insertSqlPreset;
+
+function copyAiPrompt(promptKey) {
+  if (!_criiDbSchema || !_criiDbSchema.aiPromptTemplates) {
+    window.showToast('Please wait for database schema to load.', 'warning');
+    return;
+  }
+
+  const promptText = _criiDbSchema.aiPromptTemplates[promptKey] || _criiDbSchema.aiPromptTemplates['fullSchemaPrompt'];
+  if (!promptText) return;
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(promptText).then(() => {
+      window.showToast('AI Bulk Data Prompt copied! Paste into ChatGPT or Claude with your raw data.', 'success');
+    }).catch(() => {
+      window.prompt('Copy AI Bulk Data Prompt:', promptText);
+    });
+  } else {
+    window.prompt('Copy AI Bulk Data Prompt:', promptText);
+  }
+}
+window.copyAiPrompt = copyAiPrompt;
+
+function copySelectedTableDdl() {
+  const tbl = _criiDbSchema?.tables?.find(t => t.name === _criiSelectedTable);
+  if (!tbl || !tbl.sql) {
+    window.showToast('No DDL available for selected table', 'info');
+    return;
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(tbl.sql + ';').then(() => {
+      window.showToast(`DDL for "${tbl.name}" copied to clipboard!`, 'success');
+    });
+  }
+}
+window.copySelectedTableDdl = copySelectedTableDdl;
+
+function formatSqlQuery() {
+  const queryInput = document.getElementById('sqlQueryInput');
+  if (!queryInput || !queryInput.value) return;
+  
+  let val = queryInput.value.trim();
+  const keywords = ['SELECT', 'FROM', 'WHERE', 'INSERT INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE FROM', 'ORDER BY', 'GROUP BY', 'LIMIT', 'JOIN', 'LEFT JOIN', 'INNER JOIN', 'AND', 'OR', 'UNION ALL', 'UNION', 'CREATE TABLE', 'DROP TABLE', 'ALTER TABLE'];
+  keywords.forEach(kw => {
+    const reg = new RegExp('\\b' + kw.replace(' ', '\\s+') + '\\b', 'gi');
+    val = val.replace(reg, kw);
+  });
+  queryInput.value = val;
+  window.showToast('SQL keywords formatted', 'info');
+}
+window.formatSqlQuery = formatSqlQuery;
+
+function clearSqlEditor() {
+  const queryInput = document.getElementById('sqlQueryInput');
+  if (queryInput) queryInput.value = '';
+}
+window.clearSqlEditor = clearSqlEditor;
+
+function exportSqlResultsToCsv() {
+  if (!_criiLastSqlResults || !_criiLastSqlResults.rows || _criiLastSqlResults.rows.length === 0) {
+    window.showToast('No results to export', 'warning');
+    return;
+  }
+  const rows = _criiLastSqlResults.rows;
+  const cols = _criiLastSqlResults.columns || Object.keys(rows[0]);
+
+  let csv = cols.map(c => `"${c.replace(/"/g, '""')}"`).join(',') + '\n';
+  rows.forEach(r => {
+    const line = cols.map(c => {
+      let v = r[c];
+      if (v === null || v === undefined) return '""';
+      if (typeof v === 'object') v = JSON.stringify(v);
+      return `"${String(v).replace(/"/g, '""')}"`;
+    }).join(',');
+    csv += line + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `d1-query-export-${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  window.showToast('CSV downloaded successfully', 'success');
+}
+window.exportSqlResultsToCsv = exportSqlResultsToCsv;
+
+function copySqlResultsJson() {
+  if (!_criiLastSqlResults || !_criiLastSqlResults.rows) {
+    window.showToast('No results to copy', 'warning');
+    return;
+  }
+  const jsonStr = JSON.stringify(_criiLastSqlResults.rows, null, 2);
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      window.showToast('Results JSON copied to clipboard!', 'success');
+    });
+  }
+}
+window.copySqlResultsJson = copySqlResultsJson;

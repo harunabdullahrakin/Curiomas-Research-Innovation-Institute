@@ -149,6 +149,15 @@ export function renderPortalPageHtml() {
             <span class="portal-nav-label">Access Control</span>
           </button>
 
+          <button class="portal-nav-btn" data-tab="sql" data-tooltip="D1 Database & SQL Studio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+              <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>
+            </svg>
+            <span class="portal-nav-label">D1 SQL Studio</span>
+            <span class="portal-nav-badge" style="background: rgba(234, 88, 12, 0.15); color: #ea580c; font-weight: 700;">D1</span>
+          </button>
           <button class="portal-nav-btn" data-tab="settings" data-tooltip="Institute & Navbar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
@@ -1514,6 +1523,167 @@ export function renderPortalPageHtml() {
         <!-- Media Grid Container -->
         <div id="storageMediaGrid" class="storage-media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
           <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB: CLOUDFLARE D1 SQL STUDIO & DB SCHEMA EXPLORER
+           Direct SQL console & AI Bulk Data Prompt Generator
+           ==================================================================== -->
+      <div id="tab-sql" class="portal-tab-content" style="display:none;">
+        <div class="portal-topbar" style="margin-top: 0.25rem;">
+          <div class="portal-title-block">
+            <h1 style="line-height: 1.25;">Cloudflare D1 SQL Studio & Schema</h1>
+            <p>Direct query console for <code>crii-production-db</code> — inspect live table schemas, run raw SQL queries, and generate bulk data prompts for AI.</p>
+          </div>
+          <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" id="sqlRefreshSchemaBtn" onclick="window.loadSqlSchema()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <span>Refresh Schema</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.copyAiPrompt('fullSchemaPrompt')" title="Copy complete database schema and rules to paste into ChatGPT/Claude">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span>Copy Full Schema for AI</span>
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.runSqlQuery()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Execute SQL (Ctrl+Enter)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- AI Bulk Data Generation Banner -->
+        <div class="sql-ai-banner" style="margin-bottom: 1.5rem;">
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(234, 88, 12, 0.15); color: #ea580c; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            </div>
+            <div>
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">AI Bulk Data Importer & Prompt Generator</div>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">
+                Need to add multiple articles, publications, or research fellows? Copy the schema prompt below, paste your raw data to any AI (ChatGPT, Claude, Gemini), and execute the generated SQL here.
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="window.copyAiPrompt('bulkArticles')">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span>Prompt: Bulk Articles</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="window.copyAiPrompt('bulkResearchers')">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span>Prompt: Bulk Researchers</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Studio Grid: Left Schema Explorer, Right Query Console -->
+        <div class="sql-studio-grid">
+          <!-- Left: Schema Explorer Sidebar -->
+          <div class="sql-sidebar-card">
+            <div class="sql-sidebar-header">
+              <div class="sql-sidebar-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ea580c" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+                <span>Live D1 Tables</span>
+              </div>
+              <span id="sqlTableCountBadge" class="sql-table-badge">0 Tables</span>
+            </div>
+            <div id="sqlTableListContainer" class="sql-table-list">
+              <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.82rem;">Loading database schema...</div>
+            </div>
+            <!-- Selected Table Detail / Quick Actions -->
+            <div id="sqlSelectedTableInfo" style="padding: 1rem; border-top: 1px solid var(--border-color); background: var(--bg-primary); display: none;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span id="sqlSelectedTableName" style="font-weight: 700; font-family: monospace; font-size: 0.85rem; color: var(--accent-primary);"></span>
+                <span id="sqlSelectedTableRowCount" class="sql-table-badge"></span>
+              </div>
+              <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-xs btn-secondary" onclick="window.insertSqlPreset('selectFromSelected')">SELECT *</button>
+                <button type="button" class="btn btn-xs btn-secondary" onclick="window.insertSqlPreset('countSelected')">COUNT</button>
+                <button type="button" class="btn btn-xs btn-secondary" onclick="window.copySelectedTableDdl()">Copy DDL</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: SQL Console & Results -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem; min-width: 0;">
+            <!-- Console Box -->
+            <div class="sql-console-card">
+              <div class="sql-toolbar">
+                <div class="sql-presets-group">
+                  <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Presets:</span>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('selectPosts')">Posts (20)</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('selectInterns')">Researchers</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('tableCounts')">All Row Counts</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateInsertPost')">+ Insert Post</button>
+                  <button type="button" class="sql-preset-chip" onclick="window.insertSqlPreset('templateInsertIntern')">+ Insert Fellow</button>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <button type="button" class="btn btn-xs btn-secondary" onclick="window.formatSqlQuery()" title="Format SQL query">Format</button>
+                  <button type="button" class="btn btn-xs btn-secondary" onclick="window.clearSqlEditor()" title="Clear editor">Clear</button>
+                </div>
+              </div>
+
+              <!-- Monospace Editor Wrapper -->
+              <div class="sql-editor-wrapper">
+                <div class="sql-editor-header">
+                  <div class="sql-editor-dots">
+                    <span class="sql-editor-dot" style="background: #ef4444;"></span>
+                    <span class="sql-editor-dot" style="background: #f59e0b;"></span>
+                    <span class="sql-editor-dot" style="background: #10b981;"></span>
+                  </div>
+                  <span style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">crii-production-db (Cloudflare D1 SQLite)</span>
+                </div>
+                <textarea id="sqlQueryInput" class="sql-editor-textarea" spellcheck="false" placeholder="-- Enter SQL query or bulk INSERT statements here...
+-- Example: SELECT * FROM posts ORDER BY date DESC LIMIT 10;
+-- Keyboard Shortcut: Press Ctrl + Enter (or Cmd + Enter) to execute."></textarea>
+              </div>
+
+              <!-- Execution Status Bar -->
+              <div class="sql-status-bar">
+                <div id="sqlExecutionStatus" class="sql-status-badge">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                  <span>Ready. Press Ctrl+Enter to execute.</span>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="sqlExecuteBtn" onclick="window.runSqlQuery()">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>Execute SQL</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Error Display Card (Hidden by default) -->
+            <div id="sqlErrorContainer" style="display: none; background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 1.25rem 1.5rem; color: #b91c1c;">
+              <div style="font-weight: 700; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>SQL Execution Error</span>
+              </div>
+              <div id="sqlErrorMessage" style="font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all;"></div>
+            </div>
+
+            <!-- Results Card -->
+            <div id="sqlResultsCard" class="sql-results-card" style="display: none;">
+              <div class="sql-results-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary);">Query Results</span>
+                  <span id="sqlResultsSummary" class="sql-table-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; font-weight: 700;"></span>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <button type="button" class="btn btn-xs btn-secondary" onclick="window.exportSqlResultsToCsv()">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Export CSV</span>
+                  </button>
+                  <button type="button" class="btn btn-xs btn-secondary" onclick="window.copySqlResultsJson()">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    <span>Copy JSON</span>
+                  </button>
+                </div>
+              </div>
+              <div id="sqlResultsTableContainer" class="sql-results-table-container">
+                <!-- Dynamically populated table -->
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>

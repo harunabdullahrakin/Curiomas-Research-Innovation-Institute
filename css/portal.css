@@ -2464,3 +2464,361 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     border-top: 1px solid var(--border-color);
   }
 }
+
+
+/* ==========================================================================
+   PORTAL STATS & STORAGE METRICS GRID
+   Fixes stretched full-width rows into sleek White + Orange responsive cards
+   ========================================================================== */
+.portal-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 14px;
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  min-width: 0;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -2px rgba(234, 88, 12, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  border-color: rgba(234, 88, 12, 0.35);
+}
+
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  max-width: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* ==========================================================================
+   CLOUDFLARE D1 SQL STUDIO & SCHEMA EXPLORER
+   Modern White + Orange Database Query Console & AI Bulk Data Prompt Studio
+   ========================================================================== */
+.sql-studio-grid {
+  display: grid;
+  grid-template-columns: 310px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .sql-studio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sql-sidebar-card {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.sql-sidebar-header {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-primary, #f8fafc);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sql-sidebar-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sql-table-list {
+  padding: 0.75rem;
+  max-height: 600px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sql-table-item {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.16s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.sql-table-item:hover {
+  background: rgba(234, 88, 12, 0.05);
+  border-color: rgba(234, 88, 12, 0.2);
+}
+
+.sql-table-item.active {
+  background: rgba(234, 88, 12, 0.1);
+  border-color: var(--accent-primary, #ea580c);
+}
+
+.sql-table-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.sql-table-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--bg-primary, #f1f5f9);
+  color: var(--text-muted, #64748b);
+}
+
+/* SQL Main Console Card */
+.sql-console-card {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sql-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.sql-presets-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sql-preset-chip {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-primary, #f8fafc);
+  color: var(--text-secondary, #334155);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sql-preset-chip:hover {
+  background: rgba(234, 88, 12, 0.08);
+  border-color: rgba(234, 88, 12, 0.3);
+  color: var(--accent-primary, #ea580c);
+}
+
+.sql-editor-wrapper {
+  position: relative;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  background: #0f172a;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.sql-editor-header {
+  background: #1e293b;
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #334155;
+}
+
+.sql-editor-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.sql-editor-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.sql-editor-textarea {
+  width: 100%;
+  min-height: 220px;
+  max-height: 500px;
+  padding: 1rem 1.15rem;
+  background: transparent;
+  color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  border: none;
+  outline: none;
+  resize: vertical;
+  tab-size: 2;
+  box-sizing: border-box;
+}
+
+.sql-editor-textarea::placeholder {
+  color: #64748b;
+}
+
+.sql-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.6rem 0.25rem 0;
+}
+
+.sql-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+.sql-status-badge.success {
+  color: #10b981;
+}
+
+.sql-status-badge.error {
+  color: #ef4444;
+}
+
+/* Results Table */
+.sql-results-card {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.sql-results-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-primary, #f8fafc);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.sql-results-table-container {
+  max-height: 480px;
+  overflow: auto;
+}
+
+.sql-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.sql-table th {
+  position: sticky;
+  top: 0;
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  border-bottom: 2px solid var(--border-color, #e2e8f0);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.sql-table td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  color: var(--text-primary, #0f172a);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sql-table tr:hover td {
+  background: rgba(234, 88, 12, 0.03);
+}
+
+/* AI Schema Helper Banner */
+.sql-ai-banner {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.08) 0%, rgba(249, 115, 22, 0.03) 100%);
+  border: 1px solid rgba(234, 88, 12, 0.25);
+  border-radius: 14px;
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
