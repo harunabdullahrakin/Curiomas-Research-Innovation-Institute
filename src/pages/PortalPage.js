@@ -133,6 +133,15 @@ export function renderPortalPageHtml() {
         <div class="portal-nav-group">
           <div class="portal-nav-group-title">Governance & Settings</div>
 
+          
+          <button class="portal-nav-btn" data-tab="aliases" data-tooltip="Researcher Emails (ImprovMX)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span class="portal-nav-label">Researcher Emails</span>
+            <span class="portal-nav-badge" style="background: rgba(37, 99, 235, 0.15); color: #3b82f6; font-weight: 700;">MX</span>
+          </button>
           <button class="portal-nav-btn" data-tab="permissions" data-tooltip="Access Control">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/>
@@ -919,6 +928,133 @@ export function renderPortalPageHtml() {
       <!-- ====================================================================
            TAB 6: INSTITUTE & APPEARANCE SETTINGS
            ==================================================================== -->
+      
+      <!-- ====================================================================
+           TAB: RESEARCHER CUSTOM EMAILS (IMPROVMX)
+           ==================================================================== -->
+      <div id="tab-aliases" class="portal-tab-content" style="display:none;">
+        <div class="portal-topbar">
+          <div class="portal-title-block">
+            <h1>Researcher Custom Emails & Forwarding</h1>
+            <p>Provide and manage custom verified @domain email aliases for institute researchers, forwarding seamlessly to their personal Gmail accounts via ImprovMX.</p>
+          </div>
+          <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" id="openManageKeysBtn" title="Manage ImprovMX API Keys">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              <span>API Keys & Accounts</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="refreshAliasesBtn" title="Sync ImprovMX status">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              <span>Refresh Status</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="openCreateAliasBtn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span>Provision Email Alias</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Domain Overview & Health Stats -->
+        <div class="portal-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <!-- Active Domain Card -->
+          <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;">
+              Active Domain Scope
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <select id="improvmxDomainSelect" class="form-input" style="padding: 0.4rem 0.65rem; font-weight: 600; font-size: 0.92rem;"></select>
+            </div>
+            <div id="improvmxAccountEmail" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.45rem;">
+              Connected via ImprovMX
+            </div>
+          </div>
+
+          <!-- DNS MX Health Card -->
+          <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;">
+              Mail Exchange (MX) Status
+            </div>
+            <div id="improvmxMxStatus">
+              <span class="status-chip published">✓ MX Records Active</span>
+            </div>
+            <div id="improvmxMxDetails" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.45rem;">
+              Relaying mail via ImprovMX clusters
+            </div>
+          </div>
+
+          <!-- SPF / Delivery Health Card -->
+          <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;">
+              SPF & DMARC Status
+            </div>
+            <div id="improvmxSpfStatus">
+              <span class="status-chip published">✓ SPF Valid</span>
+            </div>
+            <div id="improvmxSpfDetails" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.45rem;">
+              v=spf1 include:spf.improvmx.com ~all
+            </div>
+          </div>
+
+          <!-- Plan Quota Card -->
+          <div class="card" style="padding: 1.25rem;">
+            <div style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem;">
+              Aliases Allocation
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+              <span id="improvmxAliasCount" style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">0</span>
+              <span id="improvmxAliasLimit" style="font-size: 0.9rem; color: var(--text-muted);">/ 25 Used</span>
+            </div>
+            <div id="improvmxPlanTier" style="font-size: 0.74rem; color: var(--accent-primary, #2563eb); font-weight: 600; margin-top: 0.35rem;">
+              ImprovMX Free Tier
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="data-table-card portal-filter-card" style="margin-bottom: 1.25rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Filter:</span>
+            <button type="button" class="btn btn-sm btn-secondary active" id="filterAliasesAll" onclick="window.filterAliasesList('all')">All Aliases</button>
+            <button type="button" class="btn btn-sm btn-secondary" id="filterAliasesFellows" onclick="window.filterAliasesList('fellows')">Verified Fellows</button>
+            <button type="button" class="btn btn-sm btn-secondary" id="filterAliasesCustom" onclick="window.filterAliasesList('custom')">Catch-all / Other</button>
+          </div>
+          <div style="min-width: 220px; flex: 1; max-width: 400px;">
+            <input type="text" id="searchAliasesInput" class="form-input" placeholder="Search by alias or destination Gmail..." style="padding: 0.45rem 0.85rem; font-size: 0.85rem;">
+          </div>
+        </div>
+
+        <!-- Aliases Table & Mobile Cards -->
+        <div class="data-table-card">
+          <!-- Desktop Table -->
+          <div class="table-wrapper portal-aliases-desktop-table">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Custom Email Alias</th>
+                  <th>Forward Destination (Gmail)</th>
+                  <th>Assigned Fellow / Scope</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="improvmxAliasesTbody">
+                <tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading email aliases...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile Cards Grid -->
+          <div id="improvmxAliasesMobileGrid" class="portal-aliases-mobile-grid"></div>
+        </div>
+      </div>
+
       <div id="tab-settings" class="portal-tab-content" style="display:none;">
         <div class="portal-topbar">
           <div class="portal-title-block">
@@ -1381,6 +1517,137 @@ export function renderPortalPageHtml() {
         </div>
       </div>
     </main>
+  
+  <!-- ====================================================================
+       IMPROVMX EMAIL ALIAS MANAGER MODALS
+       ==================================================================== -->
+
+  <!-- Modal 1: Provision Email Alias -->
+  <div id="provisionAliasModal" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Provision Researcher Email Alias</h3>
+        <button type="button" class="modal-close" onclick="window.closeProvisionAliasModal()">&times;</button>
+      </div>
+      <form id="provisionAliasForm" onsubmit="window.handleProvisionAliasSubmit(event)">
+        <div class="modal-body">
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.2rem;">
+            Assign an official institute email handle that automatically forwards all incoming mail directly to the researcher's personal Gmail.
+          </p>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Target Domain *</label>
+            <select id="provDomainSelect" class="form-input" required></select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Email Alias Handle *</label>
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <input type="text" id="provAliasInput" class="form-input" placeholder="e.g. harun, research, or first.last" required style="font-family: monospace;">
+              <span id="provDomainSuffix" style="font-weight: 600; color: var(--text-muted); font-size: 0.88rem; white-space: nowrap;">@domain</span>
+            </div>
+            <small style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">Use lowercase letters, numbers, hyphens, dots, or * for catch-all.</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Quick Pick from Active Fellows / Team (Optional)</label>
+            <select id="provFellowSelect" class="form-input" onchange="window.handleFellowSelect(this.value)">
+              <option value="">-- Choose fellow to auto-fill Gmail --</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Forwarding Destination (Gmail / Personal Email) *</label>
+            <input type="email" id="provForwardInput" class="form-input" placeholder="researcher.personal@gmail.com" required>
+            <small style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">All emails sent to this alias will be instantly delivered to this address.</small>
+          </div>
+
+          <!-- Live Preview Box -->
+          <div style="background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 8px; padding: 0.75rem 1rem; margin-top: 0.75rem;">
+            <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary, #2563eb); margin-bottom: 0.2rem;">Relay Preview</div>
+            <div id="provRelayPreview" style="font-family: monospace; font-size: 0.85rem; color: var(--text-primary);">
+              (handle)@(domain) &rarr; (destination)
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.closeProvisionAliasModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="provSubmitBtn">Provision Email Alias</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Edit Email Alias -->
+  <div id="editAliasModal" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Forwarding Destination</h3>
+        <button type="button" class="modal-close" onclick="window.closeEditAliasModal()">&times;</button>
+      </div>
+      <form id="editAliasForm" onsubmit="window.handleEditAliasSubmit(event)">
+        <input type="hidden" id="editAliasId">
+        <input type="hidden" id="editAliasDomain">
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Email Alias</label>
+            <input type="text" id="editAliasDisplay" class="form-input" readonly style="font-family: monospace; background: var(--bg-surface);">
+          </div>
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Forward To (Gmail Address) *</label>
+            <input type="email" id="editForwardInput" class="form-input" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.closeEditAliasModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="editSubmitBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Manage ImprovMX API Keys -->
+  <div id="manageImprovmxKeysModal" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 class="modal-title">ImprovMX API Keys & Accounts</h3>
+        <button type="button" class="modal-close" onclick="window.closeManageKeysModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Connect multiple ImprovMX accounts or API keys to manage different custom domains across your research institute.
+        </p>
+
+        <!-- Connected Keys List -->
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Configured API Keys</h4>
+          <div id="improvmxKeysList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.84rem; color: var(--text-muted);">Loading keys...</div>
+          </div>
+        </div>
+
+        <!-- Add New Key Form -->
+        <div style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
+          <h4 style="font-size: 0.85rem; font-weight: 700; margin-bottom: 0.6rem; color: var(--text-primary);">+ Connect Additional ImprovMX API Key</h4>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="form-label">Account Label *</label>
+            <input type="text" id="newKeyLabelInput" class="form-input" placeholder="e.g. Secondary Lab / Personal Domain">
+          </div>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="form-label">ImprovMX API Key (sk_...) *</label>
+            <input type="password" id="newKeySecretInput" class="form-input" placeholder="sk_xxxxxxxxxxxxxxxxxxxxxxxx">
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="addNewKeyBtn" onclick="window.handleAddNewApiKey()">
+            Verify & Connect Key
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="window.closeManageKeysModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   </section>
 
   <!-- ==========================================================================

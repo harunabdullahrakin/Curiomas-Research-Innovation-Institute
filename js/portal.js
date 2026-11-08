@@ -235,6 +235,9 @@ function showTab(tabName) {
   if (tabName === 'storage' && typeof window.renderStorageTab === 'function') {
     window.renderStorageTab();
   }
+  if (tabName === 'aliases' && typeof window.renderAliasesTab === 'function') {
+    window.renderAliasesTab();
+  }
   if (tabName === 'cohorts') {
     if (typeof window.renderCohortsTab === 'function') window.renderCohortsTab();
     if (typeof window.initApplicationFormBuilder === 'function') window.initApplicationFormBuilder();
@@ -3410,3 +3413,626 @@ function initStorageDropzone() {
   });
 }
 window.initStorageDropzone = initStorageDropzone;
+
+// =============================================================================
+// IMPROVMX RESEARCHER EMAIL ALIASES MANAGEMENT
+// =============================================================================
+let cachedImprovmxDomains = [];
+let cachedImprovmxAliases = [];
+let currentImprovmxDomain = null;
+let currentImprovmxKeyId = null;
+let cachedImprovmxKeys = [];
+let cachedImprovmxAccount = null;
+
+function initAliasesTab() {
+  const openProvBtn = document.getElementById('openCreateAliasBtn');
+  if (openProvBtn) {
+    openProvBtn.addEventListener('click', () => window.openProvisionAliasModal());
+  }
+
+  const openKeysBtn = document.getElementById('openManageKeysBtn');
+  if (openKeysBtn) {
+    openKeysBtn.addEventListener('click', () => window.openManageKeysModal());
+  }
+
+  const refreshBtn = document.getElementById('refreshAliasesBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
+      window.showToast('Syncing ImprovMX domains & aliases...', 'info');
+      await window.renderAliasesTab(true);
+      window.showToast('ImprovMX status refreshed!', 'success');
+    });
+  }
+
+  const domainSelect = document.getElementById('improvmxDomainSelect');
+  if (domainSelect) {
+    domainSelect.addEventListener('change', async (e) => {
+      currentImprovmxDomain = e.target.value;
+      await window.loadImprovmxAliases(currentImprovmxDomain);
+      await window.checkDomainHealth(currentImprovmxDomain);
+    });
+  }
+
+  const searchInput = document.getElementById('searchAliasesInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      window.filterAliasesList('all');
+    });
+  }
+
+  // Live preview binding in provision modal
+  const provAlias = document.getElementById('provAliasInput');
+  const provDomain = document.getElementById('provDomainSelect');
+  const provFwd = document.getElementById('provForwardInput');
+  const updatePreview = () => {
+    const handle = (provAlias?.value || 'handle').trim().toLowerCase().replace(/^@+/, '');
+    const dom = provDomain?.value || (currentImprovmxDomain || 'domain.com');
+    const fwd = (provFwd?.value || 'researcher@gmail.com').trim();
+    const prevEl = document.getElementById('provRelayPreview');
+    const suffixEl = document.getElementById('provDomainSuffix');
+    if (suffixEl) suffixEl.textContent = '@' + dom;
+    if (prevEl) {
+      prevEl.innerHTML = '<strong>' + escapeHtml(handle) + '@' + escapeHtml(dom) + '</strong> &rarr; <span style="color:#2563eb;">' + escapeHtml(fwd) + '</span>';
+    }
+  };
+
+  if (provAlias) provAlias.addEventListener('input', updatePreview);
+  if (provDomain) provDomain.addEventListener('change', updatePreview);
+  if (provFwd) provFwd.addEventListener('input', updatePreview);
+}
+window.initAliasesTab = initAliasesTab;
+
+async function renderAliasesTab(forceRefresh = false) {
+  const tbody = document.getElementById('improvmxAliasesTbody');
+  const mobileGrid = document.getElementById('improvmxAliasesMobileGrid');
+  if (!tbody && !mobileGrid) return;
+
+  if (forceRefresh || cachedImprovmxDomains.length === 0) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);"><span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #2563eb; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:0.5rem; vertical-align:middle;"></span> Fetching verified domains from ImprovMX...</td></tr>';
+    
+    // Load account limits
+    const accRes = await window.CRII_API.getImprovMXAccount(currentImprovmxKeyId);
+    if (accRes && accRes.account) {
+      cachedImprovmxAccount = accRes.account;
+      const tierEl = document.getElementById('improvmxPlanTier');
+      const emailEl = document.getElementById('improvmxAccountEmail');
+      if (tierEl) tierEl.textContent = accRes.account.premium ? 'ImprovMX Premium Tier' : 'ImprovMX Free Tier';
+      if (emailEl) emailEl.textContent = 'Account: ' + (accRes.account.email || 'harunabdullahrakin@gmail.com');
+    }
+
+    // Load domains
+    const domRes = await window.CRII_API.getImprovMXDomains(currentImprovmxKeyId);
+    if (domRes && Array.isArray(domRes.domains) && domRes.domains.length > 0) {
+      cachedImprovmxDomains = domRes.domains;
+      const domSelect = document.getElementById('improvmxDomainSelect');
+      const provSelect = document.getElementById('provDomainSelect');
+
+      if (domSelect) {
+        domSelect.innerHTML = cachedImprovmxDomains.map(d => 
+          '<option value="' + escapeHtml(d.domain) + '"' + (d.domain === currentImprovmxDomain ? ' selected' : '') + '>' + escapeHtml(d.domain) + (d.active ? ' (Active)' : '') + '</option>'
+        ).join('');
+      }
+      if (provSelect) {
+        provSelect.innerHTML = cachedImprovmxDomains.map(d => 
+          '<option value="' + escapeHtml(d.domain) + '"' + (d.domain === currentImprovmxDomain ? ' selected' : '') + '>' + escapeHtml(d.domain) + '</option>'
+        ).join('');
+      }
+
+      if (!currentImprovmxDomain || !cachedImprovmxDomains.some(d => d.domain === currentImprovmxDomain)) {
+        currentImprovmxDomain = cachedImprovmxDomains[0].domain;
+      }
+    } else {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">No domains found on connected ImprovMX key. Please verify your API key in "API Keys & Accounts".</td></tr>';
+      return;
+    }
+  }
+
+  if (currentImprovmxDomain) {
+    await window.checkDomainHealth(currentImprovmxDomain);
+    await window.loadImprovmxAliases(currentImprovmxDomain);
+  }
+}
+window.renderAliasesTab = renderAliasesTab;
+
+async function checkDomainHealth(domain) {
+  const mxStatus = document.getElementById('improvmxMxStatus');
+  const mxDetails = document.getElementById('improvmxMxDetails');
+  const spfStatus = document.getElementById('improvmxSpfStatus');
+  const spfDetails = document.getElementById('improvmxSpfDetails');
+
+  const checkRes = await window.CRII_API.checkImprovMXDomain(domain, currentImprovmxKeyId);
+  if (checkRes && checkRes.records) {
+    const r = checkRes.records;
+    const isMxValid = r.mx && r.mx.valid;
+    const isSpfValid = r.spf && r.spf.valid;
+
+    if (mxStatus) {
+      mxStatus.innerHTML = isMxValid 
+        ? '<span class="status-chip published">✓ MX Records Active</span>'
+        : '<span class="status-chip draft" style="color:#ef4444; border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.08);">⚠️ MX Setup Incomplete</span>';
+    }
+    if (mxDetails) {
+      mxDetails.textContent = isMxValid
+        ? 'Relaying via mx1.improvmx.com & mx2.improvmx.com'
+        : 'Point DNS MX to mx1.improvmx.com (10) & mx2.improvmx.com (20)';
+    }
+
+    if (spfStatus) {
+      spfStatus.innerHTML = isSpfValid
+        ? '<span class="status-chip published">✓ SPF Valid</span>'
+        : '<span class="status-chip draft" style="color:#f59e0b; border-color:rgba(245,158,11,0.3); background:rgba(245,158,11,0.08);">⚠️ SPF Advisory</span>';
+    }
+    if (spfDetails) {
+      spfDetails.textContent = isSpfValid
+        ? 'Sender Policy Framework verified'
+        : 'Add TXT record: v=spf1 include:spf.improvmx.com ~all';
+    }
+  }
+}
+window.checkDomainHealth = checkDomainHealth;
+
+async function loadImprovmxAliases(domain) {
+  const tbody = document.getElementById('improvmxAliasesTbody');
+  if (!domain) return;
+
+  const res = await window.CRII_API.getImprovMXAliases(domain, currentImprovmxKeyId);
+  if (res && Array.isArray(res.aliases)) {
+    cachedImprovmxAliases = res.aliases;
+
+    // Update Quota badge
+    const countEl = document.getElementById('improvmxAliasCount');
+    const limitEl = document.getElementById('improvmxAliasLimit');
+    const maxLimit = cachedImprovmxAccount?.limits?.aliases || 25;
+    if (countEl) countEl.textContent = res.aliases.length;
+    if (limitEl) limitEl.textContent = '/ ' + maxLimit + ' Used';
+
+    renderAliasesTable(res.aliases);
+  } else {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">Failed to load aliases: ' + escapeHtml(res?.error || 'Unknown error') + '</td></tr>';
+  }
+}
+window.loadImprovmxAliases = loadImprovmxAliases;
+
+function renderAliasesTable(aliases) {
+  const tbody = document.getElementById('improvmxAliasesTbody');
+  const mobileGrid = document.getElementById('improvmxAliasesMobileGrid');
+  if (!tbody && !mobileGrid) return;
+
+  const searchVal = (document.getElementById('searchAliasesInput')?.value || '').toLowerCase().trim();
+  let list = aliases || [];
+
+  if (searchVal) {
+    list = list.filter(a => 
+      (a.alias || '').toLowerCase().includes(searchVal) ||
+      (a.forward || '').toLowerCase().includes(searchVal)
+    );
+  }
+
+  // Get active roster fellows to match forward addresses
+  const fellows = (cachedInternsData && cachedInternsData.activeInterns) ? cachedInternsData.activeInterns : [];
+
+  if (list.length === 0) {
+    const emptyMsg = searchVal ? 'No aliases match your search.' : 'No email aliases provisioned for this domain yet. Click "+ Provision Email Alias" to create one.';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">' + escapeHtml(emptyMsg) + '</td></tr>';
+    if (mobileGrid) mobileGrid.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-muted);">' + escapeHtml(emptyMsg) + '</div>';
+    return;
+  }
+
+  // Render Desktop Table
+  if (tbody) {
+    tbody.innerHTML = list.map(item => {
+      const fullAlias = (item.alias === '*' ? '* (Catch-all)' : item.alias) + '@' + currentImprovmxDomain;
+      const createdStr = item.created ? new Date(item.created).toLocaleDateString() : 'Active';
+      const matchedFellow = fellows.find(f => (f.email || '').toLowerCase() === (item.forward || '').toLowerCase());
+      const fellowName = matchedFellow ? matchedFellow.name : (item.alias === '*' ? 'System Catch-All' : 'Institute Researcher');
+      const fellowRole = matchedFellow ? matchedFellow.role : (item.alias === '*' ? 'Domain Fallback' : 'Active Member');
+
+      return `
+        <tr>
+          <td>
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <span style="font-family:monospace; font-weight:700; color:var(--accent-primary, #2563eb); font-size:0.94rem;">
+                ${escapeHtml(fullAlias)}
+              </span>
+              <button type="button" class="btn btn-sm btn-icon" title="Copy email address" onclick="window.copyAliasToClipboard('${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}')">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              </button>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex; align-items:center; gap:0.45rem;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#10b981; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+              <span style="font-size:0.88rem; color:var(--text-primary); font-weight:500;">${escapeHtml(item.forward)}</span>
+            </div>
+          </td>
+          <td>
+            <div style="font-size:0.86rem; font-weight:600; color:var(--text-primary);">${escapeHtml(fellowName)}</div>
+            <div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(fellowRole)}</div>
+          </td>
+          <td>
+            <span class="status-chip published">✓ Active Forwarding</span>
+          </td>
+          <td style="font-size:0.82rem; color:var(--text-muted);">
+            ${createdStr}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:0.4rem;">
+              <button type="button" class="btn btn-secondary btn-sm" title="Edit destination Gmail" onclick="window.openEditAliasModal(${item.id}, '${escapeHtml(item.alias)}', '${escapeHtml(item.forward)}', '${escapeHtml(currentImprovmxDomain)}')">
+                Edit
+              </button>
+              <button type="button" class="btn btn-glass btn-sm" title="Send test email to alias" onclick="window.openEmailComposer('${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}', '${escapeHtml(fellowName)}', 'Institute Direct Dispatch Test', 'Hello ${escapeHtml(fellowName)},\n\nThis is a verification dispatch sent via your official institute email alias (${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}).\n\nBest regards,\nCuriomas Executive Council')">
+                Test ✉
+              </button>
+              <button type="button" class="btn btn-sm btn-icon" title="Revoke and delete alias" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteImprovmxAlias(${item.id}, '${escapeHtml(item.alias)}', '${escapeHtml(currentImprovmxDomain)}')">
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Render Mobile Cards Grid
+  if (mobileGrid) {
+    mobileGrid.innerHTML = list.map(item => {
+      const fullAlias = (item.alias === '*' ? '* (Catch-all)' : item.alias) + '@' + currentImprovmxDomain;
+      const createdStr = item.created ? new Date(item.created).toLocaleDateString() : 'Active';
+      const matchedFellow = fellows.find(f => (f.email || '').toLowerCase() === (item.forward || '').toLowerCase());
+      const fellowName = matchedFellow ? matchedFellow.name : (item.alias === '*' ? 'System Catch-All' : 'Institute Researcher');
+
+      return `
+        <div class="portal-alias-card">
+          <div class="portal-alias-card-top">
+            <div>
+              <div class="portal-alias-handle">${escapeHtml(fullAlias)}</div>
+              <div style="font-size:0.76rem; color:var(--text-muted); margin-top:0.2rem;">Assigned: ${escapeHtml(fellowName)}</div>
+            </div>
+            <span class="status-chip published" style="font-size:0.7rem;">Active</span>
+          </div>
+
+          <div class="portal-alias-forward-row">
+            <span style="color:var(--text-muted); font-size:0.78rem;">Relaying to:</span>
+            <strong style="color:var(--text-primary); font-size:0.86rem; word-break:break-all;">${escapeHtml(item.forward)}</strong>
+          </div>
+
+          <div style="font-size:0.74rem; color:var(--text-muted);">Provisioned on ${createdStr}</div>
+
+          <div class="portal-alias-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.openEditAliasModal(${item.id}, '${escapeHtml(item.alias)}', '${escapeHtml(item.forward)}', '${escapeHtml(currentImprovmxDomain)}')">
+              Edit
+            </button>
+            <button type="button" class="btn btn-glass btn-sm" onclick="window.openEmailComposer('${escapeHtml(item.alias)}@${escapeHtml(currentImprovmxDomain)}', '${escapeHtml(fellowName)}', 'Institute Email Dispatch Test', 'Hello ${escapeHtml(fellowName)},\n\nThis is a verification dispatch sent to your official institute email alias.\n\nCuriomas Executive Council')">
+              Test Dispatch
+            </button>
+            <button type="button" class="btn btn-sm btn-icon" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteImprovmxAlias(${item.id}, '${escapeHtml(item.alias)}', '${escapeHtml(currentImprovmxDomain)}')">
+              ✕
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function filterAliasesList(type) {
+  ['All', 'Fellows', 'Custom'].forEach(t => {
+    document.getElementById('filterAliases' + t)?.classList.remove('active');
+  });
+
+  const fellows = (cachedInternsData && cachedInternsData.activeInterns) ? cachedInternsData.activeInterns : [];
+  let filtered = cachedImprovmxAliases;
+
+  if (type === 'all') {
+    document.getElementById('filterAliasesAll')?.classList.add('active');
+  } else if (type === 'fellows') {
+    document.getElementById('filterAliasesFellows')?.classList.add('active');
+    filtered = filtered.filter(a => fellows.some(f => (f.email || '').toLowerCase() === (a.forward || '').toLowerCase()));
+  } else if (type === 'custom') {
+    document.getElementById('filterAliasesCustom')?.classList.add('active');
+    filtered = filtered.filter(a => a.alias === '*' || !fellows.some(f => (f.email || '').toLowerCase() === (a.forward || '').toLowerCase()));
+  }
+
+  renderAliasesTable(filtered);
+}
+window.filterAliasesList = filterAliasesList;
+
+function openProvisionAliasModal() {
+  const modal = document.getElementById('provisionAliasModal');
+  if (!modal) return;
+
+  // Populate fellows in quick-select dropdown
+  const fellowSelect = document.getElementById('provFellowSelect');
+  if (fellowSelect) {
+    const fellows = (cachedInternsData && cachedInternsData.activeInterns) ? cachedInternsData.activeInterns : [];
+    fellowSelect.innerHTML = '<option value="">-- Choose fellow to auto-fill Gmail --</option>' +
+      fellows.map(f => '<option value="' + escapeHtml(f.email || '') + '" data-name="' + escapeHtml(f.name || '') + '">' + escapeHtml(f.name || '') + ' (' + escapeHtml(f.email || '') + ')</option>').join('');
+  }
+
+  // Populate domains
+  const domainSelect = document.getElementById('provDomainSelect');
+  if (domainSelect) {
+    domainSelect.innerHTML = cachedImprovmxDomains.map(d => 
+      '<option value="' + escapeHtml(d.domain) + '"' + (d.domain === currentImprovmxDomain ? ' selected' : '') + '>' + escapeHtml(d.domain) + '</option>'
+    ).join('');
+  }
+
+  document.getElementById('provAliasInput').value = '';
+  document.getElementById('provForwardInput').value = '';
+  const suffixEl = document.getElementById('provDomainSuffix');
+  if (suffixEl) suffixEl.textContent = '@' + (currentImprovmxDomain || 'domain.com');
+
+  modal.style.display = 'flex';
+}
+window.openProvisionAliasModal = openProvisionAliasModal;
+
+function closeProvisionAliasModal() {
+  const modal = document.getElementById('provisionAliasModal');
+  if (modal) modal.style.display = 'none';
+}
+window.closeProvisionAliasModal = closeProvisionAliasModal;
+
+function handleFellowSelect(fellowEmail) {
+  if (!fellowEmail) return;
+  const fwdInput = document.getElementById('provForwardInput');
+  const aliasInput = document.getElementById('provAliasInput');
+  if (fwdInput) fwdInput.value = fellowEmail;
+  if (aliasInput && !aliasInput.value) {
+    // Generate clean username prefix
+    const username = fellowEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9.]+/g, '');
+    aliasInput.value = username;
+  }
+  // Trigger preview update
+  document.getElementById('provAliasInput')?.dispatchEvent(new Event('input'));
+}
+window.handleFellowSelect = handleFellowSelect;
+
+async function handleProvisionAliasSubmit(e) {
+  e.preventDefault();
+  const domain = document.getElementById('provDomainSelect')?.value;
+  const alias = document.getElementById('provAliasInput')?.value.trim();
+  const forward = document.getElementById('provForwardInput')?.value.trim();
+  const submitBtn = document.getElementById('provSubmitBtn');
+
+  if (!domain || !alias || !forward) {
+    window.showToast('Please fill in all required fields', 'error');
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Provisioning in ImprovMX...';
+  }
+
+  try {
+    const res = await window.CRII_API.createImprovMXAlias({
+      domain,
+      alias,
+      forward,
+      keyId: currentImprovmxKeyId
+    });
+
+    if (res && res.success) {
+      window.showToast('Email alias "' + alias + '@' + domain + '" created successfully!', 'success');
+      closeProvisionAliasModal();
+      await window.loadImprovmxAliases(domain);
+    } else {
+      window.showToast('ImprovMX error: ' + (res?.error || res?.errors?.alias?.[0] || 'Failed to create alias'), 'error');
+    }
+  } catch (err) {
+    window.showToast('Failed to provision email: ' + err.message, 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Provision Email Alias';
+    }
+  }
+}
+window.handleProvisionAliasSubmit = handleProvisionAliasSubmit;
+
+function openEditAliasModal(aliasId, currentAlias, currentForward, domain) {
+  const modal = document.getElementById('editAliasModal');
+  if (!modal) return;
+
+  document.getElementById('editAliasId').value = aliasId;
+  document.getElementById('editAliasDomain').value = domain;
+  document.getElementById('editAliasDisplay').value = currentAlias + '@' + domain;
+  document.getElementById('editForwardInput').value = currentForward;
+
+  modal.style.display = 'flex';
+}
+window.openEditAliasModal = openEditAliasModal;
+
+function closeEditAliasModal() {
+  const modal = document.getElementById('editAliasModal');
+  if (modal) modal.style.display = 'none';
+}
+window.closeEditAliasModal = closeEditAliasModal;
+
+async function handleEditAliasSubmit(e) {
+  e.preventDefault();
+  const aliasId = document.getElementById('editAliasId')?.value;
+  const domain = document.getElementById('editAliasDomain')?.value;
+  const forward = document.getElementById('editForwardInput')?.value.trim();
+  const submitBtn = document.getElementById('editSubmitBtn');
+
+  if (!aliasId || !domain || !forward) {
+    window.showToast('Destination email cannot be empty', 'error');
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Updating...';
+  }
+
+  try {
+    const res = await window.CRII_API.updateImprovMXAlias({
+      domain,
+      aliasId,
+      forward,
+      keyId: currentImprovmxKeyId
+    });
+
+    if (res && res.success) {
+      window.showToast('Forwarding destination updated successfully!', 'success');
+      closeEditAliasModal();
+      await window.loadImprovmxAliases(domain);
+    } else {
+      window.showToast('ImprovMX update error: ' + (res?.error || 'Failed to update'), 'error');
+    }
+  } catch (err) {
+    window.showToast('Update failed: ' + err.message, 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Changes';
+    }
+  }
+}
+window.handleEditAliasSubmit = handleEditAliasSubmit;
+
+async function deleteImprovmxAlias(aliasId, aliasName, domain) {
+  const full = aliasName + '@' + domain;
+  if (!window.confirm('Permanently revoke and delete the email alias "' + full + '"?\n\nIncoming messages to this address will no longer be relayed.')) {
+    return;
+  }
+
+  window.showToast('Revoking alias in ImprovMX...', 'info');
+  try {
+    const res = await window.CRII_API.deleteImprovMXAlias({
+      domain,
+      aliasId,
+      keyId: currentImprovmxKeyId
+    });
+
+    if (res && res.success) {
+      window.showToast('Email alias "' + full + '" deleted successfully!', 'info');
+      await window.loadImprovmxAliases(domain);
+    } else {
+      window.showToast('Failed to delete alias: ' + (res?.error || 'Unknown error'), 'error');
+    }
+  } catch (err) {
+    window.showToast('Error deleting alias: ' + err.message, 'error');
+  }
+}
+window.deleteImprovmxAlias = deleteImprovmxAlias;
+
+async function openManageKeysModal() {
+  const modal = document.getElementById('manageImprovmxKeysModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  await renderImprovmxKeysList();
+}
+window.openManageKeysModal = openManageKeysModal;
+
+function closeManageKeysModal() {
+  const modal = document.getElementById('manageImprovmxKeysModal');
+  if (modal) modal.style.display = 'none';
+}
+window.closeManageKeysModal = closeManageKeysModal;
+
+async function renderImprovmxKeysList() {
+  const container = document.getElementById('improvmxKeysList');
+  if (!container) return;
+
+  const res = await window.CRII_API.getImprovMXKeys();
+  if (res && Array.isArray(res.keys)) {
+    cachedImprovmxKeys = res.keys;
+    container.innerHTML = res.keys.map(k => {
+      const isSelected = (!currentImprovmxKeyId && k.isDefault) || (currentImprovmxKeyId === k.id);
+      return `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; border:1px solid ${isSelected ? 'var(--accent-primary, #2563eb)' : 'var(--border-color)'}; border-radius:8px; background:var(--bg-surface);">
+          <div>
+            <div style="font-weight:600; font-size:0.88rem; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem;">
+              ${escapeHtml(k.label)}
+              ${isSelected ? '<span class="status-chip published" style="font-size:0.68rem; padding:1px 6px;">Active</span>' : ''}
+              ${k.isDefault ? '<span class="badge" style="font-size:0.68rem; background:rgba(100,116,139,0.15);">Default</span>' : ''}
+            </div>
+            <div style="font-family:monospace; font-size:0.76rem; color:var(--text-muted); margin-top:0.2rem;">${escapeHtml(k.maskedKey)}</div>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center;">
+            ${!isSelected ? `<button type="button" class="btn btn-secondary btn-sm" onclick="window.switchActiveApiKey('${k.id}')">Use Key</button>` : ''}
+            ${!k.isDefault ? `<button type="button" class="btn btn-sm btn-icon" style="color:#ef4444;" onclick="window.handleDeleteApiKey('${k.id}')" title="Delete key">✕</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+window.renderImprovmxKeysList = renderImprovmxKeysList;
+
+async function switchActiveApiKey(keyId) {
+  currentImprovmxKeyId = keyId;
+  closeManageKeysModal();
+  window.showToast('Switched active ImprovMX API Key', 'info');
+  await renderAliasesTab(true);
+}
+window.switchActiveApiKey = switchActiveApiKey;
+
+async function handleAddNewApiKey() {
+  const labelInput = document.getElementById('newKeyLabelInput');
+  const secretInput = document.getElementById('newKeySecretInput');
+  const addBtn = document.getElementById('addNewKeyBtn');
+
+  const label = (labelInput?.value || '').trim();
+  const key = (secretInput?.value || '').trim();
+
+  if (!key || !key.startsWith('sk_')) {
+    window.showToast('Please enter a valid ImprovMX API key (sk_...)', 'error');
+    return;
+  }
+
+  if (addBtn) {
+    addBtn.disabled = true;
+    addBtn.textContent = 'Verifying key with ImprovMX...';
+  }
+
+  try {
+    const res = await window.CRII_API.addImprovMXKey(label || 'Secondary Account', key);
+    if (res && res.success) {
+      window.showToast('ImprovMX API Key verified and saved successfully!', 'success');
+      if (labelInput) labelInput.value = '';
+      if (secretInput) secretInput.value = '';
+      await renderImprovmxKeysList();
+    } else {
+      window.showToast('Failed to verify API key: ' + (res?.error || 'Invalid credentials'), 'error');
+    }
+  } catch (err) {
+    window.showToast('Error connecting key: ' + err.message, 'error');
+  } finally {
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.textContent = 'Verify & Connect Key';
+    }
+  }
+}
+window.handleAddNewApiKey = handleAddNewApiKey;
+
+async function handleDeleteApiKey(targetKeyId) {
+  if (!window.confirm('Remove this secondary ImprovMX API key?')) return;
+  try {
+    const res = await window.CRII_API.deleteImprovMXKey(targetKeyId);
+    if (res && res.success) {
+      window.showToast('API key removed', 'info');
+      if (currentImprovmxKeyId === targetKeyId) currentImprovmxKeyId = null;
+      await renderImprovmxKeysList();
+    }
+  } catch (e) {
+    window.showToast('Failed to delete key', 'error');
+  }
+}
+window.handleDeleteApiKey = handleDeleteApiKey;
+
+function copyAliasToClipboard(email) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(email).then(() => {
+      window.showToast('Copied "' + email + '" to clipboard!', 'success');
+    }).catch(() => {
+      window.showToast('Alias: ' + email, 'info');
+    });
+  } else {
+    window.showToast('Alias: ' + email, 'info');
+  }
+}
+window.copyAliasToClipboard = copyAliasToClipboard;

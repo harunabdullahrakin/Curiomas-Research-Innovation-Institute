@@ -1545,6 +1545,119 @@ class CriiApiClient {
       openDatasets: datasets.length
     };
   }
+
+  // ---------------------------------------------------------------------------
+  // ImprovMX Email Alias Manager API
+  // ---------------------------------------------------------------------------
+  async getImprovMXKeys() {
+    try {
+      const res = await fetch('/api/improvmx?action=keys');
+      if (!res.ok) return { success: false, keys: [] };
+      return await res.json();
+    } catch (e) {
+      return { success: false, keys: [] };
+    }
+  }
+
+  async addImprovMXKey(label, key) {
+    try {
+      const res = await fetch('/api/improvmx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add_key', label, key })
+      });
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async deleteImprovMXKey(targetKeyId) {
+    try {
+      const res = await fetch(`/api/improvmx?action=delete_key&targetKeyId=${encodeURIComponent(targetKeyId)}`, {
+        method: 'DELETE'
+      });
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async getImprovMXAccount(keyId) {
+    try {
+      const url = `/api/improvmx?action=account${keyId ? '&keyId=' + encodeURIComponent(keyId) : ''}`;
+      const res = await fetch(url);
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async getImprovMXDomains(keyId) {
+    try {
+      const url = `/api/improvmx?action=domains${keyId ? '&keyId=' + encodeURIComponent(keyId) : ''}`;
+      const res = await fetch(url);
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async checkImprovMXDomain(domain, keyId) {
+    try {
+      const url = `/api/improvmx?action=check&domain=${encodeURIComponent(domain)}${keyId ? '&keyId=' + encodeURIComponent(keyId) : ''}`;
+      const res = await fetch(url);
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async getImprovMXAliases(domain, keyId) {
+    try {
+      const url = `/api/improvmx?action=aliases&domain=${encodeURIComponent(domain)}${keyId ? '&keyId=' + encodeURIComponent(keyId) : ''}`;
+      const res = await fetch(url);
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async createImprovMXAlias({ domain, alias, forward, keyId }) {
+    try {
+      const res = await fetch('/api/improvmx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_alias', domain, alias, forward, keyId })
+      });
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async updateImprovMXAlias({ domain, aliasId, forward, keyId }) {
+    try {
+      const res = await fetch('/api/improvmx', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_alias', domain, aliasId, forward, keyId })
+      });
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async deleteImprovMXAlias({ domain, aliasId, keyId }) {
+    try {
+      const url = `/api/improvmx?action=delete_alias&domain=${encodeURIComponent(domain)}&aliasId=${encodeURIComponent(aliasId)}${keyId ? '&keyId=' + encodeURIComponent(keyId) : ''}`;
+      const res = await fetch(url, { method: 'DELETE' });
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
 }
 
 window.CRII_API = new CriiApiClient();

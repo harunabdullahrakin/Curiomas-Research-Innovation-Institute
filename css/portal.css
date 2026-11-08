@@ -2313,3 +2313,62 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     box-sizing: border-box !important;
   }
 }
+
+
+/* =============================================================================
+   IMPROVMX RESEARCHER EMAIL ALIASES MANAGER
+   ============================================================================= */
+.portal-aliases-mobile-grid {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .portal-aliases-desktop-table {
+    display: none !important;
+  }
+  .portal-aliases-mobile-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    width: 100% !important;
+  }
+  .portal-alias-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.1rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  .portal-alias-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .portal-alias-handle {
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: var(--accent-primary, #2563eb);
+    font-family: monospace;
+    word-break: break-all;
+  }
+  .portal-alias-forward-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  .portal-alias-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+  }
+}
