@@ -155,24 +155,144 @@ async function initApplicationForm() {
     ? window.CRII_API.getApplicationFormConfig()
     : { isOpen: true, enableCuriosityGateway: true };
 
-  const isAppOpen = formConfig.isOpen !== false;
+  const startDateStr = (formConfig.startDate || '').trim();
+  const endDateStr = (formConfig.endDate || '').trim();
+
+  function formatAppDate(isoStr) {
+    if (!isoStr) return '';
+    try {
+      const parts = isoStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+    } catch(e) {}
+    return isoStr;
+  }
+
+  const now = new Date();
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  let isExpired = false;
+  let isUpcoming = false;
+
+  if (endDateStr) {
+    const endParts = endDateStr.split('-');
+    if (endParts.length === 3) {
+      const endMidnight = new Date(Number(endParts[0]), Number(endParts[1]) - 1, Number(endParts[2]), 23, 59, 59).getTime();
+      if (Date.now() > endMidnight) {
+        isExpired = true;
+      }
+    }
+  }
+
+  if (startDateStr) {
+    const startParts = startDateStr.split('-');
+    if (startParts.length === 3) {
+      const startMidnight = new Date(Number(startParts[0]), Number(startParts[1]) - 1, Number(startParts[2]), 0, 0, 0).getTime();
+      if (todayMidnight < startMidnight) {
+        isUpcoming = true;
+      }
+    }
+  }
+
+  const manualOpen = formConfig.isOpen !== false;
+  const isAppOpen = manualOpen && !isExpired && !isUpcoming;
 
   if (!isAppOpen) {
-    // If applications are turned OFF
+    // If applications are turned OFF or expired/upcoming
     if (closedCard) closedCard.style.display = 'block';
     if (openContainer) openContainer.style.display = 'none';
-    if (closedMsgEl && formConfig.closedMessage) {
-      closedMsgEl.textContent = formConfig.closedMessage;
+
+    const closedTitleEl = document.getElementById('fellowshipClosedTitle');
+    const closedBadgeEl = document.getElementById('fellowshipClosedTimelineBadge');
+
+    if (isExpired) {
+      const formattedEnd = formatAppDate(endDateStr);
+      if (closedBadgeEl) {
+        closedBadgeEl.innerHTML = `⏱️ Cohort Application Window Ended: ${formattedEnd}`;
+        closedBadgeEl.style.background = 'rgba(234, 88, 12, 0.12)';
+        closedBadgeEl.style.color = '#ea580c';
+      }
+      if (closedTitleEl) {
+        closedTitleEl.textContent = 'Fellowship Applications Have Closed';
+      }
+      if (closedMsgEl) {
+        closedMsgEl.textContent = `Applications for this fellowship cohort officially closed on ${formattedEnd}. Candidate dossiers are currently under review by the Institute Research Council. Follow our dispatches for announcements regarding the next cohort.`;
+      }
+    } else if (isUpcoming) {
+      const formattedStart = formatAppDate(startDateStr);
+      if (closedBadgeEl) {
+        closedBadgeEl.innerHTML = `⏳ Applications Opening Soon: ${formattedStart}`;
+        closedBadgeEl.style.background = 'rgba(2, 132, 199, 0.12)';
+        closedBadgeEl.style.color = '#0284c7';
+      }
+      if (closedTitleEl) {
+        closedTitleEl.textContent = 'Fellowship Applications Opening Soon';
+      }
+      if (closedMsgEl) {
+        closedMsgEl.textContent = `Candidate submissions for the upcoming cohort will open on ${formattedStart}. Review our published research tracks in the meantime to prepare your dossier.`;
+      }
+    } else {
+      if (closedBadgeEl) {
+        closedBadgeEl.textContent = 'Submissions Paused';
+      }
+      if (closedTitleEl) {
+        closedTitleEl.textContent = 'Fellowship Applications Currently Closed';
+      }
+      if (closedMsgEl && formConfig.closedMessage) {
+        closedMsgEl.textContent = formConfig.closedMessage;
+      }
     }
+
     const subTitle = document.getElementById('fellowshipSectionSubtitle');
     if (subTitle) {
-      subTitle.textContent = "Cohort candidate applications are currently paused. The Institute Research Council is reviewing submitted dossiers.";
+      if (isExpired) {
+        subTitle.textContent = `Cohort applications concluded on ${formatAppDate(endDateStr)}. Review active research programs below.`;
+      } else if (isUpcoming) {
+        subTitle.textContent = `Cohort applications will open on ${formatAppDate(startDateStr)}. Admissions will run globally.`;
+      } else {
+        subTitle.textContent = "Cohort candidate applications are currently paused. The Institute Research Council is reviewing submitted dossiers.";
+      }
     }
     return;
   } else {
-    // If applications are turned ON
+    // If applications are turned ON and active
     if (closedCard) closedCard.style.display = 'none';
     if (openContainer) openContainer.style.display = 'block';
+
+    // Display timeline tracker on invite card so candidates get a track of time
+    const timelineIndicator = document.getElementById('fellowshipTimelineIndicator');
+    const timelineLabel = document.getElementById('fellowshipTimelineLabel');
+
+    if (timelineIndicator && timelineLabel) {
+      if (startDateStr && endDateStr) {
+        const startFormatted = formatAppDate(startDateStr);
+        const endFormatted = formatAppDate(endDateStr);
+        
+        const endParts = endDateStr.split('-');
+        const endMidnight = new Date(Number(endParts[0]), Number(endParts[1]) - 1, Number(endParts[2]), 23, 59, 59).getTime();
+        const diffDays = Math.ceil((endMidnight - Date.now()) / (1000 * 60 * 60 * 24));
+        const countdownStr = diffDays > 0 ? ` (${diffDays} day${diffDays === 1 ? '' : 's'} remaining)` : '';
+
+        timelineLabel.innerHTML = `<strong>Application Window:</strong> ${startFormatted} – ${endFormatted}<span style="color: #ea580c; font-weight: 700;">${countdownStr}</span>`;
+        timelineIndicator.style.display = 'flex';
+      } else if (startDateStr) {
+        timelineLabel.innerHTML = `<strong>Applications Open Since:</strong> ${formatAppDate(startDateStr)} • <em>Rolling Review</em>`;
+        timelineIndicator.style.display = 'flex';
+      } else if (endDateStr) {
+        const endFormatted = formatAppDate(endDateStr);
+        const endParts = endDateStr.split('-');
+        const endMidnight = new Date(Number(endParts[0]), Number(endParts[1]) - 1, Number(endParts[2]), 23, 59, 59).getTime();
+        const diffDays = Math.ceil((endMidnight - Date.now()) / (1000 * 60 * 60 * 24));
+        const countdownStr = diffDays > 0 ? ` • ${diffDays} day${diffDays === 1 ? '' : 's'} left` : '';
+
+        timelineLabel.innerHTML = `<strong>Deadline:</strong> ${endFormatted}<span style="color: #ea580c; font-weight: 700;">${countdownStr}</span>`;
+        timelineIndicator.style.display = 'flex';
+      } else {
+        timelineIndicator.style.display = 'none';
+      }
+    }
 
     // If curious gateway is disabled in admin, jump straight to form
     if (formConfig.enableCuriosityGateway === false) {

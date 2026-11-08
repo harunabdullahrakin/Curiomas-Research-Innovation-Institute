@@ -55,15 +55,15 @@ export function renderTeamPageHtml() {
               Join an active research track. No prior publications required — we value intellectual curiosity, self-drive, and rigor.
             </p>
 
-            <!-- State A: Applications Closed Card (shown when admin toggled off) -->
+            <!-- State A: Applications Closed Card (shown when admin toggled off or deadline passed) -->
             <div id="fellowshipClosedCard" style="display: none; background: #ffffff; padding: 3rem 2.5rem; border-radius: 16px; border: 1px solid #d4c8b6; box-shadow: 0 4px 20px rgba(0,0,0,0.06); text-align: center;">
               <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(234, 88, 12, 0.1); border: 1px solid rgba(234, 88, 12, 0.3); color: #ea580c; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
                 <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </div>
-              <div style="display: inline-block; padding: 0.25rem 0.85rem; border-radius: 9999px; background: rgba(234, 88, 12, 0.1); color: #ea580c; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+              <div id="fellowshipClosedTimelineBadge" style="display: inline-block; padding: 0.3rem 0.95rem; border-radius: 9999px; background: rgba(234, 88, 12, 0.1); color: #ea580c; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.03em; margin-bottom: 0.75rem;">
                 Submissions Paused
               </div>
-              <h3 style="font-size: 1.6rem; font-weight: 800; color: #1a221b; margin-bottom: 0.75rem; font-family: var(--font-display);">Fellowship Applications Currently Closed</h3>
+              <h3 id="fellowshipClosedTitle" style="font-size: 1.6rem; font-weight: 800; color: #1a221b; margin-bottom: 0.75rem; font-family: var(--font-display);">Fellowship Applications Currently Closed</h3>
               <p id="fellowshipClosedMessageText" style="color: #5c635d; max-width: 540px; margin: 0 auto 2rem; font-size: 0.98rem; line-height: 1.65;">
                 Applications for the current fellowship cohort are currently closed. The Institute Research Council is currently reviewing candidate dossiers. Please check back for announcements regarding the next cohort.
               </p>
@@ -80,28 +80,16 @@ export function renderTeamPageHtml() {
             <div id="fellowshipOpenContainer">
               <!-- Step 0: Curiosity Invitation Card -->
               <div id="fellowshipInviteCard" style="background: #ffffff; padding: 3rem 2.5rem; border-radius: 16px; border: 1px solid #d4c8b6; box-shadow: 0 4px 24px rgba(0,0,0,0.06); text-align: center;">
-                <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.9rem; border-radius: 9999px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); color: #059669; font-size: 0.8rem; font-weight: 700; margin-bottom: 1.25rem;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 1.5s infinite;"></span>
-                  <span>Cohort Applications Active</span>
-                </div>
                 <h3 style="font-size: 1.85rem; font-weight: 800; color: #1a221b; margin-bottom: 1rem; font-family: var(--font-display);">Join the Open Science Frontier</h3>
-                <p style="color: #5c635d; max-width: 580px; margin: 0 auto 2rem; font-size: 1.02rem; line-height: 1.65;">
+                <p style="color: #5c635d; max-width: 580px; margin: 0 auto 1.5rem; font-size: 1.02rem; line-height: 1.65;">
                   Collaborate directly with institute principal investigators on computational astrophysics, deep-time paleobiology, and autonomous AI systems. Authorship credited on every published model.
                 </p>
 
-                <!-- Curiosity feature badges -->
-                <div style="display: flex; justify-content: center; gap: 0.85rem; flex-wrap: wrap; margin-bottom: 2.25rem;">
-                  <div style="background: #faf8f5; border: 1px solid #e6ded3; border-radius: 10px; padding: 0.75rem 1.15rem; font-size: 0.88rem; font-weight: 600; color: #2e382f; display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #ea580c;">⚡</span>
-                    <span>No Prior Publications Required</span>
-                  </div>
-                  <div style="background: #faf8f5; border: 1px solid #e6ded3; border-radius: 10px; padding: 0.75rem 1.15rem; font-size: 0.88rem; font-weight: 600; color: #2e382f; display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #ea580c;">🪐</span>
-                    <span>Active D1 Computational Tracks</span>
-                  </div>
-                  <div style="background: #faf8f5; border: 1px solid #e6ded3; border-radius: 10px; padding: 0.75rem 1.15rem; font-size: 0.88rem; font-weight: 600; color: #2e382f; display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #ea580c;">🔬</span>
-                    <span>1-on-1 Research Mentorship</span>
+                <!-- Application Timeline Window / Track of Time -->
+                <div id="fellowshipTimelineIndicator" style="display: none; justify-content: center; align-items: center; margin-bottom: 2rem;">
+                  <div id="fellowshipTimelineText" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #faf8f5; border: 1px solid #e6ded3; border-radius: 9999px; padding: 0.45rem 1.15rem; font-size: 0.86rem; font-weight: 600; color: #2e382f;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#ea580c" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span id="fellowshipTimelineLabel">Application Timeline Active</span>
                   </div>
                 </div>
 

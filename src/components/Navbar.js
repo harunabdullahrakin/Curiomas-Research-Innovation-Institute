@@ -5,6 +5,10 @@ export function renderNavbarHtml(currentPath = '/') {
   const loginLabel = isAuth ? 'PORTAL' : 'LOGIN';
   const loginPath = isAuth ? '/portal' : '/login';
 
+  const currentLang = (typeof localStorage !== 'undefined' && localStorage.getItem('crii_site_language')) || 'en';
+  const flagSrc = currentLang === 'bn' ? 'https://flagcdn.com/w40/bd.png' : 'https://flagcdn.com/w40/gb.png';
+  const flagAlt = currentLang === 'bn' ? 'বাংলা' : 'English';
+
   const isActive = (path) => {
     if (path === '/' && (currentPath === '/' || currentPath === '')) return 'active';
     if (path !== '/' && currentPath.startsWith(path)) return 'active';
@@ -78,14 +82,14 @@ export function renderNavbarHtml(currentPath = '/') {
           <!-- Language Dropdown -->
           <div class="nav-lang-dropdown" id="navLangDropdown">
             <button type="button" class="nav-icon-action nav-lang-btn" id="navLangBtn" aria-expanded="false" title="Language">
-              <img src="https://flagcdn.com/w40/gb.png" alt="English" class="nav-lang-flag-img" id="navLangFlagImg">
+              <img src="${flagSrc}" alt="${flagAlt}" class="nav-lang-flag-img" id="navLangFlagImg">
             </button>
             <div class="nav-lang-menu" id="navLangMenu">
-              <button type="button" class="nav-lang-opt active" data-lang="en">
+              <button type="button" class="nav-lang-opt ${currentLang === 'en' ? 'active' : ''}" data-lang="en">
                 <img src="https://flagcdn.com/w40/gb.png" class="opt-flag" alt="GB">
                 <span>English</span>
               </button>
-              <button type="button" class="nav-lang-opt" data-lang="bn">
+              <button type="button" class="nav-lang-opt ${currentLang === 'bn' ? 'active' : ''}" data-lang="bn">
                 <img src="https://flagcdn.com/w40/bd.png" class="opt-flag" alt="BD">
                 <span>বাংলা</span>
               </button>
@@ -141,7 +145,20 @@ export function renderNavbarHtml(currentPath = '/') {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
           <span>Contact</span>
         </a>
-        <div style="border-top:1px solid rgba(255,255,255,0.12); margin-top:0.4rem; padding-top:0.4rem;">
+
+        <!-- Mobile Language Selector -->
+        <div style="display:flex; gap:0.5rem; padding:0.5rem 0.25rem 0.65rem; border-top:1px solid rgba(255,255,255,0.12); margin-top:0.4rem;">
+          <button type="button" class="mobile-lang-pill ${currentLang === 'en' ? 'active' : ''}" onclick="window.triggerGoogleTranslate('en')" style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.55rem; border-radius:8px; border:1px solid ${currentLang === 'en' ? '#ea580c' : 'rgba(255,255,255,0.15)'}; background:${currentLang === 'en' ? 'rgba(234,88,12,0.15)' : 'rgba(255,255,255,0.06)'}; color:#fff; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <img src="https://flagcdn.com/w40/gb.png" width="16" height="12" style="border-radius:2px; object-fit:cover;" alt="English">
+            <span>English</span>
+          </button>
+          <button type="button" class="mobile-lang-pill ${currentLang === 'bn' ? 'active' : ''}" onclick="window.triggerGoogleTranslate('bn')" style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.55rem; border-radius:8px; border:1px solid ${currentLang === 'bn' ? '#ea580c' : 'rgba(255,255,255,0.15)'}; background:${currentLang === 'bn' ? 'rgba(234,88,12,0.15)' : 'rgba(255,255,255,0.06)'}; color:#fff; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <img src="https://flagcdn.com/w40/bd.png" width="16" height="12" style="border-radius:2px; object-fit:cover;" alt="বাংলা">
+            <span>বাংলা</span>
+          </button>
+        </div>
+
+        <div style="border-top:1px solid rgba(255,255,255,0.12); margin-top:0.2rem; padding-top:0.4rem;">
           <a href="${loginPath}" class="mobile-nav-link mobile-login-pill ${isActive('/portal') || isActive('/login')}">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             <span>${loginLabel}</span>
@@ -154,26 +171,70 @@ export function renderNavbarHtml(currentPath = '/') {
 
 export function triggerGoogleTranslate(lang) {
   try {
-    localStorage.setItem('crii_site_language', lang);
+    const validLang = (lang === 'bn') ? 'bn' : 'en';
+    localStorage.setItem('crii_site_language', validLang);
     const hostname = window.location.hostname;
-    const cookieVal = lang === 'en' ? '/en/en' : `/en/${lang}`;
 
-    // Set cookie without domain to avoid Public Suffix List (.zone.id) browser rejection
-    document.cookie = `googtrans=${cookieVal}; path=/;`;
-    if (hostname) {
-      document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
-      const domainWithoutWww = hostname.replace(/^www\./, '');
-      if (domainWithoutWww !== hostname) {
-        document.cookie = `googtrans=${cookieVal}; path=/; domain=.${domainWithoutWww};`;
+    if (validLang === 'en') {
+      // Purge all googtrans cookies across domain variations
+      const expireStr = '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+      document.cookie = `googtrans${expireStr}`;
+      if (hostname) {
+        document.cookie = `googtrans${expireStr} domain=${hostname};`;
+        const domainWithoutWww = hostname.replace(/^www\./, '');
+        if (domainWithoutWww !== hostname) {
+          document.cookie = `googtrans${expireStr} domain=.${domainWithoutWww};`;
+        }
+        const parts = hostname.split('.');
+        if (parts.length >= 2) {
+          document.cookie = `googtrans${expireStr} domain=.${parts.slice(-2).join('.')};`;
+        }
       }
-    }
 
-    const combo = document.querySelector('.goog-te-combo');
-    if (combo) {
-      combo.value = lang;
-      combo.dispatchEvent(new Event('change', { bubbles: true }));
+      // In Google Translate, empty string resets to the original page language (English)
+      const combo = document.querySelector('.goog-te-combo');
+      if (combo) {
+        combo.value = '';
+        combo.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      // Update UI flag
+      const flagImg = document.getElementById('navLangFlagImg');
+      if (flagImg) {
+        flagImg.src = 'https://flagcdn.com/w40/gb.png';
+        flagImg.alt = 'English';
+      }
+
+      // If page was already translated by Google Translate, reload cleans DOM completely
+      if (document.documentElement.classList.contains('translated-ltr') || document.querySelector('.goog-te-banner-frame')) {
+        setTimeout(() => window.location.reload(), 100);
+      }
     } else {
-      window.location.reload();
+      // Switch to Bengali
+      const cookieVal = '/en/bn';
+      document.cookie = `googtrans=${cookieVal}; path=/;`;
+      if (hostname) {
+        document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
+        const domainWithoutWww = hostname.replace(/^www\./, '');
+        if (domainWithoutWww !== hostname) {
+          document.cookie = `googtrans=${cookieVal}; path=/; domain=.${domainWithoutWww};`;
+        }
+      }
+
+      const combo = document.querySelector('.goog-te-combo');
+      if (combo) {
+        combo.value = 'bn';
+        combo.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        window.location.reload();
+      }
+
+      // Update UI flag
+      const flagImg = document.getElementById('navLangFlagImg');
+      if (flagImg) {
+        flagImg.src = 'https://flagcdn.com/w40/bd.png';
+        flagImg.alt = 'বাংলা';
+      }
     }
   } catch (err) {
     console.error('Translation error:', err);

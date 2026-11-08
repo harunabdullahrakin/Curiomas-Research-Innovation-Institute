@@ -622,6 +622,42 @@ export function renderPortalPageHtml() {
                 </div>
               </div>
 
+              <!-- Application Timeline Window (Start & Optional End Date) -->
+              <div style="padding-top: 1.15rem; border-top: 1px solid var(--border-color); margin-bottom: 1.15rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.85rem;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ea580c" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <span>Cohort Application Timeline & Deadlines</span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      Set when fellowship submissions open and an optional deadline. Candidates on <code>/team#apply</code> will see the active window and countdown. If the end date has passed, applications automatically close and display when the window concluded so candidates get a track of time.
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                  <div>
+                    <label class="form-label" for="appFormStartDate" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Application Start Date</label>
+                    <input type="date" id="appFormStartDate" class="form-input" style="font-size: 0.88rem;">
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.35rem;">
+                      <button type="button" class="btn btn-xs btn-secondary" onclick="document.getElementById('appFormStartDate').value = new Date().toISOString().split('T')[0]">Set Today</button>
+                      <button type="button" class="btn btn-xs btn-secondary" onclick="document.getElementById('appFormStartDate').value = ''">Clear</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="form-label" for="appFormEndDate" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Application End Date (Optional Deadline)</label>
+                    <input type="date" id="appFormEndDate" class="form-input" style="font-size: 0.88rem;">
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.35rem;">
+                      <button type="button" class="btn btn-xs btn-secondary" onclick="const d = new Date(); d.setDate(d.getDate() + 30); document.getElementById('appFormEndDate').value = d.toISOString().split('T')[0];">+30 Days</button>
+                      <button type="button" class="btn btn-xs btn-secondary" onclick="const d = new Date(); d.setDate(d.getDate() + 60); document.getElementById('appFormEndDate').value = d.toISOString().split('T')[0];">+60 Days</button>
+                      <button type="button" class="btn btn-xs btn-secondary" onclick="document.getElementById('appFormEndDate').value = ''">No Deadline (Rolling)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Closed Message Notice -->
               <div id="appClosedMessageContainer" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-color); margin-bottom: 1rem;">
                 <label class="form-label" for="appFormClosedMessage" style="font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; display: block;">Message to Display When Applications Are Closed:</label>
@@ -1499,50 +1535,50 @@ export function renderPortalPageHtml() {
           </div>
         </div>
 
-        <!-- Metrics Cards -->
-        <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
-          <div class="metric-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
-            <div class="metric-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
-              <span class="metric-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Total Stored Objects</span>
-              <div style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; border-radius: 10px; background: rgba(234, 88, 12, 0.12); color: #ea580c; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-              </div>
+        <!-- Metrics Cards (Responsive White + Orange Stat Cards) -->
+        <div class="portal-stats-grid" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+          <div class="stat-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; align-items: center; gap: 1.15rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
+            <div class="stat-icon-wrapper" style="width: 48px; height: 48px; min-width: 48px; max-width: 48px; border-radius: 12px; background: rgba(234, 88, 12, 0.12); color: #ea580c; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
             </div>
-            <div id="storageTotalCount" class="metric-val" style="font-size: 2.1rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.35rem; font-family: var(--font-display);">0</div>
-            <div class="metric-desc" style="font-size: 0.8rem; color: var(--text-muted);">Indexed in Cloudflare R2 bucket</div>
+            <div class="stat-info" style="display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; flex: 1;">
+              <span class="stat-label" style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary, #64748b); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Stored Objects</span>
+              <div id="storageTotalCount" class="stat-value" style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary, #0f172a); line-height: 1.1; font-family: var(--font-display);">0</div>
+              <div style="font-size: 0.76rem; color: var(--text-muted, #94a3b8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Indexed in Cloudflare R2</div>
+            </div>
           </div>
 
-          <div class="metric-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
-            <div class="metric-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
-              <span class="metric-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Storage Used</span>
-              <div style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
-              </div>
+          <div class="stat-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; align-items: center; gap: 1.15rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
+            <div class="stat-icon-wrapper" style="width: 48px; height: 48px; min-width: 48px; max-width: 48px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
             </div>
-            <div id="storageTotalSize" class="metric-val" style="font-size: 2.1rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.35rem; font-family: var(--font-display);">0 MB</div>
-            <div class="metric-desc" style="font-size: 0.8rem; color: var(--text-muted);">Aggregate R2 payload size</div>
+            <div class="stat-info" style="display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; flex: 1;">
+              <span class="stat-label" style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary, #64748b); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Storage Used</span>
+              <div id="storageTotalSize" class="stat-value" style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary, #0f172a); line-height: 1.1; font-family: var(--font-display);">0 MB</div>
+              <div style="font-size: 0.76rem; color: var(--text-muted, #94a3b8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Aggregate R2 size</div>
+            </div>
           </div>
 
-          <div class="metric-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
-            <div class="metric-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
-              <span class="metric-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Video Files</span>
-              <div style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.12); color: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect width="15" height="14" x="1" y="5" rx="2" ry="2"/></svg>
-              </div>
+          <div class="stat-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; align-items: center; gap: 1.15rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
+            <div class="stat-icon-wrapper" style="width: 48px; height: 48px; min-width: 48px; max-width: 48px; border-radius: 12px; background: rgba(245, 158, 11, 0.12); color: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect width="15" height="14" x="1" y="5" rx="2" ry="2"/></svg>
             </div>
-            <div id="storageVideoCount" class="metric-val" style="font-size: 2.1rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.35rem; font-family: var(--font-display);">0</div>
-            <div class="metric-desc" style="font-size: 0.8rem; color: var(--text-muted);">MP4 & WEBM background streams</div>
+            <div class="stat-info" style="display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; flex: 1;">
+              <span class="stat-label" style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary, #64748b); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Video Files</span>
+              <div id="storageVideoCount" class="stat-value" style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary, #0f172a); line-height: 1.1; font-family: var(--font-display);">0</div>
+              <div style="font-size: 0.76rem; color: var(--text-muted, #94a3b8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">MP4 & WEBM streams</div>
+            </div>
           </div>
 
-          <div class="metric-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
-            <div class="metric-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
-              <span class="metric-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Image Files</span>
-              <div style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; border-radius: 10px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6Z"/></svg>
-              </div>
+          <div class="stat-card" style="background: var(--bg-surface, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 1.25rem 1.4rem; display: flex; align-items: center; gap: 1.15rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-width: 0;">
+            <div class="stat-icon-wrapper" style="width: 48px; height: 48px; min-width: 48px; max-width: 48px; border-radius: 12px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6Z"/></svg>
             </div>
-            <div id="storageImageCount" class="metric-val" style="font-size: 2.1rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.35rem; font-family: var(--font-display);">0</div>
-            <div class="metric-desc" style="font-size: 0.8rem; color: var(--text-muted);">WEBP, PNG, JPG & SVG graphics</div>
+            <div class="stat-info" style="display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; flex: 1;">
+              <span class="stat-label" style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary, #64748b); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Image Files</span>
+              <div id="storageImageCount" class="stat-value" style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary, #0f172a); line-height: 1.1; font-family: var(--font-display);">0</div>
+              <div style="font-size: 0.76rem; color: var(--text-muted, #94a3b8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">WEBP, PNG, JPG & SVG</div>
+            </div>
           </div>
         </div>
 

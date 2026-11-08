@@ -3077,6 +3077,12 @@ function initApplicationFormBuilder() {
     gatewayEl.checked = currentAppFormConfig.enableCuriosityGateway !== false;
   }
 
+  const startDateEl = document.getElementById('appFormStartDate');
+  if (startDateEl) startDateEl.value = currentAppFormConfig.startDate || '';
+
+  const endDateEl = document.getElementById('appFormEndDate');
+  if (endDateEl) endDateEl.value = currentAppFormConfig.endDate || '';
+
   renderCustomFieldsBuilder();
 }
 window.initApplicationFormBuilder = initApplicationFormBuilder;
@@ -3147,6 +3153,8 @@ async function handleSaveAppFormSettings(e) {
   });
 
   config.isOpen = document.getElementById('appFormIsOpen')?.checked !== false;
+  config.startDate = (document.getElementById('appFormStartDate')?.value || '').trim();
+  config.endDate = (document.getElementById('appFormEndDate')?.value || '').trim();
   config.closedMessage = (document.getElementById('appFormClosedMessage')?.value || '').trim() || "Applications for the current Student Research Fellowship cohort are currently closed. The Institute Research Council is reviewing candidate dossiers. Please check back for announcements regarding the next cohort.";
   config.enableCuriosityGateway = document.getElementById('appFormCuriosityGateway')?.checked !== false;
 

@@ -47,6 +47,24 @@
   <div id="app"></div>
   <div id="google_translate_element" style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0; pointer-events:none; overflow:hidden;" aria-hidden="true"></div>
   <script type="text/javascript">
+    (function() {
+      try {
+        var lang = localStorage.getItem('crii_site_language');
+        if (lang === 'bn') {
+          var val = '/en/bn';
+          document.cookie = 'googtrans=' + val + '; path=/;';
+          if (window.location.hostname) {
+            document.cookie = 'googtrans=' + val + '; path=/; domain=' + window.location.hostname + ';';
+          }
+        } else if (lang === 'en') {
+          var expire = '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+          document.cookie = 'googtrans' + expire;
+          if (window.location.hostname) {
+            document.cookie = 'googtrans' + expire + ' domain=' + window.location.hostname + ';';
+          }
+        }
+      } catch (e) {}
+    })();
     function googleTranslateElementInit() {
       if (window.google && window.google.translate) {
         new window.google.translate.TranslateElement({

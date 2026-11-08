@@ -1519,33 +1519,62 @@ window.triggerGoogleTranslate = function(lang = 'en') {
   try {
     const validLang = (lang === 'bn') ? 'bn' : 'en';
     localStorage.setItem('crii_site_language', validLang);
+    const hostname = window.location.hostname;
 
-    // Set googtrans cookie across domains
-    const cookieVal = `/en/${validLang}`;
-    document.cookie = `googtrans=${cookieVal}; path=/;`;
-    if (window.location.hostname) {
-      document.cookie = `googtrans=${cookieVal}; path=/; domain=${window.location.hostname};`;
-      const parts = window.location.hostname.split('.');
-      if (parts.length >= 2) {
-        document.cookie = `googtrans=${cookieVal}; path=/; domain=.${parts.slice(-2).join('.')};`;
+    if (validLang === 'en') {
+      const expireStr = '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+      document.cookie = `googtrans${expireStr}`;
+      if (hostname) {
+        document.cookie = `googtrans${expireStr} domain=${hostname};`;
+        const domainWithoutWww = hostname.replace(/^www\./, '');
+        if (domainWithoutWww !== hostname) {
+          document.cookie = `googtrans${expireStr} domain=.${domainWithoutWww};`;
+        }
+        const parts = hostname.split('.');
+        if (parts.length >= 2) {
+          document.cookie = `googtrans${expireStr} domain=.${parts.slice(-2).join('.')};`;
+        }
       }
-    }
 
-    // Try finding Google Translate combo
-    const combo = document.querySelector('.goog-te-combo');
-    if (combo) {
-      combo.value = validLang;
-      combo.dispatchEvent(new Event('change'));
+      const combo = document.querySelector('.goog-te-combo');
+      if (combo) {
+        combo.value = '';
+        combo.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      const flagImg = document.getElementById('navLangFlagImg');
+      if (flagImg) {
+        flagImg.src = 'https://flagcdn.com/w40/gb.png';
+        flagImg.alt = 'English';
+      }
+
+      if (document.documentElement.classList.contains('translated-ltr') || document.querySelector('.goog-te-banner-frame')) {
+        setTimeout(() => window.location.reload(), 100);
+      }
     } else {
-      // If combo not in DOM yet, reload cleanly so googtrans cookie takes effect
-      window.location.reload();
-    }
+      const cookieVal = '/en/bn';
+      document.cookie = `googtrans=${cookieVal}; path=/;`;
+      if (hostname) {
+        document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
+        const domainWithoutWww = hostname.replace(/^www\./, '');
+        if (domainWithoutWww !== hostname) {
+          document.cookie = `googtrans=${cookieVal}; path=/; domain=.${domainWithoutWww};`;
+        }
+      }
 
-    // Update navbar indicators if present
-    const flagImg = document.getElementById('navLangFlagImg');
-    if (flagImg) {
-      flagImg.src = validLang === 'bn' ? 'https://flagcdn.com/w40/bd.png' : 'https://flagcdn.com/w40/gb.png';
-      flagImg.alt = validLang === 'bn' ? 'বাংলা' : 'English';
+      const combo = document.querySelector('.goog-te-combo');
+      if (combo) {
+        combo.value = 'bn';
+        combo.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        window.location.reload();
+      }
+
+      const flagImg = document.getElementById('navLangFlagImg');
+      if (flagImg) {
+        flagImg.src = 'https://flagcdn.com/w40/bd.png';
+        flagImg.alt = 'বাংলা';
+      }
     }
   } catch (err) {
     console.warn('Language switch notice:', err);
