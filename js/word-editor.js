@@ -93,13 +93,16 @@
   const toast = (m, t) => { if (window.showToast) window.showToast(m, t || 'info'); };
 
   const FONTS = [
-    ['Default', ''], ['Eyekons', 'Eyekons, Georgia, serif'], ['Arial', 'Arial, Helvetica, sans-serif'],
-    ['Calibri', 'Calibri, Carlito, sans-serif'], ['Cambria', 'Cambria, Georgia, serif'],
-    ['Times New Roman', '"Times New Roman", Times, serif'], ['Georgia', 'Georgia, serif'],
-    ['Garamond', 'Garamond, "EB Garamond", serif'], ['Palatino', '"Palatino Linotype", Palatino, serif'],
-    ['Verdana', 'Verdana, Geneva, sans-serif'], ['Trebuchet MS', '"Trebuchet MS", sans-serif'],
-    ['Segoe UI', '"Segoe UI", sans-serif'], ['Courier New', '"Courier New", monospace'],
-    ['Consolas', 'Consolas, monospace'], ['Comic Sans MS', '"Comic Sans MS", cursive']
+    ['Aptos (Body)', '"Aptos", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'],
+    ['Calibri', 'Calibri, Carlito, sans-serif'],
+    ['Segoe UI', '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'],
+    ['Arial', 'Arial, Helvetica, sans-serif'],
+    ['Times New Roman', '"Times New Roman", Times, serif'],
+    ['Georgia', 'Georgia, serif'],
+    ['Cambria', 'Cambria, Georgia, serif'],
+    ['Garamond', 'Garamond, "EB Garamond", serif'],
+    ['Consolas', 'Consolas, monospace'],
+    ['Eyekons', 'Eyekons, Georgia, serif']
   ];
   const SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 48, 60, 72];
   const STYLES = [['normal', 'Normal'], ['title', 'Title'], ['subtitle', 'Subtitle'], ['h1', 'Heading 1'], ['h2', 'Heading 2'], ['h3', 'Heading 3'], ['h4', 'Heading 4'], ['quote', 'Quote'], ['code', 'Code block']];
@@ -447,17 +450,32 @@
       const kids = bq.querySelector('footer'); if (kids) kids.remove();
       unwrap(bq);
     }
-    const map = { normal: 'p', h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', title: 'h1', subtitle: 'p', quote: 'blockquote', code: 'pre' };
+    const map = { normal: 'p', nospacing: 'p', h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', title: 'h1', subtitle: 'p', quote: 'blockquote', code: 'pre' };
     document.execCommand('formatBlock', false, '<' + (map[name] || 'p') + '>');
     saveSel();
     const b = currentBlock();
     if (b) {
-      b.classList.remove('doc-title', 'doc-subtitle', 'doc-code');
+      b.classList.remove('doc-title', 'doc-subtitle', 'doc-code', 'doc-nospacing');
+      b.removeAttribute('style');
       if (name === 'title') b.classList.add('doc-title');
       if (name === 'subtitle') b.classList.add('doc-subtitle');
       if (name === 'code') b.classList.add('doc-code');
-      if (!b.classList.length) b.removeAttribute('class');
+      if (name === 'nospacing') {
+        b.classList.add('doc-nospacing');
+        b.style.margin = '0';
+        b.style.lineHeight = '1.15';
+      }
+      if (name === 'h1') {
+        b.style.color = '#2b579a';
+      }
+      if (name === 'h2') {
+        b.style.color = '#365f91';
+      }
+      if (!b.classList.length && !b.getAttribute('style')) b.removeAttribute('class');
     }
+    const gal = wrap ? wrap.querySelectorAll('.we-style-card') : [];
+    gal.forEach(c => c.classList.toggle('active', c.dataset.style === name));
+    afterChange();
   }
   function setBlockStyle(prop, val) {
     selectedBlocks().forEach(b => { b.style[prop] = val; });
@@ -1221,8 +1239,75 @@
     const l = statusEl.querySelector('.we-zoom-label'); if (l) l.textContent = zoom + '%';
   }
 
+  
+  function createStylesGallery() {
+    const gal = el('div', 'we-styles-gallery');
+    const cards = [
+      { id: 'normal', name: 'Normal', preview: 'AaBbCc', cls: 'we-style-card we-sc-normal' },
+      { id: 'nospacing', name: 'No Spacing', preview: 'AaBbCc', cls: 'we-style-card we-sc-nospacing' },
+      { id: 'h1', name: 'Heading 1', preview: 'Heading 1', cls: 'we-style-card we-sc-h1' },
+      { id: 'h2', name: 'Heading 2', preview: 'Heading 2', cls: 'we-style-card we-sc-h2' },
+      { id: 'title', name: 'Title', preview: 'Title', cls: 'we-style-card we-sc-title' }
+    ];
+    cards.forEach(c => {
+      const card = el('button', c.cls);
+      card.type = 'button';
+      card.dataset.style = c.id;
+      card.innerHTML = '<span class="we-sc-preview">' + c.preview + '</span><span class="we-sc-label">' + c.name + '</span>';
+      card.addEventListener('mousedown', e => e.preventDefault());
+      card.addEventListener('click', () => applyStyle(c.id));
+      gal.append(card);
+    });
+    return gal;
+  }
+
+  function updateDocTitleDisplay(title) {
+    const display = document.getElementById('weDocTitleDisplay');
+    if (display) {
+      const clean = (title || '').trim();
+      display.textContent = (clean ? clean : 'Document1') + ' - Word';
+    }
+  }
+
   function build() {
     wrap = el('div', 'we-wrap');
+
+    // Modern MS Word 365 Fluent Titlebar
+    const titlebarEl = el('div', 'we-titlebar');
+    titlebarEl.innerHTML = `
+      <div class="we-titlebar-left">
+        <span class="we-app-icon" title="Microsoft Word">${ic('word', 18)}</span>
+        <div class="we-autosave-pill" id="weAutosavePill" title="AutoSave Toggle">
+          <span>AutoSave</span>
+          <div class="we-toggle-switch"><div class="we-toggle-knob"></div></div>
+          <span class="we-toggle-label">Off</span>
+        </div>
+        <button type="button" class="we-titlebar-btn" id="weQuickSaveBtn" title="Save publication (Ctrl+S)">💾</button>
+        <button type="button" class="we-titlebar-btn we-undo-btn" title="Undo (Ctrl+Z)">↩</button>
+        <button type="button" class="we-titlebar-btn we-redo-btn" title="Redo (Ctrl+Y)">↪</button>
+        <span class="we-titlebar-caret">▾</span>
+      </div>
+      <div class="we-titlebar-center">
+        <div class="we-doc-name" id="weDocTitleDisplay">Document1 - Word</div>
+        <div class="we-titlebar-search" id="weTitlebarSearch" title="Search document">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search" readonly>
+        </div>
+      </div>
+      <div class="we-titlebar-right">
+        <div class="we-user-avatar" title="Author">HA</div>
+        <button type="button" class="we-share-btn" id="weShareBtn" title="Share Document">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span>Share</span>
+        </button>
+        <div class="we-window-controls">
+          <span class="we-win-ctrl" title="Minimize">—</span>
+          <span class="we-win-ctrl" title="Maximize">□</span>
+          <span class="we-win-ctrl we-win-close" title="Close">✕</span>
+        </div>
+      </div>
+    `;
+
     tabsEl = el('div', 'we-tabs');
     ribbonEl = el('div', 'we-ribbon');
 
@@ -1272,10 +1357,10 @@
       painterBtn.classList.add('active'); toast('Format copied — now select the text to format', 'info');
     });
     panels.home.append(
-      group('Clipboard', [[
-        btn('paste', 'Paste as plain text (Ctrl+Shift+V)', async () => { try { const t = await navigator.clipboard.readText(); restoreSel(); document.execCommand('insertText', false, t); afterChange(); } catch (e) { toast('Use Ctrl+V to paste (browser blocked clipboard access)', 'info'); } }, { text: 'Paste' }),
-        cmdBtn('cut', 'Cut (Ctrl+X)', 'cut'), cmdBtn('copy', 'Copy (Ctrl+C)', 'copy'), painterBtn
-      ]]),
+      group('Clipboard', [
+        [btn('paste', 'Paste (Ctrl+V)', async () => { try { const t = await navigator.clipboard.readText(); restoreSel(); document.execCommand('insertText', false, t); afterChange(); } catch (e) { toast('Use Ctrl+V to paste', 'info'); } }, { big: true, text: 'Paste', caret: true })],
+        [cmdBtn('cut', 'Cut (Ctrl+X)', 'cut'), cmdBtn('copy', 'Copy (Ctrl+C)', 'copy'), painterBtn]
+      ]),
       group('Undo', [[cmdBtn('undo', 'Undo (Ctrl+Z)', 'undo'), cmdBtn('redo', 'Redo (Ctrl+Y)', 'redo')]]),
       group('Font', [
         [ctlFont, ctlSize, btn(null, 'Increase font size', () => stepFontSize(1), { html: '<b style="font-size:.95rem">A<sup>+</sup></b>' }), btn(null, 'Decrease font size', () => stepFontSize(-1), { html: '<b style="font-size:.8rem">A<sup>−</sup></b>' })],
@@ -1292,7 +1377,7 @@
           menuBtn('spacing', 'Line spacing', ['1', '1.15', '1.5', '2', '2.5', '3'].map(v => ({ label: v === '1.15' ? '1.15 (recommended)' : v, fn: () => setBlockStyle('lineHeight', v) })))],
         [cmdBtn('alignL', 'Align left (Ctrl+L)', 'justifyLeft'), cmdBtn('alignC', 'Center (Ctrl+E)', 'justifyCenter'), cmdBtn('alignR', 'Align right (Ctrl+R)', 'justifyRight'), cmdBtn('alignJ', 'Justify (Ctrl+J)', 'justifyFull')]
       ]),
-      group('Styles', [[ctlStyle], [btn(null, 'Heading 1', () => applyStyle('h1'), { html: '<b>H1</b>' }), btn(null, 'Heading 2', () => applyStyle('h2'), { html: '<b>H2</b>' }), btn(null, 'Heading 3', () => applyStyle('h3'), { html: '<b>H3</b>' }), btn(null, 'Normal text', () => applyStyle('normal'), { html: 'Normal' })]]),
+      group('Styles', [[createStylesGallery()]]),
       group('Editing', [[btn('search', 'Find (Ctrl+F)', () => openFind(false), { text: 'Find' }), btn('search', 'Find and replace (Ctrl+H)', () => openFind(true), { text: 'Replace' })], [btn(null, 'Select all (Ctrl+A)', () => { exec('selectAll'); }, { text: 'Select all' })]])
     );
 
@@ -1423,13 +1508,78 @@
     buildFindPanel();
 
     statusEl = el('div', 'we-status',
-      '<span class="we-st-words">0 words</span><span class="we-st-chars">0 characters</span><span class="we-st-read">1 min read</span><span class="we-saved"></span><span class="we-spacer"></span>' +
-      '<button type="button" class="we-zoom-out" title="Zoom out">−</button><input type="range" class="we-zoom-range" min="50" max="200" value="100"><button type="button" class="we-zoom-in" title="Zoom in">+</button><span class="we-zoom-label">100%</span>');
+      '<div class="we-status-left">' +
+        '<span class="we-st-words">0 words</span>' +
+        '<span class="we-st-spell" title="No proofing errors"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="m9 12 2 2 4-4"/></svg></span>' +
+        '<span class="we-saved"></span>' +
+      '</div>' +
+      '<div class="we-spacer"></div>' +
+      '<div class="we-status-right">' +
+        '<button type="button" class="we-status-btn we-canvas-toggle" id="weCanvasThemeToggle" title="Toggle dark / light document canvas">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>' +
+          '<span>Canvas Theme</span>' +
+        '</button>' +
+        '<button type="button" class="we-status-btn" id="weFocusBtn" title="Focus mode">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>' +
+          '<span>Focus</span>' +
+        '</button>' +
+        '<div class="we-view-modes">' +
+          '<button type="button" class="we-view-btn" title="Read Mode"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>' +
+          '<button type="button" class="we-view-btn active" title="Print Layout"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>' +
+          '<button type="button" class="we-view-btn" title="Web Layout"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></button>' +
+        '</div>' +
+        '<button type="button" class="we-zoom-out" title="Zoom out">−</button>' +
+        '<input type="range" class="we-zoom-range" min="50" max="200" value="100">' +
+        '<button type="button" class="we-zoom-in" title="Zoom in">+</button>' +
+        '<span class="we-zoom-label">100%</span>' +
+      '</div>');
     statusEl.querySelector('.we-zoom-range').addEventListener('input', e => setZoom(+e.target.value));
     statusEl.querySelector('.we-zoom-out').addEventListener('click', () => setZoom(zoom - 10));
     statusEl.querySelector('.we-zoom-in').addEventListener('click', () => setZoom(zoom + 10));
 
-    wrap.append(tabsEl, ribbonEl, body, findPanel, statusEl);
+    // Wire Titlebar events
+    titlebarEl.querySelector('#weQuickSaveBtn').addEventListener('click', () => {
+      const b = document.getElementById('bloggerSaveBtn');
+      if (b) b.click();
+      else toast('Saved to draft', 'info');
+    });
+    titlebarEl.querySelector('#weShareBtn').addEventListener('click', () => {
+      const path = window.location.origin + '/blog';
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(path).then(() => toast('Public URL copied to clipboard: ' + path, 'success')).catch(() => toast('URL: ' + path, 'info'));
+      } else {
+        toast('URL: ' + path, 'info');
+      }
+    });
+    const autosavePill = titlebarEl.querySelector('#weAutosavePill');
+    if (autosavePill) {
+      autosavePill.addEventListener('click', () => {
+        const on = autosavePill.classList.toggle('on');
+        autosavePill.querySelector('.we-toggle-label').textContent = on ? 'On' : 'Off';
+        toast('AutoSave ' + (on ? 'enabled' : 'disabled'), 'info');
+      });
+    }
+    const titleSearch = titlebarEl.querySelector('#weTitlebarSearch');
+    if (titleSearch) {
+      titleSearch.addEventListener('click', () => openFind(false));
+    }
+
+    // Wire Canvas Theme Toggle (Dark vs Light paper)
+    const canvasToggle = statusEl.querySelector('#weCanvasThemeToggle');
+    if (canvasToggle) {
+      canvasToggle.addEventListener('click', () => {
+        const isLight = doc.classList.toggle('we-page-light');
+        toast('Switched to ' + (isLight ? 'Light Paper' : 'Dark Canvas') + ' mode', 'info');
+      });
+    }
+
+    // Wire Focus Button
+    const focusBtn = statusEl.querySelector('#weFocusBtn');
+    if (focusBtn) {
+      focusBtn.addEventListener('click', toggleFullscreen);
+    }
+
+    wrap.append(titlebarEl, tabsEl, ribbonEl, body, findPanel, statusEl);
     showTab('home');
     bindEditorEvents();
   }
@@ -1924,6 +2074,11 @@
     pane.prepend(wrap);
     pane.prepend(modeBar);
     mounted = true;
+    const titleInp = document.getElementById('bloggerTitleInput');
+    if (titleInp && !titleInp.dataset.wordBound) {
+      titleInp.dataset.wordBound = 'true';
+      titleInp.addEventListener('input', () => updateDocTitleDisplay(titleInp.value));
+    }
 
     function syncBlocksToDoc() {
       const blocks = (window.getEditorBlocks ? window.getEditorBlocks() : (blocksProvider ? blocksProvider() : [])) || [];
@@ -2006,6 +2161,8 @@
       blocksProvider = provider || (() => []);
       draftKey = 'crii_doc_draft_' + (post && post.id ? post.id : 'new');
       dirty = false;
+      const initialTitle = post && post.title ? post.title : (document.getElementById('bloggerTitleInput')?.value || '');
+      updateDocTitleDisplay(initialTitle);
       if (post && CD.isDoc(post.content)) {
         setHtml(post.content.slice(CD.MARK.length));
         setMode('doc');

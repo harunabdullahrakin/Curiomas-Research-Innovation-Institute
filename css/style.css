@@ -605,11 +605,43 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
     gap: 0.65rem !important;
     margin-bottom: 1.75rem !important;
     width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
   }
   .research-catalog-tabs .catalog-tab {
     width: 100% !important;
+    max-width: 100% !important;
     justify-content: center !important;
+    white-space: normal !important;
+    text-align: center !important;
+    padding: 0.75rem 1rem !important;
     box-sizing: border-box !important;
+  }
+  .filter-bar.research-filter-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.85rem !important;
+    box-sizing: border-box !important;
+  }
+  .search-input-group {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .search-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .category-pills {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+  }
+  .category-pill {
+    white-space: normal !important;
+    text-align: center !important;
   }
 }
 
@@ -1427,13 +1459,13 @@ a, button, input[type="button"], input[type="submit"], input[type="checkbox"], i
   width: 100%;
   max-width: 1240px;
   margin-top: 8px;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(10, 18, 35, 0.45) !important;
+  backdrop-filter: blur(32px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
   border-radius: 20px;
   padding: 0.75rem;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35), inset 0 1px 1.5px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35), inset 0 1px 1.5px rgba(255, 255, 255, 0.3) !important;
   pointer-events: auto !important;
   flex-direction: column;
   gap: 0.35rem;

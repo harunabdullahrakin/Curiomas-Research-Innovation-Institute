@@ -214,6 +214,21 @@ function showTab(tabName) {
   });
 
   currentTab = tabName;
+  if (tabName === 'posts' && typeof renderPostsDirectory === 'function') {
+    renderPostsDirectory();
+  }
+  if (tabName === 'roster' && typeof renderRosterGrid === 'function') {
+    renderRosterGrid();
+  }
+  if (tabName === 'access' && typeof renderAllowedUsersTable === 'function') {
+    renderAllowedUsersTable();
+  }
+  if (tabName === 'applications' && typeof renderApplicationsTable === 'function') {
+    renderApplicationsTable();
+  }
+  if (tabName === 'datasets' && typeof renderDatasetsTable === 'function') {
+    renderDatasetsTable();
+  }
   if (tabName === 'divisions' && typeof window.renderDivisionsTab === 'function') {
     window.renderDivisionsTab();
   }
