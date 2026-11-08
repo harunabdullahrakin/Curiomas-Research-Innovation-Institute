@@ -1196,7 +1196,12 @@
         }
         case 'text':
         default:
-          return c.split(/\n{2,}/).map(p => `<p data-block-type="text">${inlineMd(p).replace(/\n/g, '<br>')}</p>`).join('');
+          return c.split(/\n{2,}/).map(p => {
+            const trimmed = p.trim();
+            if (!trimmed) return '';
+            const body = /<[a-z][\s\S]*>/i.test(trimmed) ? trimmed : inlineMd(trimmed).replace(/\n/g, '<br>');
+            return `<p data-block-type="text">${body}</p>`;
+          }).filter(Boolean).join('');
       }
     }).join('');
   }
@@ -1544,12 +1549,44 @@
       return `b-${Date.now()}-${(counter++).toString(36)}`;
     }
 
-    const children = Array.from(div.children);
-    if (children.length === 0 && div.textContent.trim()) {
-      return [{ id: uid(), type: 'text', content: div.textContent.trim() }];
+    // Flatten nested wrapper elements (e.g. pasted Word/Google Docs structures)
+    function collectBlockElements(root) {
+      const result = [];
+      function walk(node) {
+        if (node.nodeType === 3) {
+          const t = node.textContent.trim();
+          if (t) {
+            const p = document.createElement('p');
+            p.textContent = t;
+            result.push(p);
+          }
+          return;
+        }
+        if (node.nodeType !== 1) return;
+        const tag = node.tagName.toLowerCase();
+        const explicitType = node.getAttribute('data-block-type');
+        const isSpecialBlock = explicitType || 
+          ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'figure', 'blockquote', 'pre', 'ul', 'ol', 'hr', 'table'].includes(tag) ||
+          node.classList.contains('doc-callout') || node.classList.contains('doc-timeline') ||
+          node.classList.contains('doc-equation') || node.classList.contains('doc-music-card') ||
+          node.classList.contains('doc-video') || node.classList.contains('table-wrapper');
+
+        if (isSpecialBlock) {
+          result.push(node);
+        } else {
+          Array.from(node.childNodes).forEach(walk);
+        }
+      }
+      Array.from(root.childNodes).forEach(walk);
+      return result;
     }
 
-    children.forEach(el => {
+    const elements = collectBlockElements(div);
+    if (elements.length === 0 && div.textContent.trim()) {
+      return [{ id: uid(), type: 'text', content: div.innerHTML.trim() || div.textContent.trim() }];
+    }
+
+    elements.forEach(el => {
       const explicitType = el.getAttribute('data-block-type');
       const tag = el.tagName.toLowerCase();
 
@@ -1572,15 +1609,16 @@
         }
       } else if (explicitType === 'quote' || tag === 'blockquote') {
         const authorAttr = el.getAttribute('data-author');
-        const foot = el.querySelector('footer');
+        const foot = el.querySelector('footer, .doc-citation');
         const author = authorAttr || (foot ? foot.innerText.replace(/^—\s*/, '').trim() : '');
         const clone = el.cloneNode(true);
-        const fInClone = clone.querySelector('footer');
+        const fInClone = clone.querySelector('footer, .doc-citation');
         if (fInClone) fInClone.remove();
+        const inner = clone.innerHTML ? clone.innerHTML.trim() : clone.innerText.trim();
         blocks.push({
           id: uid(),
           type: 'quote',
-          content: clone.innerText.trim(),
+          content: inner,
           author
         });
       } else if (explicitType === 'callout' || el.classList.contains('doc-callout')) {
@@ -1594,7 +1632,7 @@
           id: uid(),
           type: 'callout',
           style,
-          content: clone.innerText.trim()
+          content: clone.innerHTML ? clone.innerHTML.trim() : clone.innerText.trim()
         });
       } else if (explicitType === 'code' || tag === 'pre' || el.classList.contains('doc-code')) {
         const lang = el.getAttribute('data-language') || 'python';
@@ -1662,9 +1700,11 @@
           content: items.map(x => '- ' + x).join('\n')
         });
       } else {
-        const text = el.innerText.trim();
-        if (text) {
-          blocks.push({ id: uid(), type: 'text', content: text });
+        const text = el.innerText ? el.innerText.trim() : '';
+        const inner = el.innerHTML ? el.innerHTML.trim() : '';
+        if (text && text !== '' && inner !== '<br>') {
+          const hasInlineHtml = /<[a-z][\s\S]*>/i.test(inner);
+          blocks.push({ id: uid(), type: 'text', content: hasInlineHtml ? inner : text });
         }
       }
     });
@@ -1973,10 +2013,10 @@
         if (d && d.html && d.html !== getCleanHtml()) restoreDraft(false);
       } else if (post && Array.isArray(post.blocks) && post.blocks.length > 0) {
         setHtml(blocksToHtml(post.blocks));
-        setMode('blocks');
+        setMode('doc');
       } else if (post) {
         setHtml('');
-        setMode('blocks');
+        setMode('doc');
       } else {
         setHtml('');
         setMode('doc');
@@ -1987,10 +2027,11 @@
       selImg = null;
       updateStatus(); updateNav();
     },
-    getMode: () => (mounted ? mode : 'blocks'),
+    getMode: () => (mounted ? mode : 'doc'),
     setMode,
     setHtml,
     getCleanHtml: () => (mounted ? getCleanHtml() : ''),
+    getHtml: () => (mounted ? getCleanHtml() : ''),
     getWordCount: () => (mounted ? wordCount() : 0),
     getExcerpt: n => (mounted ? getExcerpt(n || 200) : ''),
     isEmpty: () => (mounted ? isEmpty() : true),

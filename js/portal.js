@@ -354,6 +354,8 @@ function updateBloggerStatusUI() {
   }
 }
 
+let lastActiveEditorMode = 'doc';
+
 function switchBloggerSubtab(subtab) {
   currentEditorSubtab = subtab;
   const isEditing = (subtab === 'doc' || subtab === 'blocks' || subtab === 'write');
@@ -373,27 +375,53 @@ function switchBloggerSubtab(subtab) {
     btn.classList.toggle('active', Boolean(match));
   });
 
+  const getCleanDocHtml = () => {
+    if (!window.CRII_WORD) return '';
+    return (window.CRII_WORD.getCleanHtml ? window.CRII_WORD.getCleanHtml() : (window.CRII_WORD.getHtml ? window.CRII_WORD.getHtml() : '')) || '';
+  };
+
   if (subtab === 'doc') {
     if (window.CRII_WORD) {
-      if (currentPostBlocks && currentPostBlocks.length > 0) {
+      // If we are switching from blocks into doc, convert current blocks into doc
+      if (lastActiveEditorMode === 'blocks' && currentPostBlocks && currentPostBlocks.length > 0) {
         window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
       }
       window.CRII_WORD.setMode('doc');
+      lastActiveEditorMode = 'doc';
     }
   } else if (subtab === 'blocks' || subtab === 'write') {
     if (window.CRII_WORD) {
-      const cleanHtml = window.CRII_WORD.getHtml();
-      if (cleanHtml && cleanHtml.trim()) {
-        currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
-        renderBlockStack();
+      // If we are switching from doc into blocks, convert doc into blocks
+      if (lastActiveEditorMode === 'doc') {
+        const cleanHtml = getCleanDocHtml();
+        if (cleanHtml && cleanHtml.trim()) {
+          currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
+          renderBlockStack();
+        }
       }
       window.CRII_WORD.setMode('blocks');
+      lastActiveEditorMode = 'blocks';
+    }
+  } else if (subtab === 'details') {
+    if (window.CRII_WORD) {
+      if (lastActiveEditorMode === 'doc') {
+        const cleanHtml = getCleanDocHtml();
+        if (cleanHtml && cleanHtml.trim()) {
+          currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
+        }
+      } else if (currentPostBlocks && currentPostBlocks.length > 0) {
+        window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
+      }
     }
   } else if (subtab === 'preview') {
     if (window.CRII_WORD) {
-      const cleanHtml = window.CRII_WORD.getHtml();
-      if (cleanHtml && cleanHtml.trim()) {
-        currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
+      if (lastActiveEditorMode === 'doc') {
+        const cleanHtml = getCleanDocHtml();
+        if (cleanHtml && cleanHtml.trim()) {
+          currentPostBlocks = window.CRII_WORD.htmlToBlocks(cleanHtml);
+        }
+      } else if (currentPostBlocks && currentPostBlocks.length > 0) {
+        window.CRII_WORD.setHtml(window.CRII_WORD.blocksToHtml(currentPostBlocks));
       }
     }
     renderBloggerLiveReaderPreview();
@@ -1271,7 +1299,7 @@ async function saveCurrentPost() {
 
   const authorsStr = (document.getElementById('bloggerAuthorsInput')?.value || '').trim();
   const doi = (document.getElementById('bloggerDoiInput')?.value || '').trim() || `10.5281/crii.2026.${Math.floor(1000 + Math.random() * 9000)}`;
-  const __docMode = !!(window.CRII_WORD && window.CRII_WORD.getMode() === 'doc');
+  const __docMode = (lastActiveEditorMode === 'doc') || !!(window.CRII_WORD && window.CRII_WORD.getMode() === 'doc');
   const summary = (document.getElementById('bloggerSummaryInput')?.value || '').trim() || (__docMode ? window.CRII_WORD.getExcerpt(220) : '') || title;
   const abstract = (document.getElementById('bloggerAbstractInput')?.value || '').trim() || summary;
   const tagsStr = (document.getElementById('bloggerTagsInput')?.value || '').trim();
