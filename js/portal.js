@@ -249,6 +249,9 @@ function showTab(tabName) {
   if (tabName === 'recruit' && typeof window.renderRecruitTab === 'function') {
     window.renderRecruitTab();
   }
+  if (tabName === 'settings' && typeof window.loadAiProvidersManager === 'function') {
+    window.loadAiProvidersManager();
+  }
   try {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
@@ -5285,6 +5288,378 @@ setInterval(() => {
 let _aiStudioTargetBlockIdx = null;
 let _aiStudioCurrentResult = null;
 let _aiStudioSessionGallery = [];
+let _cachedAiProviders = [];
+
+const AI_VENDOR_PRESETS = {
+  pollinations: {
+    label: 'Pollinations.ai (Free FLUX)',
+    baseUrl: 'https://image.pollinations.ai',
+    imageModel: 'flux',
+    textModel: '',
+    supportsImage: true,
+    supportsText: false,
+    keyHint: '(Optional — works 100% free with NO key!)',
+    guide: 'Works completely free with zero API key! Supports models: <code>flux</code>, <code>turbo</code>, <code>flux-realism</code>, <code>flux-3d</code>.'
+  },
+  huggingface: {
+    label: 'Hugging Face Inference (FLUX)',
+    baseUrl: 'https://router.huggingface.co',
+    imageModel: 'black-forest-labs/FLUX.1-schnell',
+    textModel: 'meta-llama/Llama-3.3-70B-Instruct',
+    supportsImage: true,
+    supportsText: true,
+    keyHint: '(Free hf_... token)',
+    guide: 'Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">huggingface.co/settings/tokens</a> (enable "Make calls to Inference Providers"). Great for free FLUX.1-schnell!'
+  },
+  cloudflare: {
+    label: 'Cloudflare Workers AI',
+    baseUrl: 'https://api.cloudflare.com/client/v4',
+    imageModel: '@cf/black-forest-labs/flux-1-schnell',
+    textModel: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+    supportsImage: true,
+    supportsText: true,
+    keyHint: '(Workers AI API Token + Account ID)',
+    guide: 'Cloudflare gives <strong>10,000 free Neurons/day</strong>! Create a Workers AI token at <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">Cloudflare API Tokens</a> and paste your Account ID.'
+  },
+  together: {
+    label: 'Together AI (FLUX Free)',
+    baseUrl: 'https://api.together.xyz/v1',
+    imageModel: 'black-forest-labs/FLUX.1-schnell-Free',
+    textModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    supportsImage: true,
+    supportsText: true,
+    keyHint: '(Together API Key)',
+    guide: 'Get a key at <a href="https://api.together.xyz/settings/api-keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">api.together.xyz</a> — includes free FLUX.1-schnell-Free image generation & fast Llama models!'
+  },
+  groq: {
+    label: 'Groq (Free Ultra-Fast LLM)',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    imageModel: '',
+    textModel: 'llama-3.3-70b-versatile',
+    supportsImage: false,
+    supportsText: true,
+    keyHint: '(Free gsk_... key)',
+    guide: 'Get a free high-speed key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">console.groq.com/keys</a>. Instant free article reading & prompt synthesis!'
+  },
+  openrouter: {
+    label: 'OpenRouter (100+ Models)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    imageModel: '',
+    textModel: 'meta-llama/llama-3.3-70b-instruct:free',
+    supportsImage: false,
+    supportsText: true,
+    keyHint: '(sk-or-... key)',
+    guide: 'Get a key at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">openrouter.ai/keys</a>. Use any <code>:free</code> model for free article prompt drafting.'
+  },
+  openai: {
+    label: 'OpenAI (GPT & Image)',
+    baseUrl: 'https://api.openai.com/v1',
+    imageModel: 'gpt-image-1',
+    textModel: 'gpt-4o-mini',
+    supportsImage: true,
+    supportsText: true,
+    keyHint: '(sk-... key)',
+    guide: 'Connect your <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">OpenAI API Key</a> for GPT-4o prompt drafting and GPT-Image-1 / DALL-E 3 generation.'
+  },
+  gemini: {
+    label: 'Google Gemini',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/interactions',
+    imageModel: 'gemini-nano-banana-2.1',
+    textModel: 'gemini-3.8-flash',
+    supportsImage: true,
+    supportsText: true,
+    keyHint: '(AIza... key)',
+    guide: 'Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">Google AI Studio</a>. Text models have free tier; Nano Banana image models require billing enabled.'
+  },
+  stability: {
+    label: 'Stability AI',
+    baseUrl: 'https://api.stability.ai',
+    imageModel: 'core',
+    textModel: '',
+    supportsImage: true,
+    supportsText: false,
+    keyHint: '(sk-... key)',
+    guide: 'Get free starter credits at <a href="https://platform.stability.ai/account/keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">platform.stability.ai</a>. Supports <code>core</code> and <code>sd3.5-large</code>.'
+  },
+  custom: {
+    label: 'Custom OpenAI-Compatible API',
+    baseUrl: 'https://api.deepseek.com/v1',
+    imageModel: '',
+    textModel: 'deepseek-chat',
+    supportsImage: false,
+    supportsText: true,
+    keyHint: '(Bearer API Key)',
+    guide: 'Connect ANY OpenAI-compatible API (DeepSeek, Mistral, xAI Grok, Fireworks, DeepInfra, SiliconFlow, etc.) by entering its Base URL, API Key, and Model ID.'
+  }
+};
+
+function syncAiProviderDropdown() {
+  const sel = document.getElementById('aiImgProviderSelect');
+  if (!sel) return;
+  const imgProviders = _cachedAiProviders.filter(p => p.enabled !== false && p.supportsImage);
+  const currentVal = sel.value || 'auto';
+  sel.innerHTML = `<option value="auto">Auto Smart Cascade (Default → Free FLUX Fallback)</option>` +
+    imgProviders.map(p => {
+      const tag = p.isDefaultImage ? ' ★ Default' : '';
+      const modelTxt = p.imageModel ? ` (${p.imageModel})` : '';
+      return `<option value="${escapeHtml(p.id)}">${escapeHtml(p.label)}${escapeHtml(modelTxt)}${tag}</option>`;
+    }).join('');
+  if (Array.from(sel.options).some(o => o.value === currentVal)) {
+    sel.value = currentVal;
+  }
+}
+
+function renderSettingsAiProvidersGrid() {
+  const grid = document.getElementById('settingsAiProvidersGrid');
+  if (!grid) return;
+  if (_cachedAiProviders.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1 / -1; padding:1.5rem; text-align:center; border:1px dashed var(--border-color); border-radius:12px; color:var(--text-muted);">No AI providers found. Click "+ Add AI / Image API" above.</div>';
+    return;
+  }
+
+  grid.innerHTML = _cachedAiProviders.map(p => {
+    const isOn = p.enabled !== false;
+    const keyStatus = p.vendor === 'pollinations' && !p.hasKey
+      ? '<span style="color:#059669; font-weight:700;">✓ Free — No Key Needed</span>'
+      : p.hasKey
+        ? `<span style="font-family:monospace; color:var(--text-secondary);">${escapeHtml(p.maskedKey)}</span>`
+        : '<span style="color:#ef4444; font-weight:600;">No key saved</span>';
+    return `
+      <div style="background:var(--bg-surface); border:${(p.isDefaultImage || p.isDefaultText) && isOn ? '1.5px solid rgba(234,88,12,0.5)' : '1px solid var(--border-color)'}; border-radius:14px; padding:1.1rem 1.2rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.85rem; opacity:${isOn ? '1' : '0.62'};">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.45rem;">
+            <div>
+              <div style="font-weight:700; font-size:0.96rem; color:var(--text-primary);">${escapeHtml(p.label)}</div>
+              <div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">${escapeHtml(p.vendor)}</div>
+            </div>
+            <button type="button" class="status-chip ${isOn ? 'published' : 'draft'}" style="border:none; cursor:pointer; font-size:0.7rem; padding:2px 8px;" onclick="window.handleToggleAiProvider('${escapeHtml(p.id)}')" title="Click to toggle Active / Disabled">${isOn ? 'Active' : 'Disabled'}</button>
+          </div>
+
+          <div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-bottom:0.55rem;">
+            ${p.supportsImage ? `<span class="badge" style="font-size:0.68rem; background:rgba(234,88,12,0.12); color:#ea580c;">🖼 Image${p.isDefaultImage ? ' ★ Default' : ''}</span>` : ''}
+            ${p.supportsText ? `<span class="badge" style="font-size:0.68rem; background:rgba(16,185,129,0.12); color:#059669;">🧠 Text/Prompts${p.isDefaultText ? ' ★ Default' : ''}</span>` : ''}
+          </div>
+
+          <div style="font-size:0.76rem; color:var(--text-muted); display:flex; flex-direction:column; gap:0.2rem;">
+            <div>Key: ${keyStatus}</div>
+            ${p.imageModel ? `<div>Image Model: <code style="font-size:0.72rem;">${escapeHtml(p.imageModel)}</code></div>` : ''}
+            ${p.textModel ? `<div>Text Model: <code style="font-size:0.72rem;">${escapeHtml(p.textModel)}</code></div>` : ''}
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.4rem; flex-wrap:wrap; padding-top:0.65rem; border-top:1px solid var(--border-color);">
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem;" onclick="window.handleTestAiProvider('${escapeHtml(p.id)}', this)">Test</button>
+          ${p.supportsImage && !p.isDefaultImage ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem; color:#ea580c;" onclick="window.handleSetDefaultAiProvider('${escapeHtml(p.id)}', 'image')">Default Image</button>` : ''}
+          ${p.supportsText && !p.isDefaultText ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem; color:#059669;" onclick="window.handleSetDefaultAiProvider('${escapeHtml(p.id)}', 'text')">Default Prompt</button>` : ''}
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem;" onclick="window.openAiProviderModal('${escapeHtml(p.id)}')">Edit</button>
+          ${!p.builtIn ? `<button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem;" onclick="window.handleDeleteAiProvider('${escapeHtml(p.id)}')">✕</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadAiProvidersManager() {
+  try {
+    const res = await fetch('/api/ai-image', { cache: 'no-store' });
+    const data = await res.json();
+    if (res.ok && Array.isArray(data.providers)) {
+      _cachedAiProviders = data.providers;
+      renderSettingsAiProvidersGrid();
+      syncAiProviderDropdown();
+    }
+  } catch (e) {}
+}
+window.loadAiProvidersManager = loadAiProvidersManager;
+
+window.applyAiVendorPreset = function(vendor) {
+  const preset = AI_VENDOR_PRESETS[vendor] || AI_VENDOR_PRESETS.custom;
+  const idVal = document.getElementById('aiProvIdInput')?.value;
+  if (!idVal) {
+    document.getElementById('aiProvLabelInput').value = preset.label;
+    document.getElementById('aiProvBaseUrlInput').value = preset.baseUrl;
+    document.getElementById('aiProvImageModelInput').value = preset.imageModel;
+    document.getElementById('aiProvTextModelInput').value = preset.textModel;
+    document.getElementById('aiProvSupportsImageInput').checked = preset.supportsImage;
+    document.getElementById('aiProvSupportsTextInput').checked = preset.supportsText;
+  }
+  const guideEl = document.getElementById('aiProvGuideBanner');
+  if (guideEl) guideEl.innerHTML = preset.guide;
+  const hintEl = document.getElementById('aiProvKeyHint');
+  if (hintEl) hintEl.textContent = preset.keyHint || '';
+  const accGroup = document.getElementById('aiProvAccountIdGroup');
+  if (accGroup) accGroup.style.display = vendor === 'cloudflare' ? 'block' : 'none';
+};
+
+window.openAiProviderModal = function(providerId = null, presetVendor = null) {
+  const modal = document.getElementById('aiProviderModal');
+  const form = document.getElementById('aiProviderForm');
+  const titleEl = document.getElementById('aiProviderModalTitle');
+  if (!modal || !form) return;
+
+  form.reset();
+  document.getElementById('aiProvIdInput').value = '';
+
+  if (providerId) {
+    const prov = _cachedAiProviders.find(p => p.id === providerId);
+    if (prov) {
+      if (titleEl) titleEl.textContent = 'Edit AI Provider: ' + prov.label;
+      document.getElementById('aiProvIdInput').value = prov.id;
+      document.getElementById('aiProvVendorInput').value = prov.vendor || 'custom';
+      document.getElementById('aiProvLabelInput').value = prov.label || '';
+      document.getElementById('aiProvAccountIdInput').value = prov.accountId || '';
+      document.getElementById('aiProvBaseUrlInput').value = prov.baseUrl || '';
+      document.getElementById('aiProvImageModelInput').value = prov.imageModel || '';
+      document.getElementById('aiProvTextModelInput').value = prov.textModel || '';
+      document.getElementById('aiProvSupportsImageInput').checked = Boolean(prov.supportsImage);
+      document.getElementById('aiProvSupportsTextInput').checked = Boolean(prov.supportsText);
+      document.getElementById('aiProvDefaultImageInput').checked = Boolean(prov.isDefaultImage);
+      document.getElementById('aiProvDefaultTextInput').checked = Boolean(prov.isDefaultText);
+      window.applyAiVendorPreset(prov.vendor || 'custom');
+    }
+  } else {
+    if (titleEl) titleEl.textContent = 'Connect AI / Image Generation API';
+    const vendor = presetVendor || 'huggingface';
+    document.getElementById('aiProvVendorInput').value = vendor;
+    window.applyAiVendorPreset(vendor);
+  }
+  modal.classList.add('active');
+};
+
+window.closeAiProviderModal = function() {
+  const modal = document.getElementById('aiProviderModal');
+  if (modal) modal.classList.remove('active');
+};
+
+window.handleSaveAiProvider = async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('aiSaveProviderBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+  }
+  try {
+    const user = window.CRII_API && window.CRII_API.getCurrentUser ? window.CRII_API.getCurrentUser() : null;
+    const payload = {
+      action: 'save_provider',
+      id: document.getElementById('aiProvIdInput').value || undefined,
+      vendor: document.getElementById('aiProvVendorInput').value,
+      label: document.getElementById('aiProvLabelInput').value.trim(),
+      apiKey: document.getElementById('aiProvKeyInput').value.trim(),
+      accountId: document.getElementById('aiProvAccountIdInput').value.trim(),
+      baseUrl: document.getElementById('aiProvBaseUrlInput').value.trim(),
+      imageModel: document.getElementById('aiProvImageModelInput').value.trim(),
+      textModel: document.getElementById('aiProvTextModelInput').value.trim(),
+      supportsImage: document.getElementById('aiProvSupportsImageInput').checked,
+      supportsText: document.getElementById('aiProvSupportsTextInput').checked,
+      isDefaultImage: document.getElementById('aiProvDefaultImageInput').checked,
+      isDefaultText: document.getElementById('aiProvDefaultTextInput').checked,
+      enabled: true,
+      updatedBy: user ? (user.name || user.email) : 'Administrator'
+    };
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+    _cachedAiProviders = data.providers || [];
+    renderSettingsAiProvidersGrid();
+    syncAiProviderDropdown();
+    window.closeAiProviderModal();
+    window.showToast('AI provider saved securely to Cloudflare D1!', 'success');
+  } catch (err) {
+    window.showToast('Failed to save provider: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Save AI Provider';
+    }
+  }
+};
+
+window.handleSetDefaultAiProvider = async function(id, kind) {
+  try {
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_default_provider', id, kind })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      _cachedAiProviders = data.providers || [];
+      renderSettingsAiProvidersGrid();
+      syncAiProviderDropdown();
+      window.showToast(`Updated default ${kind} AI provider!`, 'success');
+    }
+  } catch (e) {}
+};
+
+window.handleToggleAiProvider = async function(id) {
+  try {
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggle_provider', id })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      _cachedAiProviders = data.providers || [];
+      renderSettingsAiProvidersGrid();
+      syncAiProviderDropdown();
+      window.showToast('Provider status updated', 'info');
+    }
+  } catch (e) {}
+};
+
+window.handleDeleteAiProvider = async function(id) {
+  if (!confirm('Remove this AI API provider from Cloudflare D1?')) return;
+  try {
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_provider', id })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      _cachedAiProviders = data.providers || [];
+      renderSettingsAiProvidersGrid();
+      syncAiProviderDropdown();
+      window.showToast('AI provider removed', 'info');
+    } else {
+      window.showToast(data.error || 'Could not remove provider', 'error');
+    }
+  } catch (e) {}
+};
+
+window.handleTestAiProvider = async function(id, btnEl) {
+  const orig = btnEl ? btnEl.textContent : 'Test';
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.textContent = 'Testing...';
+  }
+  try {
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'test_provider', id })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      window.showToast(`✓ ${data.detail} (${data.latencyMs}ms)`, 'success');
+    } else {
+      window.showToast(`✕ Test failed: ${data.error || 'Error'}`, 'error');
+    }
+  } catch (err) {
+    window.showToast('Test error: ' + err.message, 'error');
+  } finally {
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.textContent = orig;
+    }
+  }
+};
 
 function extractCurrentArticleContext() {
   const title = (document.getElementById('bloggerTitleInput')?.value || '').trim();
@@ -5310,14 +5685,7 @@ function extractCurrentArticleContext() {
   const combinedForCount = [title, excerpt, bodyText].filter(Boolean).join(' ').trim();
   const wordCount = combinedForCount ? combinedForCount.split(/\s+/).filter(Boolean).length : 0;
 
-  return {
-    title,
-    category,
-    tags: authors,
-    excerpt,
-    content: bodyText,
-    wordCount
-  };
+  return { title, category, tags: authors, excerpt, content: bodyText, wordCount };
 }
 
 function updateAiContextBanner() {
@@ -5330,96 +5698,6 @@ function updateAiContextBanner() {
   }
   el.innerHTML = `<strong>Article Scanned:</strong> "${escapeHtml(ctx.title || 'Untitled Draft')}" • <span style="color:#ea580c; font-weight:700;">${ctx.wordCount.toLocaleString()} words</span>${ctx.category ? ' • ' + escapeHtml(ctx.category) : ''}`;
 }
-
-async function refreshAiGeminiKeyStatus(autoOpenIfMissing = false) {
-  const badge = document.getElementById('aiKeyStatusBadge');
-  const drawer = document.getElementById('aiKeyDrawer');
-  try {
-    const res = await fetch('/api/ai-image', { cache: 'no-store' });
-    const data = await res.json();
-    if (badge) {
-      if (data.configured) {
-        badge.textContent = data.source === 'env'
-          ? `✓ Connected via Cloudflare Env (${data.maskedKey})`
-          : `✓ Connected (${data.maskedKey})`;
-        badge.style.color = '#059669';
-      } else {
-        badge.textContent = '⚠ No API Key Configured';
-        badge.style.color = '#ea580c';
-        if (autoOpenIfMissing && drawer) drawer.style.display = 'block';
-      }
-    }
-    return Boolean(data.configured);
-  } catch (e) {
-    if (badge) {
-      badge.textContent = '⚠ Status unavailable';
-      badge.style.color = '#ef4444';
-    }
-    return false;
-  }
-}
-
-window.toggleAiKeyDrawer = function() {
-  const drawer = document.getElementById('aiKeyDrawer');
-  if (!drawer) return;
-  drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
-};
-
-window.saveGeminiApiKey = async function() {
-  const inp = document.getElementById('aiGeminiKeyInput');
-  const btn = document.getElementById('aiSaveKeyBtn');
-  const val = (inp?.value || '').trim();
-  if (!val) {
-    window.showToast('Please paste your Google Gemini API key first.', 'error');
-    return;
-  }
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-  }
-  try {
-    const user = window.CRII_API && window.CRII_API.getCurrentUser ? window.CRII_API.getCurrentUser() : null;
-    const res = await fetch('/api/ai-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'save_key',
-        apiKey: val,
-        updatedBy: user ? (user.name || user.email) : 'Administrator'
-      })
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      if (inp) inp.value = '';
-      window.showToast('Google Gemini API key saved securely to Cloudflare D1!', 'success');
-      await refreshAiGeminiKeyStatus(false);
-      const drawer = document.getElementById('aiKeyDrawer');
-      if (drawer) drawer.style.display = 'none';
-    } else {
-      window.showToast(data.error || 'Failed to save API key', 'error');
-    }
-  } catch (e) {
-    window.showToast('Error saving key: ' + e.message, 'error');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Save Key';
-    }
-  }
-};
-
-window.clearGeminiApiKey = async function() {
-  if (!confirm('Remove the saved Google Gemini API key from D1?')) return;
-  try {
-    await fetch('/api/ai-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'save_key', apiKey: '' })
-    });
-    window.showToast('Saved Gemini API key removed', 'info');
-    await refreshAiGeminiKeyStatus(false);
-  } catch (e) {}
-};
 
 window.syncAiModeRatio = function(mode) {
   const ratioEl = document.getElementById('aiImgRatioSelect');
@@ -5443,10 +5721,10 @@ window.openAiImageStudio = async function(mode = 'thumbnail', targetBlockIdx = n
   }
   updateAiContextBanner();
   modal.classList.add('active');
-  const configured = await refreshAiGeminiKeyStatus(true);
+  await loadAiProvidersManager();
   const promptEl = document.getElementById('aiImgPromptInput');
   const ctx = extractCurrentArticleContext();
-  if (configured && promptEl && !promptEl.value.trim() && (ctx.title || ctx.wordCount > 5)) {
+  if (promptEl && !promptEl.value.trim() && (ctx.title || ctx.wordCount > 3)) {
     window.draftAiPromptFromArticle();
   }
 };
@@ -5463,7 +5741,7 @@ window.draftAiPromptFromArticle = async function() {
   updateAiContextBanner();
   const ctx = extractCurrentArticleContext();
   if (!ctx.title && !ctx.excerpt && !ctx.content) {
-    window.showToast('Write a title or article text first so Gemini can read it.', 'warning');
+    window.showToast('Write a title or article text first so AI can read it.', 'warning');
     return;
   }
 
@@ -5474,7 +5752,7 @@ window.draftAiPromptFromArticle = async function() {
     btn.disabled = true;
     btn.textContent = 'Reading article...';
   }
-  if (statusEl) statusEl.textContent = 'Google Gemini 3.8 Flash is reading your full article and crafting an art-directed prompt...';
+  if (statusEl) statusEl.textContent = 'Reading your full article and crafting an art-directed prompt...';
 
   try {
     const res = await fetch('/api/ai-image', {
@@ -5499,17 +5777,13 @@ window.draftAiPromptFromArticle = async function() {
       promptEl.value = data.prompt;
       promptEl.focus();
     }
-    const modelLabel = data.modelUsed ? ` via ${data.modelUsed}` : '';
+    const viaLabel = data.providerLabel ? ` via ${data.providerLabel}` : (data.modelUsed ? ` via ${data.modelUsed}` : '');
     const fbLabel = data.usedFallback ? ' (auto-fallback)' : '';
-    if (statusEl) statusEl.textContent = `Prompt drafted${modelLabel}${fbLabel} — customize freely before generating.`;
-    window.showToast(`Prompt synthesized${modelLabel}${fbLabel}!`, 'success');
+    if (statusEl) statusEl.textContent = `Prompt drafted${viaLabel}${fbLabel} — customize freely before generating.`;
+    window.showToast(`Prompt synthesized${viaLabel}${fbLabel}!`, 'success');
   } catch (err) {
     if (statusEl) statusEl.textContent = '';
     window.showToast('Prompt draft failed: ' + err.message, 'error');
-    if (String(err.message).toLowerCase().includes('api key')) {
-      const drawer = document.getElementById('aiKeyDrawer');
-      if (drawer) drawer.style.display = 'block';
-    }
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -5543,7 +5817,7 @@ window.selectAiGalleryItem = function(idx) {
   const r2Badge = document.getElementById('aiGeneratedR2Badge');
   if (img) img.src = item.url;
   if (promptEl && item.prompt) promptEl.value = item.prompt;
-  if (r2Badge) r2Badge.textContent = item.storedInR2 ? '✓ Saved in Cloudflare R2' : 'Generated (Preview)';
+  if (r2Badge) r2Badge.textContent = item.storedInR2 ? `✓ Saved in R2 (${item.providerLabel || item.model})` : `Generated (${item.providerLabel || item.model})`;
   renderAiSessionGallery();
 };
 
@@ -5562,7 +5836,7 @@ window.runAiImageGeneration = async function() {
     return;
   }
 
-  const model = document.getElementById('aiImgModelSelect')?.value || 'gemini-nano-banana-2.1';
+  const providerId = document.getElementById('aiImgProviderSelect')?.value || 'auto';
   const aspectRatio = document.getElementById('aiImgRatioSelect')?.value || '16:9';
   const imageSize = document.getElementById('aiImgSizeSelect')?.value || '1K';
   const slugHint = (document.getElementById('bloggerSlugInput')?.value || document.getElementById('bloggerTitleInput')?.value || 'article').trim();
@@ -5570,9 +5844,9 @@ window.runAiImageGeneration = async function() {
 
   if (genBtn) {
     genBtn.disabled = true;
-    genBtn.textContent = 'Generating with Google Gemini...';
+    genBtn.textContent = 'Generating Image...';
   }
-  if (statusEl) statusEl.textContent = `Rendering ${aspectRatio} (${imageSize}) via ${model} and saving to Cloudflare R2...`;
+  if (statusEl) statusEl.textContent = `Rendering ${aspectRatio} (${imageSize}) & saving to Cloudflare R2...`;
 
   try {
     const res = await fetch('/api/ai-image', {
@@ -5581,7 +5855,7 @@ window.runAiImageGeneration = async function() {
       body: JSON.stringify({
         action: 'generate',
         prompt,
-        model,
+        providerId,
         aspectRatio,
         imageSize,
         slugHint,
@@ -5597,23 +5871,20 @@ window.runAiImageGeneration = async function() {
     _aiStudioSessionGallery.unshift(data);
     if (_aiStudioSessionGallery.length > 10) _aiStudioSessionGallery.pop();
 
+    const engineTag = data.providerLabel || data.model || 'AI Engine';
     if (previewImg) previewImg.src = data.url;
     if (previewSec) previewSec.style.display = 'block';
-    if (r2Badge) r2Badge.textContent = data.storedInR2 ? `✓ Saved in R2 (${data.model})` : `Generated (${data.model})`;
-    if (statusEl) statusEl.textContent = `Image generated via ${data.model}${data.usedFallback ? ' (auto-fallback)' : ''}!`;
+    if (r2Badge) r2Badge.textContent = data.storedInR2 ? `✓ Saved in R2 • ${engineTag}` : engineTag;
+    if (statusEl) statusEl.textContent = `Generated via ${engineTag} (${data.model})${data.usedFallback ? ' [auto-fallback]' : ''}!`;
     renderAiSessionGallery();
-    window.showToast(`AI image generated via ${data.model}${data.usedFallback ? ' (fallback)' : ''}!`, 'success');
+    window.showToast(`Image generated via ${engineTag}${data.usedFallback ? ' (fallback)' : ''}!`, 'success');
   } catch (err) {
     if (statusEl) statusEl.textContent = '';
     window.showToast('Image generation failed: ' + err.message, 'error');
-    if (String(err.message).toLowerCase().includes('api key')) {
-      const drawer = document.getElementById('aiKeyDrawer');
-      if (drawer) drawer.style.display = 'block';
-    }
   } finally {
     if (genBtn) {
       genBtn.disabled = false;
-      genBtn.textContent = '✨ Generate Image with Google Gemini';
+      genBtn.textContent = '✨ Generate Image';
     }
   }
 };

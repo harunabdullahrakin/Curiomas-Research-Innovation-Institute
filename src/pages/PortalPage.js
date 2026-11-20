@@ -1603,6 +1603,39 @@ export function renderPortalPageHtml() {
               </div>
             </form>
           </div>
+
+          <div id="settingsAiApiManagerCard" class="data-table-card" style="padding: 2rem; grid-column: 1 / -1;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+              <div>
+                <h3 style="font-size:1.3rem; margin:0 0 0.35rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+                  <span>⚡</span>
+                  <span>AI & External APIs Management Hub</span>
+                </h3>
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin:0; max-width:720px; line-height:1.55;">
+                  Connect and manage unlimited AI providers for free & paid image generation, GPT, Gemini, FLUX, Groq, Hugging Face, OpenRouter, Cloudflare Workers AI, Together AI, Stability AI, or any Custom OpenAI-compatible API. Automatic cascading fallbacks ensure image & prompt generation never stops.
+                </p>
+              </div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAiProvidersManager()">Refresh</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="window.openAiProviderModal()">+ Add AI / Image API</button>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:0.45rem; flex-wrap:wrap; margin-bottom:1.25rem; padding:0.75rem 1rem; background:rgba(234,88,12,0.05); border:1px solid rgba(234,88,12,0.2); border-radius:10px; align-items:center;">
+              <span style="font-size:0.76rem; font-weight:700; color:#ea580c; margin-right:0.25rem;">Quick Add Free / Popular Providers:</span>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'huggingface')">🤗 Hugging Face (Free FLUX)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'cloudflare')">☁️ Cloudflare Workers AI (Free)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'together')">🚀 Together AI (FLUX Free)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'groq')">⚡ Groq (Free Fast LLM)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'openrouter')">🌐 OpenRouter (Free Models)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'openai')">🤖 OpenAI (GPT / Image)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'gemini')">✨ Google Gemini</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'stability')">🎨 Stability AI</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'custom')">🔌 Custom API</button>
+            </div>
+
+            <div id="settingsAiProvidersGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(310px, 1fr)); gap:1rem;"></div>
+          </div>
         </div>
       </div>
 
@@ -2649,36 +2682,22 @@ export function renderPortalPageHtml() {
   </div>
 
   <div id="aiImageGenModal" class="modal-overlay">
-    <div class="modal-dialog" style="max-width: 820px;">
+    <div class="modal-dialog" style="max-width: 840px;">
       <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem;">
         <div>
           <h3 class="modal-title" style="margin:0; display:flex; align-items:center; gap:0.45rem;">
-            <span>✨ Google Gemini Article Image Studio</span>
+            <span>✨ Multi-AI Article Image Studio</span>
           </h3>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.15rem;">Reads your full article to synthesize editable prompts & generate thumbnails or in-article figures via Nano Banana 2.1 / Pro.</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.15rem;">Reads your full article to synthesize editable prompts & generate thumbnails or figures with automatic multi-provider fallbacks & R2 storage.</div>
         </div>
         <div style="display:flex; align-items:center; gap:0.5rem;">
-          <button type="button" class="btn btn-secondary btn-sm" id="aiToggleKeyDrawerBtn" onclick="window.toggleAiKeyDrawer()" style="font-size:0.76rem; white-space:nowrap;">⚙ Gemini API Key</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiProviderModal()" style="font-size:0.76rem; white-space:nowrap;">+ Add API</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeAiImageStudio(); window.showTab('settings'); setTimeout(()=>document.getElementById('settingsAiApiManagerCard')?.scrollIntoView({behavior:'smooth'}),150);" style="font-size:0.76rem; white-space:nowrap;">⚙ Manage APIs</button>
           <button type="button" class="modal-close" onclick="window.closeAiImageStudio()">&times;</button>
         </div>
       </div>
 
       <div class="modal-body" style="padding: 1.35rem 1.5rem; max-height: 78vh; overflow-y: auto;">
-        <div id="aiKeyDrawer" style="display:none; background:rgba(234,88,12,0.05); border:1px solid rgba(234,88,12,0.28); border-radius:12px; padding:1rem 1.15rem; margin-bottom:1.15rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.55rem;">
-            <div style="font-weight:700; font-size:0.86rem; color:var(--text-primary);">Google AI Studio / Gemini API Key</div>
-            <span id="aiKeyStatusBadge" style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">Checking...</span>
-          </div>
-          <p style="font-size:0.78rem; color:var(--text-secondary); margin:0 0 0.65rem;">
-            Paste your Google Gemini API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#ea580c; font-weight:600;">Google AI Studio</a>. It is stored securely in Cloudflare D1 and used server-side by Cloudflare Functions.
-          </p>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <input type="password" id="aiGeminiKeyInput" class="form-input" placeholder="AIzaSy..." style="flex:1; min-width:220px;">
-            <button type="button" class="btn btn-primary btn-sm" id="aiSaveKeyBtn" onclick="window.saveGeminiApiKey()">Save Key</button>
-            <button type="button" class="btn btn-danger btn-sm" onclick="window.clearGeminiApiKey()">Remove</button>
-          </div>
-        </div>
-
         <div id="aiArticleContextBar" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.15rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
           <div style="font-size:0.82rem; color:var(--text-secondary);" id="aiArticleContextText">Scanning active article...</div>
           <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem;" onclick="window.draftAiPromptFromArticle()" id="aiDraftPromptBtn">🧠 Auto-Read Article & Draft Prompt</button>
@@ -2706,11 +2725,9 @@ export function renderPortalPageHtml() {
             </select>
           </div>
           <div class="form-group" style="margin:0;">
-            <label class="form-label" for="aiImgModelSelect" style="font-size:0.78rem;">Google Gemini Model</label>
-            <select id="aiImgModelSelect" class="form-select" style="font-size:0.84rem;">
-              <option value="gemini-nano-banana-2.1">Nano Banana 2.1 (Recommended)</option>
-              <option value="gemini-3-pro-image">Nano Banana Pro (Ultra Detail)</option>
-              <option value="gemini-3.1-flash-lite-image">Nano Banana 2 Lite (Fastest)</option>
+            <label class="form-label" for="aiImgProviderSelect" style="font-size:0.78rem;">AI Image Provider / Engine</label>
+            <select id="aiImgProviderSelect" class="form-select" style="font-size:0.84rem;">
+              <option value="auto">Auto Smart Cascade (Best + Free Fallback)</option>
             </select>
           </div>
           <div class="form-group" style="margin:0;">
@@ -2741,7 +2758,7 @@ export function renderPortalPageHtml() {
 
         <div style="display:flex; gap:0.65rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem;">
           <button type="button" class="btn btn-primary" id="aiGenerateImgBtn" onclick="window.runAiImageGeneration()" style="padding:0.65rem 1.5rem; font-weight:700;">
-            ✨ Generate Image with Google Gemini
+            ✨ Generate Image
           </button>
           <span id="aiGenStatusText" style="font-size:0.82rem; color:var(--text-muted);"></span>
         </div>
@@ -2769,6 +2786,90 @@ export function renderPortalPageHtml() {
       <div class="modal-footer" style="padding:0.85rem 1.5rem; display:flex; justify-content:flex-end;">
         <button type="button" class="btn btn-secondary" onclick="window.closeAiImageStudio()">Close</button>
       </div>
+    </div>
+  </div>
+
+  <div id="aiProviderModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 660px;">
+      <div class="modal-header">
+        <h3 id="aiProviderModalTitle" class="modal-title">Connect AI / Image Generation API</h3>
+        <button type="button" class="modal-close" onclick="window.closeAiProviderModal()">&times;</button>
+      </div>
+      <form id="aiProviderForm" onsubmit="window.handleSaveAiProvider(event)">
+        <div class="modal-body" style="padding: 1.4rem 1.5rem; max-height: 76vh; overflow-y: auto;">
+          <input type="hidden" id="aiProvIdInput">
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="aiProvVendorInput">Provider / Company *</label>
+              <select id="aiProvVendorInput" class="form-select" onchange="window.applyAiVendorPreset(this.value)">
+                <option value="pollinations">Pollinations.ai (Free FLUX — No Key Needed)</option>
+                <option value="huggingface">Hugging Face Inference (Free FLUX / Llama)</option>
+                <option value="cloudflare">Cloudflare Workers AI (Free 10k/day FLUX & Llama)</option>
+                <option value="together">Together AI (FLUX.1-schnell Free & Llama)</option>
+                <option value="groq">Groq (Free Ultra-Fast Llama / Prompts)</option>
+                <option value="openrouter">OpenRouter (Free & Paid 100+ Models)</option>
+                <option value="openai">OpenAI (GPT-4o & GPT-Image / DALL-E 3)</option>
+                <option value="gemini">Google Gemini (Free Text + Paid Nano Banana)</option>
+                <option value="stability">Stability AI (SD3.5 / Core Image Gen)</option>
+                <option value="custom">Custom OpenAI-Compatible API (DeepSeek, Grok, Mistral...)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="aiProvLabelInput">Display Name / Label *</label>
+              <input type="text" id="aiProvLabelInput" class="form-input" required placeholder="e.g. Hugging Face FLUX Free">
+            </div>
+          </div>
+
+          <div id="aiProvGuideBanner" style="font-size:0.8rem; color:var(--text-secondary); background:rgba(234,88,12,0.06); border:1px solid rgba(234,88,12,0.22); border-radius:8px; padding:0.65rem 0.85rem; margin-bottom:1rem;"></div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label" for="aiProvKeyInput">API Key / Token <span id="aiProvKeyHint" style="font-weight:400; color:var(--text-muted); font-size:0.78rem;"></span></label>
+            <input type="password" id="aiProvKeyInput" class="form-input" placeholder="Paste API key (leave blank while editing to keep existing key)">
+          </div>
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group" id="aiProvAccountIdGroup" style="display:none;">
+              <label class="form-label" for="aiProvAccountIdInput">Cloudflare Account ID *</label>
+              <input type="text" id="aiProvAccountIdInput" class="form-input" placeholder="32-character Cloudflare Account ID">
+            </div>
+            <div class="form-group" id="aiProvBaseUrlGroup">
+              <label class="form-label" for="aiProvBaseUrlInput">API Base URL</label>
+              <input type="text" id="aiProvBaseUrlInput" class="form-input" placeholder="https://api.openai.com/v1">
+            </div>
+          </div>
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="aiProvImageModelInput">Image Generation Model ID</label>
+              <input type="text" id="aiProvImageModelInput" class="form-input" placeholder="e.g. flux, black-forest-labs/FLUX.1-schnell">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="aiProvTextModelInput">Text / Prompt Drafting Model ID</label>
+              <input type="text" id="aiProvTextModelInput" class="form-input" placeholder="e.g. llama-3.3-70b-versatile, gpt-4o-mini">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:0.65rem; padding:0.85rem 1rem; background:var(--bg-secondary); border-radius:10px; border:1px solid var(--border-color);">
+            <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.84rem; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="aiProvSupportsImageInput" checked style="accent-color:#ea580c;"> Supports Image Gen
+            </label>
+            <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.84rem; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="aiProvSupportsTextInput" style="accent-color:#ea580c;"> Supports Text / Prompts
+            </label>
+            <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.84rem; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="aiProvDefaultImageInput" style="accent-color:#ea580c;"> Default Image Engine
+            </label>
+            <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.84rem; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="aiProvDefaultTextInput" style="accent-color:#ea580c;"> Default Prompt Engine
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:1rem 1.5rem; display:flex; justify-content:flex-end; gap:0.75rem;">
+          <button type="button" class="btn btn-secondary" onclick="window.closeAiProviderModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="aiSaveProviderBtn">Save AI Provider</button>
+        </div>
+      </form>
     </div>
   </div>
 

@@ -1,18 +1,40 @@
 const GEMINI_INTERACTIONS_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const GEMINI_API_REVISION = "2026-05-20";
-const TEXT_MODEL_FALLBACKS = [
+const GEMINI_TEXT_FALLBACKS = [
   "gemini-3.8-flash",
   "gemini-3.5-flash-lite",
   "gemini-3.1-flash-lite",
   "gemma-4-31b-it"
 ];
-const ALLOWED_IMAGE_MODELS = [
+const GEMINI_IMAGE_FALLBACKS = [
   "gemini-nano-banana-2.1",
   "gemini-3.1-flash-lite-image",
   "gemini-3-pro-image"
 ];
-const ALLOWED_RATIOS = ["16:9", "4:3", "3:2", "1:1", "9:16"];
-const ALLOWED_SIZES = ["1K", "2K"];
+const RATIO_DIMS = {
+  "16:9": { w: 1280, h: 720, openaiSize: "1792x1024" },
+  "3:2": { w: 1152, h: 768, openaiSize: "1792x1024" },
+  "4:3": { w: 1024, h: 768, openaiSize: "1024x1024" },
+  "1:1": { w: 1024, h: 1024, openaiSize: "1024x1024" },
+  "9:16": { w: 720, h: 1280, openaiSize: "1024x1792" }
+};
+
+const BUILTIN_POLLINATIONS = {
+  id: "builtin_pollinations",
+  vendor: "pollinations",
+  label: "Pollinations.ai (Free FLUX)",
+  apiKey: "",
+  accountId: "",
+  baseUrl: "https://image.pollinations.ai",
+  textModel: "",
+  imageModel: "flux",
+  supportsText: false,
+  supportsImage: true,
+  enabled: true,
+  isDefaultText: false,
+  isDefaultImage: true,
+  builtIn: true
+};
 
 function jsonResp(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -26,40 +48,10 @@ function jsonResp(data, status = 200) {
 }
 
 function maskKey(k) {
-  if (!k || k.length < 10) return "";
-  return k.slice(0, 6) + "..." + k.slice(-4);
-}
-
-function isRetryableAiError(status, errMsg) {
-  if ([429, 500, 502, 503, 504].includes(status)) return true;
-  const m = String(errMsg || "").toLowerCase();
-  return m.includes("high demand") ||
-    m.includes("overloaded") ||
-    m.includes("unavailable") ||
-    m.includes("temporarily") ||
-    m.includes("rate limit") ||
-    m.includes("resource_exhausted") ||
-    m.includes("quota") ||
-    m.includes("try again") ||
-    m.includes("not found");
-}
-
-function buildLocalFallbackPrompt({ title, category, excerpt, content, mode, style }) {
-  const modeDesc = mode === "diagram"
-    ? "Clean modern scientific infographic diagram with crisp visual hierarchy"
-    : mode === "illustration"
-      ? "Detailed in-article scientific editorial illustration"
-      : mode === "banner"
-        ? "Wide panoramic editorial research header banner"
-        : "High-impact 16:9 editorial scientific publication cover thumbnail";
-  const snippet = (excerpt || content || "").replace(/\s+/g, " ").trim().slice(0, 260);
-  const parts = [
-    `${modeDesc} in ${style} style representing "${title || "Frontier Scientific Discovery"}".`,
-    category ? `Discipline atmosphere inspired by ${category}.` : "",
-    snippet ? `Core visual themes drawn from the research: ${snippet}.` : "",
-    "Dramatic museum-grade studio lighting, crisp focal depth, rich balanced color palette, refined composition, no watermarks or cluttered text overlays."
-  ].filter(Boolean);
-  return parts.join(" ");
+  const s = String(k || "").trim();
+  if (!s) return "";
+  if (s.length <= 8) return "****";
+  return s.slice(0, 6) + "..." + s.slice(-4);
 }
 
 async function ensureSettingsTable(db) {
@@ -91,50 +83,134 @@ async function ensureMediaTable(db) {
   `).run().catch(() => {});
 }
 
-async function resolveGeminiKey(env) {
+async function loadProviders(env) {
+  let list = [];
   if (env && env.DB) {
     try {
       await ensureSettingsTable(env.DB);
-      const row = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'gemini_ai_config'").first();
+      const row = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'ai_api_providers'").first();
       if (row && row.value_json) {
         const parsed = JSON.parse(row.value_json);
-        if (parsed && parsed.apiKey && String(parsed.apiKey).trim()) {
-          return { key: String(parsed.apiKey).trim(), source: "db" };
+        if (Array.isArray(parsed)) list = parsed;
+      }
+      if (list.length === 0) {
+        const legacy = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'gemini_ai_config'").first();
+        if (legacy && legacy.value_json) {
+          try {
+            const p = JSON.parse(legacy.value_json);
+            if (p && p.apiKey) {
+              list.push({
+                id: "prov_gemini_migrated",
+                vendor: "gemini",
+                label: "Google Gemini",
+                apiKey: String(p.apiKey).trim(),
+                accountId: "",
+                baseUrl: GEMINI_INTERACTIONS_URL,
+                textModel: "gemini-3.8-flash",
+                imageModel: "gemini-nano-banana-2.1",
+                supportsText: true,
+                supportsImage: true,
+                enabled: true,
+                isDefaultText: true,
+                isDefaultImage: false
+              });
+            }
+          } catch (e) {}
         }
       }
     } catch (e) {}
   }
-  if (env && env.GEMINI_API_KEY && String(env.GEMINI_API_KEY).trim()) {
-    return { key: String(env.GEMINI_API_KEY).trim(), source: "env" };
+
+  if (env && env.GEMINI_API_KEY && !list.some(p => p.vendor === "gemini")) {
+    list.push({
+      id: "env_gemini",
+      vendor: "gemini",
+      label: "Google Gemini (Env)",
+      apiKey: String(env.GEMINI_API_KEY).trim(),
+      accountId: "",
+      baseUrl: GEMINI_INTERACTIONS_URL,
+      textModel: "gemini-3.8-flash",
+      imageModel: "gemini-nano-banana-2.1",
+      supportsText: true,
+      supportsImage: true,
+      enabled: true,
+      isDefaultText: !list.some(p => p.isDefaultText),
+      isDefaultImage: false
+    });
   }
-  return { key: "", source: "none" };
+
+  if (!list.some(p => p.id === BUILTIN_POLLINATIONS.id || p.vendor === "pollinations")) {
+    list.unshift({
+      ...BUILTIN_POLLINATIONS,
+      isDefaultImage: !list.some(p => p.supportsImage && p.isDefaultImage)
+    });
+  }
+
+  return list;
 }
 
-function extractTextFromInteraction(data) {
+async function saveProviders(env, list, updatedBy = "Administrator") {
+  if (!env || !env.DB) return;
+  await ensureSettingsTable(env.DB);
+  await env.DB.prepare(`
+    INSERT INTO settings (key, value_json, updatedAt, updatedBy)
+    VALUES ('ai_api_providers', ?, ?, ?)
+    ON CONFLICT(key) DO UPDATE SET
+      value_json = excluded.value_json,
+      updatedAt = excluded.updatedAt,
+      updatedBy = excluded.updatedBy
+  `).bind(JSON.stringify(list), new Date().toISOString(), updatedBy).run();
+}
+
+function sanitizeProviderForClient(p) {
+  return {
+    id: p.id,
+    vendor: p.vendor,
+    label: p.label,
+    hasKey: Boolean(p.apiKey && String(p.apiKey).trim()),
+    maskedKey: maskKey(p.apiKey),
+    accountId: p.accountId || "",
+    baseUrl: p.baseUrl || "",
+    textModel: p.textModel || "",
+    imageModel: p.imageModel || "",
+    supportsText: Boolean(p.supportsText),
+    supportsImage: Boolean(p.supportsImage),
+    enabled: p.enabled !== false,
+    isDefaultText: Boolean(p.isDefaultText),
+    isDefaultImage: Boolean(p.isDefaultImage),
+    builtIn: Boolean(p.builtIn)
+  };
+}
+
+function base64ToUint8Array(base64) {
+  const clean = String(base64 || "").replace(/\s+/g, "");
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function extractGeminiText(data) {
   if (!data || typeof data !== "object") return "";
   const chunks = [];
   if (Array.isArray(data.steps)) {
     for (const step of data.steps) {
       if (step && step.type === "model_output" && Array.isArray(step.content)) {
         for (const block of step.content) {
-          if (block && block.type === "text" && block.text) {
-            chunks.push(block.text);
-          }
+          if (block && block.type === "text" && block.text) chunks.push(block.text);
         }
       }
     }
   }
   if (chunks.length === 0 && Array.isArray(data.outputs)) {
     for (const out of data.outputs) {
-      if (out && out.type === "text" && out.text) {
-        chunks.push(out.text);
-      }
+      if (out && out.type === "text" && out.text) chunks.push(out.text);
     }
   }
   return chunks.join("\n").trim();
 }
 
-function extractImageFromInteraction(data) {
+function extractGeminiImage(data) {
   if (!data || typeof data !== "object") return null;
   let found = null;
   if (Array.isArray(data.steps)) {
@@ -142,10 +218,7 @@ function extractImageFromInteraction(data) {
       if (step && step.type === "model_output" && Array.isArray(step.content)) {
         for (const block of step.content) {
           if (block && block.type === "image" && block.data) {
-            found = {
-              data: block.data,
-              mimeType: block.mime_type || block.mimeType || "image/png"
-            };
+            found = { data: block.data, mimeType: block.mime_type || block.mimeType || "image/jpeg" };
           }
         }
       }
@@ -154,55 +227,299 @@ function extractImageFromInteraction(data) {
   if (!found && Array.isArray(data.outputs)) {
     for (const out of data.outputs) {
       if (out && out.type === "image" && out.data) {
-        found = {
-          data: out.data,
-          mimeType: out.mime_type || out.mimeType || "image/png"
-        };
+        found = { data: out.data, mimeType: out.mime_type || out.mimeType || "image/jpeg" };
       }
     }
   }
   return found;
 }
 
-function base64ToUint8Array(base64) {
-  const clean = base64.replace(/\s+/g, "");
-  const binary = atob(clean);
-  const len = binary.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
+function buildLocalFallbackPrompt({ title, category, excerpt, content, mode, style }) {
+  const modeDesc = mode === "diagram"
+    ? "Clean modern scientific infographic diagram with crisp visual hierarchy"
+    : mode === "illustration"
+      ? "Detailed in-article scientific editorial illustration"
+      : mode === "banner"
+        ? "Wide panoramic editorial research header banner"
+        : "High-impact 16:9 editorial scientific publication cover thumbnail";
+  const snippet = (excerpt || content || "").replace(/\s+/g, " ").trim().slice(0, 260);
+  return [
+    `${modeDesc} in ${style} style representing "${title || "Frontier Scientific Discovery"}".`,
+    category ? `Discipline atmosphere inspired by ${category}.` : "",
+    snippet ? `Core visual themes drawn from the research: ${snippet}.` : "",
+    "Dramatic museum-grade studio lighting, crisp focal depth, rich balanced color palette, refined composition, no watermarks or cluttered text overlays."
+  ].filter(Boolean).join(" ");
 }
 
-async function callGeminiInteractions(apiKey, payload) {
-  const res = await fetch(GEMINI_INTERACTIONS_URL, {
-    method: "POST",
-    headers: {
-      "x-goog-api-key": apiKey,
-      "Content-Type": "application/json",
-      "Api-Revision": GEMINI_API_REVISION
-    },
-    body: JSON.stringify(payload)
-  });
-  const rawText = await res.text();
-  let parsed = {};
-  try {
-    parsed = JSON.parse(rawText);
-  } catch (e) {
-    parsed = { error: { message: rawText || `HTTP ${res.status}` } };
+async function runTextWithProvider(provider, promptText) {
+  const vendor = provider.vendor;
+  const apiKey = String(provider.apiKey || "").trim();
+
+  if (vendor === "gemini") {
+    if (!apiKey) throw new Error("Gemini API key missing");
+    const chain = [provider.textModel, ...GEMINI_TEXT_FALLBACKS].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+    let lastErr = "Gemini text request failed";
+    for (const model of chain) {
+      const res = await fetch(GEMINI_INTERACTIONS_URL, {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": apiKey,
+          "Content-Type": "application/json",
+          "Api-Revision": GEMINI_API_REVISION
+        },
+        body: JSON.stringify({ model, input: [{ type: "text", text: promptText }], store: false })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const text = extractGeminiText(data);
+        if (text) return { text, model };
+      }
+      lastErr = data?.error?.message || `HTTP ${res.status}`;
+    }
+    throw new Error(lastErr);
   }
-  return { ok: res.ok, status: res.status, data: parsed };
+
+  if (vendor === "cloudflare") {
+    if (!provider.accountId || !apiKey) throw new Error("Cloudflare Account ID and API Token required");
+    const model = provider.textModel || "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+    const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(provider.accountId)}/ai/run/${model}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [{ role: "user", content: promptText }] })
+    });
+    const data = await res.json().catch(() => ({}));
+    const text = data?.result?.response || data?.result?.choices?.[0]?.message?.content || "";
+    if (!res.ok || !text) throw new Error(data?.errors?.[0]?.message || `Cloudflare AI HTTP ${res.status}`);
+    return { text: String(text).trim(), model };
+  }
+
+  if (vendor === "huggingface") {
+    if (!apiKey) throw new Error("Hugging Face token missing");
+    const model = provider.textModel || "meta-llama/Llama-3.3-70B-Instruct";
+    const res = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, messages: [{ role: "user", content: promptText }], max_tokens: 350 })
+    });
+    const data = await res.json().catch(() => ({}));
+    const text = data?.choices?.[0]?.message?.content || "";
+    if (!res.ok || !text) throw new Error(data?.error?.message || data?.error || `Hugging Face HTTP ${res.status}`);
+    return { text: String(text).trim(), model };
+  }
+
+  const defaultUrls = {
+    openai: "https://api.openai.com/v1",
+    groq: "https://api.groq.com/openai/v1",
+    openrouter: "https://openrouter.ai/api/v1",
+    together: "https://api.together.xyz/v1",
+    custom: provider.baseUrl || "https://api.openai.com/v1"
+  };
+  const defaultModels = {
+    openai: "gpt-4o-mini",
+    groq: "llama-3.3-70b-versatile",
+    openrouter: "meta-llama/llama-3.3-70b-instruct:free",
+    together: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    custom: provider.textModel || "gpt-4o-mini"
+  };
+  const base = String(provider.baseUrl || defaultUrls[vendor] || "").replace(/\/+$/, "");
+  if (!base || !apiKey) throw new Error(`${provider.label} API key or base URL missing`);
+  const model = provider.textModel || defaultModels[vendor] || "gpt-4o-mini";
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json"
+  };
+  if (vendor === "openrouter") {
+    headers["HTTP-Referer"] = "https://www.curiomas.zone.id";
+    headers["X-Title"] = "CRII Research Portal";
+  }
+  const res = await fetch(`${base}/chat/completions`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: promptText }],
+      temperature: 0.7,
+      max_tokens: 350
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  const text = data?.choices?.[0]?.message?.content || "";
+  if (!res.ok || !text) throw new Error(data?.error?.message || data?.message || `${provider.label} HTTP ${res.status}`);
+  return { text: String(text).trim(), model };
+}
+
+async function runImageWithProvider(provider, prompt, aspectRatio, imageSize) {
+  const vendor = provider.vendor;
+  const apiKey = String(provider.apiKey || "").trim();
+  const dims = RATIO_DIMS[aspectRatio] || RATIO_DIMS["16:9"];
+  const scale = imageSize === "2K" ? 1.25 : 1;
+  const width = Math.round((dims.w * scale) / 16) * 16;
+  const height = Math.round((dims.h * scale) / 16) * 16;
+
+  if (vendor === "pollinations") {
+    const model = provider.imageModel || "flux";
+    const seed = Math.floor(Math.random() * 10000000);
+    const cleanPrompt = prompt.slice(0, 950);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&model=${encodeURIComponent(model)}&nologo=true&enhance=true&seed=${seed}`;
+    const headers = { "User-Agent": "curiomas-crii-portal/1.0" };
+    if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error(`Pollinations HTTP ${res.status}`);
+    const ct = res.headers.get("content-type") || "image/jpeg";
+    if (!ct.startsWith("image/")) throw new Error("Pollinations returned non-image response");
+    const buf = new Uint8Array(await res.arrayBuffer());
+    if (buf.byteLength < 1024) throw new Error("Pollinations returned empty image");
+    return { bytes: buf, mimeType: ct.split(";")[0], model: `pollinations/${model}` };
+  }
+
+  if (vendor === "cloudflare") {
+    if (!provider.accountId || !apiKey) throw new Error("Cloudflare Account ID and API Token required");
+    const model = provider.imageModel || "@cf/black-forest-labs/flux-1-schnell";
+    const isFlux = model.includes("flux");
+    const payload = isFlux ? { prompt, steps: 4 } : { prompt, width: dims.w, height: dims.h };
+    const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(provider.accountId)}/ai/run/${model}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const ct = res.headers.get("content-type") || "";
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson?.errors?.[0]?.message || `Cloudflare AI HTTP ${res.status}`);
+    }
+    if (ct.startsWith("image/")) {
+      return { bytes: new Uint8Array(await res.arrayBuffer()), mimeType: ct.split(";")[0], model };
+    }
+    const data = await res.json().catch(() => ({}));
+    const b64 = data?.result?.image;
+    if (!b64) throw new Error("Cloudflare Workers AI returned no image data");
+    return { bytes: base64ToUint8Array(b64), mimeType: "image/jpeg", model };
+  }
+
+  if (vendor === "huggingface") {
+    if (!apiKey) throw new Error("Hugging Face token missing");
+    const model = provider.imageModel || "black-forest-labs/FLUX.1-schnell";
+    const res = await fetch(`https://router.huggingface.co/hf-inference/models/${model}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", Accept: "image/jpeg" },
+      body: JSON.stringify({ inputs: prompt, parameters: { width: dims.w, height: dims.h } })
+    });
+    const ct = res.headers.get("content-type") || "";
+    if (!res.ok || !ct.startsWith("image/")) {
+      const errTxt = await res.text().catch(() => "");
+      throw new Error(errTxt.slice(0, 220) || `Hugging Face HTTP ${res.status}`);
+    }
+    return { bytes: new Uint8Array(await res.arrayBuffer()), mimeType: ct.split(";")[0], model };
+  }
+
+  if (vendor === "stability") {
+    if (!apiKey) throw new Error("Stability AI key missing");
+    const model = provider.imageModel || "core";
+    const endpoint = model === "core"
+      ? "https://api.stability.ai/v2beta/stable-image/generate/core"
+      : "https://api.stability.ai/v2beta/stable-image/generate/sd3";
+    const fd = new FormData();
+    fd.append("prompt", prompt);
+    fd.append("aspect_ratio", aspectRatio);
+    fd.append("output_format", "jpeg");
+    if (model !== "core") fd.append("model", model);
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, Accept: "image/*" },
+      body: fd
+    });
+    if (!res.ok) {
+      const errTxt = await res.text().catch(() => "");
+      throw new Error(errTxt.slice(0, 220) || `Stability AI HTTP ${res.status}`);
+    }
+    return { bytes: new Uint8Array(await res.arrayBuffer()), mimeType: "image/jpeg", model: `stability/${model}` };
+  }
+
+  if (vendor === "gemini") {
+    if (!apiKey) throw new Error("Gemini API key missing");
+    const chain = [provider.imageModel, ...GEMINI_IMAGE_FALLBACKS].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+    let lastErr = "Gemini image request failed";
+    for (const model of chain) {
+      const res = await fetch(GEMINI_INTERACTIONS_URL, {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": apiKey,
+          "Content-Type": "application/json",
+          "Api-Revision": GEMINI_API_REVISION
+        },
+        body: JSON.stringify({
+          model,
+          input: [{ type: "text", text: prompt }],
+          response_format: { type: "image", mime_type: "image/jpeg", aspect_ratio: aspectRatio, image_size: imageSize },
+          store: false
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const img = extractGeminiImage(data);
+        if (img && img.data) {
+          return { bytes: base64ToUint8Array(img.data), mimeType: img.mimeType || "image/jpeg", model };
+        }
+      }
+      lastErr = data?.error?.message || `Gemini HTTP ${res.status}`;
+    }
+    throw new Error(lastErr);
+  }
+
+  const defaultImgUrls = {
+    openai: "https://api.openai.com/v1",
+    together: "https://api.together.xyz/v1",
+    custom: provider.baseUrl || "https://api.openai.com/v1"
+  };
+  const defaultImgModels = {
+    openai: "gpt-image-1",
+    together: "black-forest-labs/FLUX.1-schnell-Free",
+    custom: provider.imageModel || "gpt-image-1"
+  };
+  const base = String(provider.baseUrl || defaultImgUrls[vendor] || "").replace(/\/+$/, "");
+  if (!base || !apiKey) throw new Error(`${provider.label} API key or base URL missing`);
+  const model = provider.imageModel || defaultImgModels[vendor];
+  const reqBody = vendor === "together"
+    ? { model, prompt, width: dims.w, height: dims.h, steps: 4, n: 1, response_format: "b64_json" }
+    : model === "gpt-image-1"
+      ? { model, prompt, n: 1, size: dims.openaiSize }
+      : { model, prompt, n: 1, size: dims.openaiSize, response_format: "b64_json" };
+
+  const res = await fetch(`${base}/images/generations`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify(reqBody)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error?.message || data?.message || `${provider.label} HTTP ${res.status}`);
+  const item = data?.data?.[0];
+  if (item && item.b64_json) {
+    return { bytes: base64ToUint8Array(item.b64_json), mimeType: "image/png", model };
+  }
+  if (item && item.url) {
+    const imgRes = await fetch(item.url);
+    if (!imgRes.ok) throw new Error("Failed to download generated image");
+    return { bytes: new Uint8Array(await imgRes.arrayBuffer()), mimeType: (imgRes.headers.get("content-type") || "image/png").split(";")[0], model };
+  }
+  throw new Error(`${provider.label} returned no image payload`);
+}
+
+function uint8ToBase64(bytes) {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
 }
 
 export async function onRequestGet(context) {
   const { env } = context;
-  const resolved = await resolveGeminiKey(env);
+  const providers = await loadProviders(env);
   return jsonResp({
     success: true,
-    configured: Boolean(resolved.key),
-    source: resolved.source,
-    maskedKey: maskKey(resolved.key)
+    configured: providers.some(p => p.enabled !== false),
+    providers: providers.map(sanitizeProviderForClient)
   });
 }
 
@@ -218,35 +535,119 @@ export async function onRequestPost(context) {
 
   const action = body.action || "generate";
 
-  if (action === "save_key") {
-    const rawKey = String(body.apiKey || "").trim();
-    if (env && env.DB) {
-      await ensureSettingsTable(env.DB);
-      await env.DB.prepare(`
-        INSERT INTO settings (key, value_json, updatedAt, updatedBy)
-        VALUES ('gemini_ai_config', ?, ?, ?)
-        ON CONFLICT(key) DO UPDATE SET
-          value_json = excluded.value_json,
-          updatedAt = excluded.updatedAt,
-          updatedBy = excluded.updatedBy
-      `).bind(JSON.stringify({ apiKey: rawKey }), new Date().toISOString(), body.updatedBy || "Administrator").run();
+  if (action === "save_provider") {
+    const providers = await loadProviders(env);
+    const id = body.id || ("prov_" + Date.now().toString(36));
+    const idx = providers.findIndex(p => p.id === id);
+    const prev = idx >= 0 ? providers[idx] : null;
+    const rawKey = body.apiKey !== undefined && String(body.apiKey).trim() !== ""
+      ? String(body.apiKey).trim()
+      : (prev ? prev.apiKey : "");
+
+    const record = {
+      id,
+      vendor: String(body.vendor || prev?.vendor || "custom").trim(),
+      label: String(body.label || prev?.label || "Custom AI Provider").trim(),
+      apiKey: rawKey,
+      accountId: String(body.accountId !== undefined ? body.accountId : (prev?.accountId || "")).trim(),
+      baseUrl: String(body.baseUrl !== undefined ? body.baseUrl : (prev?.baseUrl || "")).trim(),
+      textModel: String(body.textModel !== undefined ? body.textModel : (prev?.textModel || "")).trim(),
+      imageModel: String(body.imageModel !== undefined ? body.imageModel : (prev?.imageModel || "")).trim(),
+      supportsText: body.supportsText !== undefined ? Boolean(body.supportsText) : Boolean(prev?.supportsText),
+      supportsImage: body.supportsImage !== undefined ? Boolean(body.supportsImage) : Boolean(prev?.supportsImage),
+      enabled: body.enabled !== undefined ? Boolean(body.enabled) : (prev ? prev.enabled !== false : true),
+      isDefaultText: Boolean(body.isDefaultText),
+      isDefaultImage: Boolean(body.isDefaultImage),
+      builtIn: Boolean(prev?.builtIn)
+    };
+
+    if (record.isDefaultText) providers.forEach(p => { p.isDefaultText = false; });
+    if (record.isDefaultImage) providers.forEach(p => { p.isDefaultImage = false; });
+
+    if (idx >= 0) providers[idx] = record;
+    else providers.push(record);
+
+    if (!providers.some(p => p.enabled !== false && p.supportsImage && p.isDefaultImage)) {
+      const firstImg = providers.find(p => p.enabled !== false && p.supportsImage);
+      if (firstImg) firstImg.isDefaultImage = true;
     }
-    const resolved = await resolveGeminiKey(env);
-    return jsonResp({
-      success: true,
-      configured: Boolean(resolved.key),
-      source: resolved.source,
-      maskedKey: maskKey(resolved.key)
-    });
+    if (!providers.some(p => p.enabled !== false && p.supportsText && p.isDefaultText)) {
+      const firstTxt = providers.find(p => p.enabled !== false && p.supportsText);
+      if (firstTxt) firstTxt.isDefaultText = true;
+    }
+
+    await saveProviders(env, providers, body.updatedBy || "Administrator");
+    return jsonResp({ success: true, provider: sanitizeProviderForClient(record), providers: providers.map(sanitizeProviderForClient) });
   }
 
-  const resolved = await resolveGeminiKey(env);
-  const apiKey = String(body.apiKeyOverride || "").trim() || resolved.key;
-  if (!apiKey) {
-    return jsonResp({
-      error: "Google Gemini API key is not configured. Click 'Gemini API Key' in the AI Studio modal to add your Google AI Studio key."
-    }, 400);
+  if (action === "delete_provider") {
+    const targetId = String(body.id || "").trim();
+    if (!targetId) return jsonResp({ error: "Provider ID required" }, 400);
+    if (targetId === BUILTIN_POLLINATIONS.id) {
+      return jsonResp({ error: "Built-in free Pollinations fallback cannot be deleted (you can disable it instead)." }, 400);
+    }
+    let providers = await loadProviders(env);
+    providers = providers.filter(p => p.id !== targetId);
+    if (!providers.some(p => p.supportsImage && p.isDefaultImage)) {
+      const firstImg = providers.find(p => p.enabled !== false && p.supportsImage);
+      if (firstImg) firstImg.isDefaultImage = true;
+    }
+    if (!providers.some(p => p.supportsText && p.isDefaultText)) {
+      const firstTxt = providers.find(p => p.enabled !== false && p.supportsText);
+      if (firstTxt) firstTxt.isDefaultText = true;
+    }
+    await saveProviders(env, providers, body.updatedBy || "Administrator");
+    return jsonResp({ success: true, providers: providers.map(sanitizeProviderForClient) });
   }
+
+  if (action === "set_default_provider") {
+    const targetId = String(body.id || "").trim();
+    const kind = body.kind === "text" ? "text" : "image";
+    const providers = await loadProviders(env);
+    const target = providers.find(p => p.id === targetId);
+    if (!target) return jsonResp({ error: "Provider not found" }, 404);
+    if (kind === "text") {
+      providers.forEach(p => { p.isDefaultText = p.id === targetId; });
+    } else {
+      providers.forEach(p => { p.isDefaultImage = p.id === targetId; });
+    }
+    target.enabled = true;
+    await saveProviders(env, providers, body.updatedBy || "Administrator");
+    return jsonResp({ success: true, providers: providers.map(sanitizeProviderForClient) });
+  }
+
+  if (action === "toggle_provider") {
+    const targetId = String(body.id || "").trim();
+    const providers = await loadProviders(env);
+    const target = providers.find(p => p.id === targetId);
+    if (!target) return jsonResp({ error: "Provider not found" }, 404);
+    target.enabled = body.enabled !== undefined ? Boolean(body.enabled) : !target.enabled;
+    await saveProviders(env, providers, body.updatedBy || "Administrator");
+    return jsonResp({ success: true, providers: providers.map(sanitizeProviderForClient) });
+  }
+
+  if (action === "test_provider") {
+    const targetId = String(body.id || "").trim();
+    const providers = await loadProviders(env);
+    const target = providers.find(p => p.id === targetId);
+    if (!target) return jsonResp({ error: "Provider not found" }, 404);
+    const started = Date.now();
+    try {
+      if (target.supportsText) {
+        const res = await runTextWithProvider(target, "Reply with the single word OK.");
+        return jsonResp({ success: true, latencyMs: Date.now() - started, detail: `Text OK (${res.model})` });
+      }
+      if (target.supportsImage) {
+        const res = await runImageWithProvider(target, "Minimalist glowing blue sphere on dark background", "1:1", "1K");
+        return jsonResp({ success: true, latencyMs: Date.now() - started, detail: `Image OK (${res.model}, ${Math.round(res.bytes.byteLength / 1024)} KB)` });
+      }
+      return jsonResp({ error: "Provider has neither text nor image enabled" }, 400);
+    } catch (err) {
+      return jsonResp({ success: false, error: err.message, latencyMs: Date.now() - started }, 400);
+    }
+  }
+
+  const providers = await loadProviders(env);
 
   if (action === "draft_prompt") {
     const title = String(body.title || "").trim();
@@ -258,7 +659,7 @@ export async function onRequestPost(context) {
     const style = String(body.style || "Editorial Scientific Photography").trim();
 
     if (!title && !excerpt && !content) {
-      return jsonResp({ error: "Write a title, summary, or article content first so Gemini can read it." }, 400);
+      return jsonResp({ error: "Write a title, summary, or article content first so AI can read it." }, 400);
     }
 
     const modeDirectives = {
@@ -280,33 +681,26 @@ export async function onRequestPost(context) {
       content ? `Full Article Content:\n${content}` : ""
     ].filter(Boolean).join("\n\n");
 
-    let lastError = "";
-    let lastStatus = 500;
+    const textProviders = providers
+      .filter(p => p.enabled !== false && p.supportsText && (p.apiKey || p.vendor === "pollinations"))
+      .sort((a, b) => (b.isDefaultText ? 1 : 0) - (a.isDefaultText ? 1 : 0));
 
-    for (let i = 0; i < TEXT_MODEL_FALLBACKS.length; i++) {
-      const candidateModel = TEXT_MODEL_FALLBACKS[i];
-      const aiRes = await callGeminiInteractions(apiKey, {
-        model: candidateModel,
-        input: [{ type: "text", text: synthesisInput }],
-        store: false
-      });
-
-      if (aiRes.ok) {
-        const draftedPrompt = extractTextFromInteraction(aiRes.data);
-        if (draftedPrompt) {
+    let lastErr = "";
+    for (let i = 0; i < textProviders.length; i++) {
+      const prov = textProviders[i];
+      try {
+        const result = await runTextWithProvider(prov, synthesisInput);
+        if (result && result.text) {
           return jsonResp({
             success: true,
-            prompt: draftedPrompt,
-            modelUsed: candidateModel,
+            prompt: result.text,
+            providerLabel: prov.label,
+            modelUsed: result.model,
             usedFallback: i > 0
           });
         }
-      }
-
-      lastStatus = aiRes.status;
-      lastError = aiRes.data?.error?.message || aiRes.data?.message || `HTTP ${aiRes.status}`;
-      if (!isRetryableAiError(aiRes.status, lastError)) {
-        return jsonResp({ error: lastError }, aiRes.status >= 400 && aiRes.status < 600 ? aiRes.status : 500);
+      } catch (err) {
+        lastErr = `${prov.label}: ${err.message}`;
       }
     }
 
@@ -314,82 +708,79 @@ export async function onRequestPost(context) {
     return jsonResp({
       success: true,
       prompt: fallbackPrompt,
+      providerLabel: "CRII Smart Local Synthesizer",
       modelUsed: "smart-local-fallback",
       usedFallback: true,
-      fallbackNotice: lastError
+      fallbackNotice: lastErr
     });
   }
 
   if (action === "generate") {
     const prompt = String(body.prompt || "").trim();
-    if (!prompt) {
-      return jsonResp({ error: "Image prompt is required." }, 400);
-    }
+    if (!prompt) return jsonResp({ error: "Image prompt is required." }, 400);
 
-    const requestedModel = ALLOWED_IMAGE_MODELS.includes(body.model) ? body.model : "gemini-nano-banana-2.1";
-    const imageModelChain = [requestedModel, ...ALLOWED_IMAGE_MODELS.filter(m => m !== requestedModel)];
-    const aspectRatio = ALLOWED_RATIOS.includes(body.aspectRatio) ? body.aspectRatio : "16:9";
-    const imageSize = ALLOWED_SIZES.includes(body.imageSize) ? body.imageSize : "1K";
+    const aspectRatio = RATIO_DIMS[body.aspectRatio] ? body.aspectRatio : "16:9";
+    const imageSize = body.imageSize === "2K" ? "2K" : "1K";
+    const requestedProviderId = String(body.providerId || "auto").trim();
     const slugHint = String(body.slugHint || "article").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "article";
 
-    let imgObj = null;
-    let modelUsed = requestedModel;
-    let usedFallback = false;
-    let lastError = "";
-    let lastStatus = 500;
+    const enabledImageProviders = providers.filter(p => p.enabled !== false && p.supportsImage);
+    let ordered = [];
 
-    for (let i = 0; i < imageModelChain.length; i++) {
-      const candidateModel = imageModelChain[i];
-      const aiRes = await callGeminiInteractions(apiKey, {
-        model: candidateModel,
-        input: [{ type: "text", text: prompt }],
-        response_format: {
-          type: "image",
-          mime_type: "image/jpeg",
-          aspect_ratio: aspectRatio,
-          image_size: imageSize
-        },
-        store: false
+    if (requestedProviderId && requestedProviderId !== "auto") {
+      const exact = enabledImageProviders.find(p => p.id === requestedProviderId);
+      if (exact) ordered.push(exact);
+    }
+
+    const rest = enabledImageProviders
+      .filter(p => !ordered.some(x => x.id === p.id))
+      .sort((a, b) => {
+        if (a.isDefaultImage !== b.isDefaultImage) return b.isDefaultImage ? 1 : -1;
+        if (a.vendor === "pollinations") return 1;
+        if (b.vendor === "pollinations") return -1;
+        return 0;
       });
+    ordered = [...ordered, ...rest];
 
-      if (aiRes.ok) {
-        const extracted = extractImageFromInteraction(aiRes.data);
-        if (extracted && extracted.data) {
-          imgObj = extracted;
-          modelUsed = candidateModel;
-          usedFallback = i > 0;
-          break;
-        }
-        lastError = extractTextFromInteraction(aiRes.data) || "No image returned by model.";
-        lastStatus = 422;
-      } else {
-        lastStatus = aiRes.status;
-        lastError = aiRes.data?.error?.message || aiRes.data?.message || `HTTP ${aiRes.status}`;
-        if (!isRetryableAiError(aiRes.status, lastError)) {
-          return jsonResp({ error: lastError }, aiRes.status >= 400 && aiRes.status < 600 ? aiRes.status : 500);
-        }
+    if (!ordered.some(p => p.vendor === "pollinations")) {
+      ordered.push(BUILTIN_POLLINATIONS);
+    }
+
+    let generated = null;
+    let usedProvider = null;
+    let usedFallback = false;
+    const errors = [];
+
+    for (let i = 0; i < ordered.length; i++) {
+      const prov = ordered[i];
+      try {
+        generated = await runImageWithProvider(prov, prompt, aspectRatio, imageSize);
+        usedProvider = prov;
+        usedFallback = i > 0;
+        break;
+      } catch (err) {
+        errors.push(`${prov.label}: ${err.message}`);
       }
     }
 
-    if (!imgObj || !imgObj.data) {
+    if (!generated || !generated.bytes) {
       return jsonResp({
-        error: lastError || "All Gemini image models are currently experiencing high demand. Please retry in a moment."
-      }, lastStatus >= 400 && lastStatus < 600 ? lastStatus : 503);
+        error: errors.join(" | ") || "All configured image providers failed. Please check Settings > AI & API Management."
+      }, 503);
     }
 
-    const mimeType = imgObj.mimeType || "image/png";
-    const ext = mimeType.includes("jpeg") || mimeType.includes("jpg") ? "jpg" : mimeType.includes("webp") ? "webp" : "png";
-    const bytes = base64ToUint8Array(imgObj.data);
+    const mimeType = generated.mimeType || "image/jpeg";
+    const ext = mimeType.includes("png") ? "png" : mimeType.includes("webp") ? "webp" : "jpg";
     const filename = `ai-${slugHint}-${Date.now()}.${ext}`;
     const r2Key = `uploads/${filename}`;
-    let finalUrl = `data:${mimeType};base64,${imgObj.data}`;
+    let finalUrl = `data:${mimeType};base64,${uint8ToBase64(generated.bytes)}`;
     let storedInR2 = false;
 
     if (env && env.STORAGE) {
       try {
-        await env.STORAGE.put(r2Key, bytes, {
+        await env.STORAGE.put(r2Key, generated.bytes, {
           httpMetadata: { contentType: mimeType },
-          customMetadata: { originalName: filename, source: "gemini_ai_studio", model: modelUsed }
+          customMetadata: { originalName: filename, source: usedProvider.vendor, model: generated.model }
         });
         finalUrl = `/api/images/${r2Key}`;
         storedInR2 = true;
@@ -405,7 +796,7 @@ export async function onRequestPost(context) {
             finalUrl,
             filename,
             mimeType,
-            bytes.byteLength,
+            generated.bytes.byteLength,
             new Date().toISOString(),
             body.createdBy || "AI Studio",
             "ai-generated"
@@ -420,9 +811,12 @@ export async function onRequestPost(context) {
       key: storedInR2 ? r2Key : null,
       storedInR2,
       mimeType,
-      size: bytes.byteLength,
-      model: modelUsed,
+      size: generated.bytes.byteLength,
+      providerId: usedProvider.id,
+      providerLabel: usedProvider.label,
+      model: generated.model,
       usedFallback,
+      fallbackErrors: usedFallback ? errors : [],
       aspectRatio,
       prompt
     });
