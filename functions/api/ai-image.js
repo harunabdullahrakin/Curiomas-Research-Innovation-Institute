@@ -360,11 +360,17 @@ async function runImageWithProvider(provider, prompt, aspectRatio, imageSize) {
     const model = provider.imageModel || "flux";
     const seed = Math.floor(Math.random() * 10000000);
     const cleanPrompt = prompt.slice(0, 950);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&model=${encodeURIComponent(model)}&nologo=true&enhance=true&seed=${seed}`;
+    const url = apiKey
+      ? `https://gen.pollinations.ai/image/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&model=${encodeURIComponent(model)}&nologo=true&seed=${seed}`
+      : `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&model=${encodeURIComponent(model)}&nologo=true&seed=${seed}`;
     const headers = { "User-Agent": "curiomas-crii-portal/1.0" };
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
     const res = await fetch(url, { headers });
-    if (!res.ok) throw new Error(`Pollinations HTTP ${res.status}`);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => null);
+      const errMsg = errBody?.error?.message || errBody?.message || `Pollinations HTTP ${res.status}`;
+      throw new Error(errMsg);
+    }
     const ct = res.headers.get("content-type") || "image/jpeg";
     if (!ct.startsWith("image/")) throw new Error("Pollinations returned non-image response");
     const buf = new Uint8Array(await res.arrayBuffer());
@@ -643,6 +649,13 @@ export async function onRequestPost(context) {
       }
       return jsonResp({ error: "Provider has neither text nor image enabled" }, 400);
     } catch (err) {
+      if (target.vendor === "pollinations" && !target.apiKey && /402|Free limit|FREE_LIMIT/i.test(err.message || "")) {
+        return jsonResp({
+          success: true,
+          latencyMs: Date.now() - started,
+          detail: "Ready via Browser-Direct Free FLUX (Cloudflare shared IP rate-limited; add optional key from enter.pollinations.ai for server-side)"
+        });
+      }
       return jsonResp({ success: false, error: err.message, latencyMs: Date.now() - started }, 400);
     }
   }
@@ -764,8 +777,18 @@ export async function onRequestPost(context) {
     }
 
     if (!generated || !generated.bytes) {
+      const dims = RATIO_DIMS[aspectRatio] || RATIO_DIMS["16:9"];
+      const scale = imageSize === "2K" ? 1.25 : 1;
+      const w = Math.round((dims.w * scale) / 16) * 16;
+      const h = Math.round((dims.h * scale) / 16) * 16;
+      const polProv = providers.find(p => p.vendor === "pollinations");
+      const polModel = (polProv && polProv.imageModel) || "flux";
+      const seed = Math.floor(Math.random() * 10000000);
+      const clientPollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.slice(0, 950))}?width=${w}&height=${h}&model=${encodeURIComponent(polModel)}&nologo=true&seed=${seed}`;
       return jsonResp({
-        error: errors.join(" | ") || "All configured image providers failed. Please check Settings > AI & API Management."
+        error: errors.join(" | ") || "All configured image providers failed. Please check Settings > AI & API Management.",
+        clientPollinationsUrl,
+        clientPollinationsModel: `pollinations/${polModel}`
       }, 503);
     }
 

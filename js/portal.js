@@ -5862,9 +5862,54 @@ window.runAiImageGeneration = async function() {
         createdBy: user ? (user.name || user.email) : 'AI Studio'
       })
     });
-    const data = await res.json();
+    let data = await res.json();
     if (!res.ok || !data.success || !data.url) {
-      throw new Error(data.error || `HTTP ${res.status}`);
+      if (data && data.clientPollinationsUrl) {
+        if (statusEl) statusEl.textContent = 'Server providers busy — rendering directly via Pollinations Free FLUX & saving to Cloudflare R2...';
+        const directRes = await fetch(data.clientPollinationsUrl);
+        const directCt = directRes.headers.get('content-type') || '';
+        if (!directRes.ok || !directCt.startsWith('image/')) {
+          const directErr = await directRes.json().catch(() => null);
+          const msg = directErr?.error?.message || data.error || `HTTP ${directRes.status}`;
+          throw new Error(msg + ' — Tip: Add a free Hugging Face, Cloudflare Workers AI, or Pollinations key in Settings → AI & APIs.');
+        }
+        const blob = await directRes.blob();
+        const ext = directCt.includes('png') ? 'png' : directCt.includes('webp') ? 'webp' : 'jpg';
+        const safeSlug = (slugHint || 'article').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'article';
+        const fileObj = new File([blob], `ai-${safeSlug}-${Date.now()}.${ext}`, { type: directCt.split(';')[0] });
+        let savedUrl = '';
+        let savedR2 = false;
+        try {
+          const fd = new FormData();
+          fd.append('file', fileObj);
+          const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+          const upData = await upRes.json();
+          if (upRes.ok && upData && upData.url) {
+            savedUrl = upData.url;
+            savedR2 = true;
+          }
+        } catch (upErr) {}
+        if (!savedUrl) {
+          savedUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+        data = {
+          success: true,
+          url: savedUrl,
+          storedInR2: savedR2,
+          providerLabel: 'Pollinations Free FLUX (Browser Direct)',
+          model: data.clientPollinationsModel || 'pollinations/flux',
+          usedFallback: true,
+          aspectRatio,
+          prompt
+        };
+      } else {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
     }
 
     _aiStudioCurrentResult = data;
