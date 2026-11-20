@@ -705,6 +705,9 @@ function renderBlockEditorFields(block, idx) {
             <button type="button" class="btn btn-secondary btn-sm" id="blockImageInput_${idx}_urlBtn" onclick="window.toggleMediaUrlRow('blockImageInput_${idx}')" style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem;">
               <span>URL</span>
             </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiImageStudio('illustration', ${idx})" style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.75rem; border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700;">
+              <span>✨ AI Generate</span>
+            </button>
             <span style="font-size:0.74rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:260px;">${block.url ? escapeHtml(block.url) : 'No image attached'}</span>
           </div>
           <div id="blockImageInput_${idx}_urlWrap" style="display:none;">
@@ -5278,3 +5281,391 @@ setInterval(() => {
     }
   });
 }, 800);
+
+let _aiStudioTargetBlockIdx = null;
+let _aiStudioCurrentResult = null;
+let _aiStudioSessionGallery = [];
+
+function extractCurrentArticleContext() {
+  const title = (document.getElementById('bloggerTitleInput')?.value || '').trim();
+  const category = (document.getElementById('bloggerCategoryInput')?.value || '').trim();
+  const authors = (document.getElementById('bloggerAuthorsInput')?.value || '').trim();
+  const summary = (document.getElementById('bloggerSummaryInput')?.value || '').trim();
+  const abstractText = (document.getElementById('bloggerAbstractInput')?.value || '').trim();
+  const excerpt = [summary, abstractText].filter(Boolean).join('\n');
+
+  let bodyText = '';
+  if (window.CRII_WORD && typeof window.CRII_WORD.getMode === 'function' && window.CRII_WORD.getMode() === 'doc') {
+    const rawHtml = window.CRII_WORD.getCleanHtml ? window.CRII_WORD.getCleanHtml() : '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = rawHtml;
+    bodyText = (tmp.innerText || tmp.textContent || '').trim();
+  } else if (Array.isArray(currentPostBlocks) && currentPostBlocks.length > 0) {
+    bodyText = currentPostBlocks
+      .map(b => [b.content, b.caption, b.author, b.date].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  const combinedForCount = [title, excerpt, bodyText].filter(Boolean).join(' ').trim();
+  const wordCount = combinedForCount ? combinedForCount.split(/\s+/).filter(Boolean).length : 0;
+
+  return {
+    title,
+    category,
+    tags: authors,
+    excerpt,
+    content: bodyText,
+    wordCount
+  };
+}
+
+function updateAiContextBanner() {
+  const el = document.getElementById('aiArticleContextText');
+  if (!el) return;
+  const ctx = extractCurrentArticleContext();
+  if (!ctx.title && ctx.wordCount === 0) {
+    el.innerHTML = '<strong style="color:#ea580c;">Empty Draft:</strong> Add a title or write content first, or type a custom prompt below.';
+    return;
+  }
+  el.innerHTML = `<strong>Article Scanned:</strong> "${escapeHtml(ctx.title || 'Untitled Draft')}" • <span style="color:#ea580c; font-weight:700;">${ctx.wordCount.toLocaleString()} words</span>${ctx.category ? ' • ' + escapeHtml(ctx.category) : ''}`;
+}
+
+async function refreshAiGeminiKeyStatus(autoOpenIfMissing = false) {
+  const badge = document.getElementById('aiKeyStatusBadge');
+  const drawer = document.getElementById('aiKeyDrawer');
+  try {
+    const res = await fetch('/api/ai-image', { cache: 'no-store' });
+    const data = await res.json();
+    if (badge) {
+      if (data.configured) {
+        badge.textContent = data.source === 'env'
+          ? `✓ Connected via Cloudflare Env (${data.maskedKey})`
+          : `✓ Connected (${data.maskedKey})`;
+        badge.style.color = '#059669';
+      } else {
+        badge.textContent = '⚠ No API Key Configured';
+        badge.style.color = '#ea580c';
+        if (autoOpenIfMissing && drawer) drawer.style.display = 'block';
+      }
+    }
+    return Boolean(data.configured);
+  } catch (e) {
+    if (badge) {
+      badge.textContent = '⚠ Status unavailable';
+      badge.style.color = '#ef4444';
+    }
+    return false;
+  }
+}
+
+window.toggleAiKeyDrawer = function() {
+  const drawer = document.getElementById('aiKeyDrawer');
+  if (!drawer) return;
+  drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+};
+
+window.saveGeminiApiKey = async function() {
+  const inp = document.getElementById('aiGeminiKeyInput');
+  const btn = document.getElementById('aiSaveKeyBtn');
+  const val = (inp?.value || '').trim();
+  if (!val) {
+    window.showToast('Please paste your Google Gemini API key first.', 'error');
+    return;
+  }
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+  }
+  try {
+    const user = window.CRII_API && window.CRII_API.getCurrentUser ? window.CRII_API.getCurrentUser() : null;
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'save_key',
+        apiKey: val,
+        updatedBy: user ? (user.name || user.email) : 'Administrator'
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (inp) inp.value = '';
+      window.showToast('Google Gemini API key saved securely to Cloudflare D1!', 'success');
+      await refreshAiGeminiKeyStatus(false);
+      const drawer = document.getElementById('aiKeyDrawer');
+      if (drawer) drawer.style.display = 'none';
+    } else {
+      window.showToast(data.error || 'Failed to save API key', 'error');
+    }
+  } catch (e) {
+    window.showToast('Error saving key: ' + e.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Save Key';
+    }
+  }
+};
+
+window.clearGeminiApiKey = async function() {
+  if (!confirm('Remove the saved Google Gemini API key from D1?')) return;
+  try {
+    await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'save_key', apiKey: '' })
+    });
+    window.showToast('Saved Gemini API key removed', 'info');
+    await refreshAiGeminiKeyStatus(false);
+  } catch (e) {}
+};
+
+window.syncAiModeRatio = function(mode) {
+  const ratioEl = document.getElementById('aiImgRatioSelect');
+  if (!ratioEl) return;
+  if (mode === 'thumbnail' || mode === 'banner') ratioEl.value = '16:9';
+  else if (mode === 'illustration' || mode === 'diagram') ratioEl.value = '4:3';
+};
+
+window.openAiImageStudio = async function(mode = 'thumbnail', targetBlockIdx = null) {
+  const modal = document.getElementById('aiImageGenModal');
+  if (!modal) return;
+  _aiStudioTargetBlockIdx = targetBlockIdx;
+  const modeSel = document.getElementById('aiImgModeSelect');
+  if (modeSel) {
+    modeSel.value = mode;
+    window.syncAiModeRatio(mode);
+  }
+  const insertBtn = document.getElementById('aiInsertBodyBtn');
+  if (insertBtn) {
+    insertBtn.textContent = targetBlockIdx !== null ? 'Apply to Selected Image Block' : 'Insert into Article Body';
+  }
+  updateAiContextBanner();
+  modal.classList.add('active');
+  const configured = await refreshAiGeminiKeyStatus(true);
+  const promptEl = document.getElementById('aiImgPromptInput');
+  const ctx = extractCurrentArticleContext();
+  if (configured && promptEl && !promptEl.value.trim() && (ctx.title || ctx.wordCount > 5)) {
+    window.draftAiPromptFromArticle();
+  }
+};
+
+window.closeAiImageStudio = function() {
+  const modal = document.getElementById('aiImageGenModal');
+  if (modal) modal.classList.remove('active');
+};
+
+window.draftAiPromptFromArticle = async function() {
+  const btn = document.getElementById('aiDraftPromptBtn');
+  const promptEl = document.getElementById('aiImgPromptInput');
+  const statusEl = document.getElementById('aiGenStatusText');
+  updateAiContextBanner();
+  const ctx = extractCurrentArticleContext();
+  if (!ctx.title && !ctx.excerpt && !ctx.content) {
+    window.showToast('Write a title or article text first so Gemini can read it.', 'warning');
+    return;
+  }
+
+  const mode = document.getElementById('aiImgModeSelect')?.value || 'thumbnail';
+  const style = document.getElementById('aiImgStyleSelect')?.value || 'Editorial Scientific Photography';
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Reading article...';
+  }
+  if (statusEl) statusEl.textContent = 'Google Gemini 3.8 Flash is reading your full article and crafting an art-directed prompt...';
+
+  try {
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'draft_prompt',
+        title: ctx.title,
+        category: ctx.category,
+        tags: ctx.tags,
+        excerpt: ctx.excerpt,
+        content: ctx.content,
+        mode,
+        style
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    if (promptEl) {
+      promptEl.value = data.prompt;
+      promptEl.focus();
+    }
+    if (statusEl) statusEl.textContent = 'Prompt drafted from your article — feel free to modify it before generating.';
+    window.showToast('Prompt synthesized from article! Edit freely or generate now.', 'success');
+  } catch (err) {
+    if (statusEl) statusEl.textContent = '';
+    window.showToast('Prompt draft failed: ' + err.message, 'error');
+    if (String(err.message).toLowerCase().includes('api key')) {
+      const drawer = document.getElementById('aiKeyDrawer');
+      if (drawer) drawer.style.display = 'block';
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🧠 Auto-Read Article & Draft Prompt';
+    }
+  }
+};
+
+function renderAiSessionGallery() {
+  const wrap = document.getElementById('aiSessionHistoryWrap');
+  const grid = document.getElementById('aiSessionHistoryGrid');
+  if (!wrap || !grid) return;
+  if (_aiStudioSessionGallery.length <= 1) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  grid.innerHTML = _aiStudioSessionGallery.map((item, idx) => `
+    <button type="button" onclick="window.selectAiGalleryItem(${idx})" style="padding:0; border:${_aiStudioCurrentResult && _aiStudioCurrentResult.url === item.url ? '2px solid #ea580c' : '1px solid var(--border-color)'}; border-radius:8px; overflow:hidden; width:92px; height:58px; flex-shrink:0; cursor:pointer; background:#0f172a;">
+      <img src="${escapeHtml(item.url)}" style="width:100%; height:100%; object-fit:cover; display:block;">
+    </button>
+  `).join('');
+}
+
+window.selectAiGalleryItem = function(idx) {
+  const item = _aiStudioSessionGallery[idx];
+  if (!item) return;
+  _aiStudioCurrentResult = item;
+  const img = document.getElementById('aiGeneratedPreviewImg');
+  const promptEl = document.getElementById('aiImgPromptInput');
+  const r2Badge = document.getElementById('aiGeneratedR2Badge');
+  if (img) img.src = item.url;
+  if (promptEl && item.prompt) promptEl.value = item.prompt;
+  if (r2Badge) r2Badge.textContent = item.storedInR2 ? '✓ Saved in Cloudflare R2' : 'Generated (Preview)';
+  renderAiSessionGallery();
+};
+
+window.runAiImageGeneration = async function() {
+  const promptEl = document.getElementById('aiImgPromptInput');
+  const genBtn = document.getElementById('aiGenerateImgBtn');
+  const statusEl = document.getElementById('aiGenStatusText');
+  const previewSec = document.getElementById('aiResultPreviewSection');
+  const previewImg = document.getElementById('aiGeneratedPreviewImg');
+  const r2Badge = document.getElementById('aiGeneratedR2Badge');
+
+  const prompt = (promptEl?.value || '').trim();
+  if (!prompt) {
+    window.showToast('Please draft or enter a prompt first.', 'warning');
+    promptEl?.focus();
+    return;
+  }
+
+  const model = document.getElementById('aiImgModelSelect')?.value || 'gemini-nano-banana-2.1';
+  const aspectRatio = document.getElementById('aiImgRatioSelect')?.value || '16:9';
+  const imageSize = document.getElementById('aiImgSizeSelect')?.value || '1K';
+  const slugHint = (document.getElementById('bloggerSlugInput')?.value || document.getElementById('bloggerTitleInput')?.value || 'article').trim();
+  const user = window.CRII_API && window.CRII_API.getCurrentUser ? window.CRII_API.getCurrentUser() : null;
+
+  if (genBtn) {
+    genBtn.disabled = true;
+    genBtn.textContent = 'Generating with Google Gemini...';
+  }
+  if (statusEl) statusEl.textContent = `Rendering ${aspectRatio} (${imageSize}) via ${model} and saving to Cloudflare R2...`;
+
+  try {
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'generate',
+        prompt,
+        model,
+        aspectRatio,
+        imageSize,
+        slugHint,
+        createdBy: user ? (user.name || user.email) : 'AI Studio'
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success || !data.url) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    _aiStudioCurrentResult = data;
+    _aiStudioSessionGallery.unshift(data);
+    if (_aiStudioSessionGallery.length > 10) _aiStudioSessionGallery.pop();
+
+    if (previewImg) previewImg.src = data.url;
+    if (previewSec) previewSec.style.display = 'block';
+    if (r2Badge) r2Badge.textContent = data.storedInR2 ? '✓ Saved in Cloudflare R2' : 'Generated';
+    if (statusEl) statusEl.textContent = 'Image generated successfully!';
+    renderAiSessionGallery();
+    window.showToast('AI image generated & saved to R2!', 'success');
+  } catch (err) {
+    if (statusEl) statusEl.textContent = '';
+    window.showToast('Image generation failed: ' + err.message, 'error');
+    if (String(err.message).toLowerCase().includes('api key')) {
+      const drawer = document.getElementById('aiKeyDrawer');
+      if (drawer) drawer.style.display = 'block';
+    }
+  } finally {
+    if (genBtn) {
+      genBtn.disabled = false;
+      genBtn.textContent = '✨ Generate Image with Google Gemini';
+    }
+  }
+};
+
+window.applyAiImageAsCover = function() {
+  if (!_aiStudioCurrentResult || !_aiStudioCurrentResult.url) return;
+  const url = _aiStudioCurrentResult.url;
+  window.setMediaInputValue('bloggerCoverInput', url);
+  const previewBox = document.getElementById('bloggerCoverPreviewBox');
+  if (previewBox) {
+    previewBox.innerHTML = `<img src="${escapeHtml(url)}" style="width:100%; height:100%; object-fit:cover;">`;
+  }
+  window.closeAiImageStudio();
+  window.showToast('AI thumbnail applied as Article Cover Image!', 'success');
+};
+
+window.insertAiImageIntoArticle = function() {
+  if (!_aiStudioCurrentResult || !_aiStudioCurrentResult.url) return;
+  const url = _aiStudioCurrentResult.url;
+  const titleHint = (document.getElementById('bloggerTitleInput')?.value || 'Scientific Figure').trim();
+
+  if (_aiStudioTargetBlockIdx !== null && currentPostBlocks[_aiStudioTargetBlockIdx]) {
+    currentPostBlocks[_aiStudioTargetBlockIdx].url = url;
+    if (!currentPostBlocks[_aiStudioTargetBlockIdx].caption) {
+      currentPostBlocks[_aiStudioTargetBlockIdx].caption = titleHint;
+    }
+    renderBlockEditor();
+    window.closeAiImageStudio();
+    window.showToast('AI image applied to block!', 'success');
+    return;
+  }
+
+  if (window.CRII_WORD && typeof window.CRII_WORD.getMode === 'function' && window.CRII_WORD.getMode() === 'doc' && typeof window.CRII_WORD.insertFigure === 'function') {
+    window.CRII_WORD.insertFigure(url, titleHint);
+    window.closeAiImageStudio();
+    window.showToast('AI image inserted into Word document!', 'success');
+    return;
+  }
+
+  currentPostBlocks.push({
+    id: 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    type: 'image',
+    url,
+    caption: titleHint
+  });
+  renderBlockEditor();
+  window.closeAiImageStudio();
+  window.showToast('AI image added as a new Image Block!', 'success');
+};
+
+window.copyAiImageUrl = function() {
+  if (!_aiStudioCurrentResult || !_aiStudioCurrentResult.url) return;
+  const full = _aiStudioCurrentResult.url.startsWith('/') ? (window.location.origin + _aiStudioCurrentResult.url) : _aiStudioCurrentResult.url;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(full).then(() => window.showToast('Copied image URL!', 'success'));
+  }
+};

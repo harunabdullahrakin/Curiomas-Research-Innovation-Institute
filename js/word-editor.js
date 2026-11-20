@@ -1909,7 +1909,14 @@
     getWordCount: () => (mounted ? wordCount() : 0),
     getExcerpt: n => (mounted ? getExcerpt(n || 200) : ''),
     isEmpty: () => (mounted ? isEmpty() : true),
-    clearDraft() { try { localStorage.removeItem(draftKey); } catch (e) { /* ignore */ } dirty = false; },
+    clearDraft() { try { localStorage.removeItem(draftKey); } catch (e) {} dirty = false; },
+    insertFigure(url, caption) {
+      if (!mounted || !doc || !url) return false;
+      const html = figureHtml(url, caption || 'AI Generated Scientific Figure', caption || '', '85', 'center');
+      doc.focus();
+      insertHtml(html);
+      return true;
+    },
     blocksToHtml
   };
 })();

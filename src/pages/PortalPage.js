@@ -420,6 +420,9 @@ export function renderPortalPageHtml() {
 
               <div class="blogger-topbar-right">
                 <span id="bloggerReadTimeBadge" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">1 min read</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiImageStudio('thumbnail')" style="display:inline-flex; align-items:center; gap:0.35rem; border-color:rgba(234,88,12,0.4); color:#ea580c; background:rgba(234,88,12,0.06); font-weight:700;">
+                  <span>✨ AI Image Studio</span>
+                </button>
                 <button type="button" id="bloggerStatusBtn" class="status-chip published" style="cursor: pointer; border: none; font-size: 0.78rem; padding: 0.3rem 0.75rem;">
                   Published
                 </button>
@@ -483,6 +486,9 @@ export function renderPortalPageHtml() {
                     <button type="button" class="btn btn-secondary btn-sm" id="bloggerCoverInput_urlBtn" onclick="window.toggleMediaUrlRow('bloggerCoverInput')" style="display:inline-flex; align-items:center; gap:0.35rem; white-space:nowrap;">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                       <span>URL</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiImageStudio('thumbnail')" style="display:inline-flex; align-items:center; gap:0.35rem; white-space:nowrap; border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700;">
+                      <span>✨ AI Generate Thumbnail</span>
                     </button>
                     <div id="bloggerCoverInput_preview" style="font-size:0.76rem; color:var(--text-muted); display:inline-flex; align-items:center; gap:0.45rem; min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
                   </div>
@@ -2639,6 +2645,130 @@ export function renderPortalPageHtml() {
           <button type="submit" class="btn btn-primary" id="saveRecruitPageBtn">Save Recruit Page</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="aiImageGenModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 820px;">
+      <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem;">
+        <div>
+          <h3 class="modal-title" style="margin:0; display:flex; align-items:center; gap:0.45rem;">
+            <span>✨ Google Gemini Article Image Studio</span>
+          </h3>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.15rem;">Reads your full article to synthesize editable prompts & generate thumbnails or in-article figures via Nano Banana 2.1 / Pro.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <button type="button" class="btn btn-secondary btn-sm" id="aiToggleKeyDrawerBtn" onclick="window.toggleAiKeyDrawer()" style="font-size:0.76rem; white-space:nowrap;">⚙ Gemini API Key</button>
+          <button type="button" class="modal-close" onclick="window.closeAiImageStudio()">&times;</button>
+        </div>
+      </div>
+
+      <div class="modal-body" style="padding: 1.35rem 1.5rem; max-height: 78vh; overflow-y: auto;">
+        <div id="aiKeyDrawer" style="display:none; background:rgba(234,88,12,0.05); border:1px solid rgba(234,88,12,0.28); border-radius:12px; padding:1rem 1.15rem; margin-bottom:1.15rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.55rem;">
+            <div style="font-weight:700; font-size:0.86rem; color:var(--text-primary);">Google AI Studio / Gemini API Key</div>
+            <span id="aiKeyStatusBadge" style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">Checking...</span>
+          </div>
+          <p style="font-size:0.78rem; color:var(--text-secondary); margin:0 0 0.65rem;">
+            Paste your Google Gemini API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#ea580c; font-weight:600;">Google AI Studio</a>. It is stored securely in Cloudflare D1 and used server-side by Cloudflare Functions.
+          </p>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <input type="password" id="aiGeminiKeyInput" class="form-input" placeholder="AIzaSy..." style="flex:1; min-width:220px;">
+            <button type="button" class="btn btn-primary btn-sm" id="aiSaveKeyBtn" onclick="window.saveGeminiApiKey()">Save Key</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="window.clearGeminiApiKey()">Remove</button>
+          </div>
+        </div>
+
+        <div id="aiArticleContextBar" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:0.75rem 1rem; margin-bottom:1.15rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+          <div style="font-size:0.82rem; color:var(--text-secondary);" id="aiArticleContextText">Scanning active article...</div>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem;" onclick="window.draftAiPromptFromArticle()" id="aiDraftPromptBtn">🧠 Auto-Read Article & Draft Prompt</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.85rem; margin-bottom:1rem;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="aiImgModeSelect" style="font-size:0.78rem;">Image Purpose</label>
+            <select id="aiImgModeSelect" class="form-select" style="font-size:0.84rem;" onchange="window.syncAiModeRatio(this.value)">
+              <option value="thumbnail">Cover Thumbnail</option>
+              <option value="illustration">In-Article Illustration</option>
+              <option value="diagram">Scientific Diagram / Infographic</option>
+              <option value="banner">Editorial Header Banner</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="aiImgStyleSelect" style="font-size:0.78rem;">Visual Style</label>
+            <select id="aiImgStyleSelect" class="form-select" style="font-size:0.84rem;">
+              <option value="Editorial Scientific Photography">Editorial Scientific Photography</option>
+              <option value="3D Molecular & Astrophysics Render">3D Molecular / Space Render</option>
+              <option value="Minimalist Academic Diagram">Minimalist Academic Diagram</option>
+              <option value="Futuristic Laboratory Concept Art">Futuristic Lab Concept Art</option>
+              <option value="Photorealistic Macro Science">Photorealistic Macro Science</option>
+              <option value="Classic Naturalist Scientific Illustration">Classic Scientific Illustration</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="aiImgModelSelect" style="font-size:0.78rem;">Google Gemini Model</label>
+            <select id="aiImgModelSelect" class="form-select" style="font-size:0.84rem;">
+              <option value="gemini-nano-banana-2.1">Nano Banana 2.1 (Recommended)</option>
+              <option value="gemini-3-pro-image">Nano Banana Pro (Ultra Detail)</option>
+              <option value="gemini-3.1-flash-lite-image">Nano Banana 2 Lite (Fastest)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="aiImgRatioSelect" style="font-size:0.78rem;">Aspect Ratio & Size</label>
+            <div style="display:flex; gap:0.4rem;">
+              <select id="aiImgRatioSelect" class="form-select" style="font-size:0.84rem; flex:1;">
+                <option value="16:9">16:9</option>
+                <option value="3:2">3:2</option>
+                <option value="4:3">4:3</option>
+                <option value="1:1">1:1</option>
+                <option value="9:16">9:16</option>
+              </select>
+              <select id="aiImgSizeSelect" class="form-select" style="font-size:0.84rem; width:74px;">
+                <option value="1K">1K</option>
+                <option value="2K">2K</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+            <label class="form-label" for="aiImgPromptInput" style="margin:0; font-weight:700;">Image Prompt (Fully Editable)</label>
+            <span style="font-size:0.74rem; color:var(--text-muted);">Auto-generated from your article — customize freely before generating</span>
+          </div>
+          <textarea id="aiImgPromptInput" class="form-textarea" rows="4" placeholder="Click 'Auto-Read Article & Draft Prompt' or write/modify your own visual description here..."></textarea>
+        </div>
+
+        <div style="display:flex; gap:0.65rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem;">
+          <button type="button" class="btn btn-primary" id="aiGenerateImgBtn" onclick="window.runAiImageGeneration()" style="padding:0.65rem 1.5rem; font-weight:700;">
+            ✨ Generate Image with Google Gemini
+          </button>
+          <span id="aiGenStatusText" style="font-size:0.82rem; color:var(--text-muted);"></span>
+        </div>
+
+        <div id="aiResultPreviewSection" style="display:none; border-top:1px solid var(--border-color); padding-top:1.15rem;">
+          <div style="border-radius:12px; overflow:hidden; border:1px solid var(--border-color); background:#0f172a; margin-bottom:0.85rem; text-align:center;">
+            <img id="aiGeneratedPreviewImg" src="" alt="AI Generated Result" style="max-width:100%; max-height:360px; object-fit:contain; display:block; margin:0 auto;">
+          </div>
+          <div style="display:flex; gap:0.55rem; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="window.applyAiImageAsCover()">Use as Article Thumbnail</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="aiInsertBodyBtn" onclick="window.insertAiImageIntoArticle()">Insert into Article Body</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.copyAiImageUrl()">Copy R2 URL</button>
+            </div>
+            <span id="aiGeneratedR2Badge" style="font-size:0.74rem; color:#10b981; font-weight:700;"></span>
+          </div>
+
+          <div id="aiSessionHistoryWrap" style="display:none; margin-top:1rem;">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.45rem;">Generated Variations (Click to Select)</div>
+            <div id="aiSessionHistoryGrid" style="display:flex; gap:0.6rem; overflow-x:auto; padding-bottom:0.25rem;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding:0.85rem 1.5rem; display:flex; justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="window.closeAiImageStudio()">Close</button>
+      </div>
     </div>
   </div>
 
