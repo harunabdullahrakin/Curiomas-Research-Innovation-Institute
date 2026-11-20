@@ -1,0 +1,49 @@
+{
+  "name": "Curiomas Research & Innovation Institute — CRII",
+  "short_name": "CRII",
+  "description": "Autonomous Scientific Research, SSC & HSC Academics, MCQ Auto-Exam Engine, CQ Bank & Offline Study Portal.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#071f16",
+  "theme_color": "#ea580c",
+  "categories": ["education", "science", "productivity"],
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Academics (SSC & HSC)",
+      "short_name": "Academics",
+      "description": "Open SSC & HSC MCQs, Auto-Exam Taker, CQs & Study Notes",
+      "url": "/academics",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Research & Datasets",
+      "short_name": "Research",
+      "description": "Explore publications and open scientific datasets",
+      "url": "/research",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Researcher Portal",
+      "short_name": "Portal",
+      "description": "Manage publications, academics, fellows & AI tools",
+      "url": "/portal",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

@@ -37,13 +37,12 @@ export function renderNavbarHtml(currentPath = '/') {
             <span>Research</span>
           </a>
 
-          <a href="/blog" class="nav-item ${isActive('/blog')}">
+          <a href="/academics" class="nav-item ${isActive('/academics')}">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-              <path d="M6 6h10"/>
-              <path d="M6 10h10"/>
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
             </svg>
-            <span>Dispatches</span>
+            <span>Academics</span>
           </a>
         </nav>
 
@@ -96,7 +95,14 @@ export function renderNavbarHtml(currentPath = '/') {
             </div>
           </div>
 
-          <!-- Search Button -->
+          <button type="button" class="nav-icon-action" id="navPwaInstallBtn" onclick="window.triggerPwaInstall()" aria-label="Install App" title="Install CRII App (Works Offline)" style="display:none;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+
           <button type="button" class="nav-icon-action nav-search-trigger" id="navSearchTrigger" aria-label="Search" title="Search posts (Ctrl+K)">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"/>
@@ -133,9 +139,9 @@ export function renderNavbarHtml(currentPath = '/') {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.31L4.1 20.3a2 2 0 0 0 1.7 2.7h12.4a2 2 0 0 0 1.7-2.7L14 9.31V2"/></svg>
           <span>Research</span>
         </a>
-        <a href="/blog" class="mobile-nav-link ${isActive('/blog')}">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
-          <span>Dispatches</span>
+        <a href="/academics" class="mobile-nav-link ${isActive('/academics')}">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          <span>Academics</span>
         </a>
         <a href="/team" class="mobile-nav-link ${isActive('/team')}">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -145,6 +151,10 @@ export function renderNavbarHtml(currentPath = '/') {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
           <span>Contact</span>
         </a>
+        <button type="button" id="mobilePwaInstallBtn" class="mobile-nav-link" onclick="window.triggerPwaInstall()" style="width:100%; background:rgba(234,88,12,0.14); border:1px solid rgba(234,88,12,0.35); color:#fb923c; cursor:pointer; display:none;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Install CRII App (Offline Ready)</span>
+        </button>
 
         <!-- Mobile Language Selector -->
         <div style="display:flex; gap:0.5rem; padding:0.5rem 0.25rem 0.65rem; border-top:1px solid rgba(255,255,255,0.12); margin-top:0.4rem;">

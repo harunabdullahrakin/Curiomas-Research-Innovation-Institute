@@ -48,7 +48,7 @@ export function renderFooterHtml() {
             <ul class="footer-links-list">
               <li><a href="/">Home</a></li>
               <li><a href="/research">Research & Publications</a></li>
-              <li><a href="/blog">Dispatches</a></li>
+              <li><a href="/academics">Academics (SSC & HSC)</a></li>
               <li><a href="/team">Team & Mentors</a></li>
               <li><a href="/team#apply">Admissions</a></li>
               <li><a href="/contact">Contact</a></li>

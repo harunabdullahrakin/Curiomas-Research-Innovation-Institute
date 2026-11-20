@@ -104,6 +104,14 @@ export function renderPortalPageHtml() {
             </svg>
             <span class="portal-nav-label">Open Datasets</span>
           </button>
+
+          <button class="portal-nav-btn" data-tab="academics" data-tooltip="Academics (SSC / HSC)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+            <span class="portal-nav-label">Academics (SSC/HSC)</span>
+            <span class="portal-nav-badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700;">EDU</span>
+          </button>
         </div>
 
         <!-- Group 3: Community & Cohorts -->
@@ -1923,9 +1931,217 @@ export function renderPortalPageHtml() {
                 </div>
               </div>
               <div id="sqlResultsTableContainer" class="sql-results-table-container">
-                <!-- Dynamically populated table -->
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-academics" class="portal-tab-content" style="display:none;">
+        <div class="portal-topbar">
+          <div class="portal-title-block">
+            <h1>Academics Manager (SSC, HSC & STEM)</h1>
+            <p>Manage public classes, subjects, MCQ Auto-Exam question banks, Creative Questions (CQs), and chapter notes. All items include future Student Package access controls.</p>
+          </div>
+          <div style="display:flex; gap:0.55rem; flex-wrap:wrap;">
+            <a href="/academics" target="_blank" class="btn btn-secondary btn-sm">Open Public /academics ↗</a>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAdminAcademics()">Refresh</button>
+          </div>
+        </div>
+
+        <div id="acadAdminStatsGrid" class="portal-stats-grid" style="margin-bottom:1.5rem;"></div>
+
+        <div id="acadAdminSubTabs" style="display:flex; gap:0.45rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+          <button type="button" class="btn btn-sm btn-primary" data-asub="classes" onclick="window.switchAcadAdminTab('classes')">🎓 Classes & Subjects</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-asub="mcqs" onclick="window.switchAcadAdminTab('mcqs')">🧠 MCQ Bank + AI Gen</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-asub="cqs" onclick="window.switchAcadAdminTab('cqs')">📝 Creative Questions (CQ)</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-asub="notes" onclick="window.switchAcadAdminTab('notes')">📚 Notes & Formula Sheets</button>
+        </div>
+
+        <div id="acadAdminPane_classes">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:1.25rem; margin-bottom:1.5rem;">
+            <div class="data-table-card" style="padding:1.4rem;">
+              <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Add / Edit Class (SSC, HSC, etc.)</h3>
+              <form id="acadClassForm" onsubmit="window.handleSaveAcadClass(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
+                <input type="hidden" id="acadClassIdInput">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+                  <input type="text" id="acadClassNameInput" class="form-input" placeholder="Class Name (e.g. SSC (Class 9–10))" required>
+                  <input type="text" id="acadClassShortInput" class="form-input" placeholder="Short Label (e.g. SSC)">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 90px; gap:0.65rem;">
+                  <input type="text" id="acadClassBadgeInput" class="form-input" placeholder="Badge (e.g. Board Prep)">
+                  <select id="acadClassAccessInput" class="form-select">
+                    <option value="public">Public (Free)</option>
+                    <option value="package">Student Package (Future)</option>
+                  </select>
+                  <input type="color" id="acadClassColorInput" class="form-input" value="#ea580c" style="padding:0.2rem; height:38px;">
+                </div>
+                <textarea id="acadClassDescInput" class="form-textarea" rows="2" placeholder="Class overview & exam focus..."></textarea>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadClassForm').reset(); document.getElementById('acadClassIdInput').value='';">Clear</button>
+                  <button type="submit" class="btn btn-primary btn-sm">Save Class</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="data-table-card" style="padding:1.4rem;">
+              <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Add / Edit Subject & Chapters</h3>
+              <form id="acadSubjectForm" onsubmit="window.handleSaveAcadSubject(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
+                <input type="hidden" id="acadSubIdInput">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+                  <select id="acadSubClassSelect" class="form-select" required></select>
+                  <input type="text" id="acadSubNameInput" class="form-input" placeholder="Subject Name (e.g. Physics)" required>
+                </div>
+                <div style="display:grid; grid-template-columns:80px 1fr 1fr; gap:0.65rem;">
+                  <input type="text" id="acadSubIconInput" class="form-input" value="⚛️" placeholder="Icon">
+                  <input type="text" id="acadSubCodeInput" class="form-input" placeholder="Code (e.g. PHY-136)">
+                  <select id="acadSubAccessInput" class="form-select">
+                    <option value="public">Public (Free)</option>
+                    <option value="package">Student Package</option>
+                  </select>
+                </div>
+                <textarea id="acadSubChaptersInput" class="form-textarea" rows="2" placeholder="Chapters (comma or newline separated, e.g. Chapter 1: Motion, Chapter 2: Force)"></textarea>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadSubjectForm').reset(); document.getElementById('acadSubIdInput').value='';">Clear</button>
+                  <button type="submit" class="btn btn-primary btn-sm">Save Subject</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="data-table-card" style="padding:1.35rem;">
+            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Configured Classes & Subjects</h3>
+            <div id="acadAdminClassesList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:0.9rem;"></div>
+          </div>
+        </div>
+
+        <div id="acadAdminPane_mcqs" style="display:none;">
+          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
+              <h3 style="margin:0; font-size:1.05rem;">Add MCQ Question (or AI Auto-Generate Batch)</h3>
+              <button type="button" class="btn btn-secondary btn-sm" id="acadAiGenMcqBtn" onclick="window.handleAiGenerateMcqs()" style="border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700;">✨ AI Generate 5 MCQs for Selected Subject/Chapter</button>
+            </div>
+            <form id="acadMcqForm" onsubmit="window.handleSaveAcadMcq(event)" style="display:flex; flex-direction:column; gap:0.75rem;">
+              <input type="hidden" id="acadMcqIdInput">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
+                <select id="acadMcqClassSelect" class="form-select" onchange="window.syncAcadSubjectSelect('acadMcqClassSelect', 'acadMcqSubjectSelect')" required></select>
+                <select id="acadMcqSubjectSelect" class="form-select" required></select>
+                <input type="text" id="acadMcqChapterInput" class="form-input" placeholder="Chapter (e.g. Chapter 2: Motion)">
+                <input type="text" id="acadMcqBoardInput" class="form-input" placeholder="Board/Year (e.g. Dhaka Board 2025)">
+                <select id="acadMcqDiffInput" class="form-select">
+                  <option value="Easy">Easy</option>
+                  <option value="Medium" selected>Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
+              <textarea id="acadMcqQuestionInput" class="form-textarea" rows="2" placeholder="Enter MCQ question text..." required></textarea>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+                <input type="text" id="acadMcqOpt0" class="form-input" placeholder="Option A *" required>
+                <input type="text" id="acadMcqOpt1" class="form-input" placeholder="Option B *" required>
+                <input type="text" id="acadMcqOpt2" class="form-input" placeholder="Option C *" required>
+                <input type="text" id="acadMcqOpt3" class="form-input" placeholder="Option D *" required>
+              </div>
+              <div style="display:grid; grid-template-columns:180px 1fr; gap:0.65rem;">
+                <select id="acadMcqCorrectSelect" class="form-select">
+                  <option value="0">Correct: Option A</option>
+                  <option value="1">Correct: Option B</option>
+                  <option value="2">Correct: Option C</option>
+                  <option value="3">Correct: Option D</option>
+                </select>
+                <input type="text" id="acadMcqExplanationInput" class="form-input" placeholder="Step-by-step explanation shown after student submits...">
+              </div>
+              <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadMcqForm').reset(); document.getElementById('acadMcqIdInput').value='';">Clear</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save MCQ</button>
+              </div>
+            </form>
+          </div>
+          <div class="data-table-card" style="padding:1.35rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.85rem;">
+              <h3 style="margin:0; font-size:1.05rem;">Existing MCQ Question Bank</h3>
+              <input type="text" id="acadAdminMcqSearch" class="form-input" placeholder="Filter MCQs..." oninput="window.renderAcadAdminMcqList()" style="max-width:260px; font-size:0.82rem; padding:0.38rem 0.7rem;">
+            </div>
+            <div id="acadAdminMcqList" style="display:flex; flex-direction:column; gap:0.65rem; max-height:460px; overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <div id="acadAdminPane_cqs" style="display:none;">
+          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
+            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Add Creative Question (CQ / সৃজনশীল)</h3>
+            <form id="acadCqForm" onsubmit="window.handleSaveAcadCq(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
+              <input type="hidden" id="acadCqIdInput">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
+                <select id="acadCqClassSelect" class="form-select" onchange="window.syncAcadSubjectSelect('acadCqClassSelect', 'acadCqSubjectSelect')" required></select>
+                <select id="acadCqSubjectSelect" class="form-select" required></select>
+                <input type="text" id="acadCqChapterInput" class="form-input" placeholder="Chapter">
+                <input type="text" id="acadCqBoardInput" class="form-input" placeholder="Board/Year (e.g. HSC Dhaka 2025)">
+              </div>
+              <input type="text" id="acadCqTitleInput" class="form-input" placeholder="CQ Topic Title (e.g. Geostationary Satellite Orbital Speed)" required>
+              <textarea id="acadCqStemInput" class="form-textarea" rows="3" placeholder="Uddipok / Scenario Stem *" required></textarea>
+              <div>
+                <label class="form-label" style="font-size:0.78rem;">Optional Diagram / Figure</label>
+                ${renderMediaPickerField({ id: 'acadCqImageInput', accept: 'image/*', uploadLabel: 'Upload Diagram', placeholder: 'Paste diagram URL or /api/images/...' })}
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+                <input type="text" id="acadCqPartA" class="form-input" placeholder="(ক) Knowledge Question [1m] *" required>
+                <input type="text" id="acadCqAnsA" class="form-input" placeholder="(ক) Model Answer">
+                <input type="text" id="acadCqPartB" class="form-input" placeholder="(খ) Comprehension Question [2m] *" required>
+                <input type="text" id="acadCqAnsB" class="form-input" placeholder="(খ) Model Answer">
+                <textarea id="acadCqPartC" class="form-textarea" rows="2" placeholder="(গ) Application Question [3m] *" required></textarea>
+                <textarea id="acadCqAnsC" class="form-textarea" rows="2" placeholder="(গ) Step-by-step Answer"></textarea>
+                <textarea id="acadCqPartD" class="form-textarea" rows="2" placeholder="(ঘ) Higher-Order Question [4m] *" required></textarea>
+                <textarea id="acadCqAnsD" class="form-textarea" rows="2" placeholder="(ঘ) Full Analytical Answer"></textarea>
+              </div>
+              <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadCqForm').reset(); document.getElementById('acadCqIdInput').value='';">Clear</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save CQ</button>
+              </div>
+            </form>
+          </div>
+          <div class="data-table-card" style="padding:1.35rem;">
+            <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Published Creative Questions</h3>
+            <div id="acadAdminCqList" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+          </div>
+        </div>
+
+        <div id="acadAdminPane_notes" style="display:none;">
+          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
+            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Add Study Note, Formula Sheet, PDF Handout or Lecture</h3>
+            <form id="acadNoteForm" onsubmit="window.handleSaveAcadNote(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
+              <input type="hidden" id="acadNoteIdInput">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
+                <select id="acadNoteClassSelect" class="form-select" onchange="window.syncAcadSubjectSelect('acadNoteClassSelect', 'acadNoteSubjectSelect')" required></select>
+                <select id="acadNoteSubjectSelect" class="form-select" required></select>
+                <input type="text" id="acadNoteChapterInput" class="form-input" placeholder="Chapter">
+                <select id="acadNoteTypeSelect" class="form-select">
+                  <option value="note">Chapter Note</option>
+                  <option value="formula">Formula Sheet</option>
+                  <option value="pdf">PDF / Handout</option>
+                  <option value="video">Video Lecture</option>
+                </select>
+              </div>
+              <input type="text" id="acadNoteTitleInput" class="form-input" placeholder="Resource Title *" required>
+              <input type="text" id="acadNoteSummaryInput" class="form-input" placeholder="Short summary...">
+              <textarea id="acadNoteContentInput" class="form-textarea" rows="5" placeholder="Markdown notes / formulas (use ## Headings and - bullet points)..."></textarea>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div>
+                  <label class="form-label" style="font-size:0.78rem;">Optional Handout File / Image (R2 Upload or URL)</label>
+                  ${renderMediaPickerField({ id: 'acadNoteFileInput', accept: 'image/*,.pdf', uploadLabel: 'Upload File', placeholder: 'Paste PDF/Image URL or /api/images/...' })}
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.78rem;">Optional Video Lecture (Upload MP4 or URL)</label>
+                  ${renderMediaPickerField({ id: 'acadNoteVideoInput', accept: 'video/*', uploadLabel: 'Upload Video', placeholder: 'Paste YouTube or MP4 URL...' })}
+                </div>
+              </div>
+              <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadNoteForm').reset(); document.getElementById('acadNoteIdInput').value='';">Clear</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save Study Resource</button>
+              </div>
+            </form>
+          </div>
+          <div class="data-table-card" style="padding:1.35rem;">
+            <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Published Study Notes & Formula Sheets</h3>
+            <div id="acadAdminNoteList" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
           </div>
         </div>
       </div>

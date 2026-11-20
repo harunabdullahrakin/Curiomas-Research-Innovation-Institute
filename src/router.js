@@ -5,8 +5,8 @@
 
 import { renderHomePageHtml, mountHomePage } from './pages/HomePage.js';
 import { renderResearchPageHtml, mountResearchPage } from './pages/ResearchPage.js';
+import { renderAcademicsPageHtml, mountAcademicsPage } from './pages/AcademicsPage.js';
 import { renderTeamPageHtml, mountTeamPage } from './pages/TeamPage.js';
-import { renderBlogPageHtml, mountBlogPage } from './pages/BlogPage.js';
 import { renderArticlePageHtml, mountArticlePage } from './pages/ArticlePage.js';
 import { renderContactPageHtml, mountContactPage } from './pages/ContactPage.js';
 import { renderLoginPageHtml, mountLoginPage } from './pages/LoginPage.js';
@@ -132,10 +132,15 @@ export class Router {
         mountFn = mountTeamPage;
         document.title = 'Core Team & Research Mentors — CRII';
         break;
+      case '/academics':
+        html = renderAcademicsPageHtml();
+        mountFn = mountAcademicsPage;
+        document.title = 'CRII Academics — SSC, HSC & STEM Exam Hub';
+        break;
       case '/blog':
-        html = renderBlogPageHtml();
-        mountFn = mountBlogPage;
-        document.title = 'Dispatches from the Institute — CRII';
+        html = renderResearchPageHtml();
+        mountFn = mountResearchPage;
+        document.title = 'Research Publications & Datasets — CRII';
         break;
       case '/article':
         html = renderArticlePageHtml();

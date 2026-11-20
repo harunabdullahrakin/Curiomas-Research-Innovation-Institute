@@ -252,6 +252,9 @@ function showTab(tabName) {
   if (tabName === 'settings' && typeof window.loadAiProvidersManager === 'function') {
     window.loadAiProvidersManager();
   }
+  if (tabName === 'academics' && typeof window.loadAdminAcademics === 'function') {
+    window.loadAdminAcademics();
+  }
   try {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
@@ -6504,5 +6507,351 @@ window.handleSendAiHelp = async function(e) {
       btn.textContent = 'Send ↵';
     }
     if (inp) inp.focus();
+  }
+};
+
+let _adminAcadCatalog = { classes: [], subjects: [], mcqs: [], cqs: [], notes: [] };
+
+window.switchAcadAdminTab = function(sub) {
+  ['classes', 'mcqs', 'cqs', 'notes'].forEach(t => {
+    const p = document.getElementById('acadAdminPane_' + t);
+    if (p) p.style.display = t === sub ? 'block' : 'none';
+  });
+  const bar = document.getElementById('acadAdminSubTabs');
+  if (bar) {
+    bar.querySelectorAll('button').forEach(b => {
+      const act = b.dataset.asub === sub;
+      b.classList.toggle('btn-primary', act);
+      b.classList.toggle('btn-secondary', !act);
+    });
+  }
+};
+
+window.syncAcadSubjectSelect = function(classSelId, subSelId, keepSubId = '') {
+  const cSel = document.getElementById(classSelId);
+  const sSel = document.getElementById(subSelId);
+  if (!cSel || !sSel) return;
+  const cid = cSel.value;
+  const subs = _adminAcadCatalog.subjects.filter(s => s.classId === cid);
+  const prev = keepSubId || sSel.value;
+  sSel.innerHTML = subs.length
+    ? subs.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.icon || '📘')} ${escapeHtml(s.name)}</option>`).join('')
+    : '<option value="">No subjects in this class yet</option>';
+  if (prev && subs.some(s => s.id === prev)) sSel.value = prev;
+};
+
+function renderAdminAcademicsAll() {
+  const { classes, subjects, mcqs, cqs, notes } = _adminAcadCatalog;
+
+  const statsEl = document.getElementById('acadAdminStatsGrid');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="stat-label">Classes / Tracks</div><div class="stat-value">${classes.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Subjects</div><div class="stat-value">${subjects.length}</div></div>
+      <div class="stat-card"><div class="stat-label">MCQ Bank</div><div class="stat-value">${mcqs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Creative Qs (CQ)</div><div class="stat-value">${cqs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Notes & Formulas</div><div class="stat-value">${notes.length}</div></div>
+    `;
+  }
+
+  const classOpts = classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
+  ['acadSubClassSelect', 'acadMcqClassSelect', 'acadCqClassSelect', 'acadNoteClassSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = classOpts || '<option value="">Create a class first</option>';
+    if (prev && classes.some(c => c.id === prev)) el.value = prev;
+  });
+  window.syncAcadSubjectSelect('acadMcqClassSelect', 'acadMcqSubjectSelect');
+  window.syncAcadSubjectSelect('acadCqClassSelect', 'acadCqSubjectSelect');
+  window.syncAcadSubjectSelect('acadNoteClassSelect', 'acadNoteSubjectSelect');
+
+  const clsList = document.getElementById('acadAdminClassesList');
+  if (clsList) {
+    clsList.innerHTML = classes.map(c => {
+      const subs = subjects.filter(s => s.classId === c.id);
+      return `
+        <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:12px; padding:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem;">
+            <div>
+              <strong style="font-size:0.98rem; color:var(--text-primary);">${escapeHtml(c.name)}</strong>
+              <div style="font-size:0.74rem; color:var(--text-muted);">${escapeHtml(c.badge || '')} • Access: <strong>${escapeHtml(c.accessTier || 'public')}</strong></div>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm" style="font-size:0.7rem; padding:0.2rem 0.5rem;" onclick="window.handleDeleteAcadItem('delete_class', '${escapeHtml(c.id)}')">✕</button>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.65rem;">
+            ${subs.length === 0 ? '<div style="font-size:0.78rem; color:var(--text-muted);">No subjects yet</div>' : subs.map(s => `
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; padding:0.4rem 0.6rem; border-radius:8px; background:var(--bg-secondary); font-size:0.8rem;">
+                <span>${escapeHtml(s.icon || '📘')} <strong>${escapeHtml(s.name)}</strong> <span style="color:var(--text-muted);">(${(s.chapters || []).length} ch)</span></span>
+                <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.68rem; padding:0.15rem 0.45rem; color:#ef4444;" onclick="window.handleDeleteAcadItem('delete_subject', '${escapeHtml(s.id)}')">✕</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.renderAcadAdminMcqList();
+
+  const cqList = document.getElementById('acadAdminCqList');
+  if (cqList) {
+    cqList.innerHTML = cqs.map(cq => {
+      const sub = subjects.find(s => s.id === cq.subjectId);
+      const cls = classes.find(c => c.id === cq.classId);
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem; padding:0.85rem 1rem; border-radius:10px; background:var(--bg-secondary); border:1px solid var(--border-color);">
+          <div>
+            <div style="font-size:0.74rem; color:#ea580c; font-weight:700;">${escapeHtml(cls ? cls.shortName : '')} • ${escapeHtml(sub ? sub.name : '')} • ${escapeHtml(cq.chapter || '')} ${cq.boardTag ? '• ' + escapeHtml(cq.boardTag) : ''}</div>
+            <div style="font-weight:700; font-size:0.9rem; color:var(--text-primary); margin:0.15rem 0;">${escapeHtml(cq.title || 'Creative Question')}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml((cq.stem || '').slice(0, 140))}...</div>
+          </div>
+          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleDeleteAcadItem('delete_cq', '${escapeHtml(cq.id)}')">Delete</button>
+        </div>
+      `;
+    }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No CQs published yet.</div>';
+  }
+
+  const noteList = document.getElementById('acadAdminNoteList');
+  if (noteList) {
+    noteList.innerHTML = notes.map(n => {
+      const sub = subjects.find(s => s.id === n.subjectId);
+      const cls = classes.find(c => c.id === n.classId);
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; padding:0.85rem 1rem; border-radius:10px; background:var(--bg-secondary); border:1px solid var(--border-color);">
+          <div>
+            <div style="font-size:0.74rem; color:#ea580c; font-weight:700;">${escapeHtml(cls ? cls.shortName : '')} • ${escapeHtml(sub ? sub.name : '')} • ${escapeHtml((n.resourceType || 'note').toUpperCase())}</div>
+            <div style="font-weight:700; font-size:0.9rem; color:var(--text-primary);">${escapeHtml(n.title)}</div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">${escapeHtml(n.chapter || '')}${n.summary ? ' — ' + escapeHtml(n.summary) : ''}</div>
+          </div>
+          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleDeleteAcadItem('delete_note', '${escapeHtml(n.id)}')">Delete</button>
+        </div>
+      `;
+    }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No study notes published yet.</div>';
+  }
+}
+
+window.renderAcadAdminMcqList = function() {
+  const listEl = document.getElementById('acadAdminMcqList');
+  if (!listEl) return;
+  const q = (document.getElementById('acadAdminMcqSearch')?.value || '').trim().toLowerCase();
+  const letters = ['A', 'B', 'C', 'D'];
+  const items = _adminAcadCatalog.mcqs.filter(m => {
+    if (!q) return true;
+    return [m.question, m.chapter, m.boardTag, ...(m.options || [])].join(' ').toLowerCase().includes(q);
+  });
+  listEl.innerHTML = items.map(m => {
+    const sub = _adminAcadCatalog.subjects.find(s => s.id === m.subjectId);
+    const cls = _adminAcadCatalog.classes.find(c => c.id === m.classId);
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem; padding:0.75rem 0.95rem; border-radius:10px; background:var(--bg-secondary); border:1px solid var(--border-color);">
+        <div>
+          <div style="font-size:0.72rem; color:#ea580c; font-weight:700;">${escapeHtml(cls ? cls.shortName : '')} • ${escapeHtml(sub ? sub.name : '')} • ${escapeHtml(m.chapter || '')} ${m.boardTag ? '• ' + escapeHtml(m.boardTag) : ''}</div>
+          <div style="font-weight:700; font-size:0.86rem; color:var(--text-primary); margin:0.2rem 0;">${escapeHtml(m.question)}</div>
+          <div style="font-size:0.76rem; color:#059669; font-weight:600;">Ans (${letters[m.correctIndex] || 'A'}): ${escapeHtml((m.options || [])[m.correctIndex] || '')}</div>
+        </div>
+        <button type="button" class="btn btn-danger btn-sm" style="font-size:0.7rem;" onclick="window.handleDeleteAcadItem('delete_mcq', '${escapeHtml(m.id)}')">✕</button>
+      </div>
+    `;
+  }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No MCQs found.</div>';
+};
+
+window.loadAdminAcademics = async function() {
+  try {
+    const res = await fetch('/api/academics', { cache: 'no-store' });
+    const data = await res.json();
+    if (res.ok && Array.isArray(data.classes)) {
+      _adminAcadCatalog = data;
+      renderAdminAcademicsAll();
+    }
+  } catch (e) {}
+};
+
+async function postAcademicsAction(payload, successMsg) {
+  const res = await fetch('/api/academics', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+  _adminAcadCatalog = data;
+  renderAdminAcademicsAll();
+  if (successMsg && window.showToast) window.showToast(successMsg, 'success');
+  return data;
+}
+
+window.handleSaveAcadClass = async function(e) {
+  e.preventDefault();
+  try {
+    await postAcademicsAction({
+      action: 'save_class',
+      id: document.getElementById('acadClassIdInput').value || undefined,
+      name: document.getElementById('acadClassNameInput').value.trim(),
+      shortName: document.getElementById('acadClassShortInput').value.trim(),
+      badge: document.getElementById('acadClassBadgeInput').value.trim(),
+      accessTier: document.getElementById('acadClassAccessInput').value,
+      accentColor: document.getElementById('acadClassColorInput').value,
+      description: document.getElementById('acadClassDescInput').value.trim()
+    }, 'Class saved!');
+    document.getElementById('acadClassForm').reset();
+    document.getElementById('acadClassIdInput').value = '';
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleSaveAcadSubject = async function(e) {
+  e.preventDefault();
+  try {
+    await postAcademicsAction({
+      action: 'save_subject',
+      id: document.getElementById('acadSubIdInput').value || undefined,
+      classId: document.getElementById('acadSubClassSelect').value,
+      name: document.getElementById('acadSubNameInput').value.trim(),
+      icon: document.getElementById('acadSubIconInput').value.trim() || '📘',
+      code: document.getElementById('acadSubCodeInput').value.trim(),
+      accessTier: document.getElementById('acadSubAccessInput').value,
+      chapters: document.getElementById('acadSubChaptersInput').value
+    }, 'Subject & chapters saved!');
+    document.getElementById('acadSubjectForm').reset();
+    document.getElementById('acadSubIdInput').value = '';
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleSaveAcadMcq = async function(e) {
+  e.preventDefault();
+  try {
+    await postAcademicsAction({
+      action: 'save_mcq',
+      id: document.getElementById('acadMcqIdInput').value || undefined,
+      classId: document.getElementById('acadMcqClassSelect').value,
+      subjectId: document.getElementById('acadMcqSubjectSelect').value,
+      chapter: document.getElementById('acadMcqChapterInput').value.trim() || 'General',
+      boardTag: document.getElementById('acadMcqBoardInput').value.trim(),
+      difficulty: document.getElementById('acadMcqDiffInput').value,
+      question: document.getElementById('acadMcqQuestionInput').value.trim(),
+      options: [
+        document.getElementById('acadMcqOpt0').value.trim(),
+        document.getElementById('acadMcqOpt1').value.trim(),
+        document.getElementById('acadMcqOpt2').value.trim(),
+        document.getElementById('acadMcqOpt3').value.trim()
+      ],
+      correctIndex: Number(document.getElementById('acadMcqCorrectSelect').value) || 0,
+      explanation: document.getElementById('acadMcqExplanationInput').value.trim()
+    }, 'MCQ added to exam bank!');
+    document.getElementById('acadMcqQuestionInput').value = '';
+    ['acadMcqOpt0', 'acadMcqOpt1', 'acadMcqOpt2', 'acadMcqOpt3', 'acadMcqExplanationInput', 'acadMcqIdInput'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleAiGenerateMcqs = async function() {
+  const btn = document.getElementById('acadAiGenMcqBtn');
+  const classId = document.getElementById('acadMcqClassSelect')?.value;
+  const subjectId = document.getElementById('acadMcqSubjectSelect')?.value;
+  const chapter = (document.getElementById('acadMcqChapterInput')?.value || 'Core Board Topics').trim();
+  const cls = _adminAcadCatalog.classes.find(c => c.id === classId);
+  const sub = _adminAcadCatalog.subjects.find(s => s.id === subjectId);
+  if (!classId || !subjectId) {
+    window.showToast('Select a Class and Subject first.', 'warning');
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = '✨ Generating 5 MCQs...'; }
+  try {
+    const prompt = `Generate exactly 5 high-quality multiple-choice exam questions for ${cls ? cls.name : 'SSC/HSC'} — ${sub ? sub.name : 'Science'}, Chapter: "${chapter}". Return ONLY a valid JSON array (no markdown fences, no commentary) where each item has: {"question":"...","options":["optA","optB","optC","optD"],"correctIndex":0,"explanation":"...","difficulty":"Medium","boardTag":"AI Model Test"}.`;
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'write_assist', mode: 'custom', title: `${cls ? cls.name : ''} ${sub ? sub.name : ''} ${chapter}`, instruction: prompt, tone: 'Academic & Peer-Reviewed', length: 'Medium' })
+    });
+    let data = await res.json();
+    let rawText = data.text || '';
+    if ((!res.ok || !rawText) && data.clientTextFallback) {
+      const dr = await fetch(data.clientTextFallback.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: data.clientTextFallback.model, messages: data.clientTextFallback.messages })
+      });
+      const dj = await dr.json().catch(() => ({}));
+      rawText = dj?.choices?.[0]?.message?.content || '';
+    }
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('AI response did not contain a valid JSON MCQ array.');
+    const items = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(items) || items.length === 0) throw new Error('No MCQs generated.');
+    await postAcademicsAction({ action: 'bulk_save_mcqs', classId, subjectId, chapter, boardTag: 'AI Model Test', items }, `✨ AI generated & saved ${items.length} MCQs!`);
+  } catch (err) {
+    window.showToast('AI MCQ generation failed: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✨ AI Generate 5 MCQs for Selected Subject/Chapter'; }
+  }
+};
+
+window.handleSaveAcadCq = async function(e) {
+  e.preventDefault();
+  try {
+    await postAcademicsAction({
+      action: 'save_cq',
+      id: document.getElementById('acadCqIdInput').value || undefined,
+      classId: document.getElementById('acadCqClassSelect').value,
+      subjectId: document.getElementById('acadCqSubjectSelect').value,
+      chapter: document.getElementById('acadCqChapterInput').value.trim() || 'General',
+      boardTag: document.getElementById('acadCqBoardInput').value.trim(),
+      title: document.getElementById('acadCqTitleInput').value.trim(),
+      stem: document.getElementById('acadCqStemInput').value.trim(),
+      imageUrl: document.getElementById('acadCqImageInput')?.value.trim() || '',
+      partA: document.getElementById('acadCqPartA').value.trim(),
+      ansA: document.getElementById('acadCqAnsA').value.trim(),
+      partB: document.getElementById('acadCqPartB').value.trim(),
+      ansB: document.getElementById('acadCqAnsB').value.trim(),
+      partC: document.getElementById('acadCqPartC').value.trim(),
+      ansC: document.getElementById('acadCqAnsC').value.trim(),
+      partD: document.getElementById('acadCqPartD').value.trim(),
+      ansD: document.getElementById('acadCqAnsD').value.trim()
+    }, 'Creative Question (CQ) saved!');
+    document.getElementById('acadCqForm').reset();
+    document.getElementById('acadCqIdInput').value = '';
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleSaveAcadNote = async function(e) {
+  e.preventDefault();
+  try {
+    await postAcademicsAction({
+      action: 'save_note',
+      id: document.getElementById('acadNoteIdInput').value || undefined,
+      classId: document.getElementById('acadNoteClassSelect').value,
+      subjectId: document.getElementById('acadNoteSubjectSelect').value,
+      chapter: document.getElementById('acadNoteChapterInput').value.trim() || 'General',
+      resourceType: document.getElementById('acadNoteTypeSelect').value,
+      title: document.getElementById('acadNoteTitleInput').value.trim(),
+      summary: document.getElementById('acadNoteSummaryInput').value.trim(),
+      content: document.getElementById('acadNoteContentInput').value.trim(),
+      fileUrl: document.getElementById('acadNoteFileInput')?.value.trim() || '',
+      videoUrl: document.getElementById('acadNoteVideoInput')?.value.trim() || ''
+    }, 'Study resource saved!');
+    document.getElementById('acadNoteForm').reset();
+    document.getElementById('acadNoteIdInput').value = '';
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleDeleteAcadItem = async function(action, id) {
+  if (!confirm('Delete this academic item permanently?')) return;
+  try {
+    await postAcademicsAction({ action, id }, 'Deleted successfully');
+  } catch (err) {
+    window.showToast(err.message, 'error');
   }
 };

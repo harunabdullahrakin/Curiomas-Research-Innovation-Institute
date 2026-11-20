@@ -15,7 +15,7 @@ export function renderArticlePageHtml() {
           <div class="mockup-page-hero-body" style="max-width: 860px;">
             <div style="font-size: 0.86rem; color: #94a3b8; margin-bottom: 1.25rem;">
               <a href="/" style="color: inherit; text-decoration: none;">Home</a> / 
-              <a href="/blog" style="color: inherit; text-decoration: none;">Dispatches</a> / 
+              <a href="/research" style="color: inherit; text-decoration: none;">Research</a> / 
               <span id="postCategoryHero" style="color: #38bdf8; font-weight: 600;">Article</span>
             </div>
             <h1 id="postHeroTitle" class="mockup-page-hero-title" style="font-size: 2.75rem; line-height: 1.15;"></h1>
