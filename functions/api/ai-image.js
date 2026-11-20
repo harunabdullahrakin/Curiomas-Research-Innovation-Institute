@@ -1,9 +1,15 @@
 const GEMINI_INTERACTIONS_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const GEMINI_API_REVISION = "2026-05-20";
+const TEXT_MODEL_FALLBACKS = [
+  "gemini-3.8-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite",
+  "gemma-4-31b-it"
+];
 const ALLOWED_IMAGE_MODELS = [
   "gemini-nano-banana-2.1",
-  "gemini-3-pro-image",
-  "gemini-3.1-flash-lite-image"
+  "gemini-3.1-flash-lite-image",
+  "gemini-3-pro-image"
 ];
 const ALLOWED_RATIOS = ["16:9", "4:3", "3:2", "1:1", "9:16"];
 const ALLOWED_SIZES = ["1K", "2K"];
@@ -22,6 +28,38 @@ function jsonResp(data, status = 200) {
 function maskKey(k) {
   if (!k || k.length < 10) return "";
   return k.slice(0, 6) + "..." + k.slice(-4);
+}
+
+function isRetryableAiError(status, errMsg) {
+  if ([429, 500, 502, 503, 504].includes(status)) return true;
+  const m = String(errMsg || "").toLowerCase();
+  return m.includes("high demand") ||
+    m.includes("overloaded") ||
+    m.includes("unavailable") ||
+    m.includes("temporarily") ||
+    m.includes("rate limit") ||
+    m.includes("resource_exhausted") ||
+    m.includes("quota") ||
+    m.includes("try again") ||
+    m.includes("not found");
+}
+
+function buildLocalFallbackPrompt({ title, category, excerpt, content, mode, style }) {
+  const modeDesc = mode === "diagram"
+    ? "Clean modern scientific infographic diagram with crisp visual hierarchy"
+    : mode === "illustration"
+      ? "Detailed in-article scientific editorial illustration"
+      : mode === "banner"
+        ? "Wide panoramic editorial research header banner"
+        : "High-impact 16:9 editorial scientific publication cover thumbnail";
+  const snippet = (excerpt || content || "").replace(/\s+/g, " ").trim().slice(0, 260);
+  const parts = [
+    `${modeDesc} in ${style} style representing "${title || "Frontier Scientific Discovery"}".`,
+    category ? `Discipline atmosphere inspired by ${category}.` : "",
+    snippet ? `Core visual themes drawn from the research: ${snippet}.` : "",
+    "Dramatic museum-grade studio lighting, crisp focal depth, rich balanced color palette, refined composition, no watermarks or cluttered text overlays."
+  ].filter(Boolean);
+  return parts.join(" ");
 }
 
 async function ensureSettingsTable(db) {
@@ -242,23 +280,44 @@ export async function onRequestPost(context) {
       content ? `Full Article Content:\n${content}` : ""
     ].filter(Boolean).join("\n\n");
 
-    const aiRes = await callGeminiInteractions(apiKey, {
-      model: "gemini-3.8-flash",
-      input: [{ type: "text", text: synthesisInput }],
-      store: false
+    let lastError = "";
+    let lastStatus = 500;
+
+    for (let i = 0; i < TEXT_MODEL_FALLBACKS.length; i++) {
+      const candidateModel = TEXT_MODEL_FALLBACKS[i];
+      const aiRes = await callGeminiInteractions(apiKey, {
+        model: candidateModel,
+        input: [{ type: "text", text: synthesisInput }],
+        store: false
+      });
+
+      if (aiRes.ok) {
+        const draftedPrompt = extractTextFromInteraction(aiRes.data);
+        if (draftedPrompt) {
+          return jsonResp({
+            success: true,
+            prompt: draftedPrompt,
+            modelUsed: candidateModel,
+            usedFallback: i > 0
+          });
+        }
+      }
+
+      lastStatus = aiRes.status;
+      lastError = aiRes.data?.error?.message || aiRes.data?.message || `HTTP ${aiRes.status}`;
+      if (!isRetryableAiError(aiRes.status, lastError)) {
+        return jsonResp({ error: lastError }, aiRes.status >= 400 && aiRes.status < 600 ? aiRes.status : 500);
+      }
+    }
+
+    const fallbackPrompt = buildLocalFallbackPrompt({ title, category, excerpt, content, mode, style });
+    return jsonResp({
+      success: true,
+      prompt: fallbackPrompt,
+      modelUsed: "smart-local-fallback",
+      usedFallback: true,
+      fallbackNotice: lastError
     });
-
-    if (!aiRes.ok) {
-      const errMsg = aiRes.data?.error?.message || aiRes.data?.message || `Gemini API returned HTTP ${aiRes.status}`;
-      return jsonResp({ error: errMsg }, aiRes.status >= 400 && aiRes.status < 600 ? aiRes.status : 500);
-    }
-
-    const draftedPrompt = extractTextFromInteraction(aiRes.data);
-    if (!draftedPrompt) {
-      return jsonResp({ error: "Gemini did not return a prompt. Please try again." }, 500);
-    }
-
-    return jsonResp({ success: true, prompt: draftedPrompt });
   }
 
   if (action === "generate") {
@@ -267,34 +326,55 @@ export async function onRequestPost(context) {
       return jsonResp({ error: "Image prompt is required." }, 400);
     }
 
-    const model = ALLOWED_IMAGE_MODELS.includes(body.model) ? body.model : "gemini-nano-banana-2.1";
+    const requestedModel = ALLOWED_IMAGE_MODELS.includes(body.model) ? body.model : "gemini-nano-banana-2.1";
+    const imageModelChain = [requestedModel, ...ALLOWED_IMAGE_MODELS.filter(m => m !== requestedModel)];
     const aspectRatio = ALLOWED_RATIOS.includes(body.aspectRatio) ? body.aspectRatio : "16:9";
     const imageSize = ALLOWED_SIZES.includes(body.imageSize) ? body.imageSize : "1K";
     const slugHint = String(body.slugHint || "article").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "article";
 
-    const aiRes = await callGeminiInteractions(apiKey, {
-      model,
-      input: [{ type: "text", text: prompt }],
-      response_format: {
-        type: "image",
-        mime_type: "image/png",
-        aspect_ratio: aspectRatio,
-        image_size: imageSize
-      },
-      store: false
-    });
+    let imgObj = null;
+    let modelUsed = requestedModel;
+    let usedFallback = false;
+    let lastError = "";
+    let lastStatus = 500;
 
-    if (!aiRes.ok) {
-      const errMsg = aiRes.data?.error?.message || aiRes.data?.message || `Gemini Image API returned HTTP ${aiRes.status}`;
-      return jsonResp({ error: errMsg }, aiRes.status >= 400 && aiRes.status < 600 ? aiRes.status : 500);
+    for (let i = 0; i < imageModelChain.length; i++) {
+      const candidateModel = imageModelChain[i];
+      const aiRes = await callGeminiInteractions(apiKey, {
+        model: candidateModel,
+        input: [{ type: "text", text: prompt }],
+        response_format: {
+          type: "image",
+          mime_type: "image/png",
+          aspect_ratio: aspectRatio,
+          image_size: imageSize
+        },
+        store: false
+      });
+
+      if (aiRes.ok) {
+        const extracted = extractImageFromInteraction(aiRes.data);
+        if (extracted && extracted.data) {
+          imgObj = extracted;
+          modelUsed = candidateModel;
+          usedFallback = i > 0;
+          break;
+        }
+        lastError = extractTextFromInteraction(aiRes.data) || "No image returned by model.";
+        lastStatus = 422;
+      } else {
+        lastStatus = aiRes.status;
+        lastError = aiRes.data?.error?.message || aiRes.data?.message || `HTTP ${aiRes.status}`;
+        if (!isRetryableAiError(aiRes.status, lastError)) {
+          return jsonResp({ error: lastError }, aiRes.status >= 400 && aiRes.status < 600 ? aiRes.status : 500);
+        }
+      }
     }
 
-    const imgObj = extractImageFromInteraction(aiRes.data);
     if (!imgObj || !imgObj.data) {
-      const fallbackText = extractTextFromInteraction(aiRes.data);
       return jsonResp({
-        error: fallbackText || "No image was returned by Gemini. Try adjusting the prompt."
-      }, 422);
+        error: lastError || "All Gemini image models are currently experiencing high demand. Please retry in a moment."
+      }, lastStatus >= 400 && lastStatus < 600 ? lastStatus : 503);
     }
 
     const mimeType = imgObj.mimeType || "image/png";
@@ -309,7 +389,7 @@ export async function onRequestPost(context) {
       try {
         await env.STORAGE.put(r2Key, bytes, {
           httpMetadata: { contentType: mimeType },
-          customMetadata: { originalName: filename, source: "gemini_ai_studio", model }
+          customMetadata: { originalName: filename, source: "gemini_ai_studio", model: modelUsed }
         });
         finalUrl = `/api/images/${r2Key}`;
         storedInR2 = true;
@@ -341,7 +421,8 @@ export async function onRequestPost(context) {
       storedInR2,
       mimeType,
       size: bytes.byteLength,
-      model,
+      model: modelUsed,
+      usedFallback,
       aspectRatio,
       prompt
     });

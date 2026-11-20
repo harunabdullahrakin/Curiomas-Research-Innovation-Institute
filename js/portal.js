@@ -5499,8 +5499,10 @@ window.draftAiPromptFromArticle = async function() {
       promptEl.value = data.prompt;
       promptEl.focus();
     }
-    if (statusEl) statusEl.textContent = 'Prompt drafted from your article — feel free to modify it before generating.';
-    window.showToast('Prompt synthesized from article! Edit freely or generate now.', 'success');
+    const modelLabel = data.modelUsed ? ` via ${data.modelUsed}` : '';
+    const fbLabel = data.usedFallback ? ' (auto-fallback)' : '';
+    if (statusEl) statusEl.textContent = `Prompt drafted${modelLabel}${fbLabel} — customize freely before generating.`;
+    window.showToast(`Prompt synthesized${modelLabel}${fbLabel}!`, 'success');
   } catch (err) {
     if (statusEl) statusEl.textContent = '';
     window.showToast('Prompt draft failed: ' + err.message, 'error');
@@ -5597,10 +5599,10 @@ window.runAiImageGeneration = async function() {
 
     if (previewImg) previewImg.src = data.url;
     if (previewSec) previewSec.style.display = 'block';
-    if (r2Badge) r2Badge.textContent = data.storedInR2 ? '✓ Saved in Cloudflare R2' : 'Generated';
-    if (statusEl) statusEl.textContent = 'Image generated successfully!';
+    if (r2Badge) r2Badge.textContent = data.storedInR2 ? `✓ Saved in R2 (${data.model})` : `Generated (${data.model})`;
+    if (statusEl) statusEl.textContent = `Image generated via ${data.model}${data.usedFallback ? ' (auto-fallback)' : ''}!`;
     renderAiSessionGallery();
-    window.showToast('AI image generated & saved to R2!', 'success');
+    window.showToast(`AI image generated via ${data.model}${data.usedFallback ? ' (fallback)' : ''}!`, 'success');
   } catch (err) {
     if (statusEl) statusEl.textContent = '';
     window.showToast('Image generation failed: ' + err.message, 'error');
