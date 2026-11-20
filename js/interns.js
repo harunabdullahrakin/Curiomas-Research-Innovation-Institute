@@ -321,7 +321,135 @@ async function initApplicationForm() {
     if (inviteCard) inviteCard.style.display = 'block';
   };
 
-  window.proceedFromCuriousGateway = function() {
+  const activeOptions = window._criiActiveAppFormOptions || {};
+  let selectedPackageObj = null;
+  const uniqueDebounceTimers = {};
+
+  async function runUniqueCheck(fieldKey, value, isCustom, statusEl, inputEl) {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) {
+      if (statusEl) statusEl.innerHTML = '';
+      if (inputEl) delete inputEl.dataset.uniqueConflict;
+      return true;
+    }
+    if (statusEl) statusEl.innerHTML = '<span style="color:#64748b;">Checking availability...</span>';
+    const res = await window.CRII_API.checkApplicationFieldUnique(fieldKey, trimmed, isCustom);
+    if (res && res.exists) {
+      if (statusEl) statusEl.innerHTML = '<span style="color:#dc2626; font-weight:600;">✕ Already used — this value must be unique.</span>';
+      if (inputEl) {
+        inputEl.dataset.uniqueConflict = 'true';
+        inputEl.style.borderColor = '#dc2626';
+      }
+      return false;
+    }
+    if (statusEl) statusEl.innerHTML = '<span style="color:#059669; font-weight:600;">✓ Available</span>';
+    if (inputEl) {
+      delete inputEl.dataset.uniqueConflict;
+      inputEl.style.borderColor = '#10b981';
+    }
+    return true;
+  }
+
+  function bindUniqueAutoCheck(inputEl, fieldKey, isCustom, statusEl) {
+    if (!inputEl) return;
+    const trigger = () => {
+      clearTimeout(uniqueDebounceTimers[fieldKey]);
+      uniqueDebounceTimers[fieldKey] = setTimeout(() => {
+        runUniqueCheck(fieldKey, inputEl.value, isCustom, statusEl, inputEl);
+      }, 400);
+    };
+    inputEl.addEventListener('input', trigger);
+    inputEl.addEventListener('blur', () => runUniqueCheck(fieldKey, inputEl.value, isCustom, statusEl, inputEl));
+  }
+
+  const curiousEmailEl = document.getElementById('curiousEmailInput');
+  const curiousEmailStatus = document.getElementById('curiousEmailUniqueStatus');
+  if (formConfig.uniqueEmail && curiousEmailEl) {
+    bindUniqueAutoCheck(curiousEmailEl, 'email', false, curiousEmailStatus);
+  }
+
+  const paymentRefEl = document.getElementById('appPaymentRefInput');
+  const paymentRefStatus = document.getElementById('appPaymentRefUniqueStatus');
+  if (paymentRefEl) {
+    bindUniqueAutoCheck(paymentRefEl, 'paymentRef', false, paymentRefStatus);
+  }
+
+  window.togglePublicAppUrlInput = function(inputId) {
+    const wrap = document.getElementById(inputId + '_urlWrap');
+    if (!wrap) return;
+    const hidden = wrap.style.display === 'none' || !wrap.style.display;
+    wrap.style.display = hidden ? 'block' : 'none';
+    if (hidden) {
+      const inp = document.getElementById(inputId);
+      if (inp) inp.focus();
+    }
+  };
+
+  window.triggerPublicAppMediaUpload = function(inputId, accept = 'image/*', isPfp = false) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = accept;
+    fileInput.style.display = 'none';
+    fileInput.onchange = async (ev) => {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      const statusEl = document.getElementById(inputId + '_status');
+      const targetInp = document.getElementById(inputId);
+      const previewEl = document.getElementById(inputId + '_preview');
+      if (statusEl) statusEl.innerHTML = `<span style="color:#ea580c; font-weight:600;">Uploading ${escapeHtml(file.name)}...</span>`;
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('source', 'fellowship_application');
+      try {
+        const res = await fetch('/api/storage', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Upload failed');
+        const uploadedUrl = data.url || (data.item && data.item.url) || ('/api/images/' + data.item.key.replace(/^uploads\//, ''));
+        if (targetInp) {
+          targetInp.value = uploadedUrl;
+          targetInp.dispatchEvent(new Event('input', { bubbles: true }));
+          targetInp.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        if (statusEl) statusEl.innerHTML = '<span style="color:#059669; font-weight:600;">✓ Uploaded</span>';
+        if (previewEl) {
+          if (accept.includes('video')) {
+            previewEl.innerHTML = `<video src="${escapeHtml(uploadedUrl)}" controls style="max-height:140px; max-width:100%; border-radius:8px; margin-top:0.45rem;"></video>`;
+          } else {
+            previewEl.innerHTML = `<img src="${escapeHtml(uploadedUrl)}" style="${isPfp ? 'width:76px; height:76px; border-radius:50%;' : 'max-height:120px; max-width:220px; border-radius:10px;'} object-fit:cover; border:2px solid #ea580c; margin-top:0.45rem;">`;
+          }
+        }
+      } catch (err) {
+        if (statusEl) statusEl.innerHTML = `<span style="color:#dc2626;">Upload failed: ${escapeHtml(err.message)}</span>`;
+      } finally {
+        fileInput.remove();
+      }
+    };
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    setTimeout(() => fileInput.remove(), 60000);
+  };
+
+  window.setAppCustomStarRating = function(inputId, ratingVal) {
+    const inp = document.getElementById(inputId);
+    if (inp) {
+      inp.value = String(ratingVal);
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+      inp.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const wrap = document.getElementById(inputId + '_stars');
+    if (wrap) {
+      wrap.querySelectorAll('button[data-star]').forEach(btn => {
+        const s = Number(btn.getAttribute('data-star'));
+        btn.style.color = s <= ratingVal ? '#f59e0b' : '#cbd5e1';
+        btn.style.transform = s <= ratingVal ? 'scale(1.12)' : 'scale(1)';
+      });
+    }
+    const lbl = document.getElementById(inputId + '_ratingLabel');
+    if (lbl) lbl.textContent = `${ratingVal} / 5`;
+  };
+
+  window.proceedFromCuriousGateway = async function() {
     const nameInput = document.getElementById('curiousNameInput');
     const emailInput = document.getElementById('curiousEmailInput');
     const name = (nameInput?.value || '').trim();
@@ -337,8 +465,14 @@ async function initApplicationForm() {
       emailInput?.focus();
       return;
     }
+    if (formConfig.uniqueEmail) {
+      const ok = await runUniqueCheck('email', email, false, curiousEmailStatus, emailInput);
+      if (!ok) {
+        emailInput?.focus();
+        return;
+      }
+    }
 
-    // Set badges and form fields
     const appFullName = document.getElementById('appFullName');
     const appEmail = document.getElementById('appEmail');
     const dossierNameBadge = document.getElementById('dossierNameBadge');
@@ -349,7 +483,6 @@ async function initApplicationForm() {
     if (dossierNameBadge) dossierNameBadge.textContent = name;
     if (dossierEmailBadge) dossierEmailBadge.textContent = email;
 
-    // Show curiosity loader animation
     if (gatewayCard) gatewayCard.style.display = 'none';
     if (loaderCard) {
       loaderCard.style.display = 'block';
@@ -391,7 +524,6 @@ async function initApplicationForm() {
     }
   };
 
-  // 3. Populate Real Divisions into Preferred Division dropdown (from live D1)
   const divSelect = document.getElementById('appDivision');
   if (divSelect && window.CRII_API) {
     try {
@@ -409,12 +541,9 @@ async function initApplicationForm() {
           <option value="Interdisciplinary Open Science">Interdisciplinary Open Science</option>
         `;
       }
-    } catch (e) {
-      console.warn('Error fetching divisions for form:', e);
-    }
+    } catch (e) {}
   }
 
-  // 4. Populate Real Cohorts & Grades into Academic Level dropdown
   const levelSelect = document.getElementById('appLevel');
   if (levelSelect && window.CRII_API) {
     try {
@@ -435,12 +564,91 @@ async function initApplicationForm() {
           <option value="Self-Directed & Independent Researchers">Self-Directed & Independent Researchers</option>
         `;
       }
-    } catch (e) {
-      console.warn('Error fetching cohorts for form:', e);
-    }
+    } catch (e) {}
   }
 
-  // 5. Apply Application Form Settings (Visibility, Required status, Custom fields)
+  const pkgContainer = document.getElementById('appPackagesSelectorContainer');
+  const payBox = document.getElementById('appPaymentDetailsBox');
+  const payInstr = document.getElementById('appPaymentInstructionsText');
+  const payLinkWrap = document.getElementById('appPaymentLinkWrap');
+  const payLinkBtn = document.getElementById('appPaymentLinkBtn');
+  if (pkgContainer && window.CRII_API && window.CRII_API.getFellowshipPackages) {
+    try {
+      let pkgs = (await window.CRII_API.getFellowshipPackages()) || [];
+      pkgs = pkgs.filter(p => p && p.active !== false);
+      if (Array.isArray(activeOptions.allowedPackageIds) && activeOptions.allowedPackageIds.length > 0) {
+        pkgs = pkgs.filter(p => activeOptions.allowedPackageIds.includes(p.id));
+      }
+
+      const formatPrice = (p) => {
+        const n = Number(p.price || 0);
+        if (!n || n <= 0) return 'Free';
+        const syms = { BDT: '৳', USD: '$', EUR: '€', GBP: '£', INR: '₹' };
+        return `${syms[p.currency] || (p.currency ? p.currency + ' ' : '')}${n.toLocaleString()}`;
+      };
+
+      window.selectApplicationPackage = function(pkgId) {
+        const found = pkgs.find(p => p.id === pkgId) || null;
+        selectedPackageObj = found;
+        pkgContainer.querySelectorAll('.app-pkg-card').forEach(card => {
+          const isMatch = card.getAttribute('data-pkg-id') === pkgId;
+          card.style.borderColor = isMatch ? '#ea580c' : '#e2e8f0';
+          card.style.background = isMatch ? '#fff7ed' : '#ffffff';
+          card.style.boxShadow = isMatch ? '0 8px 22px rgba(234,88,12,0.14)' : 'none';
+          const chk = card.querySelector('.app-pkg-check');
+          if (chk) chk.style.display = isMatch ? 'inline-flex' : 'none';
+        });
+        if (payBox) {
+          if (found && Number(found.price || 0) > 0) {
+            payBox.style.display = 'block';
+            if (payInstr) payInstr.textContent = found.paymentInstructions || `Selected package fee: ${formatPrice(found)} (${found.billingCycle || 'One-time'}). Complete payment and enter your transaction reference below.`;
+            if (payLinkWrap && payLinkBtn) {
+              if (found.paymentLink) {
+                payLinkBtn.href = found.paymentLink;
+                payLinkWrap.style.display = 'block';
+              } else {
+                payLinkWrap.style.display = 'none';
+              }
+            }
+            if (paymentRefEl) paymentRefEl.required = true;
+          } else {
+            payBox.style.display = 'none';
+            if (paymentRefEl) paymentRefEl.required = false;
+          }
+        }
+      };
+
+      if (pkgs.length > 0) {
+        pkgContainer.style.display = 'block';
+        pkgContainer.innerHTML = `
+          <label class="form-label" style="font-weight:700; display:block; margin-bottom:0.65rem;">Select Fellowship Package / Student Fee Tier *</label>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.85rem;">
+            ${pkgs.map(p => `
+              <div class="app-pkg-card" data-pkg-id="${escapeHtml(p.id)}" onclick="window.selectApplicationPackage('${escapeHtml(p.id)}')" style="border:2px solid #e2e8f0; border-radius:12px; padding:1rem; background:#ffffff; cursor:pointer; transition:all 0.2s ease; display:flex; flex-direction:column; justify-content:space-between;">
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; margin-bottom:0.35rem;">
+                    <span style="font-weight:700; font-size:0.95rem; color:#0f172a;">${escapeHtml(p.name)}</span>
+                    <span class="app-pkg-check" style="display:none; width:20px; height:20px; border-radius:50%; background:#ea580c; color:#fff; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700;">✓</span>
+                  </div>
+                  ${p.badge ? `<span style="display:inline-block; font-size:0.68rem; font-weight:700; color:#ea580c; background:rgba(234,88,12,0.12); padding:2px 7px; border-radius:999px; margin-bottom:0.45rem;">${escapeHtml(p.badge)}</span>` : ''}
+                  <div style="font-size:1.35rem; font-weight:800; color:#ea580c; margin-bottom:0.4rem;">${formatPrice(p)} <span style="font-size:0.74rem; font-weight:500; color:#64748b;">/ ${escapeHtml(p.billingCycle || 'One-time')}</span></div>
+                  <ul style="margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0.25rem;">
+                    ${(p.benefits || []).slice(0, 5).map(b => `<li style="font-size:0.76rem; color:#475569; display:flex; gap:0.35rem;"><span style="color:#10b981;">✓</span><span>${escapeHtml(b)}</span></li>`).join('')}
+                  </ul>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        const urlPkg = new URLSearchParams(window.location.search).get('package');
+        const initialPkgId = activeOptions.preselectedPackageId || urlPkg || (pkgs.find(p => p.highlighted) || pkgs[0]).id;
+        window.selectApplicationPackage(initialPkgId);
+      } else {
+        pkgContainer.style.display = 'none';
+      }
+    } catch (e) {}
+  }
+
   if (formConfig && formConfig.fields) {
     const f = formConfig.fields;
     const applyFieldConfig = (id, fieldKey) => {
@@ -466,79 +674,177 @@ async function initApplicationForm() {
     applyFieldConfig('appStatement', 'statement');
   }
 
-  // Render Custom Fields
   const customContainer = document.getElementById('appCustomFieldsContainer');
   if (customContainer) {
     if (Array.isArray(formConfig.customFields) && formConfig.customFields.length > 0) {
       customContainer.innerHTML = formConfig.customFields.map((cf, idx) => {
         const inputId = `appCustom_${idx}`;
+        const keyAttr = escapeHtml(cf.label || ('Field ' + (idx + 1)));
+        const reqAttr = cf.required ? 'required' : '';
+        const uniqAttr = cf.unique ? 'data-unique="true"' : '';
+        const phAttr = escapeHtml(cf.placeholder || '');
         let inputHtml = '';
+
         if (cf.type === 'textarea') {
-          inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}"></textarea>`;
+          inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr} placeholder="${phAttr}"></textarea>`;
         } else if (cf.type === 'select') {
           const opts = Array.isArray(cf.options) ? cf.options : [];
           inputHtml = `
-            <select id="${inputId}" class="form-select" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''}>
+            <select id="${inputId}" class="form-select" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr}>
               <option value="">Select option...</option>
               ${opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}
             </select>
           `;
         } else if (cf.type === 'number') {
-          inputHtml = `<input type="number" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
+          inputHtml = `<input type="number" step="any" id="${inputId}" class="form-input" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr} placeholder="${phAttr}">`;
+        } else if (cf.type === 'id') {
+          inputHtml = `<input type="text" id="${inputId}" class="form-input" style="font-family:monospace; letter-spacing:0.04em;" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr} placeholder="${phAttr || 'e.g. ID-2026-0041'}">`;
+        } else if (cf.type === 'email') {
+          inputHtml = `<input type="email" id="${inputId}" class="form-input" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr} placeholder="${phAttr || 'name@example.com'}">`;
+        } else if (cf.type === 'phone') {
+          inputHtml = `<input type="tel" id="${inputId}" class="form-input" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr} placeholder="${phAttr || '+880 1XXX-XXXXXX'}">`;
+        } else if (cf.type === 'date') {
+          inputHtml = `<input type="date" id="${inputId}" class="form-input" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr}>`;
+        } else if (cf.type === 'url') {
+          inputHtml = `<input type="text" id="${inputId}" class="form-input" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr} placeholder="${phAttr || 'Paste link or path...'}">`;
+        } else if (cf.type === 'rating') {
+          inputHtml = `
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <div id="${inputId}_stars" style="display:inline-flex; gap:0.25rem;">
+                ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" onclick="window.setAppCustomStarRating('${inputId}', ${n})" style="background:none; border:none; font-size:1.7rem; color:#cbd5e1; cursor:pointer; transition:transform 0.15s ease, color 0.15s ease; padding:0 0.1rem;">★</button>`).join('')}
+              </div>
+              <span id="${inputId}_ratingLabel" style="font-size:0.85rem; font-weight:700; color:#ea580c;"></span>
+              <input type="hidden" id="${inputId}" data-custom-key="${keyAttr}" data-custom-required="${cf.required ? '1' : '0'}" ${uniqAttr} value="">
+            </div>
+          `;
+        } else if (cf.type === 'image' || cf.type === 'pfp' || cf.type === 'video') {
+          const isVid = cf.type === 'video';
+          const isPfp = cf.type === 'pfp';
+          const acc = isVid ? 'video/mp4,video/webm,video/*' : 'image/*';
+          const btnText = isVid ? 'Upload Video' : (isPfp ? 'Upload Profile Photo' : 'Upload Image');
+          inputHtml = `
+            <div style="display:flex; flex-direction:column; gap:0.45rem;">
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="window.triggerPublicAppMediaUpload('${inputId}', '${acc}', ${isPfp ? 'true' : 'false'})">${btnText}</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.togglePublicAppUrlInput('${inputId}')">URL</button>
+                <span id="${inputId}_status" style="font-size:0.78rem; color:#64748b;"></span>
+              </div>
+              <div id="${inputId}_urlWrap" style="display:none;">
+                <input type="text" id="${inputId}" class="form-input" data-custom-key="${keyAttr}" data-custom-required="${cf.required ? '1' : '0'}" ${uniqAttr} placeholder="${phAttr || 'Paste URL or server path...'}">
+              </div>
+              <div id="${inputId}_preview"></div>
+            </div>
+          `;
+        } else if (cf.type === 'checkbox') {
+          inputHtml = `
+            <label style="display:flex; align-items:center; gap:0.55rem; font-size:0.9rem; cursor:pointer; padding:0.5rem 0.75rem; background:#faf8f5; border-radius:8px; border:1px solid #d4c8b6;">
+              <input type="checkbox" id="${inputId}" data-custom-key="${keyAttr}" data-is-checkbox="1" ${reqAttr} style="width:17px; height:17px; accent-color:#ea580c;">
+              <span>${phAttr || 'Yes, I confirm'}</span>
+            </label>
+          `;
         } else {
-          inputHtml = `<input type="text" id="${inputId}" class="form-input" data-custom-key="${escapeHtml(cf.label)}" ${cf.required ? 'required' : ''} placeholder="${escapeHtml(cf.placeholder || '')}">`;
+          inputHtml = `<input type="text" id="${inputId}" class="form-input" data-custom-key="${keyAttr}" ${uniqAttr} ${reqAttr} placeholder="${phAttr}">`;
         }
 
         return `
           <div class="form-group" style="margin-bottom:1.25rem;">
-            <label class="form-label" for="${inputId}" style="font-weight:600;">
-              ${escapeHtml(cf.label)} ${cf.required ? '*' : ''}
+            <label class="form-label" for="${inputId}" style="font-weight:600; display:flex; align-items:center; gap:0.45rem;">
+              <span>${keyAttr} ${cf.required ? '*' : ''}</span>
+              ${cf.unique ? '<span style="font-size:0.68rem; font-weight:700; color:#ea580c; background:rgba(234,88,12,0.1); padding:1px 6px; border-radius:999px;">Unique</span>' : ''}
             </label>
             ${inputHtml}
+            ${cf.unique ? `<div id="${inputId}_uniqueStatus" style="font-size:0.78rem; margin-top:0.3rem; min-height:1em;"></div>` : ''}
           </div>
         `;
       }).join('');
+
+      formConfig.customFields.forEach((cf, idx) => {
+        if (!cf.unique) return;
+        const inputEl = document.getElementById(`appCustom_${idx}`);
+        const statusEl = document.getElementById(`appCustom_${idx}_uniqueStatus`);
+        bindUniqueAutoCheck(inputEl, cf.label || ('Field ' + (idx + 1)), true, statusEl);
+      });
     } else {
       customContainer.innerHTML = '';
     }
   }
 
-  // 6. Submission Handler
   if (!form) return;
+  if (form.dataset.criiBound === '1') return;
+  form.dataset.criiBound = '1';
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const uniqueChecks = [];
+    const applicantEmail = document.getElementById('appEmail')?.value.trim() || document.getElementById('curiousEmailInput')?.value.trim() || '';
+    if (formConfig.uniqueEmail && applicantEmail) {
+      uniqueChecks.push({ fieldKey: 'email', label: 'Email Address', value: applicantEmail, isCustom: false });
+    }
+    if (selectedPackageObj && Number(selectedPackageObj.price || 0) > 0 && paymentRefEl && paymentRefEl.value.trim()) {
+      uniqueChecks.push({ fieldKey: 'paymentRef', label: 'Payment Transaction ID', value: paymentRefEl.value.trim(), isCustom: false });
+    }
+
+    const customFields = {};
+    const customEls = document.querySelectorAll('#appCustomFieldsContainer [data-custom-key]');
+    for (const el of customEls) {
+      const key = el.getAttribute('data-custom-key');
+      const isCb = el.getAttribute('data-is-checkbox') === '1';
+      const val = isCb ? (el.checked ? 'Yes' : 'No') : String(el.value || '').trim();
+      if (el.getAttribute('data-custom-required') === '1' && !val) {
+        alert(`Please complete the required field: "${key}"`);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (el.dataset.uniqueConflict === 'true') {
+        alert(`"${key}" already exists in our records and must be unique.`);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (el.getAttribute('data-unique') === 'true' && val) {
+        uniqueChecks.push({ fieldKey: key, label: key, value: val, isCustom: true });
+      }
+      if (key) customFields[key] = val;
+    }
 
     const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerHTML = 'Transmitting Research Dossier...';
+      submitBtn.innerHTML = 'Verifying & Transmitting Dossier...';
     }
 
-    // Extract custom fields
-    const customFields = {};
-    document.querySelectorAll('#appCustomFieldsContainer [data-custom-key]').forEach(el => {
-      const key = el.getAttribute('data-custom-key');
-      if (key) customFields[key] = (el.value || '').trim();
-    });
+    const formatFeeText = (pkg) => {
+      if (!pkg) return '';
+      const n = Number(pkg.price || 0);
+      if (!n || n <= 0) return 'Free';
+      return `${pkg.currency || 'BDT'} ${n.toLocaleString()} (${pkg.billingCycle || 'One-time'})`;
+    };
 
     const formData = {
       fullName: document.getElementById('appFullName')?.value.trim() || document.getElementById('curiousNameInput')?.value.trim() || 'Fellow Applicant',
-      email: document.getElementById('appEmail')?.value.trim() || document.getElementById('curiousEmailInput')?.value.trim() || '',
+      email: applicantEmail,
       university: document.getElementById('appUniversity')?.value.trim() || '',
       fieldOfStudy: document.getElementById('appFieldOfStudy')?.value.trim() || '',
       preferredDivision: document.getElementById('appDivision')?.value || 'General Science',
       academicLevel: document.getElementById('appLevel')?.value || '',
       portfolioUrl: document.getElementById('appPortfolio')?.value.trim() || '',
       statement: document.getElementById('appStatement')?.value.trim() || '',
-      customFields
+      packageId: selectedPackageObj ? selectedPackageObj.id : '',
+      packageName: selectedPackageObj ? selectedPackageObj.name : '',
+      packageFee: selectedPackageObj ? formatFeeText(selectedPackageObj) : '',
+      paymentRef: paymentRefEl ? paymentRefEl.value.trim() : '',
+      paymentReceiptUrl: document.getElementById('appPaymentReceiptInput')?.value.trim() || '',
+      recruitPageSlug: activeOptions.recruitPageSlug || '',
+      customFields,
+      uniqueChecks
     };
 
     try {
       const res = await window.CRII_API.submitInternApplication(formData);
-      
-      const formCard = document.getElementById('applicationFormCard');
-      if (formCard) {
-        formCard.innerHTML = `
+
+      const formCardEl = document.getElementById('applicationFormCard');
+      if (formCardEl) {
+        formCardEl.innerHTML = `
           <div style="text-align:center; padding:3.5rem 1.5rem; animation: fadeIn 0.4s ease;">
             <div style="width:64px; height:64px; border-radius:50%; background:rgba(16, 185, 129, 0.12); border:1.5px solid #10b981; color:#059669; display:grid; place-items:center; margin:0 auto 1.5rem;">
               <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -551,7 +857,7 @@ async function initApplicationForm() {
             <h2 style="font-size:2rem; margin-bottom:0.75rem; color:var(--text-primary); font-family:var(--font-display);">Welcome to the Cohort Queue</h2>
             <p style="color:var(--text-secondary); max-width:540px; margin:0 auto 1.5rem; line-height:1.65; font-size:1.02rem;">
               Thank you, <strong>${escapeHtml(res.fullName)}</strong>. Your research application for the 
-              <span style="color:var(--accent-primary, #ea580c); font-weight:700;">${escapeHtml(res.preferredDivision)}</span> track has been entered into the admissions queue.
+              <span style="color:var(--accent-primary, #ea580c); font-weight:700;">${escapeHtml(res.preferredDivision)}</span> track${res.packageName ? ` (${escapeHtml(res.packageName)})` : ''} has been entered into the admissions queue.
             </p>
             <div style="background:#faf8f5; padding:0.95rem 1.5rem; border-radius:12px; border:1px solid #d4c8b6; display:inline-block; font-family:monospace; font-size:0.92rem; color:#1a221b; margin-bottom:2.25rem;">
               Application Reference: <strong style="color:#ea580c;">${res.id}</strong>
@@ -564,7 +870,6 @@ async function initApplicationForm() {
         `;
       }
 
-      // Dispatch EmailJS alert if template configured
       if (window.emailjs) {
         try {
           const tplId = (window.CRII_API && typeof window.CRII_API.getEmailjsTemplateId === 'function')
@@ -580,20 +885,17 @@ async function initApplicationForm() {
               applicant_university: res.university,
               applicant_division: res.preferredDivision,
               applicant_level: res.academicLevel,
-              message: `New fellowship application received from ${res.fullName} (${res.email}) from ${res.university} for track: ${res.preferredDivision} (${res.academicLevel}).\n\nPortfolio: ${res.portfolioUrl || 'None'}\n\nStatement:\n${res.statement}`
+              message: `New fellowship application received from ${res.fullName} (${res.email}) from ${res.university} for track: ${res.preferredDivision} (${res.academicLevel}).\nPackage: ${res.packageName || 'Standard'} (${res.packageFee || 'Free'})\nPayment Ref: ${res.paymentRef || 'N/A'}\nPortfolio: ${res.portfolioUrl || 'None'}\n\nStatement:\n${res.statement}`
             }, 'h3x_9dtR8frBq2pCi');
           }
-        } catch (mailErr) {
-          console.warn('EmailJS application alert notification note:', mailErr);
-        }
+        } catch (mailErr) {}
       }
     } catch (err) {
-      console.error('Error submitting application:', err);
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Submit Fellowship Application →';
       }
-      alert('There was an issue submitting your application. Please check your connection and try again.');
+      alert(err.message || 'There was an issue submitting your application. Please check your entries and try again.');
     }
   });
 }

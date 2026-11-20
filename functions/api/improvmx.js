@@ -1,14 +1,3 @@
-/**
- * Cloudflare Pages Function: /api/improvmx
- * Professional Email Alias Manager powered by ImprovMX API
- * 
- * Capabilities:
- * - List accounts and domains dynamically from API key(s)
- * - Check DNS / MX records status for active domains
- * - List, create, update, and delete email aliases (e.g. name@domain -> researcher@gmail.com)
- * - Multi-API-key support with D1 database persistence
- */
-
 const DEFAULT_PRIMARY_KEY = "sk_039b243250cf4b33856cb5cdf95b4509";
 const DEFAULT_KEY_ID = "key_primary_improvmx";
 const DEFAULT_KEY_LABEL = "Primary Council Account";
@@ -25,49 +14,73 @@ async function ensureKeysTable(db) {
         createdAt TEXT NOT NULL
       )
     `).run().catch(() => {});
-  } catch (e) {
-    // Ignore table creation errors
-  }
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value_json TEXT NOT NULL,
+        updatedAt TEXT,
+        updatedBy TEXT
+      )
+    `).run().catch(() => {});
+  } catch (e) {}
+}
+
+async function seedPrimaryIfNeverSeeded(db) {
+  if (!db) return;
+  try {
+    const seededRow = await db.prepare("SELECT value_json FROM settings WHERE key = 'improvmx_keys_seeded'").first();
+    if (seededRow) return;
+    const existing = await db.prepare("SELECT id, is_default FROM improvmx_keys").all();
+    const rows = (existing && existing.results) || [];
+    const hasPrimary = rows.some(r => r.id === DEFAULT_KEY_ID);
+    const hasAnyDefault = rows.some(r => r.is_default === 1);
+    if (!hasPrimary) {
+      await db.prepare(`
+        INSERT OR IGNORE INTO improvmx_keys (id, label, api_key, is_default, createdAt)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(DEFAULT_KEY_ID, DEFAULT_KEY_LABEL, DEFAULT_PRIMARY_KEY, hasAnyDefault ? 0 : 1, new Date().toISOString()).run();
+    }
+    await db.prepare(`
+      INSERT INTO settings (key, value_json, updatedAt, updatedBy)
+      VALUES ('improvmx_keys_seeded', 'true', ?, 'System')
+      ON CONFLICT(key) DO NOTHING
+    `).bind(new Date().toISOString()).run();
+  } catch (e) {}
 }
 
 async function getAllApiKeys(db) {
-  let keys = [
-    {
-      id: DEFAULT_KEY_ID,
-      label: DEFAULT_KEY_LABEL,
-      api_key: DEFAULT_PRIMARY_KEY,
-      is_default: 1,
-      createdAt: new Date().toISOString()
-    }
-  ];
-
   if (db) {
     try {
       await ensureKeysTable(db);
-      const { results } = await db.prepare("SELECT * FROM improvmx_keys ORDER BY createdAt ASC").all();
+      await seedPrimaryIfNeverSeeded(db);
+      const { results } = await db.prepare("SELECT * FROM improvmx_keys ORDER BY is_default DESC, createdAt ASC").all();
       if (results && results.length > 0) {
-        // Merge with custom keys, overriding or appending
-        const customKeys = results.map(r => ({
+        const mapped = results.map(r => ({
           id: r.id,
           label: r.label,
           api_key: r.api_key,
           is_default: r.is_default === 1,
           createdAt: r.createdAt
         }));
-        // If custom keys exist, make sure default key is present if not already added
-        const hasPrimary = customKeys.some(k => k.api_key === DEFAULT_PRIMARY_KEY || k.id === DEFAULT_KEY_ID);
-        if (!hasPrimary) {
-          keys = [keys[0], ...customKeys];
-        } else {
-          keys = customKeys;
+        if (!mapped.some(k => k.is_default)) {
+          mapped[0].is_default = true;
+          await db.prepare("UPDATE improvmx_keys SET is_default = 1 WHERE id = ?").bind(mapped[0].id).run().catch(() => {});
         }
+        return mapped;
       }
-    } catch (e) {
-      // Fallback to default in-memory key
-    }
+      return [];
+    } catch (e) {}
   }
 
-  return keys;
+  return [
+    {
+      id: DEFAULT_KEY_ID,
+      label: DEFAULT_KEY_LABEL,
+      api_key: DEFAULT_PRIMARY_KEY,
+      is_default: true,
+      createdAt: new Date().toISOString()
+    }
+  ];
 }
 
 function maskApiKey(key) {
@@ -82,10 +95,15 @@ async function getApiKeyById(db, keyId) {
     if (found) return found.api_key;
   }
   const defaultKey = allKeys.find(k => k.is_default);
-  return defaultKey ? defaultKey.api_key : DEFAULT_PRIMARY_KEY;
+  if (defaultKey) return defaultKey.api_key;
+  if (allKeys.length > 0) return allKeys[0].api_key;
+  return null;
 }
 
 async function callImprovMXApi(apiKey, method, endpoint, body) {
+  if (!apiKey) {
+    return { status: 400, data: { error: "No ImprovMX API key configured. Please add an API key first." } };
+  }
   const authHeader = "Basic " + btoa("api:" + apiKey);
   const url = "https://api.improvmx.com/v3" + endpoint;
 
@@ -132,9 +150,6 @@ function jsonResponse(data, status = 200) {
   });
 }
 
-// -----------------------------------------------------------------------------
-// GET Handler
-// -----------------------------------------------------------------------------
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -142,9 +157,6 @@ export async function onRequestGet(context) {
   const keyId = url.searchParams.get("keyId");
   const domain = url.searchParams.get("domain");
 
-  const apiKey = await getApiKeyById(env?.DB, keyId);
-
-  // 1. List configured API keys
   if (action === "keys") {
     const keys = await getAllApiKeys(env?.DB);
     const masked = keys.map(k => ({
@@ -157,19 +169,18 @@ export async function onRequestGet(context) {
     return jsonResponse({ success: true, keys: masked });
   }
 
-  // 2. Account info & limits
+  const apiKey = await getApiKeyById(env?.DB, keyId);
+
   if (action === "account") {
     const res = await callImprovMXApi(apiKey, "GET", "/account");
     return jsonResponse(res.data, res.status);
   }
 
-  // 3. List Domains associated with this API key
   if (action === "domains") {
     const res = await callImprovMXApi(apiKey, "GET", "/domains");
     return jsonResponse(res.data, res.status);
   }
 
-  // 4. Check DNS / MX records status for a specific domain
   if (action === "check") {
     if (!domain) {
       return jsonResponse({ error: "domain parameter is required" }, 400);
@@ -178,7 +189,6 @@ export async function onRequestGet(context) {
     return jsonResponse(res.data, res.status);
   }
 
-  // 5. List all aliases for a domain
   if (action === "aliases") {
     if (!domain) {
       return jsonResponse({ error: "domain parameter is required" }, 400);
@@ -192,9 +202,6 @@ export async function onRequestGet(context) {
   return jsonResponse({ error: `Unknown action: ${action}` }, 400);
 }
 
-// -----------------------------------------------------------------------------
-// POST Handler
-// -----------------------------------------------------------------------------
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -206,30 +213,51 @@ export async function onRequestPost(context) {
   }
 
   const action = body.action || "create_alias";
-  const apiKey = await getApiKeyById(env?.DB, body.keyId);
 
-  // 1. Add new ImprovMX API Key
+  if (action === "set_default_key") {
+    const { targetKeyId } = body;
+    if (!targetKeyId) {
+      return jsonResponse({ error: "targetKeyId is required" }, 400);
+    }
+    if (env?.DB) {
+      await ensureKeysTable(env.DB);
+      await seedPrimaryIfNeverSeeded(env.DB);
+      const exists = await env.DB.prepare("SELECT id FROM improvmx_keys WHERE id = ?").bind(targetKeyId).first();
+      if (!exists) {
+        return jsonResponse({ error: "API key not found" }, 404);
+      }
+      await env.DB.prepare("UPDATE improvmx_keys SET is_default = 0").run();
+      await env.DB.prepare("UPDATE improvmx_keys SET is_default = 1 WHERE id = ?").bind(targetKeyId).run();
+    }
+    return jsonResponse({ success: true, defaultKeyId: targetKeyId });
+  }
+
   if (action === "add_key") {
-    const { label, key } = body;
+    const { label, key, makeDefault } = body;
     if (!key || !key.startsWith("sk_")) {
       return jsonResponse({ error: "Valid ImprovMX API key required (must start with sk_)" }, 400);
     }
 
-    // Validate key by querying /account
     const test = await callImprovMXApi(key.trim(), "GET", "/account");
     if (test.status !== 200 || !test.data.success) {
       return jsonResponse({ error: "API key validation failed. Please check your ImprovMX credentials." }, 400);
     }
 
     const newId = "key_" + Date.now().toString(36);
-    const keyLabel = (label || "Secondary Account").trim();
+    const keyLabel = (label || "Institute Account").trim();
 
     if (env?.DB) {
       await ensureKeysTable(env.DB);
+      await seedPrimaryIfNeverSeeded(env.DB);
+      const existing = await env.DB.prepare("SELECT COUNT(*) as cnt FROM improvmx_keys").first();
+      const shouldBeDefault = Boolean(makeDefault) || !existing || existing.cnt === 0;
+      if (shouldBeDefault) {
+        await env.DB.prepare("UPDATE improvmx_keys SET is_default = 0").run();
+      }
       await env.DB.prepare(`
         INSERT INTO improvmx_keys (id, label, api_key, is_default, createdAt)
-        VALUES (?, ?, ?, 0, ?)
-      `).bind(newId, keyLabel, key.trim(), new Date().toISOString()).run();
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(newId, keyLabel, key.trim(), shouldBeDefault ? 1 : 0, new Date().toISOString()).run();
     }
 
     return jsonResponse({
@@ -238,19 +266,20 @@ export async function onRequestPost(context) {
         id: newId,
         label: keyLabel,
         maskedKey: maskApiKey(key.trim()),
+        isDefault: Boolean(makeDefault),
         accountEmail: test.data?.account?.email || null
       }
     });
   }
 
-  // 2. Create Alias
+  const apiKey = await getApiKeyById(env?.DB, body.keyId);
+
   if (action === "create_alias") {
     const { domain, alias, forward } = body;
     if (!domain || !alias || !forward) {
       return jsonResponse({ error: "Missing required fields: domain, alias, forward" }, 400);
     }
 
-    // Clean alias: remove leading/trailing @ or spaces
     const cleanAlias = alias.replace(/^@+|@+$/g, "").trim().toLowerCase();
     const cleanForward = forward.trim().toLowerCase();
 
@@ -265,9 +294,6 @@ export async function onRequestPost(context) {
   return jsonResponse({ error: `Unknown action: ${action}` }, 400);
 }
 
-// -----------------------------------------------------------------------------
-// PUT Handler (Update alias forward destination)
-// -----------------------------------------------------------------------------
 export async function onRequestPut(context) {
   const { request, env } = context;
 
@@ -293,9 +319,6 @@ export async function onRequestPut(context) {
   return jsonResponse(res.data, res.status);
 }
 
-// -----------------------------------------------------------------------------
-// DELETE Handler (Delete alias or API key)
-// -----------------------------------------------------------------------------
 export async function onRequestDelete(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -304,11 +327,20 @@ export async function onRequestDelete(context) {
 
   if (action === "delete_key") {
     const targetKeyId = url.searchParams.get("targetKeyId");
-    if (!targetKeyId || targetKeyId === DEFAULT_KEY_ID) {
-      return jsonResponse({ error: "Cannot delete the primary API key" }, 400);
+    if (!targetKeyId) {
+      return jsonResponse({ error: "targetKeyId is required" }, 400);
     }
     if (env?.DB) {
+      await ensureKeysTable(env.DB);
+      await seedPrimaryIfNeverSeeded(env.DB);
+      const targetRow = await env.DB.prepare("SELECT * FROM improvmx_keys WHERE id = ?").bind(targetKeyId).first();
       await env.DB.prepare("DELETE FROM improvmx_keys WHERE id = ?").bind(targetKeyId).run();
+      if (targetRow && targetRow.is_default === 1) {
+        const nextRow = await env.DB.prepare("SELECT id FROM improvmx_keys ORDER BY createdAt ASC LIMIT 1").first();
+        if (nextRow && nextRow.id) {
+          await env.DB.prepare("UPDATE improvmx_keys SET is_default = 1 WHERE id = ?").bind(nextRow.id).run();
+        }
+      }
     }
     return jsonResponse({ success: true, deletedKeyId: targetKeyId });
   }

@@ -1,8 +1,3 @@
-/**
- * Cloudflare Pages Function: /api/applications
- * Dedicated relational SQL CRUD endpoint for Student Fellowship Applications
- */
-
 async function ensureTable(db) {
   if (!db) return;
   await db.prepare(`
@@ -16,6 +11,12 @@ async function ensureTable(db) {
       academicLevel TEXT,
       portfolioUrl TEXT,
       customFields_json TEXT,
+      packageId TEXT,
+      packageName TEXT,
+      packageFee TEXT,
+      paymentRef TEXT,
+      paymentReceiptUrl TEXT,
+      recruitPageSlug TEXT,
       status TEXT NOT NULL DEFAULT 'Under Review',
       appliedDate TEXT NOT NULL,
       statement TEXT,
@@ -24,14 +25,84 @@ async function ensureTable(db) {
     )
   `).run().catch(() => {});
 
-  // Safe migrations in case table was created with older schema
   await db.prepare("ALTER TABLE applications ADD COLUMN academicLevel TEXT").run().catch(() => {});
   await db.prepare("ALTER TABLE applications ADD COLUMN portfolioUrl TEXT").run().catch(() => {});
   await db.prepare("ALTER TABLE applications ADD COLUMN customFields_json TEXT").run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN packageId TEXT").run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN packageName TEXT").run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN packageFee TEXT").run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN paymentRef TEXT").run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN paymentReceiptUrl TEXT").run().catch(() => {});
+  await db.prepare("ALTER TABLE applications ADD COLUMN recruitPageSlug TEXT").run().catch(() => {});
+}
+
+async function checkValueExistsInDb(db, fieldKey, value, isCustom) {
+  if (!db || !fieldKey) return false;
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return false;
+
+  await ensureTable(db);
+  const { results } = await db.prepare("SELECT email, university, portfolioUrl, paymentRef, customFields_json FROM applications").all();
+  const rows = results || [];
+
+  for (const row of rows) {
+    if (!isCustom) {
+      if (fieldKey === "email" && String(row.email || "").trim().toLowerCase() === normalized) return true;
+      if (fieldKey === "portfolio" && String(row.portfolioUrl || "").trim().toLowerCase() === normalized) return true;
+      if (fieldKey === "paymentRef" && String(row.paymentRef || "").trim().toLowerCase() === normalized) return true;
+    } else if (row.customFields_json) {
+      try {
+        const parsed = JSON.parse(row.customFields_json);
+        if (parsed && typeof parsed === "object") {
+          const existingVal = parsed[fieldKey];
+          if (existingVal !== undefined && String(existingVal).trim().toLowerCase() === normalized) {
+            return true;
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  if (!isCustom && fieldKey === "email") {
+    try {
+      const internMatch = await db.prepare("SELECT id FROM interns WHERE LOWER(email) = ? LIMIT 1").bind(normalized).first();
+      if (internMatch) return true;
+    } catch (e) {}
+  }
+
+  return false;
 }
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const action = url.searchParams.get("action");
+
+  if (action === "check_unique") {
+    const fieldKey = url.searchParams.get("fieldKey") || "";
+    const value = url.searchParams.get("value") || "";
+    const isCustom = url.searchParams.get("isCustom") === "1";
+
+    if (!fieldKey || !value.trim()) {
+      return new Response(JSON.stringify({ success: true, exists: false, unique: true }), {
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+      });
+    }
+
+    let exists = false;
+    if (env && env.DB) {
+      try {
+        exists = await checkValueExistsInDb(env.DB, fieldKey, value, isCustom);
+      } catch (e) {}
+    }
+
+    return new Response(JSON.stringify({ success: true, exists, unique: !exists, fieldKey }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    });
+  }
 
   if (env && env.DB) {
     try {
@@ -61,6 +132,23 @@ export async function onRequestPost(context) {
 
   try {
     const data = await request.json();
+
+    if (env && env.DB && Array.isArray(data.uniqueChecks) && data.uniqueChecks.length > 0) {
+      for (const chk of data.uniqueChecks) {
+        if (!chk || !chk.fieldKey || !chk.value) continue;
+        const dup = await checkValueExistsInDb(env.DB, chk.fieldKey, chk.value, Boolean(chk.isCustom));
+        if (dup) {
+          return new Response(JSON.stringify({
+            error: `"${chk.label || chk.fieldKey}" value is already registered and must be unique.`,
+            duplicateField: chk.fieldKey
+          }), {
+            status: 409,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+      }
+    }
+
     const app = {
       id: data.id || `app-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
       fullName: (data.fullName || "Fellow Applicant").trim(),
@@ -71,6 +159,12 @@ export async function onRequestPost(context) {
       academicLevel: (data.academicLevel || data.appLevel || "").trim(),
       portfolioUrl: (data.portfolioUrl || data.portfolio || "").trim(),
       customFields_json: JSON.stringify(data.customFields || {}),
+      packageId: (data.packageId || "").trim(),
+      packageName: (data.packageName || "").trim(),
+      packageFee: (data.packageFee || "").trim(),
+      paymentRef: (data.paymentRef || "").trim(),
+      paymentReceiptUrl: (data.paymentReceiptUrl || "").trim(),
+      recruitPageSlug: (data.recruitPageSlug || "").trim(),
       status: data.status || "Under Review",
       appliedDate: data.appliedDate || new Date().toISOString().split("T")[0],
       statement: (data.statement || "").trim()
@@ -82,8 +176,9 @@ export async function onRequestPost(context) {
       await env.DB.prepare(`
         INSERT INTO applications (
           id, fullName, email, university, fieldOfStudy, preferredDivision,
-          academicLevel, portfolioUrl, customFields_json, status, appliedDate, statement
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          academicLevel, portfolioUrl, customFields_json, packageId, packageName,
+          packageFee, paymentRef, paymentReceiptUrl, recruitPageSlug, status, appliedDate, statement
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           fullName=excluded.fullName,
           email=excluded.email,
@@ -93,15 +188,22 @@ export async function onRequestPost(context) {
           academicLevel=excluded.academicLevel,
           portfolioUrl=excluded.portfolioUrl,
           customFields_json=excluded.customFields_json,
+          packageId=excluded.packageId,
+          packageName=excluded.packageName,
+          packageFee=excluded.packageFee,
+          paymentRef=excluded.paymentRef,
+          paymentReceiptUrl=excluded.paymentReceiptUrl,
+          recruitPageSlug=excluded.recruitPageSlug,
           status=excluded.status,
           statement=excluded.statement;
       `).bind(
         app.id, app.fullName, app.email, app.university, app.fieldOfStudy,
         app.preferredDivision, app.academicLevel, app.portfolioUrl,
-        app.customFields_json, app.status, app.appliedDate, app.statement
+        app.customFields_json, app.packageId, app.packageName, app.packageFee,
+        app.paymentRef, app.paymentReceiptUrl, app.recruitPageSlug,
+        app.status, app.appliedDate, app.statement
       ).run();
 
-      // Redundant backup inside settings table
       try {
         const storeRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'applications_store'").first();
         let list = [];
@@ -159,14 +261,12 @@ export async function onRequestPut(context) {
 
       updatedApp = await env.DB.prepare("SELECT * FROM applications WHERE id = ?").bind(id).first();
 
-      // If Accepted, automatically provision user access & roster
       if (status === 'Accepted' && updatedApp && updatedApp.email) {
         const assignedRole = (role || "Research Fellow").trim();
         const assignedDivision = (division || updatedApp.preferredDivision || "Institute Research Council").trim();
         const applicantName = (updatedApp.fullName || updatedApp.email.split('@')[0]).trim();
         const applicantEmail = updatedApp.email.toLowerCase().trim();
 
-        // 1. Provision Portal Login Access in allowed_users
         if (grantLoginAccess !== false) {
           try {
             await env.DB.prepare(`
@@ -195,7 +295,6 @@ export async function onRequestPut(context) {
           }
         }
 
-        // 2. Add to active fellows roster in interns table
         if (addToRoster !== false) {
           try {
             const internId = `fellow-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
@@ -219,7 +318,6 @@ export async function onRequestPut(context) {
         }
       }
 
-      // If Declined/Rejected, ensure allowed_users status is updated if present
       if ((status === 'Declined' || status === 'Rejected') && updatedApp && updatedApp.email) {
         try {
           await env.DB.prepare("UPDATE allowed_users SET status = 'Disabled' WHERE LOWER(email) = LOWER(?)").bind(updatedApp.email).run().catch(() => {});
@@ -264,7 +362,6 @@ export async function onRequestDelete(context) {
       await ensureTable(env.DB);
       await env.DB.prepare("DELETE FROM applications WHERE id = ?").bind(id).run();
 
-      // Clean up from backup store
       try {
         const storeRow = await env.DB.prepare("SELECT value_json FROM settings WHERE key = 'applications_store'").first();
         if (storeRow && storeRow.value_json) {

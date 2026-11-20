@@ -117,6 +117,7 @@ export function renderTeamPageHtml() {
                   <div class="form-group" style="flex: 1;">
                     <label class="form-label" for="curiousEmailInput" style="font-weight: 700; color: #1a221b;">Email Address *</label>
                     <input type="email" id="curiousEmailInput" class="form-input" placeholder="e.g. maya@university.edu" style="background: #faf8f5; border: 1.5px solid #d4c8b6; font-size: 1rem; padding: 0.85rem;" required>
+                    <div id="curiousEmailUniqueStatus" style="font-size: 0.78rem; margin-top: 0.35rem; min-height: 1.1em;"></div>
                   </div>
                 </div>
 
@@ -204,10 +205,37 @@ export function renderTeamPageHtml() {
 
                   <div class="form-group">
                     <label class="form-label" for="appPortfolio" style="font-weight: 600;">GitHub Profile, ORCID, or Portfolio Link</label>
-                    <input type="url" id="appPortfolio" class="form-input" placeholder="https://github.com/your-username">
+                    <input type="text" id="appPortfolio" class="form-input" placeholder="github.com/your-username or any link">
                   </div>
 
-                  <!-- Dynamic Custom Fields Configured in Admin Portal -->
+                  <div id="appPackagesSelectorContainer" style="display:none; margin-bottom:1.5rem;"></div>
+
+                  <div id="appPaymentDetailsBox" style="display:none; background:#fff7ed; border:1px solid #fdba74; border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
+                    <div style="font-weight:700; color:#c2410c; font-size:0.95rem; margin-bottom:0.35rem;">Student Fee & Payment Verification</div>
+                    <div id="appPaymentInstructionsText" style="font-size:0.86rem; color:#7c2d12; line-height:1.55; margin-bottom:0.85rem;"></div>
+                    <div id="appPaymentLinkWrap" style="display:none; margin-bottom:0.85rem;">
+                      <a id="appPaymentLinkBtn" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem;">Open Payment Portal →</a>
+                    </div>
+                    <div class="form-row" style="gap:1rem;">
+                      <div class="form-group" style="flex:1; margin-bottom:0;">
+                        <label class="form-label" for="appPaymentRefInput" style="font-weight:600; font-size:0.84rem;">Payment Transaction ID / Reference *</label>
+                        <input type="text" id="appPaymentRefInput" class="form-input" placeholder="e.g. TRX9A8B7C6D">
+                        <div id="appPaymentRefUniqueStatus" style="font-size:0.76rem; margin-top:0.25rem;"></div>
+                      </div>
+                      <div class="form-group" style="flex:1; margin-bottom:0;">
+                        <label class="form-label" style="font-weight:600; font-size:0.84rem;">Payment Receipt Screenshot (Optional)</label>
+                        <div style="display:flex; gap:0.45rem; align-items:center; flex-wrap:wrap;">
+                          <button type="button" class="btn btn-primary btn-sm" onclick="window.triggerPublicAppMediaUpload('appPaymentReceiptInput', 'image/*')">Upload Receipt</button>
+                          <button type="button" class="btn btn-secondary btn-sm" onclick="window.togglePublicAppUrlInput('appPaymentReceiptInput')">URL</button>
+                          <span id="appPaymentReceiptInput_status" style="font-size:0.74rem; color:#64748b;"></span>
+                        </div>
+                        <div id="appPaymentReceiptInput_urlWrap" style="display:none; margin-top:0.4rem;">
+                          <input type="text" id="appPaymentReceiptInput" class="form-input" placeholder="Receipt image URL or path">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div id="appCustomFieldsContainer"></div>
 
                   <div class="form-group">
@@ -235,6 +263,7 @@ export function renderTeamPageHtml() {
 }
 
 export async function mountTeamPage() {
+  window._criiActiveAppFormOptions = {};
   if (typeof window.initInternsRoster === 'function') {
     window.initInternsRoster();
   }

@@ -23,6 +23,8 @@ const DEFAULT_SETTINGS = {
   },
   divisions: [],
   cohorts: [],
+  fellowship_packages: [],
+  recruit_pages: [],
   festive: {
     mode: "auto",
     theme: "holi",

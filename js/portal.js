@@ -246,6 +246,9 @@ function showTab(tabName) {
     if (typeof window.renderCohortsTab === 'function') window.renderCohortsTab();
     if (typeof window.initApplicationFormBuilder === 'function') window.initApplicationFormBuilder();
   }
+  if (tabName === 'recruit' && typeof window.renderRecruitTab === 'function') {
+    window.renderRecruitTab();
+  }
   try {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
@@ -693,13 +696,19 @@ function renderBlockEditorFields(block, idx) {
     case 'image':
       return `
         <div style="display:flex; flex-direction:column; gap:0.5rem;">
-          <div style="display:flex; gap:0.5rem; align-items:center;">
-            <input type="url" class="form-input" style="flex:1;" placeholder="Image URL (https://... or upload from device)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
-            <label class="btn btn-secondary btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; margin-bottom:0; font-size:0.75rem; padding:0.4rem 0.65rem;" title="Upload image to Cloudflare R2">
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <label class="btn btn-primary btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; margin-bottom:0; font-size:0.75rem; padding:0.4rem 0.75rem;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span>Upload</span>
+              <span>Upload Image</span>
               <input type="file" accept="image/*" style="display:none;" onchange="handleBlockImageUpload(event, ${idx})">
             </label>
+            <button type="button" class="btn btn-secondary btn-sm" id="blockImageInput_${idx}_urlBtn" onclick="window.toggleMediaUrlRow('blockImageInput_${idx}')" style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem;">
+              <span>URL</span>
+            </button>
+            <span style="font-size:0.74rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:260px;">${block.url ? escapeHtml(block.url) : 'No image attached'}</span>
+          </div>
+          <div id="blockImageInput_${idx}_urlWrap" style="display:none;">
+            <input type="text" id="blockImageInput_${idx}" class="form-input" style="width:100%;" placeholder="Image URL or server path (/assets/... or /api/images/...)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
           </div>
           <span id="blockUploadStatus_${idx}" style="font-size:0.75rem; display:none;"></span>
           <input type="text" class="form-input" placeholder="Optional caption or credit..." value="${escapeHtml(block.caption || '')}" oninput="updateBlockContent(${idx}, 'caption', this.value)">
@@ -777,12 +786,18 @@ function renderBlockEditorFields(block, idx) {
     case 'video':
       return `
         <div style="display:flex; flex-direction:column; gap:0.5rem;">
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <input type="url" id="blockVideoInput_${idx}" class="form-input" style="flex:1;" placeholder="YouTube or MP4 Video URL (https://... or upload MP4)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerBlockVideoUpload(${idx})" title="Upload MP4/WEBM video to Cloudflare R2" style="white-space:nowrap; display:flex; align-items:center; gap:0.35rem;">
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.triggerBlockVideoUpload(${idx})" style="white-space:nowrap; display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem;">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <span>Upload Video</span>
             </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="blockVideoInput_${idx}_urlBtn" onclick="window.toggleMediaUrlRow('blockVideoInput_${idx}')" style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem;">
+              <span>URL</span>
+            </button>
+            <span style="font-size:0.74rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:260px;">${block.url ? escapeHtml(block.url) : 'No video attached'}</span>
+          </div>
+          <div id="blockVideoInput_${idx}_urlWrap" style="display:none;">
+            <input type="text" id="blockVideoInput_${idx}" class="form-input" style="width:100%;" placeholder="Video URL or server path (assets/hero-bg.mp4 or /api/images/...)" value="${escapeHtml(block.url || '')}" oninput="updateBlockContent(${idx}, 'url', this.value)">
           </div>
         </div>
       `;
@@ -2064,12 +2079,28 @@ window.reviewApplication = function(appId) {
   }
   const customEntries = Object.entries(parsedCustomFields);
 
+  const formatCustomAnswer = (val) => {
+    const s = String(val || '').trim();
+    if (!s) return '<span style="color:var(--text-muted);">—</span>';
+    if (/^(\/api\/images\/|\/assets\/|https?:\/\/).+\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i.test(s) || s.startsWith('/api/images/')) {
+      return `<div style="margin-top:0.35rem;"><a href="${escapeHtml(s)}" target="_blank" rel="noopener"><img src="${escapeHtml(s)}" style="max-height:110px; max-width:180px; border-radius:8px; border:1px solid var(--border-color); object-fit:cover;"></a></div>`;
+    }
+    if (/\.(mp4|webm|mov)(\?.*)?$/i.test(s)) {
+      return `<div style="margin-top:0.35rem;"><video src="${escapeHtml(s)}" controls style="max-height:140px; max-width:260px; border-radius:8px; border:1px solid var(--border-color);"></video></div>`;
+    }
+    if (/^(https?:\/\/|\/)/i.test(s)) {
+      return `<a href="${escapeHtml(s)}" target="_blank" rel="noopener" style="color:var(--accent-primary); word-break:break-all; font-weight:500;">${escapeHtml(s)}</a>`;
+    }
+    return `<span style="color:var(--text-primary);">${escapeHtml(s)}</span>`;
+  };
+
   details.innerHTML = `
     <div style="margin-bottom:1.5rem;">
       <h2 style="font-size:1.4rem; color:var(--text-primary); margin-bottom:0.25rem;">${escapeHtml(app.fullName)}</h2>
       <div style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(app.email)} • ${escapeHtml(app.university || 'Independent')} • ${escapeHtml(app.fieldOfStudy || 'General Science')}</div>
+      ${app.recruitPageSlug ? `<div style="margin-top:0.35rem;"><span class="badge" style="font-size:0.72rem; background:rgba(234,88,12,0.12); color:#ea580c;">Recruit Page: /recruit?page=${escapeHtml(app.recruitPageSlug)}</span></div>` : ''}
     </div>
-    
+
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.75rem; margin-bottom:1.25rem;">
       <div style="background:var(--bg-primary); padding:0.85rem 1rem; border-radius:8px; border:1px solid var(--border-color);">
         <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.2rem;">Preferred Division</div>
@@ -2085,15 +2116,22 @@ window.reviewApplication = function(appId) {
         <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.2rem;">Portfolio / GitHub</div>
         <div><a href="${escapeHtml(app.portfolioUrl)}" target="_blank" rel="noopener" style="color:var(--accent-primary); word-break:break-all; font-weight:500;">View Profile &rarr;</a></div>
       </div>` : ''}
+      ${app.packageName ? `
+      <div style="background:rgba(234,88,12,0.05); padding:0.85rem 1rem; border-radius:8px; border:1px solid rgba(234,88,12,0.25);">
+        <div style="font-size:0.72rem; text-transform:uppercase; color:#ea580c; font-weight:700; margin-bottom:0.2rem;">Selected Package & Fee</div>
+        <div style="font-weight:700; color:var(--text-primary);">${escapeHtml(app.packageName)} <span style="color:#ea580c;">(${escapeHtml(app.packageFee || 'Free')})</span></div>
+        ${app.paymentRef ? `<div style="font-size:0.78rem; color:var(--text-secondary); margin-top:0.25rem; font-family:monospace;">TrxID / Ref: ${escapeHtml(app.paymentRef)}</div>` : ''}
+        ${app.paymentReceiptUrl ? `<div style="margin-top:0.35rem;"><a href="${escapeHtml(app.paymentReceiptUrl)}" target="_blank" style="font-size:0.78rem; color:#ea580c; font-weight:600;">View Payment Receipt &rarr;</a></div>` : ''}
+      </div>` : ''}
     </div>
 
     ${customEntries.length > 0 ? `
     <div style="background:var(--bg-primary); padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.25rem; border:1px solid var(--border-color);">
-      <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.5rem;">Additional Custom Questions</div>
+      <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:0.65rem;">Additional Custom Questions</div>
       ${customEntries.map(([k, v]) => `
-        <div style="margin-bottom:0.4rem; font-size:0.85rem;">
-          <strong style="color:var(--text-muted);">${escapeHtml(k)}:</strong>
-          <span style="color:var(--text-primary); margin-left:0.35rem;">${escapeHtml(String(v))}</span>
+        <div style="margin-bottom:0.65rem; font-size:0.86rem; padding-bottom:0.5rem; border-bottom:1px dashed var(--border-color);">
+          <strong style="color:var(--text-muted); display:block; font-size:0.76rem; margin-bottom:0.15rem;">${escapeHtml(k)}</strong>
+          <div>${formatCustomAnswer(v)}</div>
         </div>
       `).join('')}
     </div>` : ''}
@@ -3013,35 +3051,58 @@ function renderCustomFieldsBuilder() {
 
   const customFields = currentAppFormConfig.customFields || [];
   if (customFields.length === 0) {
-    container.innerHTML = '<div style="font-size:0.85rem; color:var(--text-muted); padding:0.75rem 0; font-style:italic;">No custom fields added yet. Click "+ Add Custom Question" to create one.</div>';
+    container.innerHTML = '<div style="font-size:0.85rem; color:var(--text-muted); padding:0.75rem 0; font-style:italic;">No custom fields added yet. Click "+ Add Custom Field" to create one.</div>';
     return;
   }
 
+  const typeOptions = [
+    ['text', 'Short Text'],
+    ['textarea', 'Long Text / Paragraph'],
+    ['number', 'Number'],
+    ['id', 'ID / Registration Number'],
+    ['rating', 'Star Rating (1-5)'],
+    ['image', 'Image Upload / URL'],
+    ['pfp', 'Profile Photo (PFP)'],
+    ['video', 'Video Upload / URL'],
+    ['url', 'URL / Link'],
+    ['email', 'Email Address'],
+    ['phone', 'Phone / WhatsApp'],
+    ['date', 'Date Picker'],
+    ['select', 'Dropdown Select'],
+    ['checkbox', 'Checkbox / Agreement']
+  ];
+
   container.innerHTML = customFields.map((cf, idx) => `
-    <div style="background:var(--bg-secondary); padding:0.85rem 1rem; border-radius:8px; border:1px solid var(--border-color); display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
-      <div style="flex:2; min-width:180px;">
-        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">Question / Label</label>
-        <input type="text" class="form-input" style="padding:0.35rem 0.65rem; font-size:0.85rem;" value="${escapeHtml(cf.label || '')}" onchange="updateCustomFieldProp(${idx}, 'label', this.value)" placeholder="e.g. Graduation Year">
+    <div style="background:var(--bg-secondary); padding:1rem 1.15rem; border-radius:10px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:0.75rem;">
+      <div style="display:flex; gap:0.85rem; align-items:flex-end; flex-wrap:wrap;">
+        <div style="flex:2; min-width:190px;">
+          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">Question / Label</label>
+          <input type="text" class="form-input" style="padding:0.4rem 0.65rem; font-size:0.85rem;" value="${escapeHtml(cf.label || '')}" onchange="updateCustomFieldProp(${idx}, 'label', this.value)" placeholder="e.g. Student ID, Profile Photo, Experience Rating">
+        </div>
+        <div style="flex:1.2; min-width:155px;">
+          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">Field Type</label>
+          <select class="form-select" style="padding:0.4rem 0.65rem; font-size:0.85rem;" onchange="updateCustomFieldProp(${idx}, 'type', this.value)">
+            ${typeOptions.map(([val, lbl]) => `<option value="${val}" ${cf.type === val ? 'selected' : ''}>${lbl}</option>`).join('')}
+          </select>
+        </div>
+        <div style="flex:1.5; min-width:160px;">
+          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">${cf.type === 'select' ? 'Options (comma-separated)' : 'Placeholder / Hint'}</label>
+          ${cf.type === 'select'
+            ? `<input type="text" class="form-input" style="padding:0.4rem 0.65rem; font-size:0.85rem;" value="${escapeHtml((cf.options || []).join(', '))}" onchange="updateCustomFieldProp(${idx}, 'options', this.value.split(',').map(s=>s.trim()).filter(Boolean))" placeholder="Option 1, Option 2, Option 3">`
+            : `<input type="text" class="form-input" style="padding:0.4rem 0.65rem; font-size:0.85rem;" value="${escapeHtml(cf.placeholder || '')}" onchange="updateCustomFieldProp(${idx}, 'placeholder', this.value)" placeholder="Optional helper text...">`
+          }
+        </div>
       </div>
-      <div style="flex:1; min-width:120px;">
-        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">Type</label>
-        <select class="form-select" style="padding:0.35rem 0.65rem; font-size:0.85rem;" onchange="updateCustomFieldProp(${idx}, 'type', this.value)">
-          <option value="text" ${cf.type === 'text' ? 'selected' : ''}>Text (Single line)</option>
-          <option value="textarea" ${cf.type === 'textarea' ? 'selected' : ''}>Long Text</option>
-          <option value="number" ${cf.type === 'number' ? 'selected' : ''}>Number</option>
-          <option value="select" ${cf.type === 'select' ? 'selected' : ''}>Dropdown Select</option>
-        </select>
-      </div>
-      ${cf.type === 'select' ? `
-      <div style="flex:2; min-width:180px;">
-        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.2rem;">Options (comma-separated)</label>
-        <input type="text" class="form-input" style="padding:0.35rem 0.65rem; font-size:0.85rem;" value="${escapeHtml((cf.options || []).join(', '))}" onchange="updateCustomFieldProp(${idx}, 'options', this.value.split(',').map(s=>s.trim()).filter(Boolean))" placeholder="Option 1, Option 2, Option 3">
-      </div>` : ''}
-      <div style="display:flex; align-items:center; gap:0.5rem; margin-top:1.2rem;">
-        <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; cursor:pointer;">
-          <input type="checkbox" ${cf.required ? 'checked' : ''} onchange="updateCustomFieldProp(${idx}, 'required', this.checked)"> Required
-        </label>
-        <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.55rem; font-size:0.75rem;" onclick="removeCustomFormFieldRow(${idx})">&times; Remove</button>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; padding-top:0.5rem; border-top:1px dashed var(--border-color);">
+        <div style="display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <input type="checkbox" ${cf.required ? 'checked' : ''} onchange="updateCustomFieldProp(${idx}, 'required', this.checked)" style="accent-color:#ea580c;"> Required
+          </label>
+          <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.82rem; font-weight:600; cursor:pointer; color:${cf.unique ? '#ea580c' : 'var(--text-secondary)'};" title="Auto-check Cloudflare D1 as applicant types and block duplicate entries">
+            <input type="checkbox" ${cf.unique ? 'checked' : ''} onchange="updateCustomFieldProp(${idx}, 'unique', this.checked)" style="accent-color:#ea580c;"> Unique (Auto-Check Duplicates)
+          </label>
+        </div>
+        <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.65rem; font-size:0.75rem;" onclick="removeCustomFormFieldRow(${idx})">&times; Remove</button>
       </div>
     </div>
   `).join('');
@@ -3061,7 +3122,6 @@ function initApplicationFormBuilder() {
     if (reqEl) reqEl.checked = fields[key].required === true;
   });
 
-  // Master Status Toggle
   const isOpen = currentAppFormConfig.isOpen !== false;
   const openEl = document.getElementById('appFormIsOpen');
   if (openEl) openEl.checked = isOpen;
@@ -3082,6 +3142,9 @@ function initApplicationFormBuilder() {
 
   const endDateEl = document.getElementById('appFormEndDate');
   if (endDateEl) endDateEl.value = currentAppFormConfig.endDate || '';
+
+  const uniqEmailEl = document.getElementById('appFormUniqueEmail');
+  if (uniqEmailEl) uniqEmailEl.checked = Boolean(currentAppFormConfig.uniqueEmail);
 
   renderCustomFieldsBuilder();
 }
@@ -3110,7 +3173,7 @@ window.handleToggleAppStatus = handleToggleAppStatus;
 function updateCustomFieldProp(idx, prop, val) {
   if (!currentAppFormConfig || !currentAppFormConfig.customFields[idx]) return;
   currentAppFormConfig.customFields[idx][prop] = val;
-  if (prop === 'type') renderCustomFieldsBuilder();
+  if (prop === 'type' || prop === 'unique') renderCustomFieldsBuilder();
 }
 window.updateCustomFieldProp = updateCustomFieldProp;
 
@@ -3119,10 +3182,11 @@ function addCustomFormFieldRow() {
   if (!Array.isArray(currentAppFormConfig.customFields)) currentAppFormConfig.customFields = [];
   currentAppFormConfig.customFields.push({
     id: 'cf_' + Date.now().toString(36),
-    label: 'New Question',
+    label: 'New Field',
     type: 'text',
     placeholder: '',
-    required: false
+    required: false,
+    unique: false
   });
   renderCustomFieldsBuilder();
 }
@@ -3155,12 +3219,13 @@ async function handleSaveAppFormSettings(e) {
   config.isOpen = document.getElementById('appFormIsOpen')?.checked !== false;
   config.startDate = (document.getElementById('appFormStartDate')?.value || '').trim();
   config.endDate = (document.getElementById('appFormEndDate')?.value || '').trim();
+  config.uniqueEmail = document.getElementById('appFormUniqueEmail')?.checked === true;
   config.closedMessage = (document.getElementById('appFormClosedMessage')?.value || '').trim() || "Applications for the current Student Research Fellowship cohort are currently closed. The Institute Research Council is reviewing candidate dossiers. Please check back for announcements regarding the next cohort.";
   config.enableCuriosityGateway = document.getElementById('appFormCuriosityGateway')?.checked !== false;
 
   await window.CRII_API.saveApplicationFormConfig(config);
   if (window.showToast) {
-    window.showToast('Application form settings & status saved to database!', 'success');
+    window.showToast('Application form settings & dynamic fields saved to database!', 'success');
   }
 }
 window.handleSaveAppFormSettings = handleSaveAppFormSettings;
@@ -3515,6 +3580,9 @@ window.triggerFieldMediaUpload = function(targetInputId, acceptTypes = 'image/*'
         targetInput.dispatchEvent(new Event('input', { bubbles: true }));
         targetInput.dispatchEvent(new Event('change', { bubbles: true }));
       }
+      if (typeof window.syncMediaPreviewBadge === 'function') {
+        window.syncMediaPreviewBadge(targetInputId);
+      }
 
       if (previewImgId) {
         const previewEl = document.getElementById(previewImgId);
@@ -3561,8 +3629,51 @@ window.triggerBlockVideoUpload = function(blockIndex) {
   window.triggerFieldMediaUpload(`blockVideoInput_${blockIndex}`, 'video/mp4,video/webm,video/*', null, (url) => {
     if (typeof window.updateBlockContent === 'function') {
       window.updateBlockContent(blockIndex, 'url', url);
+      renderBlockEditor();
     }
   });
+};
+
+window.toggleMediaUrlRow = function(inputId) {
+  const wrap = document.getElementById(inputId + '_urlWrap');
+  const btn = document.getElementById(inputId + '_urlBtn');
+  if (!wrap) return;
+  const isHidden = wrap.style.display === 'none' || !wrap.style.display;
+  wrap.style.display = isHidden ? 'block' : 'none';
+  if (btn) {
+    btn.classList.toggle('btn-primary', isHidden);
+    btn.classList.toggle('btn-secondary', !isHidden);
+  }
+  if (isHidden) {
+    const inp = document.getElementById(inputId);
+    if (inp) inp.focus();
+  }
+};
+
+window.syncMediaPreviewBadge = function(inputId) {
+  const inp = document.getElementById(inputId);
+  const badge = document.getElementById(inputId + '_preview');
+  if (!inp || !badge) return;
+  const val = (inp.value || '').trim();
+  if (!val) {
+    badge.innerHTML = '<span style="color:var(--text-muted); font-style:italic;">No media attached</span>';
+    return;
+  }
+  const shortVal = val.length > 36 ? val.slice(0, 18) + '...' + val.slice(-14) : val;
+  const isVid = /\.(mp4|webm|mov)(\?.*)?$/i.test(val);
+  badge.innerHTML = isVid
+    ? `<span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.15rem 0.5rem; border-radius:6px; background:rgba(234,88,12,0.1); color:#ea580c; font-weight:600;">🎬 ${escapeHtml(shortVal)}</span>`
+    : `<img src="${escapeHtml(val)}" onerror="this.style.display='none'" style="width:26px; height:26px; border-radius:6px; object-fit:cover; border:1px solid var(--border-color); flex-shrink:0;"><span style="color:var(--text-secondary); font-family:monospace; font-size:0.72rem; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(shortVal)}</span>`;
+};
+
+window.setMediaInputValue = function(inputId, value) {
+  const inp = document.getElementById(inputId);
+  if (inp) {
+    inp.value = value || '';
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  window.syncMediaPreviewBadge(inputId);
 };
 
 // =============================================================================
@@ -4106,10 +4217,24 @@ async function deleteImprovmxAlias(aliasId, aliasName, domain) {
 }
 window.deleteImprovmxAlias = deleteImprovmxAlias;
 
+function isSuperAdminUser() {
+  try {
+    const user = (window.CRII_API && window.CRII_API.getCurrentUser && window.CRII_API.getCurrentUser()) || null;
+    if (!user) return false;
+    const role = String(user.role || '').toLowerCase();
+    const email = String(user.email || '').toLowerCase();
+    return role.includes('super') || role.includes('director') || email === 'harunabdullahrakin@gmail.com';
+  } catch (e) {
+    return false;
+  }
+}
+
 async function openManageKeysModal() {
   const modal = document.getElementById('manageImprovmxKeysModal');
   if (!modal) return;
   modal.classList.add('active');
+  const addSec = document.getElementById('addImprovmxKeySection');
+  if (addSec) addSec.style.display = isSuperAdminUser() ? 'block' : 'none';
   await renderImprovmxKeysList();
 }
 window.openManageKeysModal = openManageKeysModal;
@@ -4124,24 +4249,30 @@ async function renderImprovmxKeysList() {
   const container = document.getElementById('improvmxKeysList');
   if (!container) return;
 
+  const canManage = isSuperAdminUser();
   const res = await window.CRII_API.getImprovMXKeys();
   if (res && Array.isArray(res.keys)) {
     cachedImprovmxKeys = res.keys;
+    if (res.keys.length === 0) {
+      container.innerHTML = '<div style="padding:0.85rem; border:1px dashed var(--border-color); border-radius:8px; font-size:0.84rem; color:var(--text-muted); text-align:center;">No ImprovMX API keys configured yet. Add one below.</div>';
+      return;
+    }
     container.innerHTML = res.keys.map(k => {
       const isSelected = (!currentImprovmxKeyId && k.isDefault) || (currentImprovmxKeyId === k.id);
       return `
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; border:1px solid ${isSelected ? 'var(--accent-primary, #ea580c)' : 'var(--border-color)'}; border-radius:8px; background:var(--bg-surface);">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; padding:0.75rem 1rem; border:1px solid ${isSelected ? 'var(--accent-primary, #ea580c)' : 'var(--border-color)'}; border-radius:10px; background:var(--bg-surface);">
           <div>
-            <div style="font-weight:600; font-size:0.88rem; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem;">
+            <div style="font-weight:600; font-size:0.88rem; color:var(--text-primary); display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
               ${escapeHtml(k.label)}
               ${isSelected ? '<span class="status-chip published" style="font-size:0.68rem; padding:1px 6px;">Active</span>' : ''}
-              ${k.isDefault ? '<span class="badge" style="font-size:0.68rem; background:rgba(100,116,139,0.15);">Default</span>' : ''}
+              ${k.isDefault ? '<span class="badge" style="font-size:0.68rem; background:rgba(234,88,12,0.14); color:#ea580c;">Default</span>' : ''}
             </div>
             <div style="font-family:monospace; font-size:0.76rem; color:var(--text-muted); margin-top:0.2rem;">${escapeHtml(k.maskedKey)}</div>
           </div>
-          <div style="display:flex; gap:0.4rem; align-items:center;">
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
             ${!isSelected ? `<button type="button" class="btn btn-secondary btn-sm" onclick="window.switchActiveApiKey('${k.id}')">Use Key</button>` : ''}
-            ${!k.isDefault ? `<button type="button" class="btn btn-sm btn-icon" style="color:#ef4444;" onclick="window.handleDeleteApiKey('${k.id}')" title="Delete key">✕</button>` : ''}
+            ${!k.isDefault ? `<button type="button" class="btn btn-secondary btn-sm" style="color:#ea580c; border-color:rgba(234,88,12,0.35);" onclick="window.handleSetDefaultApiKey('${k.id}')">Make Default</button>` : ''}
+            ${canManage ? `<button type="button" class="btn btn-sm btn-icon" style="color:#ef4444;" onclick="window.handleDeleteApiKey('${k.id}')" title="Remove API Key">✕</button>` : ''}
           </div>
         </div>
       `;
@@ -4149,6 +4280,23 @@ async function renderImprovmxKeysList() {
   }
 }
 window.renderImprovmxKeysList = renderImprovmxKeysList;
+
+async function handleSetDefaultApiKey(targetKeyId) {
+  try {
+    const res = await window.CRII_API.setDefaultImprovMXKey(targetKeyId);
+    if (res && res.success) {
+      currentImprovmxKeyId = targetKeyId;
+      window.showToast('Default ImprovMX API key updated!', 'success');
+      await renderImprovmxKeysList();
+      await renderAliasesTab(true);
+    } else {
+      window.showToast(res?.error || 'Failed to update default key', 'error');
+    }
+  } catch (e) {
+    window.showToast('Error updating default key', 'error');
+  }
+}
+window.handleSetDefaultApiKey = handleSetDefaultApiKey;
 
 async function switchActiveApiKey(keyId) {
   currentImprovmxKeyId = keyId;
@@ -4159,12 +4307,18 @@ async function switchActiveApiKey(keyId) {
 window.switchActiveApiKey = switchActiveApiKey;
 
 async function handleAddNewApiKey() {
+  if (!isSuperAdminUser()) {
+    window.showToast('Only Super Admins can add ImprovMX API keys.', 'error');
+    return;
+  }
   const labelInput = document.getElementById('newKeyLabelInput');
   const secretInput = document.getElementById('newKeySecretInput');
+  const makeDefaultInput = document.getElementById('newKeyMakeDefaultInput');
   const addBtn = document.getElementById('addNewKeyBtn');
 
   const label = (labelInput?.value || '').trim();
   const key = (secretInput?.value || '').trim();
+  const makeDefault = Boolean(makeDefaultInput?.checked);
 
   if (!key || !key.startsWith('sk_')) {
     window.showToast('Please enter a valid ImprovMX API key (sk_...)', 'error');
@@ -4177,12 +4331,17 @@ async function handleAddNewApiKey() {
   }
 
   try {
-    const res = await window.CRII_API.addImprovMXKey(label || 'Secondary Account', key);
+    const res = await window.CRII_API.addImprovMXKey(label || 'Institute Account', key, makeDefault);
     if (res && res.success) {
       window.showToast('ImprovMX API Key verified and saved successfully!', 'success');
       if (labelInput) labelInput.value = '';
       if (secretInput) secretInput.value = '';
+      if (makeDefaultInput) makeDefaultInput.checked = false;
+      if (makeDefault && res.key && res.key.id) {
+        currentImprovmxKeyId = res.key.id;
+      }
       await renderImprovmxKeysList();
+      await renderAliasesTab(true);
     } else {
       window.showToast('Failed to verify API key: ' + (res?.error || 'Invalid credentials'), 'error');
     }
@@ -4198,13 +4357,20 @@ async function handleAddNewApiKey() {
 window.handleAddNewApiKey = handleAddNewApiKey;
 
 async function handleDeleteApiKey(targetKeyId) {
-  if (!window.confirm('Remove this secondary ImprovMX API key?')) return;
+  if (!isSuperAdminUser()) {
+    window.showToast('Only Super Admins can remove ImprovMX API keys.', 'error');
+    return;
+  }
+  if (!window.confirm('Remove this ImprovMX API key? If it is the default, another key will automatically become default.')) return;
   try {
     const res = await window.CRII_API.deleteImprovMXKey(targetKeyId);
     if (res && res.success) {
-      window.showToast('API key removed', 'info');
+      window.showToast('API key removed successfully', 'info');
       if (currentImprovmxKeyId === targetKeyId) currentImprovmxKeyId = null;
       await renderImprovmxKeysList();
+      await renderAliasesTab(true);
+    } else {
+      window.showToast(res?.error || 'Failed to delete key', 'error');
     }
   } catch (e) {
     window.showToast('Failed to delete key', 'error');
@@ -4748,3 +4914,367 @@ function copySqlResultsJson() {
   }
 }
 window.copySqlResultsJson = copySqlResultsJson;
+
+let cachedFellowshipPackages = [];
+let cachedRecruitPages = [];
+let currentRecruitBenefits = [];
+
+function formatPackagePrice(pkg) {
+  const num = Number(pkg.price || 0);
+  if (!num || num <= 0) return 'Free';
+  const symbols = { BDT: '৳', USD: '$', EUR: '€', GBP: '£', INR: '₹' };
+  const sym = symbols[pkg.currency] || (pkg.currency ? pkg.currency + ' ' : '');
+  return `${sym}${num.toLocaleString()}`;
+}
+
+async function renderRecruitTab() {
+  const pkgGrid = document.getElementById('packagesManageGrid');
+  const recGrid = document.getElementById('recruitPagesManageGrid');
+  if (!window.CRII_API) return;
+
+  cachedFellowshipPackages = (await window.CRII_API.getFellowshipPackages()) || [];
+  cachedRecruitPages = (await window.CRII_API.getRecruitPages()) || [];
+
+  if (pkgGrid) {
+    if (cachedFellowshipPackages.length === 0) {
+      pkgGrid.innerHTML = `
+        <div style="grid-column:1 / -1; text-align:center; padding:2.5rem 1rem; border:1px dashed var(--border-color); border-radius:14px; color:var(--text-muted);">
+          <p style="margin:0 0 0.75rem; font-weight:600; color:var(--text-primary);">No student fee tiers or packages configured yet.</p>
+          <p style="margin:0 0 1rem; font-size:0.84rem;">Add Free or Paid fellowship packages with benefits checklists and payment details.</p>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.openPackageModal()">+ Create First Package</button>
+        </div>
+      `;
+    } else {
+      pkgGrid.innerHTML = cachedFellowshipPackages.map(pkg => `
+        <div style="background:var(--bg-surface); border:${pkg.highlighted ? '2px solid #ea580c' : '1px solid var(--border-color)'}; border-radius:14px; padding:1.25rem; display:flex; flex-direction:column; justify-content:space-between; gap:1rem; position:relative; box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem;">
+              <div style="font-weight:700; font-size:1.05rem; color:var(--text-primary);">${escapeHtml(pkg.name)}</div>
+              <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                ${pkg.badge ? `<span class="badge" style="font-size:0.68rem; background:rgba(234,88,12,0.12); color:#ea580c;">${escapeHtml(pkg.badge)}</span>` : ''}
+                <span class="status-chip ${pkg.active !== false ? 'published' : 'draft'}" style="font-size:0.68rem; padding:1px 7px;">${pkg.active !== false ? 'Active' : 'Hidden'}</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:baseline; gap:0.4rem; margin-bottom:0.65rem;">
+              <span style="font-size:1.65rem; font-weight:800; color:#ea580c;">${formatPackagePrice(pkg)}</span>
+              <span style="font-size:0.78rem; color:var(--text-muted);">/ ${escapeHtml(pkg.billingCycle || 'One-time')}</span>
+            </div>
+            ${pkg.description ? `<p style="font-size:0.82rem; color:var(--text-secondary); margin:0 0 0.75rem; line-height:1.5;">${escapeHtml(pkg.description)}</p>` : ''}
+            <ul style="margin:0; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:0.35rem;">
+              ${(pkg.benefits || []).map(b => `<li style="font-size:0.8rem; color:var(--text-secondary); display:flex; align-items:flex-start; gap:0.4rem;"><span style="color:#10b981; font-weight:700;">✓</span><span>${escapeHtml(b)}</span></li>`).join('')}
+            </ul>
+          </div>
+          <div style="display:flex; gap:0.5rem; padding-top:0.75rem; border-top:1px solid var(--border-color);">
+            <button type="button" class="btn btn-secondary btn-sm" style="flex:1;" onclick="window.openPackageModal('${escapeHtml(pkg.id)}')">Edit</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="window.deletePackage('${escapeHtml(pkg.id)}')">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  if (recGrid) {
+    if (cachedRecruitPages.length === 0) {
+      recGrid.innerHTML = `
+        <div style="grid-column:1 / -1; text-align:center; padding:2.5rem 1rem; border:1px dashed var(--border-color); border-radius:14px; color:var(--text-muted);">
+          <p style="margin:0 0 0.75rem; font-weight:600; color:var(--text-primary);">No custom recruit landing pages created yet.</p>
+          <p style="margin:0 0 1rem; font-size:0.84rem;">Build campaign-specific recruitment pages with custom benefits, packages, and live embedded applications.</p>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.openRecruitPageModal()">+ Create First Recruit Page</button>
+        </div>
+      `;
+    } else {
+      recGrid.innerHTML = cachedRecruitPages.map(page => {
+        const livePath = `/recruit?page=${encodeURIComponent(page.slug)}`;
+        const pkgCount = Array.isArray(page.packageIds) ? page.packageIds.length : 0;
+        const benCount = Array.isArray(page.benefits) ? page.benefits.length : 0;
+        return `
+          <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              ${page.heroMedia && !/\.(mp4|webm|mov)(\?.*)?$/i.test(page.heroMedia) ? `<div style="height:125px; overflow:hidden; background:#0f172a;"><img src="${escapeHtml(page.heroMedia)}" style="width:100%; height:100%; object-fit:cover;"></div>` : ''}
+              <div style="padding:1.15rem 1.25rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.45rem;">
+                  <span style="font-family:monospace; font-size:0.74rem; color:#ea580c; font-weight:700;">${escapeHtml(livePath)}</span>
+                  <span class="status-chip ${page.status === 'Active' ? 'published' : 'draft'}" style="font-size:0.68rem; padding:1px 7px;">${escapeHtml(page.status || 'Active')}</span>
+                </div>
+                <div style="font-weight:700; font-size:1.05rem; color:var(--text-primary); margin-bottom:0.35rem;">${escapeHtml(page.title)}</div>
+                <p style="font-size:0.82rem; color:var(--text-secondary); margin:0 0 0.75rem; line-height:1.5;">${escapeHtml(page.subtitle || '')}</p>
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; font-size:0.74rem; color:var(--text-muted);">
+                  <span class="badge" style="background:rgba(15,23,42,0.06);">${benCount} Benefit${benCount === 1 ? '' : 's'}</span>
+                  <span class="badge" style="background:rgba(234,88,12,0.1); color:#ea580c;">${pkgCount} Package${pkgCount === 1 ? '' : 's'}</span>
+                </div>
+              </div>
+            </div>
+            <div style="padding:0.85rem 1.25rem; border-top:1px solid var(--border-color); display:flex; gap:0.45rem; flex-wrap:wrap;">
+              <a href="${livePath}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;">Open Live</a>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.copyRecruitPageLink('${escapeHtml(livePath)}')">Copy URL</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.openRecruitPageModal('${escapeHtml(page.id)}')">Edit</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteRecruitPage('${escapeHtml(page.id)}')">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+}
+window.renderRecruitTab = renderRecruitTab;
+
+window.copyRecruitPageLink = function(path) {
+  const full = window.location.origin + path;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(full).then(() => window.showToast('Copied ' + full, 'success'));
+  }
+};
+
+window.openPackageModal = function(pkgId = null) {
+  const modal = document.getElementById('packageModal');
+  const form = document.getElementById('packageForm');
+  const titleEl = document.getElementById('packageModalTitle');
+  if (!modal || !form) return;
+  form.reset();
+  document.getElementById('pkgIdInput').value = '';
+  document.getElementById('pkgActiveInput').checked = true;
+  document.getElementById('pkgHighlightedInput').checked = false;
+
+  if (pkgId) {
+    const pkg = cachedFellowshipPackages.find(p => p.id === pkgId);
+    if (pkg) {
+      if (titleEl) titleEl.textContent = 'Edit Fellowship Package';
+      document.getElementById('pkgIdInput').value = pkg.id;
+      document.getElementById('pkgNameInput').value = pkg.name || '';
+      document.getElementById('pkgBadgeInput').value = pkg.badge || '';
+      document.getElementById('pkgPriceInput').value = pkg.price !== undefined ? pkg.price : 0;
+      document.getElementById('pkgCurrencyInput').value = pkg.currency || 'BDT';
+      document.getElementById('pkgBillingInput').value = pkg.billingCycle || 'One-time';
+      document.getElementById('pkgDescInput').value = pkg.description || '';
+      document.getElementById('pkgBenefitsInput').value = (pkg.benefits || []).join('\n');
+      document.getElementById('pkgPaymentInstructionsInput').value = pkg.paymentInstructions || '';
+      document.getElementById('pkgPaymentLinkInput').value = pkg.paymentLink || '';
+      document.getElementById('pkgHighlightedInput').checked = Boolean(pkg.highlighted);
+      document.getElementById('pkgActiveInput').checked = pkg.active !== false;
+    }
+  } else {
+    if (titleEl) titleEl.textContent = 'Add Fellowship Package / Fee Tier';
+  }
+  modal.classList.add('active');
+};
+
+window.closePackageModal = function() {
+  const modal = document.getElementById('packageModal');
+  if (modal) modal.classList.remove('active');
+};
+
+window.handleSavePackage = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('pkgIdInput').value || ('pkg-' + Date.now().toString(36));
+  const pkg = {
+    id,
+    name: document.getElementById('pkgNameInput').value.trim(),
+    badge: document.getElementById('pkgBadgeInput').value.trim(),
+    price: Number(document.getElementById('pkgPriceInput').value || 0),
+    currency: document.getElementById('pkgCurrencyInput').value || 'BDT',
+    billingCycle: document.getElementById('pkgBillingInput').value || 'One-time',
+    description: document.getElementById('pkgDescInput').value.trim(),
+    benefits: document.getElementById('pkgBenefitsInput').value.split('\n').map(s => s.trim()).filter(Boolean),
+    paymentInstructions: document.getElementById('pkgPaymentInstructionsInput').value.trim(),
+    paymentLink: document.getElementById('pkgPaymentLinkInput').value.trim(),
+    highlighted: document.getElementById('pkgHighlightedInput').checked,
+    active: document.getElementById('pkgActiveInput').checked
+  };
+
+  const idx = cachedFellowshipPackages.findIndex(p => p.id === id);
+  if (idx >= 0) cachedFellowshipPackages[idx] = pkg;
+  else cachedFellowshipPackages.push(pkg);
+
+  await window.CRII_API.saveFellowshipPackages(cachedFellowshipPackages);
+  window.closePackageModal();
+  window.showToast('Fellowship package saved to Cloudflare D1!', 'success');
+  await renderRecruitTab();
+};
+
+window.deletePackage = async function(pkgId) {
+  if (!confirm('Delete this fellowship package?')) return;
+  cachedFellowshipPackages = cachedFellowshipPackages.filter(p => p.id !== pkgId);
+  await window.CRII_API.saveFellowshipPackages(cachedFellowshipPackages);
+  window.showToast('Package removed', 'info');
+  await renderRecruitTab();
+};
+
+function renderRecruitBenefitsBuilder() {
+  const container = document.getElementById('recBenefitsBuilderList');
+  if (!container) return;
+  if (currentRecruitBenefits.length === 0) {
+    container.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">No benefit cards added yet. Click "+ Add Benefit".</div>';
+    return;
+  }
+  container.innerHTML = currentRecruitBenefits.map((b, i) => `
+    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; background:var(--bg-surface); padding:0.65rem; border-radius:8px; border:1px solid var(--border-color);">
+      <input type="text" class="form-input" style="width:62px; text-align:center; padding:0.35rem;" value="${escapeHtml(b.icon || '🔬')}" oninput="window.updateRecruitBenefitProp(${i}, 'icon', this.value)" placeholder="🔬">
+      <input type="text" class="form-input" style="flex:1; min-width:140px; padding:0.35rem 0.6rem; font-size:0.84rem;" value="${escapeHtml(b.title || '')}" oninput="window.updateRecruitBenefitProp(${i}, 'title', this.value)" placeholder="Benefit Title">
+      <input type="text" class="form-input" style="flex:2; min-width:180px; padding:0.35rem 0.6rem; font-size:0.84rem;" value="${escapeHtml(b.desc || '')}" oninput="window.updateRecruitBenefitProp(${i}, 'desc', this.value)" placeholder="Short description of benefit">
+      <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.5rem;" onclick="window.removeRecruitBenefitRow(${i})">&times;</button>
+    </div>
+  `).join('');
+}
+
+window.addRecruitBenefitRow = function() {
+  currentRecruitBenefits.push({ icon: '🚀', title: '', desc: '' });
+  renderRecruitBenefitsBuilder();
+};
+
+window.updateRecruitBenefitProp = function(idx, prop, val) {
+  if (currentRecruitBenefits[idx]) currentRecruitBenefits[idx][prop] = val;
+};
+
+window.removeRecruitBenefitRow = function(idx) {
+  currentRecruitBenefits.splice(idx, 1);
+  renderRecruitBenefitsBuilder();
+};
+
+window.autoFillRecruitSlug = function(titleVal) {
+  const idInput = document.getElementById('recIdInput');
+  const slugInput = document.getElementById('recSlugInput');
+  if (idInput && idInput.value) return;
+  if (slugInput) {
+    slugInput.value = String(titleVal || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
+  }
+};
+
+window.openRecruitPageModal = function(pageId = null) {
+  const modal = document.getElementById('recruitPageModal');
+  const form = document.getElementById('recruitPageForm');
+  const titleEl = document.getElementById('recruitPageModalTitle');
+  const pkgListEl = document.getElementById('recPackagesCheckboxList');
+  if (!modal || !form) return;
+
+  form.reset();
+  document.getElementById('recIdInput').value = '';
+  document.getElementById('recShowFormInput').checked = true;
+  document.getElementById('recCtaTextInput').value = 'Apply for Fellowship';
+  window.setMediaInputValue('recHeroMediaInput', '');
+
+  let selectedPkgIds = [];
+  if (pageId) {
+    const page = cachedRecruitPages.find(p => p.id === pageId);
+    if (page) {
+      if (titleEl) titleEl.textContent = 'Edit Recruit Landing Page';
+      document.getElementById('recIdInput').value = page.id;
+      document.getElementById('recTitleInput').value = page.title || '';
+      document.getElementById('recSlugInput').value = page.slug || '';
+      document.getElementById('recBadgeInput').value = page.badge || '';
+      document.getElementById('recDivisionInput').value = page.divisionScope || '';
+      document.getElementById('recStatusInput').value = page.status || 'Active';
+      document.getElementById('recSubtitleInput').value = page.subtitle || '';
+      window.setMediaInputValue('recHeroMediaInput', page.heroMedia || '');
+      document.getElementById('recCtaTextInput').value = page.ctaText || 'Apply for Fellowship';
+      document.getElementById('recShowFormInput').checked = page.showForm !== false;
+      currentRecruitBenefits = Array.isArray(page.benefits) ? JSON.parse(JSON.stringify(page.benefits)) : [];
+      selectedPkgIds = Array.isArray(page.packageIds) ? page.packageIds : [];
+    }
+  } else {
+    if (titleEl) titleEl.textContent = 'Create Custom Recruit Landing Page';
+    currentRecruitBenefits = [
+      { icon: '🔬', title: 'Direct Research Mentorship', desc: 'Work side-by-side with senior fellows and institute leads.' },
+      { icon: '📧', title: 'Verified Scholar Identity', desc: 'Receive a custom @scholar.zone.id email & open-science publication profile.' },
+      { icon: '🏆', title: 'Published Portfolio & Certificate', desc: 'Co-author reproducible papers and earn verifiable credentials.' }
+    ];
+    selectedPkgIds = cachedFellowshipPackages.filter(p => p.active !== false).map(p => p.id);
+  }
+
+  renderRecruitBenefitsBuilder();
+
+  if (pkgListEl) {
+    if (cachedFellowshipPackages.length === 0) {
+      pkgListEl.innerHTML = '<span style="font-size:0.8rem; color:var(--text-muted);">No packages created yet. You can add packages above anytime.</span>';
+    } else {
+      pkgListEl.innerHTML = cachedFellowshipPackages.map(pkg => `
+        <label style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.4rem 0.75rem; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-surface); font-size:0.82rem; cursor:pointer;">
+          <input type="checkbox" class="rec-pkg-checkbox" value="${escapeHtml(pkg.id)}" ${selectedPkgIds.includes(pkg.id) ? 'checked' : ''} style="accent-color:#ea580c;">
+          <span>${escapeHtml(pkg.name)} (${formatPackagePrice(pkg)})</span>
+        </label>
+      `).join('');
+    }
+  }
+
+  modal.classList.add('active');
+};
+
+window.closeRecruitPageModal = function() {
+  const modal = document.getElementById('recruitPageModal');
+  if (modal) modal.classList.remove('active');
+};
+
+window.handleSaveRecruitPage = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('recIdInput').value || ('rec-' + Date.now().toString(36));
+  const rawSlug = document.getElementById('recSlugInput').value.trim() || document.getElementById('recTitleInput').value.trim();
+  const slug = rawSlug.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || ('cohort-' + Date.now().toString(36));
+  const selectedPkgIds = Array.from(document.querySelectorAll('.rec-pkg-checkbox:checked')).map(cb => cb.value);
+
+  const page = {
+    id,
+    slug,
+    title: document.getElementById('recTitleInput').value.trim(),
+    badge: document.getElementById('recBadgeInput').value.trim(),
+    divisionScope: document.getElementById('recDivisionInput').value.trim() || 'All Research Divisions',
+    status: document.getElementById('recStatusInput').value || 'Active',
+    subtitle: document.getElementById('recSubtitleInput').value.trim(),
+    heroMedia: document.getElementById('recHeroMediaInput').value.trim(),
+    ctaText: document.getElementById('recCtaTextInput').value.trim() || 'Apply for Fellowship',
+    showForm: document.getElementById('recShowFormInput').checked,
+    benefits: currentRecruitBenefits.filter(b => b.title || b.desc),
+    packageIds: selectedPkgIds,
+    updatedAt: new Date().toISOString()
+  };
+
+  const idx = cachedRecruitPages.findIndex(p => p.id === id);
+  if (idx >= 0) cachedRecruitPages[idx] = page;
+  else cachedRecruitPages.unshift(page);
+
+  await window.CRII_API.saveRecruitPages(cachedRecruitPages);
+  window.closeRecruitPageModal();
+  window.showToast('Recruit landing page published!', 'success');
+  await renderRecruitTab();
+};
+
+window.deleteRecruitPage = async function(pageId) {
+  if (!confirm('Delete this recruit landing page?')) return;
+  cachedRecruitPages = cachedRecruitPages.filter(p => p.id !== pageId);
+  await window.CRII_API.saveRecruitPages(cachedRecruitPages);
+  window.showToast('Recruit page deleted', 'info');
+  await renderRecruitTab();
+};
+
+const _origOpenResearcherModal = window.openResearcherModal;
+if (typeof _origOpenResearcherModal === 'function') {
+  window.openResearcherModal = function(...args) {
+    const r = _origOpenResearcherModal.apply(this, args);
+    setTimeout(() => window.syncMediaPreviewBadge('resAvatarInput'), 60);
+    return r;
+  };
+}
+const _origOpenDivisionModal = window.openDivisionModal;
+if (typeof _origOpenDivisionModal === 'function') {
+  window.openDivisionModal = async function(...args) {
+    const r = await _origOpenDivisionModal.apply(this, args);
+    setTimeout(() => window.syncMediaPreviewBadge('divisionImageInput'), 60);
+    return r;
+  };
+}
+const _origOpenCohortModal = window.openCohortModal;
+if (typeof _origOpenCohortModal === 'function') {
+  window.openCohortModal = async function(...args) {
+    const r = await _origOpenCohortModal.apply(this, args);
+    setTimeout(() => window.syncMediaPreviewBadge('cohortImageInput'), 60);
+    return r;
+  };
+}
+setInterval(() => {
+  ['bloggerCoverInput', 'settingLogoUrl'].forEach(id => {
+    const el = document.getElementById(id);
+    const prev = document.getElementById(id + '_preview');
+    if (el && prev && prev.dataset.lastVal !== el.value) {
+      prev.dataset.lastVal = el.value;
+      window.syncMediaPreviewBadge(id);
+    }
+  });
+}, 800);

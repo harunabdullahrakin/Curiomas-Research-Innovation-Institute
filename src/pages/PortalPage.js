@@ -1,9 +1,26 @@
-/**
- * CURIOMAS RESEARCH & INNOVATION INSTITUTE (CRII)
- * Portal Dashboard Page Component
- */
-
 import { auth } from '../services/auth.js';
+
+function renderMediaPickerField({ id, accept = 'image/*', uploadLabel = 'Upload Image', placeholder = 'Paste URL or server path (/assets/... or /api/images/...)', extraOnInput = '' }) {
+  const inputHook = extraOnInput ? `${extraOnInput}; window.syncMediaPreviewBadge('${id}')` : `window.syncMediaPreviewBadge('${id}')`;
+  return `
+    <div class="crii-media-picker" data-media-input="${id}" style="display:flex; flex-direction:column; gap:0.5rem;">
+      <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="window.triggerFieldMediaUpload('${id}', '${accept}')" style="display:inline-flex; align-items:center; gap:0.4rem; white-space:nowrap;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>${uploadLabel}</span>
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="${id}_urlBtn" onclick="window.toggleMediaUrlRow('${id}')" style="display:inline-flex; align-items:center; gap:0.35rem; white-space:nowrap;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>URL</span>
+        </button>
+        <div id="${id}_preview" style="font-size:0.76rem; color:var(--text-muted); display:inline-flex; align-items:center; gap:0.45rem; min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+      </div>
+      <div id="${id}_urlWrap" style="display:none;">
+        <input type="text" id="${id}" class="form-input" placeholder="${placeholder}" oninput="${inputHook}" onchange="${inputHook}" style="width:100%;">
+      </div>
+    </div>
+  `;
+}
 
 export function renderPortalPageHtml() {
   return `
@@ -113,6 +130,13 @@ export function renderPortalPageHtml() {
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>
             </svg>
             <span class="portal-nav-label">Who Can Join Us?</span>
+          </button>
+
+          <button class="portal-nav-btn" data-tab="recruit" data-tooltip="Fees, Packages & Recruit Pages">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+            <span class="portal-nav-label">Packages & Recruit Pages</span>
           </button>
         </div>
 
@@ -448,14 +472,23 @@ export function renderPortalPageHtml() {
             <!-- Tab 2: Details & Cover -->
             <div id="bloggerPaneDetails" class="blogger-tab-pane" style="display: none; max-width: 860px;">
               <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label class="form-label" for="bloggerCoverInput">Cover Image URL</label>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                  <input type="url" id="bloggerCoverInput" class="form-input" style="flex: 1;" placeholder="https://images.unsplash.com/... or upload below">
-                  <label class="btn btn-secondary btn-sm" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; margin-bottom: 0; padding: 0.5rem 0.85rem;" title="Upload image directly to Cloudflare R2 storage">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span>Upload Image</span>
-                    <input type="file" id="bloggerCoverFileInput" accept="image/*" style="display: none;" onchange="handleCoverFileUpload(event)">
-                  </label>
+                <label class="form-label" for="bloggerCoverInput">Cover Image</label>
+                <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                  <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                    <label class="btn btn-primary btn-sm" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; margin-bottom: 0; padding: 0.45rem 0.85rem;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span>Upload Image</span>
+                      <input type="file" id="bloggerCoverFileInput" accept="image/*" style="display: none;" onchange="handleCoverFileUpload(event)">
+                    </label>
+                    <button type="button" class="btn btn-secondary btn-sm" id="bloggerCoverInput_urlBtn" onclick="window.toggleMediaUrlRow('bloggerCoverInput')" style="display:inline-flex; align-items:center; gap:0.35rem; white-space:nowrap;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      <span>URL</span>
+                    </button>
+                    <div id="bloggerCoverInput_preview" style="font-size:0.76rem; color:var(--text-muted); display:inline-flex; align-items:center; gap:0.45rem; min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+                  </div>
+                  <div id="bloggerCoverInput_urlWrap" style="display:none;">
+                    <input type="text" id="bloggerCoverInput" class="form-input" style="width:100%;" placeholder="/assets/... or /api/images/... or https://..." oninput="window.syncMediaPreviewBadge('bloggerCoverInput')" onchange="window.syncMediaPreviewBadge('bloggerCoverInput')">
+                  </div>
                 </div>
                 <div id="bloggerCoverUploadStatus" style="font-size: 0.78rem; margin-top: 0.35rem; display: none;"></div>
                 <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; font-size: 0.75rem;">
@@ -738,23 +771,27 @@ export function renderPortalPageHtml() {
                   <input type="checkbox" id="fieldReq_statement" checked> Required
                 </label>
               </div>
+
+              <div class="form-group" style="background:rgba(234,88,12,0.04); padding:1rem; border-radius:8px; border:1px solid rgba(234,88,12,0.22);">
+                <div style="font-weight:600; margin-bottom:0.4rem; color:#ea580c;">Unique Email Enforcement</div>
+                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer;">
+                  <input type="checkbox" id="appFormUniqueEmail" style="accent-color:#ea580c;"> Auto-check & block duplicate emails live
+                </label>
+              </div>
             </div>
 
-            <!-- Custom Questions Builder -->
             <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
                 <div>
-                  <h4 style="font-weight:600; margin-bottom:0.25rem;">Custom Questions & Additional Fields</h4>
-                  <p style="font-size:0.8rem; color:var(--text-muted);">Add new fields such as Graduation Year, GPA, Discord Handle, or Weekly Availability.</p>
+                  <h4 style="font-weight:600; margin-bottom:0.25rem;">Custom Questions & Dynamic Fields</h4>
+                  <p style="font-size:0.8rem; color:var(--text-muted);">Supports Text, Long Answer, Number, ID Number, Rating (1-5 Stars), Image, Profile Photo (PFP), Video, URL, Email, Phone, Date, Dropdown, and Agreement Checkbox. Enable <strong>Unique</strong> on any field to auto-verify duplicates live against Cloudflare D1.</p>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomFormFieldRow()">
-                  + Add Custom Question
+                <button type="button" class="btn btn-primary btn-sm" onclick="addCustomFormFieldRow()">
+                  + Add Custom Field
                 </button>
               </div>
 
-              <div id="customFieldsBuilderList" style="display:flex; flex-direction:column; gap:0.75rem;">
-                <!-- Populated by portal.js -->
-              </div>
+              <div id="customFieldsBuilderList" style="display:flex; flex-direction:column; gap:0.85rem;"></div>
             </div>
 
             <div style="margin-top: 1.5rem; text-align:right;">
@@ -763,6 +800,48 @@ export function renderPortalPageHtml() {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <div id="tab-recruit" class="portal-tab-content" style="display:none;">
+        <div class="portal-topbar">
+          <div class="portal-title-block">
+            <h1>Student Fees, Packages & Recruit Pages</h1>
+            <p>Configure fellowship fee tiers, benefits packages, and launch custom recruitment landing pages with embedded live applications.</p>
+          </div>
+          <div style="display:flex; gap:0.65rem; flex-wrap:wrap;">
+            <a href="/recruit" target="_blank" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.35rem; text-decoration:none;">
+              <span>View /recruit Directory</span>
+            </a>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.openPackageModal()">
+              + Add Fee / Package Tier
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.openRecruitPageModal()">
+              + Create Recruit Page
+            </button>
+          </div>
+        </div>
+
+        <div class="data-table-card" style="padding:1.5rem; margin-bottom:2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem;">
+            <div>
+              <h3 style="margin:0 0 0.25rem; font-size:1.15rem; font-weight:700; color:var(--text-primary);">Student Fees & Fellowship Packages</h3>
+              <p style="margin:0; font-size:0.84rem; color:var(--text-muted);">Create Free or Paid student tracks with custom currency, benefits checklists, and payment instructions shown on /team#apply and Recruit Pages.</p>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.openPackageModal()">+ New Package</button>
+          </div>
+          <div id="packagesManageGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:1.25rem;"></div>
+        </div>
+
+        <div class="data-table-card" style="padding:1.5rem; margin-bottom:2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem;">
+            <div>
+              <h3 style="margin:0 0 0.25rem; font-size:1.15rem; font-weight:700; color:var(--text-primary);">Custom Recruit Landing Pages</h3>
+              <p style="margin:0; font-size:0.84rem; color:var(--text-muted);">Build dedicated recruitment campaign pages (e.g. /recruit?page=summer-2026) with hero media, benefits cards, attached packages, and instant application forms.</p>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.openRecruitPageModal()">+ New Recruit Page</button>
+          </div>
+          <div id="recruitPagesManageGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.25rem;"></div>
         </div>
       </div>
 
@@ -1215,17 +1294,24 @@ export function renderPortalPageHtml() {
                 </div>
 
                 
-                <!-- Add New Image URL or Upload File -->
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
-                  <input type="url" id="newHeroImageUrl" class="form-input" placeholder="Paste image URL (https://...)" style="flex: 1; min-width: 180px;">
-                  <button type="button" class="btn btn-secondary" onclick="addHeroImageFromInput()" style="white-space: nowrap; padding: 0.5rem 1rem;">
-                    + Add URL
-                  </button>
-                  <input type="file" id="heroImageUploadInput" accept="image/*" style="display: none;" onchange="handleHeroImageUpload(event)">
-                  <button type="button" class="btn btn-secondary" onclick="document.getElementById('heroImageUploadInput').click()" style="white-space: nowrap; padding: 0.5rem 1rem;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.35rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span>Upload Image</span>
-                  </button>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                    <input type="file" id="heroImageUploadInput" accept="image/*" style="display: none;" onchange="handleHeroImageUpload(event)">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('heroImageUploadInput').click()" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 0.35rem;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span>Upload Image</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="newHeroImageUrl_urlBtn" onclick="window.toggleMediaUrlRow('newHeroImageUrl')" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 0.35rem;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      <span>URL</span>
+                    </button>
+                  </div>
+                  <div id="newHeroImageUrl_urlWrap" style="display: none;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                      <input type="text" id="newHeroImageUrl" class="form-input" placeholder="Paste image URL or server path (/assets/... or /api/images/...)" style="flex: 1; min-width: 180px;">
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="addHeroImageFromInput()" style="white-space: nowrap; padding: 0.5rem 1rem;">+ Add URL</button>
+                    </div>
+                  </div>
                 </div>
                 <div id="heroImageUploadStatus" style="font-size: 0.75rem; color: var(--accent-primary); margin-top: 0.35rem; display: none;"></div>
 
@@ -1269,17 +1355,24 @@ export function renderPortalPageHtml() {
                   <!-- Rendered dynamically via JS -->
                 </div>
 
-                <!-- Add New Video URL or Upload File -->
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
-                  <input type="url" id="newHeroVideoUrl" class="form-input" placeholder="Paste video URL (https://... or .mp4 / .webm)" style="flex: 1; min-width: 180px;">
-                  <button type="button" class="btn btn-secondary" onclick="addHeroVideoFromInput()" style="white-space: nowrap; padding: 0.5rem 1rem;">
-                    + Add Video URL
-                  </button>
-                  <input type="file" id="heroVideoUploadInput" accept="video/mp4,video/webm" style="display: none;" onchange="handleHeroVideoUpload(event)">
-                  <button type="button" class="btn btn-secondary" onclick="document.getElementById('heroVideoUploadInput').click()" style="white-space: nowrap; padding: 0.5rem 1rem;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.35rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span>Upload Video</span>
-                  </button>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                    <input type="file" id="heroVideoUploadInput" accept="video/mp4,video/webm" style="display: none;" onchange="handleHeroVideoUpload(event)">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('heroVideoUploadInput').click()" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 0.35rem;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span>Upload Video</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="newHeroVideoUrl_urlBtn" onclick="window.toggleMediaUrlRow('newHeroVideoUrl')" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 0.35rem;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      <span>URL</span>
+                    </button>
+                  </div>
+                  <div id="newHeroVideoUrl_urlWrap" style="display: none;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                      <input type="text" id="newHeroVideoUrl" class="form-input" placeholder="Paste video URL or server path (assets/hero-bg.mp4 or /api/images/...)" style="flex: 1; min-width: 180px;">
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="addHeroVideoFromInput()" style="white-space: nowrap; padding: 0.5rem 1rem;">+ Add Video URL</button>
+                    </div>
+                  </div>
                 </div>
                 <div id="heroVideoUploadStatus" style="font-size: 0.75rem; color: var(--accent-primary); margin-top: 0.35rem; display: none;"></div>
 
@@ -1364,14 +1457,8 @@ export function renderPortalPageHtml() {
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="settingLogoUrl">Institute Logo Image URL (Optional)</label>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                  <input type="url" id="settingLogoUrl" class="form-input" placeholder="Paste logo URL or click Upload..." style="flex: 1;">
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerFieldMediaUpload('settingLogoUrl', 'image/*')" title="Upload logo to Cloudflare R2" style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span>Upload</span>
-                  </button>
-                </div>
+                <label class="form-label" for="settingLogoUrl">Institute Logo Image (Optional)</label>
+                ${renderMediaPickerField({ id: 'settingLogoUrl', accept: 'image/*', uploadLabel: 'Upload Logo', placeholder: 'Paste logo URL or server path (/assets/curiomas-no-bg.png)' })}
                 <span style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
                   Replaces the default quantum vector emblem in the navbar.
                 </span>
@@ -1888,18 +1975,20 @@ export function renderPortalPageHtml() {
           </div>
         </div>
 
-        <!-- Add New Key Form -->
-        <div style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <div id="addImprovmxKeySection" style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
           <h4 style="font-size: 0.85rem; font-weight: 700; margin-bottom: 0.6rem; color: var(--text-primary);">+ Connect Additional ImprovMX API Key</h4>
           <div class="form-group" style="margin-bottom: 0.75rem;">
             <label class="form-label">Account Label *</label>
-            <input type="text" id="newKeyLabelInput" class="form-input" placeholder="e.g. Secondary Lab / Personal Domain">
+            <input type="text" id="newKeyLabelInput" class="form-input" placeholder="e.g. Scholar Domain Account">
           </div>
           <div class="form-group" style="margin-bottom: 0.75rem;">
             <label class="form-label">ImprovMX API Key (sk_...) *</label>
             <input type="password" id="newKeySecretInput" class="form-input" placeholder="sk_xxxxxxxxxxxxxxxxxxxxxxxx">
           </div>
-          <button type="button" class="btn btn-secondary btn-sm" id="addNewKeyBtn" onclick="window.handleAddNewApiKey()">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; margin-bottom:0.85rem; cursor:pointer; color:var(--text-secondary);">
+            <input type="checkbox" id="newKeyMakeDefaultInput" style="accent-color:#ea580c;"> Set as default institute key immediately
+          </label>
+          <button type="button" class="btn btn-primary btn-sm" id="addNewKeyBtn" onclick="window.handleAddNewApiKey()">
             Verify & Connect Key
           </button>
         </div>
@@ -2077,20 +2166,14 @@ export function renderPortalPageHtml() {
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="resAvatarInput">Profile Photo (PFP URL)</label>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <input type="url" id="resAvatarInput" class="form-input" placeholder="Paste image URL or click Upload..." style="flex: 1;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerFieldMediaUpload('resAvatarInput', 'image/*')" title="Upload photo to Cloudflare R2" style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>Upload</span>
-              </button>
-            </div>
+            <label class="form-label" for="resAvatarInput">Profile Photo (PFP)</label>
+            ${renderMediaPickerField({ id: 'resAvatarInput', accept: 'image/*', uploadLabel: 'Upload Photo', placeholder: 'Paste PFP URL or server path (/api/images/... or /assets/...)' })}
             <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem; flex-wrap: wrap; font-size: 0.72rem;">
               <span style="color: var(--text-muted); align-self: center;">Avatar Presets:</span>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="document.getElementById('resAvatarInput').value='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'">Avatar 1</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="document.getElementById('resAvatarInput').value='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">Avatar 2</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="document.getElementById('resAvatarInput').value='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'">Avatar 3</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="document.getElementById('resAvatarInput').value='https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80'">Avatar 4</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="window.setMediaInputValue('resAvatarInput','https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80')">Avatar 1</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="window.setMediaInputValue('resAvatarInput','https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80')">Avatar 2</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="window.setMediaInputValue('resAvatarInput','https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80')">Avatar 3</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="window.setMediaInputValue('resAvatarInput','https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80')">Avatar 4</button>
             </div>
           </div>
 
@@ -2130,11 +2213,11 @@ export function renderPortalPageHtml() {
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="resGithubInput">GitHub URL</label>
-              <input type="url" id="resGithubInput" class="form-input" placeholder="https://github.com/username">
+              <input type="text" id="resGithubInput" class="form-input" placeholder="github.com/username or full link">
             </div>
             <div class="form-group">
               <label class="form-label" for="resLinkedinInput">LinkedIn URL</label>
-              <input type="url" id="resLinkedinInput" class="form-input" placeholder="https://linkedin.com/in/username">
+              <input type="text" id="resLinkedinInput" class="form-input" placeholder="linkedin.com/in/username or full link">
             </div>
           </div>
 
@@ -2298,20 +2381,14 @@ export function renderPortalPageHtml() {
           </div>
 
           <div class="form-group" style="margin-bottom: 1.25rem;">
-            <label class="form-label" for="divisionImageInput">Cover Image URL *</label>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <input type="url" id="divisionImageInput" class="form-input" required placeholder="Paste banner URL or click Upload..." style="flex: 1;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerFieldMediaUpload('divisionImageInput', 'image/*')" title="Upload banner image to Cloudflare R2" style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>Upload</span>
-              </button>
-            </div>
+            <label class="form-label" for="divisionImageInput">Cover Image *</label>
+            ${renderMediaPickerField({ id: 'divisionImageInput', accept: 'image/*', uploadLabel: 'Upload Cover', placeholder: 'Paste banner URL or server path (/api/images/... or /assets/...)' })}
             <div style="display:flex; gap:0.4rem; margin-top:0.45rem; flex-wrap:wrap; font-size:0.75rem;">
               <span style="color:var(--text-muted); align-self:center;">Image Presets:</span>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80'">Quantum</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=800&q=80'">Cosmology</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80'">Laboratory</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('divisionImageInput').value='https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=800&q=80'">Genomics</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="window.setMediaInputValue('divisionImageInput','https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80')">Quantum</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="window.setMediaInputValue('divisionImageInput','https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=800&q=80')">Cosmology</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="window.setMediaInputValue('divisionImageInput','https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80')">Laboratory</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="window.setMediaInputValue('divisionImageInput','https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=800&q=80')">Genomics</button>
             </div>
           </div>
 
@@ -2369,20 +2446,14 @@ export function renderPortalPageHtml() {
           </div>
 
           <div class="form-group" style="margin-bottom: 1.25rem;">
-            <label class="form-label" for="cohortImageInput">Card Media / Photo URL *</label>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <input type="url" id="cohortImageInput" class="form-input" required placeholder="Paste cover URL or click Upload..." style="flex: 1;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerFieldMediaUpload('cohortImageInput', 'image/*')" title="Upload cover image to Cloudflare R2" style="white-space: nowrap; display: flex; align-items: center; gap: 0.35rem;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>Upload</span>
-              </button>
-            </div>
+            <label class="form-label" for="cohortImageInput">Card Media / Photo *</label>
+            ${renderMediaPickerField({ id: 'cohortImageInput', accept: 'image/*', uploadLabel: 'Upload Photo', placeholder: 'Paste cover URL or server path (/api/images/... or /assets/...)' })}
             <div style="display:flex; gap:0.4rem; margin-top:0.45rem; flex-wrap:wrap; font-size:0.75rem;">
               <span style="color:var(--text-muted); align-self:center;">Presets:</span>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=800&q=80'">Lab Undergrad</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80'">Postgrad Group</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80'">Independent Research</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="document.getElementById('cohortImageInput').value='https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80'">Fellows & Mentors</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="window.setMediaInputValue('cohortImageInput','https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=800&q=80')">Lab Undergrad</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="window.setMediaInputValue('cohortImageInput','https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80')">Postgrad Group</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="window.setMediaInputValue('cohortImageInput','https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80')">Independent Research</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:0.2rem 0.55rem; font-size:0.72rem;" onclick="window.setMediaInputValue('cohortImageInput','https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80')">Fellows & Mentors</button>
             </div>
           </div>
 
@@ -2401,6 +2472,171 @@ export function renderPortalPageHtml() {
         <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button type="button" class="btn btn-secondary" onclick="closeCohortModal()">Cancel</button>
           <button type="submit" class="btn btn-primary" id="saveCohortBtn">Save Cohort Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="packageModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 660px;">
+      <div class="modal-header">
+        <h3 id="packageModalTitle" class="modal-title">Add Fellowship Package / Fee Tier</h3>
+        <button type="button" class="modal-close" onclick="window.closePackageModal()">&times;</button>
+      </div>
+      <form id="packageForm" onsubmit="window.handleSavePackage(event)">
+        <div class="modal-body" style="padding: 1.5rem; max-height: 75vh; overflow-y: auto;">
+          <input type="hidden" id="pkgIdInput">
+          <div class="form-row" style="display:grid; grid-template-columns:2fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="pkgNameInput">Package / Tier Name *</label>
+              <input type="text" id="pkgNameInput" class="form-input" required placeholder="e.g. Research Scholar Track">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pkgBadgeInput">Tag / Badge</label>
+              <input type="text" id="pkgBadgeInput" class="form-input" placeholder="e.g. Most Popular, Free">
+            </div>
+          </div>
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="pkgPriceInput">Student Fee Amount (0 = Free)</label>
+              <input type="number" id="pkgPriceInput" class="form-input" min="0" step="any" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pkgCurrencyInput">Currency</label>
+              <select id="pkgCurrencyInput" class="form-select">
+                <option value="BDT">BDT (৳)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="INR">INR (₹)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pkgBillingInput">Billing Cycle</label>
+              <select id="pkgBillingInput" class="form-select">
+                <option value="One-time">One-time Fee</option>
+                <option value="Per Cohort">Per Cohort</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Free">Free / Sponsored</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label" for="pkgDescInput">Short Description</label>
+            <textarea id="pkgDescInput" class="form-input" rows="2" placeholder="What this student package unlocks..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label" for="pkgBenefitsInput">Package Benefits (One per line) *</label>
+            <textarea id="pkgBenefitsInput" class="form-input" rows="4" required placeholder="Custom @scholar.zone.id Email&#10;1-on-1 Research Mentorship&#10;Verified Publication Certificate&#10;Cloudflare D1 & Compute Access"></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label" for="pkgPaymentInstructionsInput">Payment Instructions (Shown if Fee > 0)</label>
+            <textarea id="pkgPaymentInstructionsInput" class="form-input" rows="2" placeholder="e.g. Send fee via bKash/Nagad to 01XXXXXXXXX (Send Money) and enter Transaction ID below."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label" for="pkgPaymentLinkInput">Optional Payment Portal / Checkout Link</label>
+            <input type="text" id="pkgPaymentLinkInput" class="form-input" placeholder="/checkout or https://...">
+          </div>
+
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap; padding:0.75rem 1rem; background:var(--bg-secondary); border-radius:10px; border:1px solid var(--border-color);">
+            <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.86rem; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="pkgHighlightedInput" style="accent-color:#ea580c;"> Highlight as Recommended Tier
+            </label>
+            <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.86rem; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="pkgActiveInput" checked style="accent-color:#10b981;"> Active (Selectable by Applicants)
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" onclick="window.closePackageModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="savePackageBtn">Save Package</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="recruitPageModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 740px;">
+      <div class="modal-header">
+        <h3 id="recruitPageModalTitle" class="modal-title">Create Custom Recruit Landing Page</h3>
+        <button type="button" class="modal-close" onclick="window.closeRecruitPageModal()">&times;</button>
+      </div>
+      <form id="recruitPageForm" onsubmit="window.handleSaveRecruitPage(event)">
+        <div class="modal-body" style="padding: 1.5rem; max-height: 76vh; overflow-y: auto;">
+          <input type="hidden" id="recIdInput">
+
+          <div class="form-row" style="display:grid; grid-template-columns:2fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="recTitleInput">Recruit Page Headline *</label>
+              <input type="text" id="recTitleInput" class="form-input" required placeholder="e.g. Summer 2026 Frontier Research Fellowship" oninput="window.autoFillRecruitSlug(this.value)">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="recSlugInput">URL Slug *</label>
+              <input type="text" id="recSlugInput" class="form-input" required placeholder="summer-2026">
+            </div>
+          </div>
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="recBadgeInput">Top Hero Badge</label>
+              <input type="text" id="recBadgeInput" class="form-input" placeholder="COHORT 2026 • NOW HIRING">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="recDivisionInput">Target Division Scope</label>
+              <input type="text" id="recDivisionInput" class="form-input" placeholder="All Research Divisions">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="recStatusInput">Page Status</label>
+              <select id="recStatusInput" class="form-select">
+                <option value="Active">Active (Public)</option>
+                <option value="Draft">Draft (Hidden)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label" for="recSubtitleInput">Hero Subtitle / Recruitment Pitch *</label>
+            <textarea id="recSubtitleInput" class="form-input" rows="2" required placeholder="Explain the mission, mentorship, and why ambitious student researchers should join..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label" for="recHeroMediaInput">Hero Banner Image or Video</label>
+            ${renderMediaPickerField({ id: 'recHeroMediaInput', accept: 'image/*,video/mp4,video/webm', uploadLabel: 'Upload Banner', placeholder: 'Paste image/video URL or server path (/assets/... or /api/images/...)' })}
+          </div>
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="recCtaTextInput">Primary CTA Button Label</label>
+              <input type="text" id="recCtaTextInput" class="form-input" value="Apply for Fellowship">
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end; padding-bottom:0.4rem;">
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.86rem; font-weight:600; cursor:pointer;">
+                <input type="checkbox" id="recShowFormInput" checked style="accent-color:#ea580c;"> Embed Live Application Form on This Page
+              </label>
+            </div>
+          </div>
+
+          <div style="margin-bottom:1.15rem; padding:1rem; background:var(--bg-secondary); border-radius:10px; border:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.65rem;">
+              <label class="form-label" style="margin:0; font-weight:700;">Fellowship Benefits & Perks Cards</label>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.addRecruitBenefitRow()">+ Add Benefit</button>
+            </div>
+            <div id="recBenefitsBuilderList" style="display:flex; flex-direction:column; gap:0.6rem;"></div>
+          </div>
+
+          <div style="padding:1rem; background:var(--bg-secondary); border-radius:10px; border:1px solid var(--border-color);">
+            <label class="form-label" style="margin-bottom:0.5rem; font-weight:700; display:block;">Attached Fee Packages / Tiers</label>
+            <div id="recPackagesCheckboxList" style="display:flex; flex-wrap:wrap; gap:0.6rem;"></div>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" onclick="window.closeRecruitPageModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveRecruitPageBtn">Save Recruit Page</button>
         </div>
       </form>
     </div>

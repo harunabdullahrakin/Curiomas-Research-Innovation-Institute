@@ -11,6 +11,7 @@ import { renderArticlePageHtml, mountArticlePage } from './pages/ArticlePage.js'
 import { renderContactPageHtml, mountContactPage } from './pages/ContactPage.js';
 import { renderLoginPageHtml, mountLoginPage } from './pages/LoginPage.js';
 import { renderPortalPageHtml, mountPortalPage } from './pages/PortalPage.js';
+import { renderRecruitPageHtml, mountRecruitPage } from './pages/RecruitPage.js';
 import { updateNavbarActive } from './components/Navbar.js';
 import { auth } from './services/auth.js';
 
@@ -156,11 +157,21 @@ export class Router {
         mountFn = () => mountPortalPage(this);
         document.title = 'Researcher Portal — CRII';
         break;
+      case '/recruit':
+        html = renderRecruitPageHtml();
+        mountFn = mountRecruitPage;
+        document.title = 'Fellowship Recruitment & Packages — CRII';
+        break;
       default:
-        // Fallback to Home if unknown
-        html = renderHomePageHtml();
-        mountFn = mountHomePage;
-        document.title = 'Curiomas Research & Innovation Institute — CRII';
+        if (path.startsWith('/recruit/')) {
+          html = renderRecruitPageHtml();
+          mountFn = mountRecruitPage;
+          document.title = 'Fellowship Recruitment & Packages — CRII';
+        } else {
+          html = renderHomePageHtml();
+          mountFn = mountHomePage;
+          document.title = 'Curiomas Research & Innovation Institute — CRII';
+        }
         break;
     }
 

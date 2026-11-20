@@ -237,10 +237,12 @@ class CriiApiClient {
   }
 
 
-  // --- DYNAMIC APPLICATION FORM CONFIGURATION ---
   getApplicationFormConfig() {
     const defaultConfig = {
       isOpen: true,
+      startDate: "",
+      endDate: "",
+      uniqueEmail: false,
       closedMessage: "Applications for the current Student Research Fellowship cohort are currently closed. The Institute Research Council is reviewing candidate dossiers. Please check back for announcements regarding the next cohort.",
       enableCuriosityGateway: true,
       fields: {
@@ -264,6 +266,9 @@ class CriiApiClient {
         if (parsed && typeof parsed === 'object') {
           return {
             isOpen: parsed.isOpen !== undefined ? Boolean(parsed.isOpen) : defaultConfig.isOpen,
+            startDate: parsed.startDate || "",
+            endDate: parsed.endDate || "",
+            uniqueEmail: Boolean(parsed.uniqueEmail),
             closedMessage: parsed.closedMessage || defaultConfig.closedMessage,
             enableCuriosityGateway: parsed.enableCuriosityGateway !== undefined ? Boolean(parsed.enableCuriosityGateway) : defaultConfig.enableCuriosityGateway,
             fields: { ...defaultConfig.fields, ...(parsed.fields || {}) },
@@ -1297,6 +1302,16 @@ class CriiApiClient {
     return true;
   }
 
+  async checkApplicationFieldUnique(fieldKey, value, isCustom = true) {
+    if (!fieldKey || !String(value || '').trim()) return { unique: true, exists: false };
+    try {
+      const url = `${CRII_CONFIG.API_BASE}/applications?action=check_unique&fieldKey=${encodeURIComponent(fieldKey)}&value=${encodeURIComponent(String(value).trim())}&isCustom=${isCustom ? '1' : '0'}&_t=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (res.ok) return await res.json();
+    } catch (e) {}
+    return { unique: true, exists: false };
+  }
+
   async submitInternApplication(formData) {
     const data = await this.getInternsData();
     const newApp = {
@@ -1305,30 +1320,35 @@ class CriiApiClient {
       appliedDate: new Date().toISOString().split('T')[0],
       status: 'Under Review'
     };
-    if (!Array.isArray(data.applications)) data.applications = [];
-    data.applications = data.applications.filter(a => a.id !== newApp.id);
-    data.applications.unshift(newApp);
-    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
 
-    // Dual-route sync for 100% guarantee across Cloudflare workers
-    try {
-      const res = await fetch(`${CRII_CONFIG.API_BASE}/applications`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newApp)
-      });
-      if (!res.ok) throw new Error('applications endpoint status ' + res.status);
-    } catch (e) {
+    const res = await fetch(`${CRII_CONFIG.API_BASE}/applications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newApp)
+    });
+
+    if (res.status === 409) {
+      const errData = await res.json().catch(() => ({}));
+      const dupErr = new Error(errData.error || 'Duplicate value detected for a unique field.');
+      dupErr.status = 409;
+      dupErr.duplicateField = errData.duplicateField || '';
+      throw dupErr;
+    }
+
+    if (!res.ok) {
       try {
         await fetch(`${CRII_CONFIG.API_BASE}/interns/apply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newApp)
         });
-      } catch (err) {
-        console.warn("Failed to sync application to D1 endpoints:", err);
-      }
+      } catch (err) {}
     }
+
+    if (!Array.isArray(data.applications)) data.applications = [];
+    data.applications = data.applications.filter(a => a.id !== newApp.id);
+    data.applications.unshift(newApp);
+    localStorage.setItem(CRII_CONFIG.STORAGE_KEYS.INTERNS, JSON.stringify(data));
 
     return newApp;
   }
@@ -1552,9 +1572,6 @@ class CriiApiClient {
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // ImprovMX Email Alias Manager API
-  // ---------------------------------------------------------------------------
   async getImprovMXKeys() {
     try {
       const res = await fetch('/api/improvmx?action=keys');
@@ -1565,12 +1582,25 @@ class CriiApiClient {
     }
   }
 
-  async addImprovMXKey(label, key) {
+  async addImprovMXKey(label, key, makeDefault = false) {
     try {
       const res = await fetch('/api/improvmx', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add_key', label, key })
+        body: JSON.stringify({ action: 'add_key', label, key, makeDefault })
+      });
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  async setDefaultImprovMXKey(targetKeyId) {
+    try {
+      const res = await fetch('/api/improvmx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_default_key', targetKeyId })
       });
       return await res.json();
     } catch (e) {
@@ -1587,6 +1617,84 @@ class CriiApiClient {
     } catch (e) {
       return { error: e.message };
     }
+  }
+
+  async getFellowshipPackages() {
+    try {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/settings?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
+      if (res.ok) {
+        const settings = await res.json();
+        if (Array.isArray(settings.fellowship_packages)) {
+          localStorage.setItem('crii_fellowship_packages_v1', JSON.stringify(settings.fellowship_packages));
+          return settings.fellowship_packages;
+        }
+      }
+    } catch (e) {}
+    try {
+      const raw = localStorage.getItem('crii_fellowship_packages_v1');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return [];
+  }
+
+  async saveFellowshipPackages(packages) {
+    const list = Array.isArray(packages) ? packages : [];
+    localStorage.setItem('crii_fellowship_packages_v1', JSON.stringify(list));
+    try {
+      const user = this.getCurrentUser();
+      await fetch(`${CRII_CONFIG.API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: 'fellowship_packages',
+          value: list,
+          updatedBy: user ? (user.name || user.email) : 'Administrator'
+        })
+      });
+    } catch (e) {}
+    return list;
+  }
+
+  async getRecruitPages() {
+    try {
+      const res = await fetch(`${CRII_CONFIG.API_BASE}/settings?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
+      if (res.ok) {
+        const settings = await res.json();
+        if (Array.isArray(settings.recruit_pages)) {
+          localStorage.setItem('crii_recruit_pages_v1', JSON.stringify(settings.recruit_pages));
+          return settings.recruit_pages;
+        }
+      }
+    } catch (e) {}
+    try {
+      const raw = localStorage.getItem('crii_recruit_pages_v1');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return [];
+  }
+
+  async saveRecruitPages(pages) {
+    const list = Array.isArray(pages) ? pages : [];
+    localStorage.setItem('crii_recruit_pages_v1', JSON.stringify(list));
+    try {
+      const user = this.getCurrentUser();
+      await fetch(`${CRII_CONFIG.API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: 'recruit_pages',
+          value: list,
+          updatedBy: user ? (user.name || user.email) : 'Administrator'
+        })
+      });
+    } catch (e) {}
+    return list;
   }
 
   async getImprovMXAccount(keyId) {
