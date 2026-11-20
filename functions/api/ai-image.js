@@ -407,7 +407,9 @@ async function runTextWithProvider(provider, messages, options = {}) {
 
   if (adapter === "pollinations_text") {
     const model = provider.textModel || def.textModel || "openai";
-    const endpoint = String(provider.baseUrl || "https://text.pollinations.ai/openai").replace(/\/+$/, "");
+    const endpoint = apiKey
+      ? "https://gen.pollinations.ai/v1/chat/completions"
+      : String(provider.baseUrl || "https://text.pollinations.ai/openai").replace(/\/+$/, "");
     const headers = { "Content-Type": "application/json" };
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
     const res = await fetch(endpoint, {
@@ -1139,11 +1141,14 @@ export async function onRequestPost(context) {
       }
       return jsonResp({ error: "Provider has neither text nor image enabled" }, 400);
     } catch (err) {
-      if (getAdapter(target) === "pollinations" && !target.apiKey && /402|Free limit|FREE_LIMIT/i.test(err.message || "")) {
+      const ad = getAdapter(target);
+      if ((ad === "pollinations" || ad === "pollinations_text") && !target.apiKey && /402|Free limit|FREE_LIMIT/i.test(err.message || "")) {
         return jsonResp({
           success: true,
           latencyMs: Date.now() - started,
-          detail: "Ready via Browser-Direct Free FLUX (shared Worker IP rate-limited; add optional key from enter.pollinations.ai for server-side)"
+          detail: ad === "pollinations_text"
+            ? "Ready via Browser-Direct Free Text AI (shared Worker IP rate-limited; add a free Groq/Cerebras/Gemini/Pollinations key for server-side)"
+            : "Ready via Browser-Direct Free FLUX (shared Worker IP rate-limited; add optional key from enter.pollinations.ai for server-side)"
         });
       }
       return jsonResp({ success: false, error: err.message, latencyMs: Date.now() - started }, 400);
@@ -1292,7 +1297,14 @@ export async function onRequestPost(context) {
       }
     }
 
-    return jsonResp({ error: errs.join(" | ") || "All configured text AI providers failed." }, 503);
+    return jsonResp({
+      error: errs.join(" | ") || "All configured text AI providers failed.",
+      clientTextFallback: {
+        endpoint: "https://text.pollinations.ai/openai",
+        model: "openai",
+        messages: [{ role: "system", content: sysPrompt }, { role: "user", content: userMsg }]
+      }
+    }, 503);
   }
 
   if (action === "ai_help") {
@@ -1348,7 +1360,14 @@ export async function onRequestPost(context) {
       }
     }
 
-    return jsonResp({ error: errs.join(" | ") || "AI Help providers are currently unavailable." }, 503);
+    return jsonResp({
+      error: errs.join(" | ") || "AI Help providers are currently unavailable.",
+      clientTextFallback: {
+        endpoint: "https://text.pollinations.ai/openai",
+        model: "openai",
+        messages: convo
+      }
+    }, 503);
   }
 
   if (action === "generate") {

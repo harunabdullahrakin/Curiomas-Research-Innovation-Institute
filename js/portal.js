@@ -6129,9 +6129,42 @@ window.runAiWriterAssist = async function() {
         length
       })
     });
-    const data = await res.json();
+    let data = await res.json();
     if (!res.ok || !data.success || !data.text) {
-      throw new Error(data.error || `HTTP ${res.status}`);
+      if (data && data.clientTextFallback && data.clientTextFallback.endpoint) {
+        if (statusEl) statusEl.textContent = 'Server providers busy — completing draft directly via Free Pollinations Text AI...';
+        const directRes = await fetch(data.clientTextFallback.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: data.clientTextFallback.model || 'openai',
+            messages: data.clientTextFallback.messages
+          })
+        });
+        const directJson = await directRes.json().catch(() => ({}));
+        const directText = directJson?.choices?.[0]?.message?.content || '';
+        if (!directRes.ok || !directText) {
+          throw new Error((directJson?.error?.message || data.error || `HTTP ${directRes.status}`) + ' — Tip: Add a free Groq, Cerebras, Gemini, or GitHub Models key in Settings → AI & APIs.');
+        }
+        data = {
+          success: true,
+          text: String(directText).trim(),
+          mode: _aiWriterMode,
+          providerLabel: 'Pollinations Free Text (Browser Direct)',
+          modelUsed: 'pollinations/openai',
+          usedFallback: true
+        };
+        if (_aiWriterMode === 'abstract_tags') {
+          const sumM = data.text.match(/SUMMARY:\s*([\s\S]*?)(?=\nABSTRACT:|$)/i);
+          const absM = data.text.match(/ABSTRACT:\s*([\s\S]*?)(?=\nTAGS:|$)/i);
+          const tagM = data.text.match(/TAGS:\s*([^\n]+)/i);
+          data.summary = sumM ? sumM[1].trim() : '';
+          data.abstract = absM ? absM[1].trim() : '';
+          data.tags = tagM ? tagM[1].trim() : '';
+        }
+      } else {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
     }
     _aiWriterLastResult = data;
     if (outArea) outArea.value = data.text;
@@ -6425,9 +6458,32 @@ window.handleSendAiHelp = async function(e) {
         messages: _aiHelpHistory.map(m => ({ role: m.role, content: m.content }))
       })
     });
-    const data = await res.json();
+    let data = await res.json();
     if (!res.ok || !data.success || !data.reply) {
-      throw new Error(data.error || `HTTP ${res.status}`);
+      if (data && data.clientTextFallback && data.clientTextFallback.endpoint) {
+        const directRes = await fetch(data.clientTextFallback.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: data.clientTextFallback.model || 'openai',
+            messages: data.clientTextFallback.messages
+          })
+        });
+        const directJson = await directRes.json().catch(() => ({}));
+        const directText = directJson?.choices?.[0]?.message?.content || '';
+        if (directRes.ok && directText) {
+          data = {
+            success: true,
+            reply: String(directText).trim(),
+            providerLabel: 'Pollinations Free Text (Browser Direct)',
+            modelUsed: 'pollinations/openai'
+          };
+        } else {
+          throw new Error(directJson?.error?.message || data.error || `HTTP ${directRes.status}`);
+        }
+      } else {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
     }
     _aiHelpHistory.push({
       role: 'assistant',
@@ -6438,7 +6494,8 @@ window.handleSendAiHelp = async function(e) {
   } catch (err) {
     _aiHelpHistory.push({
       role: 'assistant',
-      content: 'Could not reach AI assistant: ' + err.message + '. Check **Settings → AI & External APIs** or switch to the **Best Free AI APIs** tab above.'
+      content: '## Instant CRII Help Fallback\nThe free shared endpoint is momentarily rate-limited (' + err.message + ').\n- **Fastest Free Text AI Keys (No Credit Card):** Groq (`console.groq.com/keys` — 14,400/day), Cerebras (`cloud.cerebras.ai` — 1M tokens/day), Google AI Studio (`aistudio.google.com/apikey`), or GitHub Models (any GitHub PAT).\n- **Best Free Image Gen Keys:** Cloudflare Workers AI (10,000 free Neurons/day), Hugging Face (`FLUX.1-schnell`), Together AI (`FLUX.1-schnell-Free`), Segmind, GetImg.ai, or built-in **Pollinations FLUX** & **AI Horde**.\n- Click the **Best Free AI APIs (No Card)** tab above to connect any of 61+ providers in 1 click!',
+      meta: 'CRII Offline Quick-Help'
     });
     renderAiHelpMessages();
   } finally {
