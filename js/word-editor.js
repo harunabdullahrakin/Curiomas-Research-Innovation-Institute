@@ -1917,6 +1917,25 @@
       insertHtml(html);
       return true;
     },
+    insertRichHtml(html, replaceAll) {
+      if (!mounted || !doc || !html) return false;
+      const clean = CD && typeof CD.sanitize === 'function' ? CD.sanitize(html) : html;
+      if (replaceAll) {
+        setHtml(clean);
+      } else {
+        doc.focus();
+        if (doc.innerHTML.trim() === '' || doc.innerHTML.trim() === '<p><br></p>') {
+          setHtml(clean);
+        } else {
+          doc.insertAdjacentHTML('beforeend', clean);
+        }
+      }
+      dirty = true;
+      updateStatus();
+      updateNav();
+      takeSnapshot('ai-writer');
+      return true;
+    },
     blocksToHtml
   };
 })();

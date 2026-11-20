@@ -196,6 +196,14 @@ export function renderPortalPageHtml() {
             <span class="portal-nav-label">Email Dispatcher</span>
             <span class="portal-nav-badge" style="background: rgba(234, 88, 12, 0.15); color: #ea580c; font-weight: 700;">Gmail</span>
           </button>
+
+          <button class="portal-nav-btn" data-tab="aihelp" onclick="window.openAiHelpModal('chat'); return false;" data-tooltip="AI Help & Free APIs Guide">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span class="portal-nav-label">AI Help & Guides</span>
+            <span class="portal-nav-badge" style="background: rgba(234, 88, 12, 0.18); color: #ea580c; font-weight: 700;">AI</span>
+          </button>
         </div>
 
       </nav>
@@ -420,6 +428,9 @@ export function renderPortalPageHtml() {
 
               <div class="blogger-topbar-right">
                 <span id="bloggerReadTimeBadge" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">1 min read</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiWriterModal('full_draft')" style="display:inline-flex; align-items:center; gap:0.35rem; border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700;">
+                  <span>✍ AI Writer</span>
+                </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiImageStudio('thumbnail')" style="display:inline-flex; align-items:center; gap:0.35rem; border-color:rgba(234,88,12,0.4); color:#ea580c; background:rgba(234,88,12,0.06); font-weight:700;">
                   <span>✨ AI Image Studio</span>
                 </button>
@@ -556,7 +567,10 @@ export function renderPortalPageHtml() {
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="bloggerSummaryInput">Summary / Excerpt *</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.35rem;">
+                  <label class="form-label" for="bloggerSummaryInput" style="margin:0;">Summary / Excerpt *</label>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiWriterModal('abstract_tags', true)" style="font-size:0.74rem; border-color:rgba(234,88,12,0.4); color:#ea580c; background:rgba(234,88,12,0.06); font-weight:700;">✨ AI Auto-Generate Summary, Abstract & Tags</button>
+                </div>
                 <input type="text" id="bloggerSummaryInput" class="form-input" placeholder="Brief 1-2 sentence description for search and cards">
               </div>
 
@@ -1607,34 +1621,45 @@ export function renderPortalPageHtml() {
           <div id="settingsAiApiManagerCard" class="data-table-card" style="padding: 2rem; grid-column: 1 / -1;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
               <div>
-                <h3 style="font-size:1.3rem; margin:0 0 0.35rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+                <h3 style="font-size:1.3rem; margin:0 0 0.35rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
                   <span>⚡</span>
                   <span>AI & External APIs Management Hub</span>
+                  <span id="aiCatalogCountBadge" style="font-size:0.74rem; padding:0.18rem 0.6rem; border-radius:999px; background:rgba(234,88,12,0.12); color:#ea580c; font-weight:700;">61 Providers Supported</span>
                 </h3>
-                <p style="font-size:0.85rem; color:var(--text-secondary); margin:0; max-width:720px; line-height:1.55;">
-                  Connect and manage unlimited AI providers for free & paid image generation, GPT, Gemini, FLUX, Groq, Hugging Face, OpenRouter, Cloudflare Workers AI, Together AI, Stability AI, or any Custom OpenAI-compatible API. Automatic cascading fallbacks ensure image & prompt generation never stops.
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin:0; max-width:780px; line-height:1.55;">
+                  Connect and manage unlimited AI providers for Image Generation, AI Article Writer, and AI Help Assistant. Includes zero-key free engines (Pollinations FLUX, Pollinations Text, AI Horde GPU) plus 60+ free-tier & studio APIs with automatic cascading fallbacks.
                 </p>
               </div>
               <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiHelpModal('free_apis')">🎁 Free API Guide</button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAiProvidersManager()">Refresh</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="window.openAiProviderModal()">+ Add AI / Image API</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="window.openAiProviderModal()">+ Add Custom / Any API</button>
               </div>
             </div>
 
-            <div style="display:flex; gap:0.45rem; flex-wrap:wrap; margin-bottom:1.25rem; padding:0.75rem 1rem; background:rgba(234,88,12,0.05); border:1px solid rgba(234,88,12,0.2); border-radius:10px; align-items:center;">
-              <span style="font-size:0.76rem; font-weight:700; color:#ea580c; margin-right:0.25rem;">Quick Add Free / Popular Providers:</span>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'huggingface')">🤗 Hugging Face (Free FLUX)</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'cloudflare')">☁️ Cloudflare Workers AI (Free)</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'together')">🚀 Together AI (FLUX Free)</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'groq')">⚡ Groq (Free Fast LLM)</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'openrouter')">🌐 OpenRouter (Free Models)</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'openai')">🤖 OpenAI (GPT / Image)</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'gemini')">✨ Google Gemini</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'stability')">🎨 Stability AI</button>
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.74rem; padding:0.22rem 0.6rem;" onclick="window.openAiProviderModal(null, 'custom')">🔌 Custom API</button>
-            </div>
+            <div style="margin-bottom:0.65rem; font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Connected & Built-in Active Engines</div>
+            <div id="settingsAiProvidersGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(310px, 1fr)); gap:1rem; margin-bottom:1.75rem;"></div>
 
-            <div id="settingsAiProvidersGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(310px, 1fr)); gap:1rem;"></div>
+            <div style="border-top:1px solid var(--border-color); padding-top:1.4rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.85rem;">
+                <div>
+                  <div style="font-size:1.02rem; font-weight:700; color:var(--text-primary);">Browse 60+ AI & Free Image/Text API Directory</div>
+                  <div style="font-size:0.78rem; color:var(--text-muted);">Click any provider below to auto-fill its verified API endpoint, free model IDs, and key link.</div>
+                </div>
+                <input type="text" id="aiCatalogSearchInput" class="form-input" placeholder="Search 60+ AIs (Groq, FLUX, Claude, DeepSeek, Cloudflare, AI Horde...)" oninput="window.renderAiCatalogBrowser()" style="min-width:260px; max-width:360px; flex:1; font-size:0.84rem; padding:0.45rem 0.85rem;">
+              </div>
+
+              <div id="aiCatalogFilterBar" style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1rem;">
+                <button type="button" class="btn btn-sm btn-primary" data-cat="all" onclick="window.setAiCatalogFilter('all', this)">All (61)</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cat="free" onclick="window.setAiCatalogFilter('free', this)">🎁 Free / No-Card</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cat="nokey" onclick="window.setAiCatalogFilter('nokey', this)">⚡ No Key Needed</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cat="image" onclick="window.setAiCatalogFilter('image', this)">🎨 Image Generation</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cat="text" onclick="window.setAiCatalogFilter('text', this)">✍ Text / Writer / Chat</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cat="pro" onclick="window.setAiCatalogFilter('pro', this)">💎 Studio & Flagship</button>
+              </div>
+
+              <div id="aiCatalogBrowserGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(255px, 1fr)); gap:0.75rem; max-height:460px; overflow-y:auto; padding:0.25rem;"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -2790,7 +2815,7 @@ export function renderPortalPageHtml() {
   </div>
 
   <div id="aiProviderModal" class="modal-overlay">
-    <div class="modal-dialog" style="max-width: 660px;">
+    <div class="modal-dialog" style="max-width: 680px;">
       <div class="modal-header">
         <h3 id="aiProviderModalTitle" class="modal-title">Connect AI / Image Generation API</h3>
         <button type="button" class="modal-close" onclick="window.closeAiProviderModal()">&times;</button>
@@ -2798,30 +2823,25 @@ export function renderPortalPageHtml() {
       <form id="aiProviderForm" onsubmit="window.handleSaveAiProvider(event)">
         <div class="modal-body" style="padding: 1.4rem 1.5rem; max-height: 76vh; overflow-y: auto;">
           <input type="hidden" id="aiProvIdInput">
+          <input type="hidden" id="aiProvAdapterInput">
+
+          <div class="form-group" style="margin-bottom:0.85rem;">
+            <label class="form-label" for="aiProvQuickFilter">Filter 61+ Providers</label>
+            <input type="text" id="aiProvQuickFilter" class="form-input" placeholder="Type to filter (e.g. Groq, FLUX, Claude, Hugging Face, AI Horde, DeepSeek...)" oninput="window.filterAiVendorSelect(this.value)">
+          </div>
 
           <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
             <div class="form-group">
               <label class="form-label" for="aiProvVendorInput">Provider / Company *</label>
-              <select id="aiProvVendorInput" class="form-select" onchange="window.applyAiVendorPreset(this.value)">
-                <option value="pollinations">Pollinations.ai (Free FLUX — No Key Needed)</option>
-                <option value="huggingface">Hugging Face Inference (Free FLUX / Llama)</option>
-                <option value="cloudflare">Cloudflare Workers AI (Free 10k/day FLUX & Llama)</option>
-                <option value="together">Together AI (FLUX.1-schnell Free & Llama)</option>
-                <option value="groq">Groq (Free Ultra-Fast Llama / Prompts)</option>
-                <option value="openrouter">OpenRouter (Free & Paid 100+ Models)</option>
-                <option value="openai">OpenAI (GPT-4o & GPT-Image / DALL-E 3)</option>
-                <option value="gemini">Google Gemini (Free Text + Paid Nano Banana)</option>
-                <option value="stability">Stability AI (SD3.5 / Core Image Gen)</option>
-                <option value="custom">Custom OpenAI-Compatible API (DeepSeek, Grok, Mistral...)</option>
-              </select>
+              <select id="aiProvVendorInput" class="form-select" onchange="window.applyAiVendorPreset(this.value)"></select>
             </div>
             <div class="form-group">
               <label class="form-label" for="aiProvLabelInput">Display Name / Label *</label>
-              <input type="text" id="aiProvLabelInput" class="form-input" required placeholder="e.g. Hugging Face FLUX Free">
+              <input type="text" id="aiProvLabelInput" class="form-input" required placeholder="e.g. Groq Llama 3.3 Free">
             </div>
           </div>
 
-          <div id="aiProvGuideBanner" style="font-size:0.8rem; color:var(--text-secondary); background:rgba(234,88,12,0.06); border:1px solid rgba(234,88,12,0.22); border-radius:8px; padding:0.65rem 0.85rem; margin-bottom:1rem;"></div>
+          <div id="aiProvGuideBanner" style="font-size:0.8rem; color:var(--text-secondary); background:rgba(234,88,12,0.06); border:1px solid rgba(234,88,12,0.22); border-radius:8px; padding:0.7rem 0.9rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap;"></div>
 
           <div class="form-group" style="margin-bottom:1rem;">
             <label class="form-label" for="aiProvKeyInput">API Key / Token <span id="aiProvKeyHint" style="font-weight:400; color:var(--text-muted); font-size:0.78rem;"></span></label>
@@ -2845,7 +2865,7 @@ export function renderPortalPageHtml() {
               <input type="text" id="aiProvImageModelInput" class="form-input" placeholder="e.g. flux, black-forest-labs/FLUX.1-schnell">
             </div>
             <div class="form-group">
-              <label class="form-label" for="aiProvTextModelInput">Text / Prompt Drafting Model ID</label>
+              <label class="form-label" for="aiProvTextModelInput">Text / Writer / Help Model ID</label>
               <input type="text" id="aiProvTextModelInput" class="form-input" placeholder="e.g. llama-3.3-70b-versatile, gpt-4o-mini">
             </div>
           </div>
@@ -2855,13 +2875,13 @@ export function renderPortalPageHtml() {
               <input type="checkbox" id="aiProvSupportsImageInput" checked style="accent-color:#ea580c;"> Supports Image Gen
             </label>
             <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.84rem; font-weight:600; cursor:pointer;">
-              <input type="checkbox" id="aiProvSupportsTextInput" style="accent-color:#ea580c;"> Supports Text / Prompts
+              <input type="checkbox" id="aiProvSupportsTextInput" style="accent-color:#ea580c;"> Supports Text / Writer
             </label>
             <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.84rem; font-weight:600; cursor:pointer;">
               <input type="checkbox" id="aiProvDefaultImageInput" style="accent-color:#ea580c;"> Default Image Engine
             </label>
             <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.84rem; font-weight:600; cursor:pointer;">
-              <input type="checkbox" id="aiProvDefaultTextInput" style="accent-color:#ea580c;"> Default Prompt Engine
+              <input type="checkbox" id="aiProvDefaultTextInput" style="accent-color:#ea580c;"> Default Writer / Text Engine
             </label>
           </div>
         </div>
@@ -2872,6 +2892,194 @@ export function renderPortalPageHtml() {
       </form>
     </div>
   </div>
+
+  <div id="aiWriterModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 860px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, rgba(234,88,12,0.12), rgba(234,88,12,0.03)); border-bottom: 1px solid var(--border-color);">
+        <div>
+          <h3 class="modal-title" style="display:flex; align-items:center; gap:0.5rem; margin:0;">
+            <span>✍</span>
+            <span>AI Research Writer Co-Pilot</span>
+          </h3>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.15rem;">Draft full research articles, outlines, academic rewrites, Bengali/English translations, or auto-fill Summary, Abstract & Tags directly into your editor.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAiProviderModal()" style="font-size:0.76rem; white-space:nowrap;">+ Add API</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeAiWriterModal(); window.showTab('settings'); setTimeout(()=>document.getElementById('settingsAiApiManagerCard')?.scrollIntoView({behavior:'smooth'}),150);" style="font-size:0.76rem; white-space:nowrap;">⚙ Manage APIs</button>
+          <button type="button" class="modal-close" onclick="window.closeAiWriterModal()">&times;</button>
+        </div>
+      </div>
+
+      <div class="modal-body" style="padding: 1.35rem 1.5rem; max-height: 78vh; overflow-y: auto;">
+        <div id="aiWriterContextBar" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:0.65rem 0.95rem; margin-bottom:1rem; font-size:0.82rem; color:var(--text-secondary);"></div>
+
+        <div style="margin-bottom:1rem;">
+          <div style="font-size:0.74rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.45rem;">Select AI Writing Action</div>
+          <div id="aiWriterModeChips" style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm btn-primary" data-wmode="full_draft" onclick="window.selectAiWriterMode('full_draft', this)">📝 Full Article Draft</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="outline" onclick="window.selectAiWriterMode('outline', this)">🗂 Research Outline</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="continue" onclick="window.selectAiWriterMode('continue', this)">⏩ Continue Writing</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="expand" onclick="window.selectAiWriterMode('expand', this)">🔬 Expand & Deepen</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="polish" onclick="window.selectAiWriterMode('polish', this)">✨ Academic Polish</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="simplify" onclick="window.selectAiWriterMode('simplify', this)">🎓 Student-Friendly</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="abstract_tags" onclick="window.selectAiWriterMode('abstract_tags', this)">🏷 Abstract, Summary & Tags</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="key_takeaways" onclick="window.selectAiWriterMode('key_takeaways', this)">💡 Key Takeaways</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="translate_bn" onclick="window.selectAiWriterMode('translate_bn', this)">🇧🇩 Translate to Bengali</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="translate_en" onclick="window.selectAiWriterMode('translate_en', this)">🌐 Translate to English</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-wmode="custom" onclick="window.selectAiWriterMode('custom', this)">🎯 Custom Prompt</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(185px, 1fr)); gap:0.8rem; margin-bottom:0.95rem;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="aiWriterProviderSelect" style="font-size:0.78rem;">Text AI Engine</label>
+            <select id="aiWriterProviderSelect" class="form-select" style="font-size:0.84rem;">
+              <option value="auto">Auto Smart Cascade (Free Fallbacks)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="aiWriterToneSelect" style="font-size:0.78rem;">Writing Tone</label>
+            <select id="aiWriterToneSelect" class="form-select" style="font-size:0.84rem;">
+              <option value="Academic & Peer-Reviewed">Academic & Peer-Reviewed</option>
+              <option value="Accessible Science Journalism">Accessible Science Journalism</option>
+              <option value="Technical Research Dispatch">Technical Research Dispatch</option>
+              <option value="Student-Friendly Explainer">Student-Friendly Explainer</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" for="aiWriterLengthSelect" style="font-size:0.78rem;">Target Length</label>
+            <select id="aiWriterLengthSelect" class="form-select" style="font-size:0.84rem;">
+              <option value="Short">Short (~300 words)</option>
+              <option value="Medium" selected>Medium (~650 words)</option>
+              <option value="Comprehensive">Comprehensive (~1200 words)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0.95rem;">
+          <label class="form-label" for="aiWriterInstructionInput" style="font-size:0.82rem; font-weight:700;">Custom Instructions / Focus Notes (Optional)</label>
+          <textarea id="aiWriterInstructionInput" class="form-textarea" rows="2" placeholder="e.g. Focus on computational methods, include a methodology section, cite key theoretical frameworks..."></textarea>
+        </div>
+
+        <div style="display:flex; gap:0.65rem; align-items:center; flex-wrap:wrap; margin-bottom:1.15rem;">
+          <button type="button" class="btn btn-primary" id="aiWriterRunBtn" onclick="window.runAiWriterAssist()" style="padding:0.6rem 1.45rem; font-weight:700;">✍ Generate with AI</button>
+          <span id="aiWriterStatusText" style="font-size:0.82rem; color:var(--text-muted);"></span>
+        </div>
+
+        <div id="aiWriterResultSection" style="display:none; border-top:1px solid var(--border-color); padding-top:1.1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; flex-wrap:wrap; gap:0.5rem;">
+            <label class="form-label" for="aiWriterOutputTextarea" style="margin:0; font-weight:700;">AI Generated Output (Editable Before Inserting)</label>
+            <span id="aiWriterModelBadge" style="font-size:0.74rem; color:#10b981; font-weight:700;"></span>
+          </div>
+          <textarea id="aiWriterOutputTextarea" class="form-textarea" rows="11" style="font-family:inherit; line-height:1.6; margin-bottom:0.85rem;"></textarea>
+
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+            <button type="button" class="btn btn-primary btn-sm" id="aiWriterInsertBtn" onclick="window.applyAiWriterToEditor(false)">+ Insert into Article</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="aiWriterReplaceBtn" onclick="window.applyAiWriterToEditor(true)">Replace Article Body</button>
+            <button type="button" class="btn btn-primary btn-sm" id="aiWriterApplyMetaBtn" style="display:none;" onclick="window.applyAiWriterMetadata()">✓ Fill Summary, Abstract & Tags</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.copyAiWriterOutput()">Copy Text</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding:0.85rem 1.5rem; display:flex; justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="window.closeAiWriterModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aiHelpModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 820px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, rgba(234,88,12,0.12), rgba(234,88,12,0.03)); border-bottom: 1px solid var(--border-color);">
+        <div>
+          <h3 class="modal-title" style="display:flex; align-items:center; gap:0.5rem; margin:0;">
+            <span>✨</span>
+            <span>CRII AI Help Assistant & Free APIs Center</span>
+          </h3>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.15rem;">Ask AI anything about the portal, writing papers, or setting up 60+ free AI & image APIs.</div>
+        </div>
+        <button type="button" class="modal-close" onclick="window.closeAiHelpModal()">&times;</button>
+      </div>
+
+      <div style="display:flex; gap:0.4rem; padding:0.75rem 1.5rem 0; border-bottom:1px solid var(--border-color); flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-primary" id="aiHelpTabBtn_chat" onclick="window.switchAiHelpTab('chat')">💬 Ask AI Assistant</button>
+        <button type="button" class="btn btn-sm btn-secondary" id="aiHelpTabBtn_free_apis" onclick="window.switchAiHelpTab('free_apis')">🎁 Best Free AI APIs (No Card)</button>
+        <button type="button" class="btn btn-sm btn-secondary" id="aiHelpTabBtn_shortcuts" onclick="window.switchAiHelpTab('shortcuts')">📘 Portal Quick Guide</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.5rem; max-height: 72vh; overflow-y: auto;">
+        <div id="aiHelpPane_chat">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+            <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.73rem; padding:0.2rem 0.55rem;" onclick="window.sendQuickAiHelp('Which free AI APIs give free keys with no credit card for images and writing?')">Best free APIs?</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.73rem; padding:0.2rem 0.55rem;" onclick="window.sendQuickAiHelp('How do I set up Cloudflare Workers AI free 10,000 daily neurons in Settings?')">Cloudflare AI setup</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.73rem; padding:0.2rem 0.55rem;" onclick="window.sendQuickAiHelp('How do I use AI Writer and AI Image Studio together to publish a research article?')">AI Writer workflow</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.73rem; padding:0.2rem 0.55rem;" onclick="window.sendQuickAiHelp('How do I add unique custom fields and recruit packages for student fellowships?')">Recruit & Unique fields</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <select id="aiHelpProviderSelect" class="form-select" style="font-size:0.76rem; padding:0.28rem 0.5rem; width:auto; max-width:210px;">
+                <option value="auto">Auto Free AI Cascade</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.73rem;" onclick="window.clearAiHelpChat()">Clear</button>
+            </div>
+          </div>
+
+          <div id="aiHelpMessagesBox" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:12px; padding:1rem; min-height:280px; max-height:380px; overflow-y:auto; display:flex; flex-direction:column; gap:0.75rem; margin-bottom:0.85rem;"></div>
+
+          <form onsubmit="window.handleSendAiHelp(event)" style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="text" id="aiHelpChatInput" class="form-input" placeholder="Ask anything about CRII Portal, writing articles, free AI APIs, or troubleshooting..." style="flex:1;">
+            <button type="submit" class="btn btn-primary" id="aiHelpSendBtn" style="white-space:nowrap;">Send ↵</button>
+          </form>
+        </div>
+
+        <div id="aiHelpPane_free_apis" style="display:none;">
+          <div style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:1rem; line-height:1.55;">
+            These top providers offer generous <strong>100% free tiers without a credit card</strong>. Click <strong>Connect →</strong> on any card to open the pre-filled setup form, or click <strong>Get Key ↗</strong> to grab a free key in ~30 seconds.
+          </div>
+          <div id="aiHelpFreeApisGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(245px, 1fr)); gap:0.75rem;"></div>
+        </div>
+
+        <div id="aiHelpPane_shortcuts" style="display:none;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:0.85rem;">
+            <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:1rem;">
+              <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">✍ AI Article Writer</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.55;">Open any article in <strong>Publications & Blog</strong> and click <strong>✍ AI Writer</strong> to generate full drafts, outlines, academic rewrites, Bengali/English translations, or auto-fill Summary, Abstract & Tags. Works in both Word and Block editors.</div>
+            </div>
+            <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:1rem;">
+              <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">✨ AI Image Studio</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.55;">Reads your full article to craft an editable visual prompt, then generates cover thumbnails or in-article figures via your chosen engine (with built-in free FLUX & AI Horde fallbacks) and saves directly to <strong>Cloudflare R2</strong>.</div>
+            </div>
+            <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:1rem;">
+              <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">⚡ 61+ AI APIs Hub</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.55;">Go to <strong>Institute & Navbar → AI & External APIs Management Hub</strong> to browse 61+ free & studio AI providers, test connections live, set Default Image & Text engines, and enable automatic cascading fallbacks.</div>
+            </div>
+            <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:1rem;">
+              <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">📤 R2 Upload-First Media</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.55;">Every media field defaults to <strong>Upload</strong> straight to Cloudflare R2. Click the adjacent <strong>URL</strong> button anytime to paste external links or local server paths (<code>/assets/...</code>, <code>/api/images/...</code>).</div>
+            </div>
+            <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:1rem;">
+              <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">🎓 Recruit Pages & Unique Fields</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.55;">Use <strong>Who Can Join Us?</strong> to add 14 custom field types (rating, image, video, pfp, id, number) with live <strong>Unique</strong> duplicate checks, and <strong>Packages & Recruit Pages</strong> for fees & custom landing pages.</div>
+            </div>
+            <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:10px; padding:1rem;">
+              <div style="font-weight:700; color:var(--text-primary); margin-bottom:0.35rem;">✉ ImprovMX & EmailJS</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.55;">Manage researcher <code>@scholar.zone.id</code> aliases in <strong>Researcher Emails</strong> (add, remove, or switch default ImprovMX API keys) and dispatch fellowship notices via <strong>Email Dispatcher</strong>.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding:0.85rem 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeAiHelpModal(); window.showTab('settings'); setTimeout(()=>document.getElementById('settingsAiApiManagerCard')?.scrollIntoView({behavior:'smooth'}),150);">⚙ Open 61+ AI APIs Hub</button>
+        <button type="button" class="btn btn-secondary" onclick="window.closeAiHelpModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" id="portalFloatingAiHelpBtn" onclick="window.openAiHelpModal('chat')" title="CRII AI Assistant & Free APIs Help" style="position:fixed; right:1.35rem; bottom:1.35rem; z-index:950; display:inline-flex; align-items:center; gap:0.45rem; padding:0.62rem 1.05rem; border-radius:999px; border:1px solid rgba(234,88,12,0.45); background:linear-gradient(135deg, #ea580c, #f97316); color:#ffffff; font-weight:700; font-size:0.84rem; box-shadow:0 10px 26px rgba(234,88,12,0.34); cursor:pointer;">
+    <span>✨</span>
+    <span>AI Help</span>
+  </button>
 
     </div>
   `;

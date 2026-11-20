@@ -5289,138 +5289,167 @@ let _aiStudioTargetBlockIdx = null;
 let _aiStudioCurrentResult = null;
 let _aiStudioSessionGallery = [];
 let _cachedAiProviders = [];
+let _aiCatalogActiveFilter = 'all';
 
-const AI_VENDOR_PRESETS = {
-  pollinations: {
-    label: 'Pollinations.ai (Free FLUX)',
-    baseUrl: 'https://image.pollinations.ai',
-    imageModel: 'flux',
-    textModel: '',
-    supportsImage: true,
-    supportsText: false,
-    keyHint: '(Optional — works 100% free with NO key!)',
-    guide: 'Works completely free with zero API key! Supports models: <code>flux</code>, <code>turbo</code>, <code>flux-realism</code>, <code>flux-3d</code>.'
-  },
-  huggingface: {
-    label: 'Hugging Face Inference (FLUX)',
-    baseUrl: 'https://router.huggingface.co',
-    imageModel: 'black-forest-labs/FLUX.1-schnell',
-    textModel: 'meta-llama/Llama-3.3-70B-Instruct',
-    supportsImage: true,
-    supportsText: true,
-    keyHint: '(Free hf_... token)',
-    guide: 'Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">huggingface.co/settings/tokens</a> (enable "Make calls to Inference Providers"). Great for free FLUX.1-schnell!'
-  },
-  cloudflare: {
-    label: 'Cloudflare Workers AI',
-    baseUrl: 'https://api.cloudflare.com/client/v4',
-    imageModel: '@cf/black-forest-labs/flux-1-schnell',
-    textModel: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-    supportsImage: true,
-    supportsText: true,
-    keyHint: '(Workers AI API Token + Account ID)',
-    guide: 'Cloudflare gives <strong>10,000 free Neurons/day</strong>! Create a Workers AI token at <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">Cloudflare API Tokens</a> and paste your Account ID.'
-  },
-  together: {
-    label: 'Together AI (FLUX Free)',
-    baseUrl: 'https://api.together.xyz/v1',
-    imageModel: 'black-forest-labs/FLUX.1-schnell-Free',
-    textModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    supportsImage: true,
-    supportsText: true,
-    keyHint: '(Together API Key)',
-    guide: 'Get a key at <a href="https://api.together.xyz/settings/api-keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">api.together.xyz</a> — includes free FLUX.1-schnell-Free image generation & fast Llama models!'
-  },
-  groq: {
-    label: 'Groq (Free Ultra-Fast LLM)',
-    baseUrl: 'https://api.groq.com/openai/v1',
-    imageModel: '',
-    textModel: 'llama-3.3-70b-versatile',
-    supportsImage: false,
-    supportsText: true,
-    keyHint: '(Free gsk_... key)',
-    guide: 'Get a free high-speed key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">console.groq.com/keys</a>. Instant free article reading & prompt synthesis!'
-  },
-  openrouter: {
-    label: 'OpenRouter (100+ Models)',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    imageModel: '',
-    textModel: 'meta-llama/llama-3.3-70b-instruct:free',
-    supportsImage: false,
-    supportsText: true,
-    keyHint: '(sk-or-... key)',
-    guide: 'Get a key at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">openrouter.ai/keys</a>. Use any <code>:free</code> model for free article prompt drafting.'
-  },
-  openai: {
-    label: 'OpenAI (GPT & Image)',
+function getAiCatalogList() {
+  return Array.isArray(window.CRII_AI_CATALOG) ? window.CRII_AI_CATALOG : [];
+}
+
+function getAiPreset(vendor) {
+  const map = window.CRII_AI_VENDOR_MAP || {};
+  return map[vendor] || map.custom || {
+    vendor: vendor || 'custom',
+    adapter: 'openai_compat',
+    label: 'Custom OpenAI-Compatible API',
+    badge: 'ANY API',
     baseUrl: 'https://api.openai.com/v1',
-    imageModel: 'gpt-image-1',
+    imageModel: '',
     textModel: 'gpt-4o-mini',
     supportsImage: true,
     supportsText: true,
-    keyHint: '(sk-... key)',
-    guide: 'Connect your <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">OpenAI API Key</a> for GPT-4o prompt drafting and GPT-Image-1 / DALL-E 3 generation.'
-  },
-  gemini: {
-    label: 'Google Gemini',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/interactions',
-    imageModel: 'gemini-nano-banana-2.1',
-    textModel: 'gemini-3.8-flash',
-    supportsImage: true,
-    supportsText: true,
-    keyHint: '(AIza... key)',
-    guide: 'Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">Google AI Studio</a>. Text models have free tier; Nano Banana image models require billing enabled.'
-  },
-  stability: {
-    label: 'Stability AI',
-    baseUrl: 'https://api.stability.ai',
-    imageModel: 'core',
-    textModel: '',
-    supportsImage: true,
-    supportsText: false,
-    keyHint: '(sk-... key)',
-    guide: 'Get free starter credits at <a href="https://platform.stability.ai/account/keys" target="_blank" rel="noopener" style="color:#ea580c; font-weight:700;">platform.stability.ai</a>. Supports <code>core</code> and <code>sd3.5-large</code>.'
-  },
-  custom: {
-    label: 'Custom OpenAI-Compatible API',
-    baseUrl: 'https://api.deepseek.com/v1',
-    imageModel: '',
-    textModel: 'deepseek-chat',
-    supportsImage: false,
-    supportsText: true,
-    keyHint: '(Bearer API Key)',
-    guide: 'Connect ANY OpenAI-compatible API (DeepSeek, Mistral, xAI Grok, Fireworks, DeepInfra, SiliconFlow, etc.) by entering its Base URL, API Key, and Model ID.'
+    needsKey: true,
+    keyUrl: '',
+    guide: 'Connect any OpenAI-compatible API endpoint with its Base URL, API Key, and Model ID.'
+  };
+}
+
+function populateAiVendorSelect(filterQuery = '', keepVendor = null) {
+  const sel = document.getElementById('aiProvVendorInput');
+  if (!sel) return;
+  const q = String(filterQuery || '').trim().toLowerCase();
+  const prev = keepVendor || sel.value;
+  const list = getAiCatalogList().filter(item => {
+    if (!q) return true;
+    return [item.label, item.vendor, item.badge, item.guide, item.imageModel, item.textModel].join(' ').toLowerCase().includes(q);
+  });
+  const source = list.length ? list : getAiCatalogList();
+  sel.innerHTML = source.map(p => {
+    const caps = [p.supportsImage ? 'Img' : '', p.supportsText ? 'Text' : ''].filter(Boolean).join('+');
+    return `<option value="${escapeHtml(p.vendor)}">${escapeHtml(p.label)} [${escapeHtml(p.badge)} • ${caps}]</option>`;
+  }).join('');
+  if (prev && source.some(p => p.vendor === prev)) {
+    sel.value = prev;
+  } else if (source[0]) {
+    sel.value = source[0].vendor;
   }
+}
+
+window.filterAiVendorSelect = function(q) {
+  populateAiVendorSelect(q);
+  const sel = document.getElementById('aiProvVendorInput');
+  if (sel && sel.value) window.applyAiVendorPreset(sel.value);
+};
+
+window.setAiCatalogFilter = function(cat, btnEl) {
+  _aiCatalogActiveFilter = cat;
+  const bar = document.getElementById('aiCatalogFilterBar');
+  if (bar) {
+    bar.querySelectorAll('button').forEach(b => {
+      const active = b.dataset.cat === cat;
+      b.classList.toggle('btn-primary', active);
+      b.classList.toggle('btn-secondary', !active);
+    });
+  }
+  window.renderAiCatalogBrowser();
+};
+
+window.renderAiCatalogBrowser = function() {
+  const grid = document.getElementById('aiCatalogBrowserGrid');
+  if (!grid) return;
+  const list = getAiCatalogList();
+  const badge = document.getElementById('aiCatalogCountBadge');
+  if (badge) {
+    badge.textContent = `${list.length} Providers Supported • ${_cachedAiProviders.filter(p => p.enabled !== false).length} Active`;
+  }
+  const q = (document.getElementById('aiCatalogSearchInput')?.value || '').trim().toLowerCase();
+  const filtered = list.filter(p => {
+    if (_aiCatalogActiveFilter === 'free' && !p.freeTier) return false;
+    if (_aiCatalogActiveFilter === 'nokey' && !p.noKey) return false;
+    if (_aiCatalogActiveFilter === 'image' && !p.supportsImage) return false;
+    if (_aiCatalogActiveFilter === 'text' && !p.supportsText) return false;
+    if (_aiCatalogActiveFilter === 'pro' && p.freeTier) return false;
+    if (q) {
+      const hay = [p.label, p.vendor, p.badge, p.guide, p.imageModel, p.textModel, p.baseUrl].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1 / -1; text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.84rem;">No providers match your search. Try "Custom OpenAI-Compatible API" to connect any endpoint!</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const connected = _cachedAiProviders.some(c => c.vendor === p.vendor && c.enabled !== false);
+    const badgeColor = p.noKey ? '#059669' : p.freeTier ? '#ea580c' : '#6366f1';
+    const badgeBg = p.noKey ? 'rgba(16,185,129,0.14)' : p.freeTier ? 'rgba(234,88,12,0.12)' : 'rgba(99,102,241,0.12)';
+    return `
+      <div style="background:var(--bg-surface); border:${connected ? '1.5px solid rgba(16,185,129,0.5)' : '1px solid var(--border-color)'}; border-radius:12px; padding:0.85rem 0.95rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.55rem;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.4rem; margin-bottom:0.35rem;">
+            <div style="font-weight:700; font-size:0.86rem; color:var(--text-primary); line-height:1.25;">${escapeHtml(p.label)}</div>
+            <span style="font-size:0.64rem; font-weight:700; padding:2px 6px; border-radius:999px; background:${badgeBg}; color:${badgeColor}; white-space:nowrap;">${escapeHtml(p.badge)}</span>
+          </div>
+          <div style="display:flex; gap:0.3rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+            ${p.supportsImage ? '<span style="font-size:0.66rem; padding:1px 6px; border-radius:6px; background:rgba(234,88,12,0.1); color:#ea580c; font-weight:600;">🖼 Image</span>' : ''}
+            ${p.supportsText ? '<span style="font-size:0.66rem; padding:1px 6px; border-radius:6px; background:rgba(16,185,129,0.1); color:#059669; font-weight:600;">✍ Writer/Text</span>' : ''}
+            ${connected ? '<span style="font-size:0.66rem; padding:1px 6px; border-radius:6px; background:rgba(16,185,129,0.16); color:#059669; font-weight:700;">✓ Active</span>' : ''}
+          </div>
+          <div style="font-size:0.74rem; color:var(--text-muted); line-height:1.4;">${escapeHtml(p.guide)}</div>
+        </div>
+        <div style="display:flex; gap:0.4rem; align-items:center; justify-content:space-between; padding-top:0.45rem; border-top:1px solid var(--border-color);">
+          ${p.keyUrl ? `<a href="${escapeHtml(p.keyUrl)}" target="_blank" rel="noopener" style="font-size:0.72rem; color:#ea580c; font-weight:700; text-decoration:none;">Get Key ↗</a>` : '<span></span>'}
+          <button type="button" class="btn btn-sm ${connected ? 'btn-secondary' : 'btn-primary'}" style="font-size:0.72rem; padding:0.22rem 0.65rem;" onclick="window.openAiProviderModal(null, '${escapeHtml(p.vendor)}')">${connected ? '+ Add Another' : '+ Connect'}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 };
 
 function syncAiProviderDropdown() {
-  const sel = document.getElementById('aiImgProviderSelect');
-  if (!sel) return;
   const imgProviders = _cachedAiProviders.filter(p => p.enabled !== false && p.supportsImage);
-  const currentVal = sel.value || 'auto';
-  sel.innerHTML = `<option value="auto">Auto Smart Cascade (Default → Free FLUX Fallback)</option>` +
-    imgProviders.map(p => {
-      const tag = p.isDefaultImage ? ' ★ Default' : '';
-      const modelTxt = p.imageModel ? ` (${p.imageModel})` : '';
-      return `<option value="${escapeHtml(p.id)}">${escapeHtml(p.label)}${escapeHtml(modelTxt)}${tag}</option>`;
-    }).join('');
-  if (Array.from(sel.options).some(o => o.value === currentVal)) {
-    sel.value = currentVal;
+  const txtProviders = _cachedAiProviders.filter(p => p.enabled !== false && p.supportsText);
+
+  const imgSel = document.getElementById('aiImgProviderSelect');
+  if (imgSel) {
+    const prev = imgSel.value || 'auto';
+    imgSel.innerHTML = `<option value="auto">Auto Smart Cascade (Default → Free FLUX & AI Horde)</option>` +
+      imgProviders.map(p => {
+        const tag = p.isDefaultImage ? ' ★ Default' : '';
+        const modelTxt = p.imageModel ? ` (${p.imageModel})` : '';
+        return `<option value="${escapeHtml(p.id)}">${escapeHtml(p.label)}${escapeHtml(modelTxt)}${tag}</option>`;
+      }).join('');
+    if (Array.from(imgSel.options).some(o => o.value === prev)) imgSel.value = prev;
   }
+
+  ['aiWriterProviderSelect', 'aiHelpProviderSelect'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const prev = sel.value || 'auto';
+    sel.innerHTML = `<option value="auto">Auto Smart Cascade (Default → Free AI Fallback)</option>` +
+      txtProviders.map(p => {
+        const tag = p.isDefaultText ? ' ★ Default' : '';
+        const modelTxt = p.textModel ? ` (${p.textModel})` : '';
+        return `<option value="${escapeHtml(p.id)}">${escapeHtml(p.label)}${escapeHtml(modelTxt)}${tag}</option>`;
+      }).join('');
+    if (Array.from(sel.options).some(o => o.value === prev)) sel.value = prev;
+  });
 }
 
 function renderSettingsAiProvidersGrid() {
   const grid = document.getElementById('settingsAiProvidersGrid');
   if (!grid) return;
   if (_cachedAiProviders.length === 0) {
-    grid.innerHTML = '<div style="grid-column:1 / -1; padding:1.5rem; text-align:center; border:1px dashed var(--border-color); border-radius:12px; color:var(--text-muted);">No AI providers found. Click "+ Add AI / Image API" above.</div>';
+    grid.innerHTML = '<div style="grid-column:1 / -1; padding:1.5rem; text-align:center; border:1px dashed var(--border-color); border-radius:12px; color:var(--text-muted);">No AI providers found. Pick any provider from the 61+ directory below!</div>';
     return;
   }
 
   grid.innerHTML = _cachedAiProviders.map(p => {
     const isOn = p.enabled !== false;
-    const keyStatus = p.vendor === 'pollinations' && !p.hasKey
-      ? '<span style="color:#059669; font-weight:700;">✓ Free — No Key Needed</span>'
+    const noKeyVendor = p.vendor === 'pollinations' || p.vendor === 'pollinations_turbo' || p.vendor === 'pollinations_gpt' || p.vendor === 'pollinations_text' || p.vendor === 'aihorde' || p.vendor === 'aihorde_sdxl' || p.vendor === 'ollama';
+    const keyStatus = noKeyVendor && !p.hasKey
+      ? '<span style="color:#059669; font-weight:700;">✓ Free — No Key Required</span>'
       : p.hasKey
         ? `<span style="font-family:monospace; color:var(--text-secondary);">${escapeHtml(p.maskedKey)}</span>`
         : '<span style="color:#ef4444; font-weight:600;">No key saved</span>';
@@ -5429,15 +5458,15 @@ function renderSettingsAiProvidersGrid() {
         <div>
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.45rem;">
             <div>
-              <div style="font-weight:700; font-size:0.96rem; color:var(--text-primary);">${escapeHtml(p.label)}</div>
-              <div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">${escapeHtml(p.vendor)}</div>
+              <div style="font-weight:700; font-size:0.95rem; color:var(--text-primary);">${escapeHtml(p.label)}</div>
+              <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">${escapeHtml(p.vendor)} • ${escapeHtml(p.adapter || 'openai_compat')}</div>
             </div>
             <button type="button" class="status-chip ${isOn ? 'published' : 'draft'}" style="border:none; cursor:pointer; font-size:0.7rem; padding:2px 8px;" onclick="window.handleToggleAiProvider('${escapeHtml(p.id)}')" title="Click to toggle Active / Disabled">${isOn ? 'Active' : 'Disabled'}</button>
           </div>
 
           <div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-bottom:0.55rem;">
             ${p.supportsImage ? `<span class="badge" style="font-size:0.68rem; background:rgba(234,88,12,0.12); color:#ea580c;">🖼 Image${p.isDefaultImage ? ' ★ Default' : ''}</span>` : ''}
-            ${p.supportsText ? `<span class="badge" style="font-size:0.68rem; background:rgba(16,185,129,0.12); color:#059669;">🧠 Text/Prompts${p.isDefaultText ? ' ★ Default' : ''}</span>` : ''}
+            ${p.supportsText ? `<span class="badge" style="font-size:0.68rem; background:rgba(16,185,129,0.12); color:#059669;">✍ Writer/Help${p.isDefaultText ? ' ★ Default' : ''}</span>` : ''}
           </div>
 
           <div style="font-size:0.76rem; color:var(--text-muted); display:flex; flex-direction:column; gap:0.2rem;">
@@ -5450,7 +5479,7 @@ function renderSettingsAiProvidersGrid() {
         <div style="display:flex; gap:0.4rem; flex-wrap:wrap; padding-top:0.65rem; border-top:1px solid var(--border-color);">
           <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem;" onclick="window.handleTestAiProvider('${escapeHtml(p.id)}', this)">Test</button>
           ${p.supportsImage && !p.isDefaultImage ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem; color:#ea580c;" onclick="window.handleSetDefaultAiProvider('${escapeHtml(p.id)}', 'image')">Default Image</button>` : ''}
-          ${p.supportsText && !p.isDefaultText ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem; color:#059669;" onclick="window.handleSetDefaultAiProvider('${escapeHtml(p.id)}', 'text')">Default Prompt</button>` : ''}
+          ${p.supportsText && !p.isDefaultText ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem; color:#059669;" onclick="window.handleSetDefaultAiProvider('${escapeHtml(p.id)}', 'text')">Default Writer</button>` : ''}
           <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem;" onclick="window.openAiProviderModal('${escapeHtml(p.id)}')">Edit</button>
           ${!p.builtIn ? `<button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem; padding:0.25rem 0.55rem;" onclick="window.handleDeleteAiProvider('${escapeHtml(p.id)}')">✕</button>` : ''}
         </div>
@@ -5466,29 +5495,39 @@ async function loadAiProvidersManager() {
     if (res.ok && Array.isArray(data.providers)) {
       _cachedAiProviders = data.providers;
       renderSettingsAiProvidersGrid();
+      window.renderAiCatalogBrowser();
       syncAiProviderDropdown();
     }
-  } catch (e) {}
+  } catch (e) {
+    window.renderAiCatalogBrowser();
+  }
 }
 window.loadAiProvidersManager = loadAiProvidersManager;
 
 window.applyAiVendorPreset = function(vendor) {
-  const preset = AI_VENDOR_PRESETS[vendor] || AI_VENDOR_PRESETS.custom;
+  const preset = getAiPreset(vendor);
   const idVal = document.getElementById('aiProvIdInput')?.value;
+  const adapterEl = document.getElementById('aiProvAdapterInput');
+  if (adapterEl) adapterEl.value = preset.adapter || 'openai_compat';
   if (!idVal) {
     document.getElementById('aiProvLabelInput').value = preset.label;
-    document.getElementById('aiProvBaseUrlInput').value = preset.baseUrl;
-    document.getElementById('aiProvImageModelInput').value = preset.imageModel;
-    document.getElementById('aiProvTextModelInput').value = preset.textModel;
-    document.getElementById('aiProvSupportsImageInput').checked = preset.supportsImage;
-    document.getElementById('aiProvSupportsTextInput').checked = preset.supportsText;
+    document.getElementById('aiProvBaseUrlInput').value = preset.baseUrl || '';
+    document.getElementById('aiProvImageModelInput').value = preset.imageModel || '';
+    document.getElementById('aiProvTextModelInput').value = preset.textModel || '';
+    document.getElementById('aiProvSupportsImageInput').checked = Boolean(preset.supportsImage);
+    document.getElementById('aiProvSupportsTextInput').checked = Boolean(preset.supportsText);
   }
   const guideEl = document.getElementById('aiProvGuideBanner');
-  if (guideEl) guideEl.innerHTML = preset.guide;
+  if (guideEl) {
+    const linkHtml = preset.keyUrl
+      ? `<a href="${escapeHtml(preset.keyUrl)}" target="_blank" rel="noopener" class="btn btn-sm btn-primary" style="font-size:0.74rem; padding:0.26rem 0.7rem; white-space:nowrap; text-decoration:none;">Get Key ↗</a>`
+      : '';
+    guideEl.innerHTML = `<div style="flex:1; min-width:200px; line-height:1.45;"><strong>${escapeHtml(preset.badge || 'API')}:</strong> ${escapeHtml(preset.guide || '')}</div>${linkHtml}`;
+  }
   const hintEl = document.getElementById('aiProvKeyHint');
-  if (hintEl) hintEl.textContent = preset.keyHint || '';
+  if (hintEl) hintEl.textContent = preset.needsKey === false ? '(Optional — works free with no key!)' : '(Required API key / token)';
   const accGroup = document.getElementById('aiProvAccountIdGroup');
-  if (accGroup) accGroup.style.display = vendor === 'cloudflare' ? 'block' : 'none';
+  if (accGroup) accGroup.style.display = preset.needsAccountId ? 'block' : 'none';
 };
 
 window.openAiProviderModal = function(providerId = null, presetVendor = null) {
@@ -5499,12 +5538,16 @@ window.openAiProviderModal = function(providerId = null, presetVendor = null) {
 
   form.reset();
   document.getElementById('aiProvIdInput').value = '';
+  const filterInput = document.getElementById('aiProvQuickFilter');
+  if (filterInput) filterInput.value = '';
 
   if (providerId) {
     const prov = _cachedAiProviders.find(p => p.id === providerId);
     if (prov) {
+      populateAiVendorSelect('', prov.vendor || 'custom');
       if (titleEl) titleEl.textContent = 'Edit AI Provider: ' + prov.label;
       document.getElementById('aiProvIdInput').value = prov.id;
+      document.getElementById('aiProvAdapterInput').value = prov.adapter || getAiPreset(prov.vendor).adapter || 'openai_compat';
       document.getElementById('aiProvVendorInput').value = prov.vendor || 'custom';
       document.getElementById('aiProvLabelInput').value = prov.label || '';
       document.getElementById('aiProvAccountIdInput').value = prov.accountId || '';
@@ -5518,8 +5561,9 @@ window.openAiProviderModal = function(providerId = null, presetVendor = null) {
       window.applyAiVendorPreset(prov.vendor || 'custom');
     }
   } else {
+    const vendor = presetVendor || 'groq';
+    populateAiVendorSelect('', vendor);
     if (titleEl) titleEl.textContent = 'Connect AI / Image Generation API';
-    const vendor = presetVendor || 'huggingface';
     document.getElementById('aiProvVendorInput').value = vendor;
     window.applyAiVendorPreset(vendor);
   }
@@ -5540,10 +5584,13 @@ window.handleSaveAiProvider = async function(e) {
   }
   try {
     const user = window.CRII_API && window.CRII_API.getCurrentUser ? window.CRII_API.getCurrentUser() : null;
+    const vendor = document.getElementById('aiProvVendorInput').value;
+    const preset = getAiPreset(vendor);
     const payload = {
       action: 'save_provider',
       id: document.getElementById('aiProvIdInput').value || undefined,
-      vendor: document.getElementById('aiProvVendorInput').value,
+      vendor,
+      adapter: document.getElementById('aiProvAdapterInput').value || preset.adapter || 'openai_compat',
       label: document.getElementById('aiProvLabelInput').value.trim(),
       apiKey: document.getElementById('aiProvKeyInput').value.trim(),
       accountId: document.getElementById('aiProvAccountIdInput').value.trim(),
@@ -5566,6 +5613,7 @@ window.handleSaveAiProvider = async function(e) {
     if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
     _cachedAiProviders = data.providers || [];
     renderSettingsAiProvidersGrid();
+    window.renderAiCatalogBrowser();
     syncAiProviderDropdown();
     window.closeAiProviderModal();
     window.showToast('AI provider saved securely to Cloudflare D1!', 'success');
@@ -5590,6 +5638,7 @@ window.handleSetDefaultAiProvider = async function(id, kind) {
     if (res.ok && data.success) {
       _cachedAiProviders = data.providers || [];
       renderSettingsAiProvidersGrid();
+      window.renderAiCatalogBrowser();
       syncAiProviderDropdown();
       window.showToast(`Updated default ${kind} AI provider!`, 'success');
     }
@@ -5607,6 +5656,7 @@ window.handleToggleAiProvider = async function(id) {
     if (res.ok && data.success) {
       _cachedAiProviders = data.providers || [];
       renderSettingsAiProvidersGrid();
+      window.renderAiCatalogBrowser();
       syncAiProviderDropdown();
       window.showToast('Provider status updated', 'info');
     }
@@ -5625,6 +5675,7 @@ window.handleDeleteAiProvider = async function(id) {
     if (res.ok && data.success) {
       _cachedAiProviders = data.providers || [];
       renderSettingsAiProvidersGrid();
+      window.renderAiCatalogBrowser();
       syncAiProviderDropdown();
       window.showToast('AI provider removed', 'info');
     } else {
@@ -5985,5 +6036,416 @@ window.copyAiImageUrl = function() {
   const full = _aiStudioCurrentResult.url.startsWith('/') ? (window.location.origin + _aiStudioCurrentResult.url) : _aiStudioCurrentResult.url;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(full).then(() => window.showToast('Copied image URL!', 'success'));
+  }
+};
+
+let _aiWriterMode = 'full_draft';
+let _aiWriterLastResult = null;
+let _aiHelpHistory = [];
+
+function updateAiWriterContextBar() {
+  const el = document.getElementById('aiWriterContextBar');
+  if (!el) return;
+  const ctx = extractCurrentArticleContext();
+  if (!ctx.title && ctx.wordCount === 0) {
+    el.innerHTML = '<strong style="color:#ea580c;">New Draft:</strong> Type a title in the editor or add a topic in Custom Instructions below, then click Generate.';
+    return;
+  }
+  el.innerHTML = `<strong>Active Article:</strong> "${escapeHtml(ctx.title || 'Untitled')}" • <span style="color:#ea580c; font-weight:700;">${ctx.wordCount.toLocaleString()} words</span>${ctx.category ? ' • ' + escapeHtml(ctx.category) : ''}`;
+}
+
+window.selectAiWriterMode = function(mode, btnEl) {
+  _aiWriterMode = mode;
+  const wrap = document.getElementById('aiWriterModeChips');
+  if (wrap) {
+    wrap.querySelectorAll('button').forEach(b => {
+      const active = b.dataset.wmode === mode;
+      b.classList.toggle('btn-primary', active);
+      b.classList.toggle('btn-secondary', !active);
+    });
+  }
+  const metaBtn = document.getElementById('aiWriterApplyMetaBtn');
+  if (metaBtn) metaBtn.style.display = mode === 'abstract_tags' ? 'inline-flex' : 'none';
+};
+
+window.openAiWriterModal = async function(mode = 'full_draft', autoRun = false) {
+  const modal = document.getElementById('aiWriterModal');
+  if (!modal) return;
+  window.selectAiWriterMode(mode);
+  updateAiWriterContextBar();
+  modal.classList.add('active');
+  await loadAiProvidersManager();
+  if (autoRun) {
+    window.runAiWriterAssist();
+  }
+};
+
+window.closeAiWriterModal = function() {
+  const modal = document.getElementById('aiWriterModal');
+  if (modal) modal.classList.remove('active');
+};
+
+window.runAiWriterAssist = async function() {
+  const btn = document.getElementById('aiWriterRunBtn');
+  const statusEl = document.getElementById('aiWriterStatusText');
+  const resultSec = document.getElementById('aiWriterResultSection');
+  const outArea = document.getElementById('aiWriterOutputTextarea');
+  const modelBadge = document.getElementById('aiWriterModelBadge');
+  const metaBtn = document.getElementById('aiWriterApplyMetaBtn');
+
+  updateAiWriterContextBar();
+  const ctx = extractCurrentArticleContext();
+  const instruction = (document.getElementById('aiWriterInstructionInput')?.value || '').trim();
+  const providerId = document.getElementById('aiWriterProviderSelect')?.value || 'auto';
+  const tone = document.getElementById('aiWriterToneSelect')?.value || 'Academic & Peer-Reviewed';
+  const length = document.getElementById('aiWriterLengthSelect')?.value || 'Medium';
+
+  if (!ctx.title && !ctx.excerpt && !ctx.content && !instruction) {
+    window.showToast('Add an article title, some text, or a custom instruction first.', 'warning');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Writing with AI...';
+  }
+  if (statusEl) statusEl.textContent = 'Synthesizing scholarly draft with automatic multi-provider fallbacks...';
+
+  try {
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'write_assist',
+        mode: _aiWriterMode,
+        providerId,
+        title: ctx.title,
+        category: ctx.category,
+        tags: document.getElementById('bloggerTagsInput')?.value || ctx.tags,
+        excerpt: ctx.excerpt,
+        content: ctx.content,
+        instruction,
+        tone,
+        length
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success || !data.text) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    _aiWriterLastResult = data;
+    if (outArea) outArea.value = data.text;
+    if (resultSec) resultSec.style.display = 'block';
+    const via = `${data.providerLabel || 'AI'}${data.modelUsed ? ' • ' + data.modelUsed : ''}${data.usedFallback ? ' (fallback)' : ''}`;
+    if (modelBadge) modelBadge.textContent = `✓ ${via}`;
+    if (statusEl) statusEl.textContent = `Draft ready via ${via}. Review or edit below before inserting.`;
+    if (metaBtn) metaBtn.style.display = _aiWriterMode === 'abstract_tags' ? 'inline-flex' : 'none';
+    window.showToast(`AI Writer finished via ${data.providerLabel || 'AI'}!`, 'success');
+  } catch (err) {
+    if (statusEl) statusEl.textContent = '';
+    window.showToast('AI Writer failed: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '✍ Generate with AI';
+    }
+  }
+};
+
+function markdownToArticleBlocks(mdText) {
+  const lines = String(mdText || '').replace(/\r\n/g, '\n').split('\n');
+  const blocks = [];
+  let paraBuf = [];
+  let listBuf = [];
+
+  const flushPara = () => {
+    if (paraBuf.length) {
+      const txt = paraBuf.join(' ').trim();
+      if (txt) {
+        blocks.push({ id: 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), type: 'paragraph', content: txt.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1') });
+      }
+      paraBuf = [];
+    }
+  };
+
+  const flushList = () => {
+    if (listBuf.length) {
+      blocks.push({ id: 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), type: 'list', style: 'bullet', content: listBuf.join('\n') });
+      listBuf = [];
+    }
+  };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) {
+      flushPara();
+      flushList();
+      continue;
+    }
+    if (/^###\s+/.test(line)) {
+      flushPara(); flushList();
+      blocks.push({ id: 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), type: 'subheading', content: line.replace(/^###\s+/, '').replace(/\*\*/g, '') });
+    } else if (/^#{1,2}\s+/.test(line)) {
+      flushPara(); flushList();
+      blocks.push({ id: 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), type: 'heading', content: line.replace(/^#{1,2}\s+/, '').replace(/\*\*/g, '') });
+    } else if (/^>\s?/.test(line)) {
+      flushPara(); flushList();
+      blocks.push({ id: 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), type: 'quote', content: line.replace(/^>\s?/, '').replace(/\*\*/g, ''), author: '' });
+    } else if (/^[-*•]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
+      flushPara();
+      listBuf.push(line.replace(/^[-*•]\s+|^\d+\.\s+/, '').replace(/\*\*(.*?)\*\*/g, '$1'));
+    } else if (/^---+$/.test(line)) {
+      flushPara(); flushList();
+      blocks.push({ id: 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), type: 'divider' });
+    } else {
+      flushList();
+      paraBuf.push(line);
+    }
+  }
+  flushPara();
+  flushList();
+  return blocks;
+}
+
+function formatInlineMarkdownHtml(str) {
+  return escapeHtml(str)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>');
+}
+
+function markdownToRichHtml(mdText) {
+  const lines = String(mdText || '').replace(/\r\n/g, '\n').split('\n');
+  const out = [];
+  let inList = false;
+  const closeList = () => { if (inList) { out.push('</ul>'); inList = false; } };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) {
+      closeList();
+      continue;
+    }
+    if (/^###\s+/.test(line)) {
+      closeList();
+      out.push(`<h3>${formatInlineMarkdownHtml(line.replace(/^###\s+/, ''))}</h3>`);
+    } else if (/^#{1,2}\s+/.test(line)) {
+      closeList();
+      out.push(`<h2>${formatInlineMarkdownHtml(line.replace(/^#{1,2}\s+/, ''))}</h2>`);
+    } else if (/^>\s?/.test(line)) {
+      closeList();
+      out.push(`<blockquote>${formatInlineMarkdownHtml(line.replace(/^>\s?/, ''))}</blockquote>`);
+    } else if (/^[-*•]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
+      if (!inList) { out.push('<ul>'); inList = true; }
+      out.push(`<li>${formatInlineMarkdownHtml(line.replace(/^[-*•]\s+|^\d+\.\s+/, ''))}</li>`);
+    } else if (/^---+$/.test(line)) {
+      closeList();
+      out.push('<hr>');
+    } else {
+      closeList();
+      out.push(`<p>${formatInlineMarkdownHtml(line)}</p>`);
+    }
+  }
+  closeList();
+  return out.join('\n');
+}
+
+window.applyAiWriterToEditor = function(replaceAll = false) {
+  const text = (document.getElementById('aiWriterOutputTextarea')?.value || '').trim();
+  if (!text) return;
+
+  if (replaceAll && !confirm('Replace the entire current article body with the AI generated draft?')) {
+    return;
+  }
+
+  if (window.CRII_WORD && typeof window.CRII_WORD.getMode === 'function' && window.CRII_WORD.getMode() === 'doc' && typeof window.CRII_WORD.insertRichHtml === 'function') {
+    const html = markdownToRichHtml(text);
+    window.CRII_WORD.insertRichHtml(html, replaceAll);
+    window.closeAiWriterModal();
+    window.showToast(replaceAll ? 'Article replaced in Word Editor!' : 'AI draft inserted into Word Editor!', 'success');
+    return;
+  }
+
+  const newBlocks = markdownToArticleBlocks(text);
+  if (replaceAll) {
+    currentPostBlocks = newBlocks;
+  } else {
+    currentPostBlocks = [...(Array.isArray(currentPostBlocks) ? currentPostBlocks : []), ...newBlocks];
+  }
+  renderBlockEditor();
+  window.closeAiWriterModal();
+  window.showToast(replaceAll ? `Replaced article with ${newBlocks.length} AI blocks!` : `Inserted ${newBlocks.length} AI blocks into article!`, 'success');
+};
+
+window.applyAiWriterMetadata = function() {
+  const raw = (document.getElementById('aiWriterOutputTextarea')?.value || '').trim();
+  if (!raw) return;
+  const sumM = raw.match(/SUMMARY:\s*([\s\S]*?)(?=\nABSTRACT:|$)/i);
+  const absM = raw.match(/ABSTRACT:\s*([\s\S]*?)(?=\nTAGS:|$)/i);
+  const tagM = raw.match(/TAGS:\s*([^\n]+)/i);
+  const summary = (_aiWriterLastResult && _aiWriterLastResult.summary) || (sumM ? sumM[1].trim() : '');
+  const abstractTxt = (_aiWriterLastResult && _aiWriterLastResult.abstract) || (absM ? absM[1].trim() : '');
+  const tags = (_aiWriterLastResult && _aiWriterLastResult.tags) || (tagM ? tagM[1].trim() : '');
+
+  if (summary && document.getElementById('bloggerSummaryInput')) {
+    document.getElementById('bloggerSummaryInput').value = summary;
+  }
+  if (abstractTxt && document.getElementById('bloggerAbstractInput')) {
+    document.getElementById('bloggerAbstractInput').value = abstractTxt;
+  }
+  if (tags && document.getElementById('bloggerTagsInput')) {
+    document.getElementById('bloggerTagsInput').value = tags;
+  }
+  window.closeAiWriterModal();
+  window.showToast('Filled Summary, Academic Abstract & Tags!', 'success');
+};
+
+window.copyAiWriterOutput = function() {
+  const val = document.getElementById('aiWriterOutputTextarea')?.value || '';
+  if (val && navigator.clipboard) {
+    navigator.clipboard.writeText(val).then(() => window.showToast('Copied AI draft to clipboard!', 'success'));
+  }
+};
+
+function renderAiHelpMessages() {
+  const box = document.getElementById('aiHelpMessagesBox');
+  if (!box) return;
+  if (_aiHelpHistory.length === 0) {
+    box.innerHTML = `
+      <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:12px; padding:0.9rem 1rem; font-size:0.84rem; color:var(--text-secondary); line-height:1.55;">
+        <div style="font-weight:700; color:#ea580c; margin-bottom:0.3rem;">✨ CRII AI Help Assistant</div>
+        Ask me anything about setting up <strong>60+ free AI & Image APIs</strong> (Groq, Cerebras, Cloudflare Workers AI, Hugging Face, Gemini, Pollinations, AI Horde), drafting & polishing articles with <strong>AI Writer</strong>, generating R2 thumbnails, or managing fellowships, recruit pages, and ImprovMX emails.
+      </div>
+    `;
+    return;
+  }
+
+  box.innerHTML = _aiHelpHistory.map(m => {
+    const isUser = m.role === 'user';
+    const bodyHtml = isUser
+      ? escapeHtml(m.content)
+      : markdownToRichHtml(m.content);
+    return `
+      <div style="align-self:${isUser ? 'flex-end' : 'flex-start'}; max-width:${isUser ? '82%' : '94%'}; background:${isUser ? 'linear-gradient(135deg, #ea580c, #f97316)' : 'var(--bg-surface)'}; color:${isUser ? '#ffffff' : 'var(--text-primary)'}; border:${isUser ? 'none' : '1px solid var(--border-color)'}; border-radius:12px; padding:0.75rem 0.95rem; font-size:0.84rem; line-height:1.55;">
+        ${!isUser && m.meta ? `<div style="font-size:0.68rem; color:#059669; font-weight:700; margin-bottom:0.3rem;">✨ ${escapeHtml(m.meta)}</div>` : ''}
+        <div class="ai-help-msg-body">${bodyHtml}</div>
+      </div>
+    `;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderAiHelpFreeApis() {
+  const grid = document.getElementById('aiHelpFreeApisGrid');
+  if (!grid) return;
+  const freeTop = getAiCatalogList().filter(p => p.freeTier).slice(0, 24);
+  grid.innerHTML = freeTop.map(p => `
+    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:12px; padding:0.85rem 0.95rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.55rem;">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.4rem; margin-bottom:0.3rem;">
+          <strong style="font-size:0.86rem; color:var(--text-primary);">${escapeHtml(p.label)}</strong>
+          <span style="font-size:0.64rem; font-weight:700; padding:2px 6px; border-radius:999px; background:${p.noKey ? 'rgba(16,185,129,0.14)' : 'rgba(234,88,12,0.12)'}; color:${p.noKey ? '#059669' : '#ea580c'}; white-space:nowrap;">${escapeHtml(p.badge)}</span>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.45;">${escapeHtml(p.guide)}</div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding-top:0.45rem; border-top:1px solid var(--border-color);">
+        ${p.keyUrl ? `<a href="${escapeHtml(p.keyUrl)}" target="_blank" rel="noopener" style="font-size:0.73rem; color:#ea580c; font-weight:700; text-decoration:none;">Get Key ↗</a>` : '<span></span>'}
+        <button type="button" class="btn btn-primary btn-sm" style="font-size:0.72rem; padding:0.2rem 0.6rem;" onclick="window.closeAiHelpModal(); window.openAiProviderModal(null, '${escapeHtml(p.vendor)}');">Connect →</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.switchAiHelpTab = function(tab) {
+  ['chat', 'free_apis', 'shortcuts'].forEach(t => {
+    const pane = document.getElementById('aiHelpPane_' + t);
+    const btn = document.getElementById('aiHelpTabBtn_' + t);
+    if (pane) pane.style.display = t === tab ? 'block' : 'none';
+    if (btn) {
+      btn.classList.toggle('btn-primary', t === tab);
+      btn.classList.toggle('btn-secondary', t !== tab);
+    }
+  });
+  if (tab === 'free_apis') renderAiHelpFreeApis();
+};
+
+window.openAiHelpModal = async function(tab = 'chat') {
+  const modal = document.getElementById('aiHelpModal');
+  if (!modal) return;
+  modal.classList.add('active');
+  window.switchAiHelpTab(tab);
+  renderAiHelpMessages();
+  await loadAiProvidersManager();
+};
+
+window.closeAiHelpModal = function() {
+  const modal = document.getElementById('aiHelpModal');
+  if (modal) modal.classList.remove('active');
+};
+
+window.clearAiHelpChat = function() {
+  _aiHelpHistory = [];
+  renderAiHelpMessages();
+};
+
+window.sendQuickAiHelp = function(question) {
+  const inp = document.getElementById('aiHelpChatInput');
+  if (inp) inp.value = question;
+  window.handleSendAiHelp({ preventDefault() {} });
+};
+
+window.handleSendAiHelp = async function(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const inp = document.getElementById('aiHelpChatInput');
+  const btn = document.getElementById('aiHelpSendBtn');
+  const text = (inp?.value || '').trim();
+  if (!text) return;
+
+  if (inp) inp.value = '';
+  _aiHelpHistory.push({ role: 'user', content: text });
+  renderAiHelpMessages();
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Thinking...';
+  }
+
+  const activeNavBtn = document.querySelector('.portal-nav-btn.active');
+  const activeTab = activeNavBtn ? (activeNavBtn.dataset.tab || 'overview') : 'overview';
+  const providerId = document.getElementById('aiHelpProviderSelect')?.value || 'auto';
+
+  try {
+    const res = await fetch('/api/ai-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'ai_help',
+        providerId,
+        activeTab,
+        messages: _aiHelpHistory.map(m => ({ role: m.role, content: m.content }))
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success || !data.reply) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    _aiHelpHistory.push({
+      role: 'assistant',
+      content: data.reply,
+      meta: `${data.providerLabel || 'AI'}${data.modelUsed ? ' • ' + data.modelUsed : ''}`
+    });
+    renderAiHelpMessages();
+  } catch (err) {
+    _aiHelpHistory.push({
+      role: 'assistant',
+      content: 'Could not reach AI assistant: ' + err.message + '. Check **Settings → AI & External APIs** or switch to the **Best Free AI APIs** tab above.'
+    });
+    renderAiHelpMessages();
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Send ↵';
+    }
+    if (inp) inp.focus();
   }
 };

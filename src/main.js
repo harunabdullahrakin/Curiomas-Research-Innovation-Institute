@@ -16,6 +16,7 @@ import '../js/app.js';
 import '../js/auth.js';
 import '../js/doc-sanitize.js';
 import '../js/word-editor.js';
+import '../js/ai-catalog.js';
 import '../js/portal.js';
 import '../js/research.js';
 import '../js/interns.js';
