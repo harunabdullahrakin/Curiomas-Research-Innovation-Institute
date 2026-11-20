@@ -414,6 +414,7 @@ function initScrollRevealEffects() {
 // FESTIVE THEMES ENGINE (Admin Controlled: Holi, Christmas, Cherry Blossom, Eid, Festival)
 // =============================================================================
 function initFestiveSeasonalTheme() {
+  window.initFestiveSeasonalTheme = initFestiveSeasonalTheme;
   // STRICTLY DO NOT RUN FESTIVE EFFECTS ON ADMIN DASHBOARD OR LOGIN
   const curPath = (window.location.pathname || '').toLowerCase();
   if (curPath.includes('portal') || curPath.includes('login') || document.body.classList.contains('portal-body') || document.querySelector('.portal-sidebar')) {

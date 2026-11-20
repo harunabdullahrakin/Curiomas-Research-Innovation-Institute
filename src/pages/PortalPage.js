@@ -1940,8 +1940,8 @@ export function renderPortalPageHtml() {
       <div id="tab-academics" class="portal-tab-content" style="display:none;">
         <div class="portal-topbar">
           <div class="portal-title-block">
-            <h1>Academics Manager (SSC, HSC & STEM)</h1>
-            <p>Manage public classes, subjects, MCQ Auto-Exam question banks, Creative Questions (CQs), and chapter notes. All items include future Student Package access controls.</p>
+            <h1>HSC Academics & Courses Manager</h1>
+            <p>Manage all 13 HSC subjects & courses (with cover images & Free/Paid pricing), add custom Academic Divisions (Academics, Books, Medical, BUET, College Questions...), and publish MCQs, CQs & Books.</p>
           </div>
           <div style="display:flex; gap:0.55rem; flex-wrap:wrap;">
             <a href="/academics" target="_blank" class="btn btn-secondary btn-sm">Open Public /academics ↗</a>
@@ -1952,66 +1952,105 @@ export function renderPortalPageHtml() {
         <div id="acadAdminStatsGrid" class="portal-stats-grid" style="margin-bottom:1.5rem;"></div>
 
         <div id="acadAdminSubTabs" style="display:flex; gap:0.45rem; flex-wrap:wrap; margin-bottom:1.25rem;">
-          <button type="button" class="btn btn-sm btn-primary" data-asub="classes" onclick="window.switchAcadAdminTab('classes')">🎓 Classes & Subjects</button>
+          <button type="button" class="btn btn-sm btn-primary" data-asub="subjects" onclick="window.switchAcadAdminTab('subjects')">🎓 HSC Subjects & Courses</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-asub="divisions" onclick="window.switchAcadAdminTab('divisions')">📂 Academic Divisions</button>
           <button type="button" class="btn btn-sm btn-secondary" data-asub="mcqs" onclick="window.switchAcadAdminTab('mcqs')">🧠 MCQ Bank + AI Gen</button>
           <button type="button" class="btn btn-sm btn-secondary" data-asub="cqs" onclick="window.switchAcadAdminTab('cqs')">📝 Creative Questions (CQ)</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-asub="notes" onclick="window.switchAcadAdminTab('notes')">📚 Notes & Formula Sheets</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-asub="notes" onclick="window.switchAcadAdminTab('notes')">📚 Books & Notes</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-asub="enrollments" onclick="window.switchAcadAdminTab('enrollments')">💳 Course Enrollments</button>
         </div>
 
-        <div id="acadAdminPane_classes">
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:1.25rem; margin-bottom:1.5rem;">
-            <div class="data-table-card" style="padding:1.4rem;">
-              <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Add / Edit Class (SSC, HSC, etc.)</h3>
-              <form id="acadClassForm" onsubmit="window.handleSaveAcadClass(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
-                <input type="hidden" id="acadClassIdInput">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
-                  <input type="text" id="acadClassNameInput" class="form-input" placeholder="Class Name (e.g. SSC (Class 9–10))" required>
-                  <input type="text" id="acadClassShortInput" class="form-input" placeholder="Short Label (e.g. SSC)">
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr 90px; gap:0.65rem;">
-                  <input type="text" id="acadClassBadgeInput" class="form-input" placeholder="Badge (e.g. Board Prep)">
-                  <select id="acadClassAccessInput" class="form-select">
-                    <option value="public">Public (Free)</option>
-                    <option value="package">Student Package (Future)</option>
-                  </select>
-                  <input type="color" id="acadClassColorInput" class="form-input" value="#ea580c" style="padding:0.2rem; height:38px;">
-                </div>
-                <textarea id="acadClassDescInput" class="form-textarea" rows="2" placeholder="Class overview & exam focus..."></textarea>
-                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadClassForm').reset(); document.getElementById('acadClassIdInput').value='';">Clear</button>
-                  <button type="submit" class="btn btn-primary btn-sm">Save Class</button>
-                </div>
-              </form>
+        <div id="acadAdminPane_subjects">
+          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.35rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.9rem;">
+              <h3 id="acadSubFormHeading" style="margin:0; font-size:1.08rem;">Add / Edit HSC Subject or Paid Course</h3>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadSubjectForm()">+ New Subject / Course</button>
             </div>
+            <form id="acadSubjectForm" onsubmit="window.handleSaveAcadSubject(event)" style="display:flex; flex-direction:column; gap:0.8rem;">
+              <input type="hidden" id="acadSubIdInput">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
+                <input type="text" id="acadSubNameInput" class="form-input" placeholder="Subject / Course Title *" required>
+                <input type="text" id="acadSubCodeInput" class="form-input" placeholder="Code (e.g. PHY-174)">
+                <input type="text" id="acadSubIconInput" class="form-input" value="⚛️" placeholder="Emoji Icon">
+                <input type="text" id="acadSubBadgeInput" class="form-input" value="HSC" placeholder="Badge (e.g. HSC, Combo)">
+                <input type="number" id="acadSubStudentsInput" class="form-input" placeholder="Enrolled Count" value="0">
+              </div>
 
-            <div class="data-table-card" style="padding:1.4rem;">
-              <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Add / Edit Subject & Chapters</h3>
-              <form id="acadSubjectForm" onsubmit="window.handleSaveAcadSubject(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
-                <input type="hidden" id="acadSubIdInput">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
-                  <select id="acadSubClassSelect" class="form-select" required></select>
-                  <input type="text" id="acadSubNameInput" class="form-input" placeholder="Subject Name (e.g. Physics)" required>
-                </div>
-                <div style="display:grid; grid-template-columns:80px 1fr 1fr; gap:0.65rem;">
-                  <input type="text" id="acadSubIconInput" class="form-input" value="⚛️" placeholder="Icon">
-                  <input type="text" id="acadSubCodeInput" class="form-input" placeholder="Code (e.g. PHY-136)">
+              <div>
+                <label class="form-label" style="font-size:0.78rem;">Course / Subject Cover Image (Upload to R2 or URL)</label>
+                ${renderMediaPickerField({ id: 'acadSubImageInput', accept: 'image/*', uploadLabel: 'Upload Course Image', placeholder: 'Paste image URL or /api/images/...' })}
+              </div>
+
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(165px, 1fr)); gap:0.65rem; padding:0.9rem; border-radius:12px; background:var(--bg-secondary); border:1px solid var(--border-color);">
+                <div>
+                  <label class="form-label" style="font-size:0.74rem;">Access Mode</label>
                   <select id="acadSubAccessInput" class="form-select">
-                    <option value="public">Public (Free)</option>
-                    <option value="package">Student Package</option>
+                    <option value="public">Free (Public Access)</option>
+                    <option value="paid">Paid Course (Enroll & Purchase UI)</option>
                   </select>
                 </div>
-                <textarea id="acadSubChaptersInput" class="form-textarea" rows="2" placeholder="Chapters (comma or newline separated, e.g. Chapter 1: Motion, Chapter 2: Force)"></textarea>
-                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadSubjectForm').reset(); document.getElementById('acadSubIdInput').value='';">Clear</button>
-                  <button type="submit" class="btn btn-primary btn-sm">Save Subject</button>
+                <div>
+                  <label class="form-label" style="font-size:0.74rem;">Course Price (৳)</label>
+                  <input type="number" id="acadSubPriceInput" class="form-input" value="0" min="0" placeholder="e.g. 2990">
                 </div>
-              </form>
-            </div>
+                <div>
+                  <label class="form-label" style="font-size:0.74rem;">Original Price (৳ Strikethrough)</label>
+                  <input type="number" id="acadSubOrigPriceInput" class="form-input" value="0" min="0" placeholder="e.g. 6000">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.74rem;">Instant Unlock Access Code</label>
+                  <input type="text" id="acadSubCodeUnlockInput" class="form-input" placeholder="e.g. CRII-HSC28">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.74rem;">Helpline Phone / Email</label>
+                  <input type="text" id="acadSubPhoneInput" class="form-input" placeholder="e.g. 017XXXXXXXX">
+                </div>
+              </div>
+
+              <textarea id="acadSubDescInput" class="form-textarea" rows="2" placeholder="Course / subject description..."></textarea>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+                <textarea id="acadSubChaptersInput" class="form-textarea" rows="3" placeholder="Chapters (comma or newline separated)"></textarea>
+                <textarea id="acadSubFeaturesInput" class="form-textarea" rows="3" placeholder="What's included in this course (one bullet per line)"></textarea>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+                <textarea id="acadSubIncludedInput" class="form-textarea" rows="2" placeholder="Included sub-courses for Combo cards (optional, one per line)"></textarea>
+                <textarea id="acadSubPayInstrInput" class="form-textarea" rows="2" placeholder="bKash / Nagad / Rocket payment instructions (shown on Paid Enroll page)"></textarea>
+              </div>
+
+              <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadSubjectForm()">Clear</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save Subject / Course</button>
+              </div>
+            </form>
           </div>
 
           <div class="data-table-card" style="padding:1.35rem;">
-            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Configured Classes & Subjects</h3>
-            <div id="acadAdminClassesList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:0.9rem;"></div>
+            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">All HSC Subjects & Courses (Click Edit to Add Cover Image or Make Paid)</h3>
+            <div id="acadAdminSubjectsList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:0.9rem;"></div>
+          </div>
+        </div>
+
+        <div id="acadAdminPane_divisions" style="display:none;">
+          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
+            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Add / Edit Academic Division (Academics, Books, Medical, BUET, College Questions...)</h3>
+            <form id="acadDivisionForm" onsubmit="window.handleSaveAcadDivision(event)" style="display:flex; flex-direction:column; gap:0.75rem;">
+              <input type="hidden" id="acadDivIdInput">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:0.65rem;">
+                <input type="text" id="acadDivNameInput" class="form-input" placeholder="Division Name (e.g. DU Ka Unit)" required>
+                <input type="text" id="acadDivIconInput" class="form-input" value="🎓" placeholder="Emoji Icon">
+                <input type="color" id="acadDivColorInput" class="form-input" value="#ea580c" style="padding:0.2rem; height:38px;">
+                <input type="number" id="acadDivOrderInput" class="form-input" value="6" placeholder="Display Order">
+              </div>
+              <input type="text" id="acadDivDescInput" class="form-input" placeholder="Short description shown on the division selector card...">
+              <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadDivisionForm').reset(); document.getElementById('acadDivIdInput').value='';">Clear</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save Academic Division</button>
+              </div>
+            </form>
+          </div>
+          <div class="data-table-card" style="padding:1.35rem;">
+            <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Active Academic Divisions</h3>
+            <div id="acadAdminDivisionsList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:0.85rem;"></div>
           </div>
         </div>
 
@@ -2019,15 +2058,15 @@ export function renderPortalPageHtml() {
           <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
               <h3 style="margin:0; font-size:1.05rem;">Add MCQ Question (or AI Auto-Generate Batch)</h3>
-              <button type="button" class="btn btn-secondary btn-sm" id="acadAiGenMcqBtn" onclick="window.handleAiGenerateMcqs()" style="border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700;">✨ AI Generate 5 MCQs for Selected Subject/Chapter</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="acadAiGenMcqBtn" onclick="window.handleAiGenerateMcqs()" style="border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700;">✨ AI Generate 5 MCQs for Selected Subject & Division</button>
             </div>
             <form id="acadMcqForm" onsubmit="window.handleSaveAcadMcq(event)" style="display:flex; flex-direction:column; gap:0.75rem;">
               <input type="hidden" id="acadMcqIdInput">
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
-                <select id="acadMcqClassSelect" class="form-select" onchange="window.syncAcadSubjectSelect('acadMcqClassSelect', 'acadMcqSubjectSelect')" required></select>
                 <select id="acadMcqSubjectSelect" class="form-select" required></select>
-                <input type="text" id="acadMcqChapterInput" class="form-input" placeholder="Chapter (e.g. Chapter 2: Motion)">
-                <input type="text" id="acadMcqBoardInput" class="form-input" placeholder="Board/Year (e.g. Dhaka Board 2025)">
+                <select id="acadMcqDivisionSelect" class="form-select" required></select>
+                <input type="text" id="acadMcqChapterInput" class="form-input" placeholder="Chapter (e.g. Ch 2: Vector)">
+                <input type="text" id="acadMcqBoardInput" class="form-input" placeholder="Board/College/Year (e.g. BUET 2024)">
                 <select id="acadMcqDiffInput" class="form-select">
                   <option value="Easy">Easy</option>
                   <option value="Medium" selected>Medium</option>
@@ -2071,12 +2110,12 @@ export function renderPortalPageHtml() {
             <form id="acadCqForm" onsubmit="window.handleSaveAcadCq(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
               <input type="hidden" id="acadCqIdInput">
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
-                <select id="acadCqClassSelect" class="form-select" onchange="window.syncAcadSubjectSelect('acadCqClassSelect', 'acadCqSubjectSelect')" required></select>
                 <select id="acadCqSubjectSelect" class="form-select" required></select>
+                <select id="acadCqDivisionSelect" class="form-select" required></select>
                 <input type="text" id="acadCqChapterInput" class="form-input" placeholder="Chapter">
-                <input type="text" id="acadCqBoardInput" class="form-input" placeholder="Board/Year (e.g. HSC Dhaka 2025)">
+                <input type="text" id="acadCqBoardInput" class="form-input" placeholder="Board/College/Year">
               </div>
-              <input type="text" id="acadCqTitleInput" class="form-input" placeholder="CQ Topic Title (e.g. Geostationary Satellite Orbital Speed)" required>
+              <input type="text" id="acadCqTitleInput" class="form-input" placeholder="CQ Topic Title *" required>
               <textarea id="acadCqStemInput" class="form-textarea" rows="3" placeholder="Uddipok / Scenario Stem *" required></textarea>
               <div>
                 <label class="form-label" style="font-size:0.78rem;">Optional Diagram / Figure</label>
@@ -2106,15 +2145,15 @@ export function renderPortalPageHtml() {
 
         <div id="acadAdminPane_notes" style="display:none;">
           <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
-            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Add Study Note, Formula Sheet, PDF Handout or Lecture</h3>
+            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Add Book, Formula Sheet, PDF Handout or Lecture</h3>
             <form id="acadNoteForm" onsubmit="window.handleSaveAcadNote(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
               <input type="hidden" id="acadNoteIdInput">
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
-                <select id="acadNoteClassSelect" class="form-select" onchange="window.syncAcadSubjectSelect('acadNoteClassSelect', 'acadNoteSubjectSelect')" required></select>
                 <select id="acadNoteSubjectSelect" class="form-select" required></select>
+                <select id="acadNoteDivisionSelect" class="form-select" required></select>
                 <input type="text" id="acadNoteChapterInput" class="form-input" placeholder="Chapter">
                 <select id="acadNoteTypeSelect" class="form-select">
-                  <option value="note">Chapter Note</option>
+                  <option value="note">Book / Concept Note</option>
                   <option value="formula">Formula Sheet</option>
                   <option value="pdf">PDF / Handout</option>
                   <option value="video">Video Lecture</option>
@@ -2125,7 +2164,7 @@ export function renderPortalPageHtml() {
               <textarea id="acadNoteContentInput" class="form-textarea" rows="5" placeholder="Markdown notes / formulas (use ## Headings and - bullet points)..."></textarea>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                 <div>
-                  <label class="form-label" style="font-size:0.78rem;">Optional Handout File / Image (R2 Upload or URL)</label>
+                  <label class="form-label" style="font-size:0.78rem;">Optional Handout File / PDF / Image (R2 Upload or URL)</label>
                   ${renderMediaPickerField({ id: 'acadNoteFileInput', accept: 'image/*,.pdf', uploadLabel: 'Upload File', placeholder: 'Paste PDF/Image URL or /api/images/...' })}
                 </div>
                 <div>
@@ -2135,13 +2174,23 @@ export function renderPortalPageHtml() {
               </div>
               <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadNoteForm').reset(); document.getElementById('acadNoteIdInput').value='';">Clear</button>
-                <button type="submit" class="btn btn-primary btn-sm">Save Study Resource</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save Book / Note</button>
               </div>
             </form>
           </div>
           <div class="data-table-card" style="padding:1.35rem;">
-            <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Published Study Notes & Formula Sheets</h3>
+            <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Published Books & Study Notes</h3>
             <div id="acadAdminNoteList" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+          </div>
+        </div>
+
+        <div id="acadAdminPane_enrollments" style="display:none;">
+          <div class="data-table-card" style="padding:1.35rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.9rem;">
+              <h3 style="margin:0; font-size:1.05rem;">Paid Course Enrollments & TrxID Verification</h3>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAdminAcadEnrollments()">Refresh Enrollments</button>
+            </div>
+            <div id="acadAdminEnrollmentsList" style="display:flex; flex-direction:column; gap:0.7rem;"></div>
           </div>
         </div>
       </div>

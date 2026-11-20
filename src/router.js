@@ -204,6 +204,11 @@ export class Router {
         console.warn('initHeroCustomization error:', e);
       }
     }
+    if (typeof window.initFestiveSeasonalTheme === 'function') {
+      try {
+        window.initFestiveSeasonalTheme();
+      } catch (e) {}
+    }
 
     // Refresh Adaptive Navbar Theme (Transparent over dark hero, darker white over light content)
     if (typeof window.updateNavbarTheme === 'function') {
