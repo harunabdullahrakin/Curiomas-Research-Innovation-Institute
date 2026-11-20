@@ -4375,6 +4375,127 @@ body {
   line-height: 1.6;
 }
 
+.acad-courses-stage {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 460px));
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.acad-subject-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+  gap: 1rem;
+}
+
+.acad-subject-tile {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid rgba(255, 255, 255, 0.24);
+  background: #0b1629;
+  padding: 1.15rem 1.2rem;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.25s ease;
+}
+
+.acad-subject-tile:hover {
+  transform: translateY(-5px);
+  border-color: #ea580c;
+  box-shadow: 0 22px 40px rgba(234, 88, 12, 0.22);
+}
+
+.acad-subject-tile-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.acad-subject-tile:hover .acad-subject-tile-bg {
+  transform: scale(1.08);
+}
+
+.acad-subject-tile-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 11, 22, 0.14) 0%, rgba(6, 11, 22, 0.45) 52%, rgba(6, 11, 22, 0.86) 100%);
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.acad-subject-tile-title {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
+}
+
+.acad-seg-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.acad-cq-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
+}
+
+.acad-cq-selector-card {
+  text-align: left;
+  cursor: pointer;
+  padding: 1rem 1.15rem;
+  border-radius: 14px;
+  border: 1.5px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.acad-cq-selector-card:hover,
+.acad-cq-selector-card.active {
+  transform: translateY(-2px);
+  border-color: #ea580c;
+  box-shadow: 0 12px 24px rgba(234, 88, 12, 0.14);
+}
+
+.theme-festive-active .acad-cq-selector-card {
+  background: rgba(255, 255, 255, 0.74) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+[data-theme="dark"] .acad-cq-selector-card {
+  background: rgba(15, 23, 42, 0.84) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
+}
+
+@media (max-width: 720px) {
+  .acad-seg-grid {
+    grid-template-columns: 1fr;
+  }
+  .acad-subject-tile-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
 @media (max-width: 960px) {
   .acad-enroll-layout {
     grid-template-columns: 1fr;

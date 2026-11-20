@@ -6514,7 +6514,7 @@ let _adminAcadCatalog = { classes: [], divisions: [], subjects: [], mcqs: [], cq
 let _adminAcadEnrollments = [];
 
 window.switchAcadAdminTab = function(sub) {
-  ['subjects', 'divisions', 'mcqs', 'cqs', 'notes', 'enrollments'].forEach(t => {
+  ['courses', 'subjects', 'divisions', 'mcqs', 'cqs', 'notes', 'enrollments'].forEach(t => {
     const p = document.getElementById('acadAdminPane_' + t);
     if (p) p.style.display = t === sub ? 'block' : 'none';
   });
@@ -6529,13 +6529,76 @@ window.switchAcadAdminTab = function(sub) {
   if (sub === 'enrollments') window.loadAdminAcadEnrollments();
 };
 
+window.resetAcadCourseForm = function() {
+  const form = document.getElementById('acadCourseForm');
+  if (form) form.reset();
+  const idEl = document.getElementById('acadCourseIdInput');
+  if (idEl) idEl.value = '';
+  const h = document.getElementById('acadCourseFormHeading');
+  if (h) h.textContent = 'Add / Edit Course (Stored in D1 SQL)';
+  if (typeof window.setMediaInputValue === 'function') window.setMediaInputValue('acadCourseImageInput', '');
+};
+
+window.editAcadCourse = function(classId) {
+  const c = _adminAcadCatalog.classes.find(x => x.id === classId);
+  if (!c) return;
+  document.getElementById('acadCourseIdInput').value = c.id;
+  document.getElementById('acadCourseNameInput').value = c.name || '';
+  document.getElementById('acadCourseShortInput').value = c.shortName || '';
+  document.getElementById('acadCourseBadgeInput').value = c.badgeText || c.badge || 'HSC';
+  document.getElementById('acadCourseStudentsInput').value = c.studentCount || 0;
+  document.getElementById('acadCourseAccessInput').value = (c.accessTier === 'paid' || Number(c.price) > 0) ? 'paid' : 'public';
+  document.getElementById('acadCoursePriceInput').value = c.price || 0;
+  document.getElementById('acadCourseOrigPriceInput').value = c.originalPrice || 0;
+  document.getElementById('acadCourseUnlockInput').value = '';
+  document.getElementById('acadCoursePhoneInput').value = c.enrollPhone || '';
+  document.getElementById('acadCourseDescInput').value = c.description || '';
+  document.getElementById('acadCourseFeaturesInput').value = (c.features || []).join('\n');
+  document.getElementById('acadCoursePayInstrInput').value = c.paymentInstructions || '';
+  if (typeof window.setMediaInputValue === 'function') {
+    window.setMediaInputValue('acadCourseImageInput', c.imageUrl || '');
+  } else if (document.getElementById('acadCourseImageInput')) {
+    document.getElementById('acadCourseImageInput').value = c.imageUrl || '';
+  }
+  const h = document.getElementById('acadCourseFormHeading');
+  if (h) h.textContent = 'Editing Course: ' + c.name;
+  document.getElementById('acadCourseForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.handleSaveAcadClass = async function(e) {
+  e.preventDefault();
+  try {
+    await postAcademicsAction({
+      action: 'save_class',
+      id: document.getElementById('acadCourseIdInput').value || undefined,
+      name: document.getElementById('acadCourseNameInput').value.trim(),
+      shortName: document.getElementById('acadCourseShortInput').value.trim(),
+      badge: document.getElementById('acadCourseBadgeInput').value.trim() || 'HSC',
+      badgeText: document.getElementById('acadCourseBadgeInput').value.trim() || 'HSC',
+      studentCount: Number(document.getElementById('acadCourseStudentsInput').value) || 0,
+      imageUrl: document.getElementById('acadCourseImageInput')?.value.trim() || '',
+      accessTier: document.getElementById('acadCourseAccessInput').value,
+      price: Number(document.getElementById('acadCoursePriceInput').value) || 0,
+      originalPrice: Number(document.getElementById('acadCourseOrigPriceInput').value) || 0,
+      accessCode: document.getElementById('acadCourseUnlockInput').value.trim(),
+      enrollPhone: document.getElementById('acadCoursePhoneInput').value.trim(),
+      description: document.getElementById('acadCourseDescInput').value.trim(),
+      features: document.getElementById('acadCourseFeaturesInput').value,
+      paymentInstructions: document.getElementById('acadCoursePayInstrInput').value.trim()
+    }, 'Course saved to D1 SQL!');
+    window.resetAcadCourseForm();
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
 window.resetAcadSubjectForm = function() {
   const form = document.getElementById('acadSubjectForm');
   if (form) form.reset();
   const idEl = document.getElementById('acadSubIdInput');
   if (idEl) idEl.value = '';
   const headEl = document.getElementById('acadSubFormHeading');
-  if (headEl) headEl.textContent = 'Add / Edit HSC Subject or Paid Course';
+  if (headEl) headEl.textContent = 'Add / Edit Subject & Background Image';
   if (typeof window.setMediaInputValue === 'function') window.setMediaInputValue('acadSubImageInput', '');
 };
 
@@ -6543,9 +6606,9 @@ window.editAcadSubject = function(subId) {
   const s = _adminAcadCatalog.subjects.find(x => x.id === subId);
   if (!s) return;
   document.getElementById('acadSubIdInput').value = s.id;
+  if (document.getElementById('acadSubClassSelect')) document.getElementById('acadSubClassSelect').value = s.classId || 'cls_hsc';
   document.getElementById('acadSubNameInput').value = s.name || '';
   document.getElementById('acadSubCodeInput').value = s.code || '';
-  document.getElementById('acadSubIconInput').value = s.icon || '📘';
   document.getElementById('acadSubBadgeInput').value = s.badgeText || 'HSC';
   document.getElementById('acadSubStudentsInput').value = s.studentCount || 0;
   document.getElementById('acadSubAccessInput').value = (s.accessTier === 'paid' || Number(s.price) > 0) ? 'paid' : 'public';
@@ -6573,7 +6636,7 @@ window.editAcadDivision = function(divId) {
   if (!d) return;
   document.getElementById('acadDivIdInput').value = d.id;
   document.getElementById('acadDivNameInput').value = d.name || '';
-  document.getElementById('acadDivIconInput').value = d.icon || '🎓';
+  document.getElementById('acadDivIconInput').value = ['graduation', 'book', 'cpu', 'heart', 'building', 'layers'].includes(d.icon) ? d.icon : 'layers';
   document.getElementById('acadDivColorInput').value = d.accentColor || '#ea580c';
   document.getElementById('acadDivOrderInput').value = d.displayOrder || 0;
   document.getElementById('acadDivDescInput').value = d.description || '';
@@ -6581,20 +6644,54 @@ window.editAcadDivision = function(divId) {
 };
 
 function renderAdminAcademicsAll() {
-  const { divisions, subjects, mcqs, cqs, notes } = _adminAcadCatalog;
+  const { classes, divisions, subjects, mcqs, cqs, notes } = _adminAcadCatalog;
 
   const statsEl = document.getElementById('acadAdminStatsGrid');
   if (statsEl) {
     statsEl.innerHTML = `
-      <div class="stat-card"><div class="stat-label">HSC Subjects</div><div class="stat-value">${subjects.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Academic Divisions</div><div class="stat-value">${divisions.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Courses (SQL)</div><div class="stat-value">${classes.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Subjects</div><div class="stat-value">${subjects.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Divisions</div><div class="stat-value">${divisions.length}</div></div>
       <div class="stat-card"><div class="stat-label">MCQ Bank</div><div class="stat-value">${mcqs.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Creative Qs (CQ)</div><div class="stat-value">${cqs.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Books & Notes</div><div class="stat-value">${notes.length}</div></div>
+      <div class="stat-card"><div class="stat-label">CQ Bank</div><div class="stat-value">${cqs.length}</div></div>
     `;
   }
 
-  const subOpts = subjects.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.icon || '📘')} ${escapeHtml(s.name)}</option>`).join('');
+  const courseSel = document.getElementById('acadSubClassSelect');
+  if (courseSel) {
+    const prev = courseSel.value;
+    courseSel.innerHTML = classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('') || '<option value="cls_hsc">HSC</option>';
+    if (prev && classes.some(c => c.id === prev)) courseSel.value = prev;
+  }
+
+  const coursesList = document.getElementById('acadAdminCoursesList');
+  if (coursesList) {
+    coursesList.innerHTML = classes.map(c => {
+      const isPaid = c.accessTier === 'paid' || Number(c.price) > 0;
+      const subCount = subjects.filter(s => s.classId === c.id).length;
+      return `
+        <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;">
+          <div style="height:130px; background:#0f172a; position:relative; overflow:hidden;">
+            <img src="${escapeHtml(c.imageUrl || '/assets/curiomas-no-bg.png')}" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.opacity='0.3'">
+            <span style="position:absolute; top:8px; left:8px; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(15,23,42,0.78); color:#ffffff;">${escapeHtml(c.badgeText || c.shortName || 'Course')}</span>
+            <span style="position:absolute; top:8px; right:8px; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px; background:${isPaid ? '#4f46e5' : '#059669'}; color:#ffffff;">${isPaid ? `Paid ৳${Number(c.price).toLocaleString()}` : 'Free'}</span>
+          </div>
+          <div style="padding:0.95rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.65rem; flex:1;">
+            <div>
+              <div style="font-weight:700; font-size:0.98rem; color:var(--text-primary);">${escapeHtml(c.name)}</div>
+              <div style="font-size:0.76rem; color:var(--text-muted); margin-top:0.2rem;">${subCount} subjects / ${Number(c.studentCount || 0).toLocaleString()} students</div>
+            </div>
+            <div style="display:flex; gap:0.4rem;">
+              <button type="button" class="btn btn-primary btn-sm" style="flex:1; font-size:0.74rem;" onclick="window.editAcadCourse('${escapeHtml(c.id)}')">Edit Banner & Price</button>
+              <button type="button" class="btn btn-danger btn-sm" style="font-size:0.74rem;" onclick="window.handleDeleteAcadItem('delete_class', '${escapeHtml(c.id)}')">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No courses in database. Add one above.</div>';
+  }
+
+  const subOpts = subjects.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
   ['acadMcqSubjectSelect', 'acadCqSubjectSelect', 'acadNoteSubjectSelect'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -6603,7 +6700,7 @@ function renderAdminAcademicsAll() {
     if (prev && subjects.some(s => s.id === prev)) el.value = prev;
   });
 
-  const divOpts = divisions.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.icon || '🎓')} ${escapeHtml(d.name)}</option>`).join('');
+  const divOpts = divisions.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}</option>`).join('');
   ['acadMcqDivisionSelect', 'acadCqDivisionSelect', 'acadNoteDivisionSelect'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -6623,17 +6720,17 @@ function renderAdminAcademicsAll() {
         <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;">
           <div style="height:115px; background:#0f172a; position:relative; overflow:hidden;">
             <img src="${escapeHtml(s.imageUrl || '/assets/curiomas-no-bg.png')}" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.opacity='0.3'">
-            <span style="position:absolute; top:8px; left:8px; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(15,23,42,0.78); color:#ffffff;">${escapeHtml(s.icon || '📘')} ${escapeHtml(s.code || 'HSC')}</span>
+            <span style="position:absolute; top:8px; left:8px; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(15,23,42,0.78); color:#ffffff;">${escapeHtml(s.code || 'HSC')}</span>
             <span style="position:absolute; top:8px; right:8px; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:${isPaid ? '#4f46e5' : '#059669'}; color:#ffffff;">${isPaid ? `Paid ৳${Number(s.price).toLocaleString()}` : 'Free'}</span>
           </div>
           <div style="padding:0.9rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.65rem; flex:1;">
             <div>
               <div style="font-weight:700; font-size:0.94rem; color:var(--text-primary);">${escapeHtml(s.name)}</div>
-              <div style="font-size:0.74rem; color:var(--text-muted); margin-top:0.15rem;">${mc} MCQs • ${cc} CQs • ${(s.chapters || []).length} chapters</div>
+              <div style="font-size:0.74rem; color:var(--text-muted); margin-top:0.15rem;">${mc} MCQs / ${cc} CQs / ${(s.chapters || []).length} chapters</div>
             </div>
             <div style="display:flex; gap:0.4rem;">
-              <button type="button" class="btn btn-primary btn-sm" style="flex:1; font-size:0.74rem;" onclick="window.editAcadSubject('${escapeHtml(s.id)}')">Edit / Image / Price</button>
-              <button type="button" class="btn btn-danger btn-sm" style="font-size:0.74rem;" onclick="window.handleDeleteAcadItem('delete_subject', '${escapeHtml(s.id)}')">✕</button>
+              <button type="button" class="btn btn-primary btn-sm" style="flex:1; font-size:0.74rem;" onclick="window.editAcadSubject('${escapeHtml(s.id)}')">Edit Image / Price</button>
+              <button type="button" class="btn btn-danger btn-sm" style="font-size:0.74rem;" onclick="window.handleDeleteAcadItem('delete_subject', '${escapeHtml(s.id)}')">Delete</button>
             </div>
           </div>
         </div>
@@ -6646,7 +6743,7 @@ function renderAdminAcademicsAll() {
     divList.innerHTML = divisions.map(d => `
       <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid ${escapeHtml(d.accentColor || '#ea580c')}; border-radius:12px; padding:0.95rem 1rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.65rem;">
         <div>
-          <div style="font-weight:800; font-size:0.98rem; color:var(--text-primary);">${escapeHtml(d.icon || '🎓')} ${escapeHtml(d.name)}</div>
+          <div style="font-weight:800; font-size:0.98rem; color:var(--text-primary);">${escapeHtml(d.name)}</div>
           <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">${escapeHtml(d.description || '')}</div>
         </div>
         <div style="display:flex; gap:0.4rem; justify-content:flex-end;">
@@ -6793,7 +6890,7 @@ window.handleSaveAcadDivision = async function(e) {
       action: 'save_division',
       id: document.getElementById('acadDivIdInput').value || undefined,
       name: document.getElementById('acadDivNameInput').value.trim(),
-      icon: document.getElementById('acadDivIconInput').value.trim() || '🎓',
+      icon: document.getElementById('acadDivIconInput')?.value || 'layers',
       accentColor: document.getElementById('acadDivColorInput').value,
       displayOrder: Number(document.getElementById('acadDivOrderInput').value) || 0,
       description: document.getElementById('acadDivDescInput').value.trim()
@@ -6811,10 +6908,10 @@ window.handleSaveAcadSubject = async function(e) {
     await postAcademicsAction({
       action: 'save_subject',
       id: document.getElementById('acadSubIdInput').value || undefined,
-      classId: 'cls_hsc',
+      classId: document.getElementById('acadSubClassSelect')?.value || 'cls_hsc',
       name: document.getElementById('acadSubNameInput').value.trim(),
       code: document.getElementById('acadSubCodeInput').value.trim(),
-      icon: document.getElementById('acadSubIconInput').value.trim() || '📘',
+      icon: 'book',
       badgeText: document.getElementById('acadSubBadgeInput').value.trim() || 'HSC',
       studentCount: Number(document.getElementById('acadSubStudentsInput').value) || 0,
       imageUrl: document.getElementById('acadSubImageInput')?.value.trim() || '',
@@ -6828,7 +6925,7 @@ window.handleSaveAcadSubject = async function(e) {
       features: document.getElementById('acadSubFeaturesInput').value,
       includedCourses: document.getElementById('acadSubIncludedInput').value,
       paymentInstructions: document.getElementById('acadSubPayInstrInput').value.trim()
-    }, 'HSC Subject / Course saved!');
+    }, 'Subject saved!');
     window.resetAcadSubjectForm();
   } catch (err) {
     window.showToast(err.message, 'error');

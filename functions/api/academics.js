@@ -28,6 +28,14 @@ async function safeAddColumn(db, table, colDef) {
 async function ensureAcademicsTables(db) {
   await db.batch([
     db.prepare(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updatedAt TEXT,
+        updatedBy TEXT
+      )
+    `),
+    db.prepare(`
       CREATE TABLE IF NOT EXISTS academics_classes (
         id TEXT PRIMARY KEY,
         slug TEXT UNIQUE NOT NULL,
@@ -48,7 +56,7 @@ async function ensureAcademicsTables(db) {
         id TEXT PRIMARY KEY,
         slug TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
-        icon TEXT DEFAULT '🎓',
+        icon TEXT DEFAULT 'book',
         description TEXT DEFAULT '',
         accentColor TEXT DEFAULT '#ea580c',
         displayOrder INTEGER DEFAULT 0,
@@ -61,7 +69,7 @@ async function ensureAcademicsTables(db) {
         classId TEXT NOT NULL,
         name TEXT NOT NULL,
         code TEXT,
-        icon TEXT DEFAULT '📘',
+        icon TEXT DEFAULT 'book',
         description TEXT,
         chaptersJson TEXT DEFAULT '[]',
         displayOrder INTEGER DEFAULT 0,
@@ -149,7 +157,7 @@ async function ensureAcademicsTables(db) {
     `)
   ]);
 
-  const subjectExtraCols = [
+  const sharedCourseCols = [
     "imageUrl TEXT DEFAULT ''",
     "price REAL DEFAULT 0",
     "originalPrice REAL DEFAULT 0",
@@ -163,7 +171,8 @@ async function ensureAcademicsTables(db) {
     "enrollPhone TEXT DEFAULT ''",
     "accessCode TEXT DEFAULT ''"
   ];
-  for (const col of subjectExtraCols) {
+  for (const col of sharedCourseCols) {
+    await safeAddColumn(db, "academics_classes", col);
     await safeAddColumn(db, "academics_subjects", col);
   }
   await safeAddColumn(db, "academics_mcqs", "divisionId TEXT DEFAULT 'div_academics'");
@@ -171,167 +180,70 @@ async function ensureAcademicsTables(db) {
   await safeAddColumn(db, "academics_notes", "divisionId TEXT DEFAULT 'div_books'");
 }
 
-async function seedHscCatalogIfNeeded(db) {
+async function seedHscOnce(db) {
+  const flag = await db.prepare("SELECT value FROM settings WHERE key = 'academics_hsc_v3_seeded'").first();
+  if (flag && flag.value === "1") return;
+
   const now = new Date().toISOString();
+  const defaultFeatures = JSON.stringify([
+    "All 13 HSC Science & General Subjects in One Hub",
+    "Academics, Books, Medical, BUET & College Question Banks",
+    "Automated Timed MCQ Exam Engine with Negative Marking",
+    "Structured 4-Part Creative Questions (CQ) with Model Answers",
+    "Full Offline Question Bank Sync & Local Exam Tracking"
+  ]);
+  const defaultFaq = JSON.stringify([
+    { q: "Can I take MCQ exams offline?", a: "Yes. Once loaded or synced, all questions, CQs, and exam results work offline via local storage and our PWA engine." },
+    { q: "Which subjects are included in HSC?", a: "Bangla 1st & 2nd, English 1st & 2nd, Higher Math 1st & 2nd, Biology 1st & 2nd, Chemistry 1st & 2nd, Physics 1st & 2nd, and ICT." },
+    { q: "How do paid courses unlock?", a: "Submit your payment TrxID through the enrollment form or enter your institute access code to unlock immediately." }
+  ]);
 
-  const divCount = await db.prepare("SELECT COUNT(*) AS c FROM academics_divisions").first();
-  if (!divCount || Number(divCount.c) === 0) {
-    const seedDivs = [
-      ["div_academics", "academics", "Academics", "🎓", "Complete HSC Board syllabus, chapter-wise board MCQs & CQs.", "#ea580c", 1, now],
-      ["div_books", "books", "Books", "📚", "Standard textbooks, concept sheets, formula handbooks & lecture PDFs.", "#0ea5e9", 2, now],
-      ["div_medical", "medical", "Medical", "🩺", "Medical & Dental admission high-yield MCQs, rapid drills & explanations.", "#10b981", 3, now],
-      ["div_buet", "buet", "BUET", "⚙️", "BUET, CKRUET & Engineering conceptual problems, calculus & analytical CQs.", "#8b5cf6", 4, now],
-      ["div_college", "college-questions", "College Questions", "🏫", "Notre Dame, Holy Cross, Viqarunnisa, Dhaka College & Rajuk test papers.", "#f59e0b", 5, now]
-    ];
-    await db.batch(seedDivs.map(d =>
-      db.prepare("INSERT OR IGNORE INTO academics_divisions (id, slug, name, icon, description, accentColor, displayOrder, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(...d)
-    ));
-  }
+  await db.prepare(`
+    INSERT INTO academics_classes (
+      id, slug, name, shortName, level, description, badge, accentColor, displayOrder, accessTier, packageId, createdAt,
+      imageUrl, price, originalPrice, studentCount, badgeText, featuresJson, faqJson
+    )
+    VALUES (
+      'cls_hsc', 'hsc', 'HSC Academic Program', 'HSC', 'Higher Secondary',
+      'Complete HSC preparation covering all 13 subjects with Academics, Books, BUET, Medical, and Top College MCQ & CQ question banks.',
+      'HSC', '#ea580c', 1, 'public', '', ?,
+      'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80',
+      0, 0, 4820, 'HSC', ?, ?
+    )
+    ON CONFLICT(id) DO UPDATE SET
+      name = excluded.name,
+      shortName = excluded.shortName,
+      description = excluded.description,
+      badge = excluded.badge,
+      imageUrl = CASE WHEN academics_classes.imageUrl = '' OR academics_classes.imageUrl IS NULL THEN excluded.imageUrl ELSE academics_classes.imageUrl END,
+      featuresJson = CASE WHEN academics_classes.featuresJson = '[]' OR academics_classes.featuresJson IS NULL THEN excluded.featuresJson ELSE academics_classes.featuresJson END,
+      faqJson = CASE WHEN academics_classes.faqJson = '[]' OR academics_classes.faqJson IS NULL THEN excluded.faqJson ELSE academics_classes.faqJson END
+  `).bind(now, defaultFeatures, defaultFaq).run();
 
-  const hasHsc13 = await db.prepare("SELECT id FROM academics_subjects WHERE id = 'sub_hsc_bn1'").first();
-  if (!hasHsc13) {
-    await db.prepare("DELETE FROM academics_classes WHERE id IN ('cls_ssc', 'cls_junior', 'cls_admission')").run().catch(() => {});
-    await db.prepare("DELETE FROM academics_subjects WHERE id IN ('sub_ssc_phy', 'sub_ssc_chem', 'sub_ssc_math', 'sub_ssc_bio', 'sub_ssc_ict', 'sub_hsc_phy', 'sub_hsc_chem', 'sub_hsc_math', 'sub_hsc_bio', 'sub_jr_sci', 'sub_adm_stem')").run().catch(() => {});
-
-    await db.prepare(`
-      INSERT INTO academics_classes (id, slug, name, shortName, level, description, badge, accentColor, displayOrder, accessTier, packageId, createdAt)
-      VALUES ('cls_hsc', 'hsc', 'HSC (Higher Secondary)', 'HSC', 'Higher Secondary', 'Complete HSC Science & General curriculum covering all 13 subjects across Academics, Books, Medical, BUET & Top College Questions.', 'HSC Active', '#ea580c', 1, 'public', '', ?)
+  const divOrder = [
+    ["div_academics", "academics", "Academics", "graduation", "Board syllabus & chapter-wise standard questions.", "#ea580c", 1],
+    ["div_books", "books", "Books", "book", "Concept books, formula sheets & reference notes.", "#0284c7", 2],
+    ["div_buet", "buet", "BUET", "cpu", "BUET & Engineering conceptual admission problems.", "#7c3aed", 3],
+    ["div_medical", "medical", "Medical", "heart", "Medical & Dental high-yield rapid drills.", "#059669", 4],
+    ["div_college", "college-questions", "College Questions", "building", "Top college test & pre-test question papers.", "#d97706", 5]
+  ];
+  await db.batch(divOrder.map(([id, slug, name, icon, desc, color, order]) =>
+    db.prepare(`
+      INSERT INTO academics_divisions (id, slug, name, icon, description, accentColor, displayOrder, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
-        shortName = excluded.shortName,
+        icon = excluded.icon,
         description = excluded.description,
-        badge = excluded.badge,
-        displayOrder = 1
-    `).bind(now).run();
+        displayOrder = excluded.displayOrder
+    `).bind(id, slug, name, icon, desc, color, order, now)
+  ));
 
-    const defaultFeatures = JSON.stringify([
-      "Chapter-wise Board, Medical, BUET & College MCQs",
-      "Automated Timed MCQ Exam Taker with Negative Marking",
-      "Structured 4-Part Creative Questions (CQ) with Model Solutions",
-      "1-Click Offline Question Database Download for Zero-Internet Study",
-      "Concept Books, Formula Cheat Sheets & PDF Handouts"
-    ]);
-    const defaultFaq = JSON.stringify([
-      { q: "Can I take MCQ exams offline after downloading?", a: "Yes! Click 'Download Qn DB Offline' to save the complete question bank on your phone or PC and take unlimited timed exams without internet." },
-      { q: "Are both Bangla and English versions supported?", a: "Yes, use the top language switcher or browse bilingual terminology across all 13 HSC subjects." },
-      { q: "How do I unlock a paid course?", a: "Complete payment via bKash/Nagad/Rocket using the instructions provided, submit your TrxID, or enter your Institute Access Code for instant unlock." }
-    ]);
-
-    const hscSubjects = [
-      ["sub_hsc_bn1", "Bangla 1st Paper", "BAN-101", "📖", "গদ্য, পদ্য, উপন্যাস (লালসালু) ও নাটক (সিরাজউদ্দৌলা) — HSC বোর্ড ও বিশ্ববিদ্যালয় প্রস্তুতি।", ["অপরিচিতা", "বিলাসী", "আমার পথ", "মানব-কল্যাণ", "সোনার তরী", "বিদ্রোহী", "লালসালু", "সিরাজউদ্দৌলা"], 1, "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=900&q=80", 1420],
-      ["sub_hsc_bn2", "Bangla 2nd Paper", "BAN-102", "✍️", "বাংলা ব্যাকরণ, উচ্চারণ, বানান, সমাস, উপসর্গ, বাক্যতত্ত্ব ও নির্মিতি অংশ।", ["বাংলা উচ্চারণের নিয়ম", "বাংলা বানানের নিয়ম", "বাংলা ভাষার ব্যাকরণিক শব্দশ্রেণি", "সমাস ও উপসর্গ", "বাক্যতত্ত্ব", "প্রবন্ধ ও প্রতিবেদন"], 2, "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80", 1280],
-      ["sub_hsc_en1", "English 1st Paper", "ENG-107", "🌍", "Reading comprehension, flowcharts, summary writing, cloze tests & rearrangement.", ["Unit 1: People or Institutions Making History", "Unit 2: Education and Life", "Unit 3: Dreams", "Unit 4: Youthful Achievers", "Unit 6: Adolescence", "Flowchart & Summary Practice"], 3, "https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&w=900&q=80", 1650],
-      ["sub_hsc_en2", "English 2nd Paper", "ENG-108", "📝", "Prepositions, modifiers, right form of verbs, narration, connectors & composition.", ["Prepositions", "Special Uses of Words & Phrases", "Completing Sentences", "Right Form of Verbs", "Narration & Transformation", "Modifiers & Connectors"], 4, "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=900&q=80", 1590],
-      ["sub_hsc_hm1", "Higher Math 1st Paper", "HM-265", "📐", "Matrices, Vectors, Straight Lines, Circles, Trigonometry, Differentiation & Integration.", ["Ch 1: Matrix & Determinant", "Ch 3: Straight Lines", "Ch 4: Circle", "Ch 7: Trigonometric Ratios", "Ch 9: Differentiation", "Ch 10: Integration"], 5, "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=900&q=80", 2410],
-      ["sub_hsc_hm2", "Higher Math 2nd Paper", "HM-266", "∑", "Complex Numbers, Polynomials, Conics, Inverse Trigonometry, Statics & Dynamics.", ["Ch 3: Complex Numbers", "Ch 4: Polynomials", "Ch 6: Conics", "Ch 7: Inverse Trigonometric Functions", "Ch 8: Statics", "Ch 9: Motion of a Particle in a Plane"], 6, "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=900&q=80", 2180],
-      ["sub_hsc_bio1", "Biology 1st Paper", "BIO-178", "🌿", "Botany: Cell & Structure, Cell Division, Microorganisms, Bryophyta, Plant Physiology & Biotechnology.", ["Ch 1: Cell & Its Structure", "Ch 2: Cell Division", "Ch 4: Microorganisms", "Ch 7: Gymnosperms & Angiosperms", "Ch 9: Plant Physiology", "Ch 11: Biotechnology"], 7, "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=900&q=80", 2640],
-      ["sub_hsc_bio2", "Biology 2nd Paper", "BIO-179", "🧬", "Zoology: Animal Diversity, Hydra/Grasshopper/Rui, Digestion, Blood Circulation, Genetics & Evolution.", ["Ch 1: Animal Diversity & Classification", "Ch 2: Introduction to Animals", "Ch 3: Human Physiology - Digestion", "Ch 4: Blood & Circulation", "Ch 5: Breathing & Respiration", "Ch 11: Genetics & Evolution"], 8, "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=900&q=80", 2520],
-      ["sub_hsc_chem1", "Chemistry 1st Paper", "CHEM-176", "⚗️", "Laboratory Safety, Qualitative Chemistry, Periodic Properties, Chemical Changes & Vocational Chemistry.", ["Ch 1: Safe Use of Laboratory", "Ch 2: Qualitative Chemistry", "Ch 3: Periodic Properties & Chemical Bonding", "Ch 4: Chemical Changes", "Ch 5: Vocational Chemistry"], 9, "https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?auto=format&fit=crop&w=900&q=80", 2310],
-      ["sub_hsc_chem2", "Chemistry 2nd Paper", "CHEM-177", "🧪", "Environmental Chemistry, Organic Chemistry, Quantitative Chemistry & Electrochemistry.", ["Ch 1: Environmental Chemistry", "Ch 2: Organic Chemistry", "Ch 3: Quantitative Chemistry", "Ch 4: Electrochemistry", "Ch 5: Economic Chemistry"], 10, "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=900&q=80", 2490],
-      ["sub_hsc_phy1", "Physics 1st Paper", "PHY-174", "⚛️", "Vector, Dynamics, Newtonian Mechanics, Work-Energy, Gravitation, Structural Properties & Periodic Motion.", ["Ch 2: Vector", "Ch 4: Newtonian Mechanics", "Ch 5: Work, Energy & Power", "Ch 6: Gravitation & Gravity", "Ch 8: Periodic Motion", "Ch 10: Ideal Gas & Kinetic Theory"], 11, "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=900&q=80", 2890],
-      ["sub_hsc_phy2", "Physics 2nd Paper", "PHY-175", "🔭", "Thermodynamics, Electrostatics, Current Electricity, Optics, Modern Physics, Nuclear Physics & Semiconductors.", ["Ch 1: Thermodynamics", "Ch 2: Static Electricity", "Ch 3: Current Electricity", "Ch 7: Physical Optics", "Ch 8: Modern Physics", "Ch 10: Semiconductor & Electronics"], 12, "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=900&q=80", 2740],
-      ["sub_hsc_ict", "ICT", "ICT-275", "💻", "Communication Systems, Number Systems & Logic Gates, Web Design & HTML, C Programming & SQL Database.", ["Ch 1: ICT World & Bangladesh", "Ch 2: Communication Systems & Networking", "Ch 3: Number System & Digital Devices", "Ch 4: Web Design & HTML", "Ch 5: Programming Language (C)", "Ch 6: Database Management System"], 13, "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80", 3120]
-    ];
-
-    const stmts = hscSubjects.map(([id, name, code, icon, desc, chs, order, img, students]) =>
-      db.prepare(`
-        INSERT INTO academics_subjects (id, classId, name, code, icon, description, chaptersJson, displayOrder, accessTier, packageId, createdAt, imageUrl, price, originalPrice, studentCount, badgeText, featuresJson, faqJson)
-        VALUES (?, 'cls_hsc', ?, ?, ?, ?, ?, ?, 'public', '', ?, ?, 0, 0, ?, 'HSC', ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          name = excluded.name,
-          code = excluded.code,
-          icon = excluded.icon,
-          description = excluded.description,
-          chaptersJson = excluded.chaptersJson,
-          displayOrder = excluded.displayOrder,
-          imageUrl = CASE WHEN academics_subjects.imageUrl = '' OR academics_subjects.imageUrl IS NULL THEN excluded.imageUrl ELSE academics_subjects.imageUrl END,
-          studentCount = CASE WHEN academics_subjects.studentCount = 0 OR academics_subjects.studentCount IS NULL THEN excluded.studentCount ELSE academics_subjects.studentCount END
-      `).bind(id, name, code, icon, desc, JSON.stringify(chs), order, now, img, students, defaultFeatures, defaultFaq)
-    );
-    await db.batch(stmts);
-
-    const seedMcqs = [
-      ["mcq_hsc_phy1_a1", "cls_hsc", "sub_hsc_phy1", "div_academics", "Ch 2: Vector", "Two vectors A and B are perpendicular to each other. What is the value of their dot product A · B?", JSON.stringify(["AB", "0", "-AB", "1"]), 1, "A · B = |A||B|cos(90°) = 0.", "Dhaka Board", "Easy"],
-      ["mcq_hsc_phy1_b1", "cls_hsc", "sub_hsc_phy1", "div_buet", "Ch 6: Gravitation & Gravity", "A satellite orbits Earth at height R (Earth's radius). Its orbital velocity compared to surface orbital speed v₀ is:", JSON.stringify(["v₀ / 2", "v₀ / √2", "√2 v₀", "v₀ / 4"]), 1, "Orbital speed v = √(GM/r). At r = R + R = 2R, v = √(GM/2R) = v₀/√2.", "BUET Admission", "Hard"],
-      ["mcq_hsc_phy1_c1", "cls_hsc", "sub_hsc_phy1", "div_college", "Ch 8: Periodic Motion", "If the effective length of a simple pendulum is quadrupled, its time period becomes:", JSON.stringify(["Half", "Double", "4 times", "Unchanged"]), 1, "T = 2π√(L/g). Since T ∝ √L, making L → 4L doubles T.", "Notre Dame College", "Medium"],
-      ["mcq_hsc_phy2_a1", "cls_hsc", "sub_hsc_phy2", "div_academics", "Ch 1: Thermodynamics", "In an isothermal process of an ideal gas, which physical quantity remains constant?", JSON.stringify(["Pressure", "Volume", "Internal Energy", "Entropy"]), 2, "Internal energy U of an ideal gas depends only on temperature T. Since ΔT = 0, ΔU = 0.", "Sylhet Board", "Medium"],
-      ["mcq_hsc_phy2_m1", "cls_hsc", "sub_hsc_phy2", "div_medical", "Ch 8: Modern Physics", "According to Einstein's photoelectric equation, maximum kinetic energy of photoelectrons depends on:", JSON.stringify(["Light intensity", "Light frequency", "Exposure duration", "Plate area"]), 1, "Kmax = hf - φ depends linearly on frequency f above threshold frequency.", "Medical Admission", "Easy"],
-      ["mcq_hsc_chem1_a1", "cls_hsc", "sub_hsc_chem1", "div_academics", "Ch 2: Qualitative Chemistry", "Which set of quantum numbers (n, l, m, s) is NOT valid for an electron?", JSON.stringify(["(3, 2, -1, +1/2)", "(2, 1, 0, -1/2)", "(3, 3, 0, +1/2)", "(4, 0, 0, +1/2)"]), 2, "Azimuthal quantum number l must satisfy 0 ≤ l ≤ n - 1, so for n = 3, l cannot be 3.", "Dhaka Board", "Medium"],
-      ["mcq_hsc_chem2_m1", "cls_hsc", "sub_hsc_chem2", "div_medical", "Ch 2: Organic Chemistry", "Which reagent is used in the Lucas test to distinguish 1°, 2°, and 3° alcohols?", JSON.stringify(["Conc. HCl + Anhydrous ZnCl₂", "Dil. H₂SO₄ + K₂Cr₂O₇", "Tollens' reagent", "Fehling's solution"]), 0, "Lucas reagent (Conc. HCl + anhydrous ZnCl₂) gives immediate turbidity with tertiary alcohols.", "Medical Admission", "Medium"],
-      ["mcq_hsc_hm1_a1", "cls_hsc", "sub_hsc_hm1", "div_academics", "Ch 9: Differentiation", "What is d/dx [ln(sin x)]?", JSON.stringify(["tan x", "cot x", "sec x", "csc x"]), 1, "By chain rule: (1/sin x) · cos x = cot x.", "Jessore Board", "Easy"],
-      ["mcq_hsc_hm1_b1", "cls_hsc", "sub_hsc_hm1", "div_buet", "Ch 10: Integration", "Evaluate ∫₀^(π/2) [sin x / (sin x + cos x)] dx:", JSON.stringify(["π/2", "π/4", "1", "0"]), 1, "Using King's property ∫₀ᵃ f(x)dx = ∫₀ᵃ f(a-x)dx gives 2I = ∫₀^(π/2) 1 dx = π/2 ⇒ I = π/4.", "BUET Admission", "Hard"],
-      ["mcq_hsc_hm2_a1", "cls_hsc", "sub_hsc_hm2", "div_academics", "Ch 3: Complex Numbers", "What is the value of 1 + ω + ω² where ω is a complex cube root of unity?", JSON.stringify(["1", "0", "-1", "3"]), 1, "The sum of the three cube roots of unity is always 1 + ω + ω² = 0.", "Rajshahi Board", "Easy"],
-      ["mcq_hsc_bio1_m1", "cls_hsc", "sub_hsc_bio1", "div_medical", "Ch 1: Cell & Its Structure", "Which cell organelle is known as the 'Powerhouse of the Cell' due to ATP synthesis?", JSON.stringify(["Ribosome", "Mitochondria", "Lysosome", "Golgi body"]), 1, "Mitochondria carry out oxidative phosphorylation and the Krebs cycle to produce ATP.", "Medical Admission", "Easy"],
-      ["mcq_hsc_bio2_m1", "cls_hsc", "sub_hsc_bio2", "div_medical", "Ch 4: Blood & Circulation", "Which heart valve separates the left atrium from the left ventricle?", JSON.stringify(["Tricuspid valve", "Bicuspid (Mitral) valve", "Semilunar valve", "Eustachian valve"]), 1, "The bicuspid (mitral) valve regulates blood flow from the left atrium to the left ventricle.", "Medical Admission", "Easy"],
-      ["mcq_hsc_ict_a1", "cls_hsc", "sub_hsc_ict", "div_academics", "Ch 3: Number System & Digital Devices", "What is the binary equivalent of decimal (25)₁₀?", JSON.stringify(["11001", "10101", "11011", "10011"]), 0, "25 = 16 + 8 + 1 = (11001)₂.", "Dhaka Board", "Easy"],
-      ["mcq_hsc_ict_c1", "cls_hsc", "sub_hsc_ict", "div_college", "Ch 3: Number System & Digital Devices", "Which pair of gates are Universal Logic Gates?", JSON.stringify(["AND & OR", "XOR & XNOR", "NAND & NOR", "NOT & AND"]), 2, "Any Boolean logic circuit can be built using only NAND gates or only NOR gates.", "Holy Cross College", "Easy"],
-      ["mcq_hsc_bn1_a1", "cls_hsc", "sub_hsc_bn1", "div_academics", "অপরিচিতা", "রবীন্দ্রনাথ ঠাকুরের 'অপরিচিতা' গল্পের কথকের নাম কী?", JSON.stringify(["অনুপম", "শম্ভুনাথ", "হরিশ", "বিনু"]), 0, "'অপরিচিতা' ছোটগল্পটি উত্তম পুরুষে অনুপমের জবানিতে বর্ণিত হয়েছে।", "Dhaka Board", "Easy"],
-      ["mcq_hsc_bn2_a1", "cls_hsc", "sub_hsc_bn2", "div_academics", "সমাস ও উপসর্গ", "'নীলপদ্ম' কোন সমাসের উদাহরণ?", JSON.stringify(["দ্বন্দ্ব", "কর্মধারয়", "বহুব্রীহি", "অব্যয়ীভাব"]), 1, "নীল যে পদ্ম = নীলপদ্ম (সাধারণ কর্মধারয় সমাস)।", "Cumilla Board", "Easy"],
-      ["mcq_hsc_en1_a1", "cls_hsc", "sub_hsc_en1", "div_academics", "Unit 1: People or Institutions Making History", "In the historic 7th March 1971 speech, the word 'emancipation' closest means:", JSON.stringify(["Restriction", "Liberation / Freedom", "Celebration", "Negotiation"]), 1, "Emancipation means freeing from political, social, or legal restrictions.", "HSC Board", "Easy"],
-      ["mcq_hsc_en2_a1", "cls_hsc", "sub_hsc_en2", "div_academics", "Right Form of Verbs", "Choose the correct completion: 'Hardly had we reached the station when the train ___.'", JSON.stringify(["leaves", "left", "had left", "leaving"]), 1, "The correlative structure is 'Hardly had + V3 ... when + Past Simple (V2)'.", "Dhaka Board", "Easy"]
-    ];
-
-    const mcqStmts = seedMcqs.map(m =>
-      db.prepare("INSERT OR IGNORE INTO academics_mcqs (id, classId, subjectId, divisionId, chapter, question, optionsJson, correctIndex, explanation, boardTag, difficulty, imageUrl, accessTier, packageId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 'public', '', ?)").bind(...m, now)
-    );
-    await db.batch(mcqStmts);
-
-    const seedCqs = [
-      [
-        "cq_hsc_phy1_a1", "cls_hsc", "sub_hsc_phy1", "div_academics", "Ch 6: Gravitation & Gravity",
-        "Geostationary Satellite Orbital Mechanics", "HSC Dhaka Board",
-        "An artificial communication satellite orbits Earth in a circular path at altitude h = 35,786 km above the equator. Earth's radius R = 6.4 × 10⁶ m and surface gravity g = 9.8 m/s².",
-        "State Kepler's Third Law of planetary motion.",
-        "The square of the orbital time period (T²) of any planet around the Sun is proportional to the cube of the semi-major axis (a³): T² ∝ a³.",
-        "Why does an astronaut feel weightless inside an orbiting spacecraft?",
-        "Both astronaut and spacecraft fall continuously toward Earth with equal centripetal acceleration, making normal floor reaction force N = 0.",
-        "Determine the linear orbital velocity of the satellite.",
-        "r = R + h = 42.186 × 10⁶ m. GM = gR² = 4.014 × 10¹⁴. v = √(GM/r) ≈ 3,085 m/s (3.085 km/s).",
-        "Verify mathematically whether this satellite is geostationary.",
-        "T = 2πr / v ≈ 85,920 s ≈ 23.87 hours ≈ 24 hours. Matching Earth's rotation period in the equatorial plane confirms it is geostationary."
-      ],
-      [
-        "cq_hsc_ict_a1", "cls_hsc", "sub_hsc_ict", "div_academics", "Ch 3: Number System & Digital Devices",
-        "Binary Arithmetic & 2's Complement Subtraction", "HSC Chattogram Board",
-        "In an ICT lab test, Rakin scored (65)₁₀ and Mahim scored (52)₈.",
-        "What is the radix (base) of a number system?",
-        "The total number of unique digits/symbols used in a positional number system (e.g., 2 for binary, 10 for decimal, 16 for hex).",
-        "Why is 2's complement preferred in digital computers?",
-        "It eliminates +0/-0 ambiguity and allows subtraction to be performed with the same hardware adder circuit as addition.",
-        "Convert (52)₈ into Decimal and Hexadecimal.",
-        "Decimal: 5×8 + 2 = (42)₁₀. Hexadecimal: 42 ÷ 16 = 2 rem 10 (A) → (2A)₁₆.",
-        "Compute Rakin's score minus Mahim's score using 8-bit 2's complement addition.",
-        "+65 = 01000001₂, +42 = 00101010₂, -42 (2's comp) = 11010110₂. Sum = (1)00010111₂ → discarding carry gives +23."
-      ],
-      [
-        "cq_hsc_chem2_c1", "cls_hsc", "sub_hsc_chem2", "div_college", "Ch 2: Organic Chemistry",
-        "Markovnikov Addition & Alcohol Identification", "Notre Dame College Pre-Test",
-        "Compound A (C₃H₆) reacts with HBr to yield major product B, which upon aqueous KOH hydrolysis produces secondary alcohol C.",
-        "What is a functional group?",
-        "An atom or group of atoms that determines the characteristic chemical reactions of an organic molecule.",
-        "Why are alkenes more reactive than alkanes?",
-        "Alkenes contain a weaker π-bond with exposed electron density that readily undergoes electrophilic addition reactions.",
-        "Write the reactions forming B and C with IUPAC names.",
-        "CH₃-CH=CH₂ (Propene) + HBr → CH₃-CH(Br)-CH₃ (2-bromopropane, B) by Markovnikov's rule.\nB + aq. KOH → CH₃-CH(OH)-CH₃ (Propan-2-ol, C).",
-        "Explain how you would distinguish C from its primary isomer using the Lucas test.",
-        "Propan-2-ol (2° alcohol) gives white turbidity with Lucas reagent (Conc. HCl + anhy. ZnCl₂) within 5–10 minutes, whereas propan-1-ol (1° alcohol) shows no turbidity at room temperature."
-      ]
-    ];
-
-    await db.batch(seedCqs.map(c =>
-      db.prepare("INSERT OR IGNORE INTO academics_cqs (id, classId, subjectId, divisionId, chapter, title, boardTag, stem, imageUrl, partA, ansA, partB, ansB, partC, ansC, partD, ansD, accessTier, packageId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?, 'public', '', ?)").bind(...c, now)
-    ));
-
-    const seedNotes = [
-      ["note_hsc_phy1_vec", "cls_hsc", "sub_hsc_phy1", "div_books", "Ch 2: Vector", "Physics 1st Paper: Vector & Mechanics Formula Book", "formula", "Resultant vectors, river-boat shortcuts, projectile motion & vector calculus.", "## Parallelogram Law\n- R = √(P² + Q² + 2PQ cosα)\n- tanθ = (Q sinα) / (P + Q cosα)\n\n## River-Boat Shortcuts\n- Minimum Time: tmin = d / v (α = 90°)\n- Shortest Path: cosα = -u / v\n\n## Projectile Motion\n- Time of flight: T = 2v₀sinθ / g\n- Max Height: H = v₀²sin²θ / (2g)\n- Range: R = v₀²sin(2θ) / g"],
-      ["note_hsc_ict_book", "cls_hsc", "sub_hsc_ict", "div_books", "Ch 3: Number System & Digital Devices", "ICT Chapter 3: Number Systems & Logic Gates Concept Book", "formula", "Base conversions, De Morgan's laws, Half/Full adders & universal gates.", "## De Morgan's Theorems\n- (A + B)' = A' · B'\n- (A · B)' = A' + B'\n\n## Adder Equations\n- Half Adder: S = A ⊕ B, C = A · B\n- Full Adder: S = A ⊕ B ⊕ Cin, Cout = AB + Cin(A ⊕ B)"],
-      ["note_hsc_chem2_book", "cls_hsc", "sub_hsc_chem2", "div_books", "Ch 2: Organic Chemistry", "Organic Chemistry Master Reaction & Identification Book", "note", "All essential HSC Board & Medical functional group tests in one sheet.", "## Key Tests\n- Unsaturation: Bromine water (Br₂/CCl₄) decolorizes\n- Aldehyde: Silver Mirror with Tollens' reagent\n- 1°/2°/3° Alcohol: Lucas Test (Conc. HCl + anhy. ZnCl₂)\n- Iodoform Test: Yellow CHI₃ crystals with I₂ + NaOH"]
-    ];
-
-    await db.batch(seedNotes.map(n =>
-      db.prepare("INSERT OR IGNORE INTO academics_notes (id, classId, subjectId, divisionId, chapter, title, resourceType, summary, content, fileUrl, videoUrl, accessTier, packageId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '', '', 'public', '', ?)").bind(...n, now)
-    ));
-  }
+  await db.prepare(`
+    INSERT INTO settings (key, value, updatedAt, updatedBy)
+    VALUES ('academics_hsc_v3_seeded', '1', ?, 'system')
+    ON CONFLICT(key) DO UPDATE SET value = '1', updatedAt = excluded.updatedAt
+  `).bind(now).run();
 }
 
 async function fetchFullCatalog(db) {
@@ -344,7 +256,18 @@ async function fetchFullCatalog(db) {
     db.prepare("SELECT * FROM academics_notes ORDER BY createdAt DESC").all()
   ]);
 
-  const classes = clsRes.results || [];
+  const classes = (clsRes.results || []).map(c => ({
+    ...c,
+    includedCourses: safeJsonParse(c.includedCoursesJson, []),
+    instructors: safeJsonParse(c.instructorsJson, []),
+    features: safeJsonParse(c.featuresJson, []),
+    faq: safeJsonParse(c.faqJson, []),
+    price: Number(c.price) || 0,
+    originalPrice: Number(c.originalPrice) || 0,
+    studentCount: Number(c.studentCount) || 0,
+    hasAccessCode: Boolean(c.accessCode && String(c.accessCode).trim().length > 0),
+    accessCode: undefined
+  }));
   const divisions = divRes.results || [];
   const subjects = (subRes.results || []).map(s => ({
     ...s,
@@ -397,7 +320,7 @@ export async function onRequestGet(context) {
   if (!env || !env.DB) return jsonResp({ error: "Database binding missing" }, 503);
   try {
     await ensureAcademicsTables(env.DB);
-    await seedHscCatalogIfNeeded(env.DB);
+    await seedHscOnce(env.DB);
     const catalog = await fetchFullCatalog(env.DB);
     return jsonResp(catalog);
   } catch (err) {
@@ -440,7 +363,7 @@ export async function onRequestPost(context) {
         id,
         slug,
         name,
-        String(body.icon || "🎓").trim(),
+        String(body.icon || "layers").trim(),
         String(body.description || "").trim(),
         String(body.accentColor || "#ea580c").trim(),
         Number(body.displayOrder) || 0,
@@ -458,12 +381,29 @@ export async function onRequestPost(context) {
 
     if (action === "save_class") {
       const name = String(body.name || "").trim();
-      if (!name) return jsonResp({ error: "Class name required" }, 400);
+      if (!name) return jsonResp({ error: "Course name required" }, 400);
       const id = String(body.id || ("cls_" + Date.now().toString(36))).trim();
+      const prev = await env.DB.prepare("SELECT * FROM academics_classes WHERE id = ?").bind(id).first();
       const slug = String(body.slug || name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || id;
+      const price = Math.max(0, Number(body.price) || 0);
+      const originalPrice = Math.max(0, Number(body.originalPrice) || 0);
+      const accessTier = body.accessTier === "paid" || price > 0 ? "paid" : "public";
+      const features = Array.isArray(body.features)
+        ? body.features.map(f => String(f).trim()).filter(Boolean)
+        : String(body.features || "").split(/\r?\n/).map(f => f.trim()).filter(Boolean);
+      const includedCourses = Array.isArray(body.includedCourses)
+        ? body.includedCourses.map(x => String(x).trim()).filter(Boolean)
+        : String(body.includedCourses || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      const accessCode = body.accessCode !== undefined && String(body.accessCode).trim() !== ""
+        ? String(body.accessCode).trim()
+        : (prev?.accessCode || "");
+
       await env.DB.prepare(`
-        INSERT INTO academics_classes (id, slug, name, shortName, level, description, badge, accentColor, displayOrder, accessTier, packageId, createdAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO academics_classes (
+          id, slug, name, shortName, level, description, badge, accentColor, displayOrder, accessTier, packageId, createdAt,
+          imageUrl, price, originalPrice, studentCount, badgeText, includedCoursesJson, featuresJson, paymentInstructions, enrollPhone, accessCode
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           slug = excluded.slug,
           name = excluded.name,
@@ -474,7 +414,17 @@ export async function onRequestPost(context) {
           accentColor = excluded.accentColor,
           displayOrder = excluded.displayOrder,
           accessTier = excluded.accessTier,
-          packageId = excluded.packageId
+          packageId = excluded.packageId,
+          imageUrl = excluded.imageUrl,
+          price = excluded.price,
+          originalPrice = excluded.originalPrice,
+          studentCount = excluded.studentCount,
+          badgeText = excluded.badgeText,
+          includedCoursesJson = excluded.includedCoursesJson,
+          featuresJson = excluded.featuresJson,
+          paymentInstructions = excluded.paymentInstructions,
+          enrollPhone = excluded.enrollPhone,
+          accessCode = excluded.accessCode
       `).bind(
         id,
         slug,
@@ -482,19 +432,29 @@ export async function onRequestPost(context) {
         String(body.shortName || name).trim(),
         String(body.level || "Higher Secondary").trim(),
         String(body.description || "").trim(),
-        String(body.badge || "Active").trim(),
+        String(body.badge || "Course").trim(),
         String(body.accentColor || "#ea580c").trim(),
-        Number(body.displayOrder) || 0,
-        String(body.accessTier || "public").trim(),
+        Number(body.displayOrder) || (prev ? prev.displayOrder : 0),
+        accessTier,
         String(body.packageId || "").trim(),
-        now
+        prev ? prev.createdAt : now,
+        String(body.imageUrl !== undefined ? body.imageUrl : (prev?.imageUrl || "")).trim(),
+        price,
+        originalPrice,
+        Number(body.studentCount) || (prev ? prev.studentCount : 0),
+        String(body.badgeText || body.badge || "HSC").trim(),
+        JSON.stringify(includedCourses),
+        JSON.stringify(features.length ? features : (prev ? safeJsonParse(prev.featuresJson, []) : [])),
+        String(body.paymentInstructions !== undefined ? body.paymentInstructions : (prev?.paymentInstructions || "")).trim(),
+        String(body.enrollPhone !== undefined ? body.enrollPhone : (prev?.enrollPhone || "")).trim(),
+        accessCode
       ).run();
       return jsonResp({ success: true, id, ...(await fetchFullCatalog(env.DB)) });
     }
 
     if (action === "delete_class") {
       const id = String(body.id || "").trim();
-      if (!id) return jsonResp({ error: "Class ID required" }, 400);
+      if (!id) return jsonResp({ error: "Course ID required" }, 400);
       await env.DB.batch([
         env.DB.prepare("DELETE FROM academics_classes WHERE id = ?").bind(id),
         env.DB.prepare("DELETE FROM academics_subjects WHERE classId = ?").bind(id),
@@ -508,7 +468,7 @@ export async function onRequestPost(context) {
     if (action === "save_subject") {
       const name = String(body.name || "").trim();
       const classId = String(body.classId || "cls_hsc").trim();
-      if (!name) return jsonResp({ error: "Subject / Course name is required" }, 400);
+      if (!name) return jsonResp({ error: "Subject name is required" }, 400);
       const id = String(body.id || ("sub_" + Date.now().toString(36))).trim();
       const prev = await env.DB.prepare("SELECT * FROM academics_subjects WHERE id = ?").bind(id).first();
       const chapters = Array.isArray(body.chapters)
@@ -562,7 +522,7 @@ export async function onRequestPost(context) {
         classId,
         name,
         String(body.code || "").trim(),
-        String(body.icon || "📘").trim(),
+        String(body.icon || "book").trim(),
         String(body.description || "").trim(),
         JSON.stringify(chapters),
         Number(body.displayOrder) || (prev ? prev.displayOrder : 0),
@@ -808,44 +768,52 @@ export async function onRequestPost(context) {
     }
 
     if (action === "enroll_course") {
-      const subjectId = String(body.subjectId || "").trim();
+      const targetId = String(body.targetId || body.subjectId || body.classId || "").trim();
       const studentName = String(body.studentName || "").trim();
       const studentEmail = String(body.studentEmail || "").trim();
-      if (!subjectId || !studentName || !studentEmail) {
+      if (!targetId || !studentName || !studentEmail) {
         return jsonResp({ error: "Course, Full Name, and Email are required." }, 400);
       }
-      const sub = await env.DB.prepare("SELECT name, price FROM academics_subjects WHERE id = ?").bind(subjectId).first();
+      const cls = await env.DB.prepare("SELECT name, price FROM academics_classes WHERE id = ?").bind(targetId).first();
+      const sub = !cls ? await env.DB.prepare("SELECT name, price FROM academics_subjects WHERE id = ?").bind(targetId).first() : null;
+      const item = cls || sub;
       const id = "enr_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       await env.DB.prepare(`
         INSERT INTO academics_enrollments (id, subjectId, subjectName, studentName, studentEmail, studentPhone, college, paymentMethod, trxId, amount, status, createdAt)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
       `).bind(
         id,
-        subjectId,
-        sub?.name || String(body.subjectName || ""),
+        targetId,
+        item?.name || String(body.subjectName || ""),
         studentName,
         studentEmail,
         String(body.studentPhone || "").trim(),
         String(body.college || "").trim(),
         String(body.paymentMethod || "bKash").trim(),
         String(body.trxId || "").trim(),
-        Number(body.amount) || Number(sub?.price) || 0,
+        Number(body.amount) || Number(item?.price) || 0,
         now
       ).run();
-      await env.DB.prepare("UPDATE academics_subjects SET studentCount = COALESCE(studentCount, 0) + 1 WHERE id = ?").bind(subjectId).run().catch(() => {});
-      return jsonResp({ success: true, id, message: "Enrollment submitted! Our academic council will verify your payment shortly." });
+      if (cls) {
+        await env.DB.prepare("UPDATE academics_classes SET studentCount = COALESCE(studentCount, 0) + 1 WHERE id = ?").bind(targetId).run().catch(() => {});
+      } else if (sub) {
+        await env.DB.prepare("UPDATE academics_subjects SET studentCount = COALESCE(studentCount, 0) + 1 WHERE id = ?").bind(targetId).run().catch(() => {});
+      }
+      return jsonResp({ success: true, id, message: "Enrollment submitted. Our team will verify your payment shortly." });
     }
 
     if (action === "verify_access_code") {
-      const subjectId = String(body.subjectId || "").trim();
+      const targetId = String(body.targetId || body.subjectId || body.classId || "").trim();
       const code = String(body.code || "").trim();
-      if (!subjectId || !code) return jsonResp({ error: "Access code required" }, 400);
-      const sub = await env.DB.prepare("SELECT accessCode FROM academics_subjects WHERE id = ?").bind(subjectId).first();
-      if (!sub || !sub.accessCode) return jsonResp({ error: "No access code configured for this course." }, 400);
-      if (String(sub.accessCode).trim().toLowerCase() === code.toLowerCase()) {
+      if (!targetId || !code) return jsonResp({ error: "Access code required" }, 400);
+      const cls = await env.DB.prepare("SELECT accessCode FROM academics_classes WHERE id = ?").bind(targetId).first();
+      const sub = !cls ? await env.DB.prepare("SELECT accessCode FROM academics_subjects WHERE id = ?").bind(targetId).first() : null;
+      const row = cls || sub;
+      if (!row || !row.accessCode) return jsonResp({ error: "No access code configured for this course." }, 400);
+      if (String(row.accessCode).trim().toLowerCase() === code.toLowerCase()) {
         return jsonResp({ success: true, unlocked: true });
       }
-      return jsonResp({ error: "Invalid access code. Please check your enrollment confirmation." }, 403);
+      return jsonResp({ error: "Invalid access code. Please check your confirmation message." }, 403);
     }
 
     if (action === "list_enrollments") {
