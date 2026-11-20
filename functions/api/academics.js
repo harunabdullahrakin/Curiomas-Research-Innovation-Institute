@@ -28,11 +28,9 @@ async function safeAddColumn(db, table, colDef) {
 async function ensureAcademicsTables(db) {
   await db.batch([
     db.prepare(`
-      CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL,
-        updatedAt TEXT,
-        updatedBy TEXT
+      CREATE TABLE IF NOT EXISTS academics_meta (
+        k TEXT PRIMARY KEY,
+        v TEXT NOT NULL
       )
     `),
     db.prepare(`
@@ -181,8 +179,8 @@ async function ensureAcademicsTables(db) {
 }
 
 async function seedHscOnce(db) {
-  const flag = await db.prepare("SELECT value FROM settings WHERE key = 'academics_hsc_v3_seeded'").first();
-  if (flag && flag.value === "1") return;
+  const flag = await db.prepare("SELECT v FROM academics_meta WHERE k = 'hsc_v3_seeded'").first();
+  if (flag && flag.v === "1") return;
 
   const now = new Date().toISOString();
   const defaultFeatures = JSON.stringify([
@@ -240,10 +238,10 @@ async function seedHscOnce(db) {
   ));
 
   await db.prepare(`
-    INSERT INTO settings (key, value, updatedAt, updatedBy)
-    VALUES ('academics_hsc_v3_seeded', '1', ?, 'system')
-    ON CONFLICT(key) DO UPDATE SET value = '1', updatedAt = excluded.updatedAt
-  `).bind(now).run();
+    INSERT INTO academics_meta (k, v)
+    VALUES ('hsc_v3_seeded', '1')
+    ON CONFLICT(k) DO UPDATE SET v = '1'
+  `).run();
 }
 
 async function fetchFullCatalog(db) {
