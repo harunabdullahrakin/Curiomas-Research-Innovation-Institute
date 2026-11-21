@@ -6512,6 +6512,67 @@ window.handleSendAiHelp = async function(e) {
 
 let _adminAcadCatalog = { classes: [], divisions: [], subjects: [], mcqs: [], cqs: [], notes: [] };
 let _adminAcadEnrollments = [];
+let _acadAdminCourseScope = 'all';
+let _selectedMcqIds = new Set();
+let _selectedCqIds = new Set();
+let _selectedNoteIds = new Set();
+
+function getAcadScopedData() {
+  const { classes, divisions, subjects, mcqs, cqs, notes } = _adminAcadCatalog;
+  if (_acadAdminCourseScope === 'all') {
+    return { classes, divisions, subjects, mcqs, cqs, notes };
+  }
+  const scSubjects = subjects.filter(s => s.classId === _acadAdminCourseScope);
+  const subSet = new Set(scSubjects.map(s => s.id));
+  const scMcqs = mcqs.filter(m => m.classId === _acadAdminCourseScope || subSet.has(m.subjectId));
+  const scCqs = cqs.filter(c => c.classId === _acadAdminCourseScope || subSet.has(c.subjectId));
+  const scNotes = notes.filter(n => n.classId === _acadAdminCourseScope || subSet.has(n.subjectId));
+  return { classes, divisions, subjects: scSubjects, mcqs: scMcqs, cqs: scCqs, notes: scNotes };
+}
+
+function getAcadCourseName(classId) {
+  const c = _adminAcadCatalog.classes.find(x => x.id === classId);
+  return c ? (c.shortName || c.name) : 'Course';
+}
+
+function getAcadDefaultCourseId() {
+  if (_acadAdminCourseScope !== 'all' && _adminAcadCatalog.classes.some(c => c.id === _acadAdminCourseScope)) {
+    return _acadAdminCourseScope;
+  }
+  return _adminAcadCatalog.classes[0]?.id || 'cls_hsc';
+}
+
+window.setAcadAdminCourseScope = function(cid) {
+  _acadAdminCourseScope = cid || 'all';
+  _selectedMcqIds.clear();
+  _selectedCqIds.clear();
+  _selectedNoteIds.clear();
+  renderAdminAcademicsAll();
+};
+
+window.scopeToAcadCourseAndOpen = function(classId, tab) {
+  _acadAdminCourseScope = classId || 'all';
+  _selectedMcqIds.clear();
+  _selectedCqIds.clear();
+  _selectedNoteIds.clear();
+  renderAdminAcademicsAll();
+  window.switchAcadAdminTab(tab || 'subjects');
+};
+
+window.jumpToAcadSubjectMcqs = function(subId) {
+  const s = _adminAcadCatalog.subjects.find(x => x.id === subId);
+  if (s && s.classId) _acadAdminCourseScope = s.classId;
+  renderAdminAcademicsAll();
+  const filt = document.getElementById('acadFilterMcqSubject');
+  if (filt) filt.value = subId;
+  const formCourse = document.getElementById('acadMcqClassSelect');
+  if (formCourse && s && s.classId) {
+    formCourse.value = s.classId;
+    window.syncAcadFormSubjects('acadMcqClassSelect', 'acadMcqSubjectSelect', subId);
+  }
+  window.renderAcadAdminMcqList();
+  window.switchAcadAdminTab('mcqs');
+};
 
 window.switchAcadAdminTab = function(sub) {
   ['courses', 'subjects', 'divisions', 'mcqs', 'cqs', 'notes', 'enrollments'].forEach(t => {
@@ -6521,12 +6582,62 @@ window.switchAcadAdminTab = function(sub) {
   const bar = document.getElementById('acadAdminSubTabs');
   if (bar) {
     bar.querySelectorAll('button').forEach(b => {
-      const act = b.dataset.asub === sub;
-      b.classList.toggle('btn-primary', act);
-      b.classList.toggle('btn-secondary', !act);
+      b.classList.toggle('active', b.dataset.asub === sub);
     });
   }
   if (sub === 'enrollments') window.loadAdminAcadEnrollments();
+};
+
+window.toggleAcadEditorPanel = function(kind, mode) {
+  const isMcq = kind === 'mcq';
+  const singleCard = document.getElementById(isMcq ? 'acadMcqSingleCard' : 'acadCqSingleCard');
+  const bulkCard = document.getElementById(isMcq ? 'acadMcqBulkCard' : 'acadCqBulkCard');
+  const sBtn = document.getElementById(isMcq ? 'acadMcqToggleSingleBtn' : 'acadCqToggleSingleBtn');
+  const bBtn = document.getElementById(isMcq ? 'acadMcqToggleBulkBtn' : 'acadCqToggleBulkBtn');
+  if (!singleCard || !bulkCard) return;
+  const showBulk = mode === 'bulk';
+  singleCard.style.display = showBulk ? 'none' : 'block';
+  bulkCard.style.display = showBulk ? 'block' : 'none';
+  if (sBtn) {
+    sBtn.classList.toggle('btn-primary', !showBulk);
+    sBtn.classList.toggle('btn-secondary', showBulk);
+  }
+  if (bBtn) {
+    bBtn.classList.toggle('btn-primary', showBulk);
+    bBtn.classList.toggle('btn-secondary', !showBulk);
+  }
+};
+
+window.toggleAcadBulkPanel = function(kind, forceOpen) {
+  const isMcq = kind === 'mcq';
+  const bulkCard = document.getElementById(isMcq ? 'acadMcqBulkCard' : 'acadCqBulkCard');
+  const openNow = forceOpen === true ? true : (bulkCard && bulkCard.style.display === 'none');
+  window.toggleAcadEditorPanel(kind, openNow ? 'bulk' : 'single');
+};
+
+window.syncAcadFormSubjects = function(courseSelId, subSelId, keepSubId) {
+  const courseEl = document.getElementById(courseSelId);
+  const subEl = document.getElementById(subSelId);
+  if (!subEl) return;
+  const cid = courseEl ? courseEl.value : '';
+  const prev = keepSubId !== undefined ? keepSubId : subEl.value;
+  let pool = cid ? _adminAcadCatalog.subjects.filter(s => s.classId === cid) : _adminAcadCatalog.subjects;
+  if (pool.length === 0) pool = _adminAcadCatalog.subjects;
+  subEl.innerHTML = pool.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('') || '<option value="">Create a subject first</option>';
+  if (prev && pool.some(s => s.id === prev)) subEl.value = prev;
+  if (subSelId === 'acadMcqSubjectSelect') window.syncAcadChapterDatalist(subEl.value, 'acadChapterDatalist');
+  if (subSelId === 'acadCqSubjectSelect') window.syncAcadChapterDatalist(subEl.value, 'acadCqChapterDatalist');
+  if (subSelId === 'acadNoteSubjectSelect') window.syncAcadChapterDatalist(subEl.value, 'acadNoteChapterDatalist');
+};
+
+window.syncAcadChapterDatalist = function(subjectId, datalistId) {
+  const dl = document.getElementById(datalistId || 'acadChapterDatalist');
+  if (!dl) return;
+  const sub = _adminAcadCatalog.subjects.find(s => s.id === subjectId);
+  const chapters = new Set(sub && Array.isArray(sub.chapters) ? sub.chapters : []);
+  _adminAcadCatalog.mcqs.filter(m => m.subjectId === subjectId && m.chapter).forEach(m => chapters.add(m.chapter));
+  _adminAcadCatalog.cqs.filter(c => c.subjectId === subjectId && c.chapter).forEach(c => chapters.add(c.chapter));
+  dl.innerHTML = Array.from(chapters).map(ch => `<option value="${escapeHtml(ch)}"></option>`).join('');
 };
 
 window.resetAcadCourseForm = function() {
@@ -6536,6 +6647,7 @@ window.resetAcadCourseForm = function() {
   if (idEl) idEl.value = '';
   const h = document.getElementById('acadCourseFormHeading');
   if (h) h.textContent = 'Add / Edit Course (Stored in D1 SQL)';
+  document.getElementById('acadCourseFormCard')?.classList.remove('acad-adm-editing-card');
   if (typeof window.setMediaInputValue === 'function') window.setMediaInputValue('acadCourseImageInput', '');
 };
 
@@ -6562,7 +6674,8 @@ window.editAcadCourse = function(classId) {
   }
   const h = document.getElementById('acadCourseFormHeading');
   if (h) h.textContent = 'Editing Course: ' + c.name;
-  document.getElementById('acadCourseForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('acadCourseFormCard')?.classList.add('acad-adm-editing-card');
+  document.getElementById('acadCourseFormCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 window.handleSaveAcadClass = async function(e) {
@@ -6597,8 +6710,11 @@ window.resetAcadSubjectForm = function() {
   if (form) form.reset();
   const idEl = document.getElementById('acadSubIdInput');
   if (idEl) idEl.value = '';
+  const clsEl = document.getElementById('acadSubClassSelect');
+  if (clsEl) clsEl.value = getAcadDefaultCourseId();
   const headEl = document.getElementById('acadSubFormHeading');
   if (headEl) headEl.textContent = 'Add / Edit Subject & Background Image';
+  document.getElementById('acadSubjectFormCard')?.classList.remove('acad-adm-editing-card');
   if (typeof window.setMediaInputValue === 'function') window.setMediaInputValue('acadSubImageInput', '');
 };
 
@@ -6606,7 +6722,7 @@ window.editAcadSubject = function(subId) {
   const s = _adminAcadCatalog.subjects.find(x => x.id === subId);
   if (!s) return;
   document.getElementById('acadSubIdInput').value = s.id;
-  if (document.getElementById('acadSubClassSelect')) document.getElementById('acadSubClassSelect').value = s.classId || 'cls_hsc';
+  if (document.getElementById('acadSubClassSelect')) document.getElementById('acadSubClassSelect').value = s.classId || getAcadDefaultCourseId();
   document.getElementById('acadSubNameInput').value = s.name || '';
   document.getElementById('acadSubCodeInput').value = s.code || '';
   document.getElementById('acadSubBadgeInput').value = s.badgeText || 'HSC';
@@ -6627,8 +6743,17 @@ window.editAcadSubject = function(subId) {
     document.getElementById('acadSubImageInput').value = s.imageUrl || '';
   }
   const headEl = document.getElementById('acadSubFormHeading');
-  if (headEl) headEl.textContent = 'Editing: ' + s.name;
-  document.getElementById('acadSubjectForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (headEl) headEl.textContent = 'Editing Subject: ' + s.name;
+  document.getElementById('acadSubjectFormCard')?.classList.add('acad-adm-editing-card');
+  document.getElementById('acadSubjectFormCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.resetAcadDivisionForm = function() {
+  document.getElementById('acadDivisionForm')?.reset();
+  const idEl = document.getElementById('acadDivIdInput');
+  if (idEl) idEl.value = '';
+  const h = document.getElementById('acadDivFormHeading');
+  if (h) h.textContent = 'Add / Edit Academic Division';
 };
 
 window.editAcadDivision = function(divId) {
@@ -6640,50 +6765,329 @@ window.editAcadDivision = function(divId) {
   document.getElementById('acadDivColorInput').value = d.accentColor || '#ea580c';
   document.getElementById('acadDivOrderInput').value = d.displayOrder || 0;
   document.getElementById('acadDivDescInput').value = d.description || '';
+  const h = document.getElementById('acadDivFormHeading');
+  if (h) h.textContent = 'Editing Division: ' + d.name;
   document.getElementById('acadDivisionForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
+window.resetAcadMcqForm = function(keepContext) {
+  const prevCourse = document.getElementById('acadMcqClassSelect')?.value;
+  const prevSub = document.getElementById('acadMcqSubjectSelect')?.value;
+  const prevDiv = document.getElementById('acadMcqDivisionSelect')?.value;
+  const prevChap = document.getElementById('acadMcqChapterInput')?.value;
+  const prevBoard = document.getElementById('acadMcqBoardInput')?.value;
+  document.getElementById('acadMcqForm')?.reset();
+  document.getElementById('acadMcqIdInput').value = '';
+  if (typeof window.setMediaInputValue === 'function') window.setMediaInputValue('acadMcqImageInput', '');
+  if (keepContext) {
+    if (prevCourse && document.getElementById('acadMcqClassSelect')) {
+      document.getElementById('acadMcqClassSelect').value = prevCourse;
+      window.syncAcadFormSubjects('acadMcqClassSelect', 'acadMcqSubjectSelect', prevSub);
+    }
+    if (prevDiv && document.getElementById('acadMcqDivisionSelect')) document.getElementById('acadMcqDivisionSelect').value = prevDiv;
+    if (prevChap && document.getElementById('acadMcqChapterInput')) document.getElementById('acadMcqChapterInput').value = prevChap;
+    if (prevBoard && document.getElementById('acadMcqBoardInput')) document.getElementById('acadMcqBoardInput').value = prevBoard;
+  } else {
+    const defCourse = getAcadDefaultCourseId();
+    if (document.getElementById('acadMcqClassSelect')) {
+      document.getElementById('acadMcqClassSelect').value = defCourse;
+      window.syncAcadFormSubjects('acadMcqClassSelect', 'acadMcqSubjectSelect');
+    }
+  }
+  const h = document.getElementById('acadMcqFormHeading');
+  if (h) h.textContent = 'Add New MCQ Question';
+  const btn = document.getElementById('acadMcqSubmitBtn');
+  if (btn) btn.textContent = 'Save MCQ';
+  const cancelBtn = document.getElementById('acadMcqCancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  document.getElementById('acadMcqSingleCard')?.classList.remove('acad-adm-editing-card');
+};
+
+window.editAcadMcq = function(id, isDuplicate) {
+  const m = _adminAcadCatalog.mcqs.find(x => x.id === id);
+  if (!m) return;
+  window.toggleAcadEditorPanel('mcq', 'single');
+  const sub = _adminAcadCatalog.subjects.find(s => s.id === m.subjectId);
+  const cid = m.classId || sub?.classId || getAcadDefaultCourseId();
+  document.getElementById('acadMcqIdInput').value = isDuplicate ? '' : m.id;
+  const clsEl = document.getElementById('acadMcqClassSelect');
+  if (clsEl) {
+    clsEl.value = cid;
+    window.syncAcadFormSubjects('acadMcqClassSelect', 'acadMcqSubjectSelect', m.subjectId);
+  }
+  if (document.getElementById('acadMcqDivisionSelect')) document.getElementById('acadMcqDivisionSelect').value = m.divisionId || 'div_academics';
+  document.getElementById('acadMcqChapterInput').value = m.chapter || '';
+  document.getElementById('acadMcqBoardInput').value = m.boardTag || '';
+  document.getElementById('acadMcqDiffInput').value = m.difficulty || 'Medium';
+  document.getElementById('acadMcqQuestionInput').value = m.question || '';
+  const opts = Array.isArray(m.options) ? m.options : [];
+  document.getElementById('acadMcqOpt0').value = opts[0] || '';
+  document.getElementById('acadMcqOpt1').value = opts[1] || '';
+  document.getElementById('acadMcqOpt2').value = opts[2] || '';
+  document.getElementById('acadMcqOpt3').value = opts[3] || '';
+  document.getElementById('acadMcqCorrectSelect').value = String(m.correctIndex || 0);
+  document.getElementById('acadMcqExplanationInput').value = m.explanation || '';
+  if (typeof window.setMediaInputValue === 'function') {
+    window.setMediaInputValue('acadMcqImageInput', m.imageUrl || '');
+  } else if (document.getElementById('acadMcqImageInput')) {
+    document.getElementById('acadMcqImageInput').value = m.imageUrl || '';
+  }
+  const h = document.getElementById('acadMcqFormHeading');
+  if (h) h.textContent = isDuplicate ? 'Duplicating MCQ (Will Save as New)' : 'Editing MCQ: ' + (m.question || '').slice(0, 60);
+  const btn = document.getElementById('acadMcqSubmitBtn');
+  if (btn) btn.textContent = isDuplicate ? 'Save Copy as New MCQ' : 'Update MCQ';
+  const cancelBtn = document.getElementById('acadMcqCancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  document.getElementById('acadMcqSingleCard')?.classList.add('acad-adm-editing-card');
+  document.getElementById('acadMcqSingleCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.duplicateAcadMcq = function(id) {
+  window.editAcadMcq(id, true);
+};
+
+window.resetAcadCqForm = function(keepContext) {
+  const prevCourse = document.getElementById('acadCqClassSelect')?.value;
+  const prevSub = document.getElementById('acadCqSubjectSelect')?.value;
+  const prevDiv = document.getElementById('acadCqDivisionSelect')?.value;
+  document.getElementById('acadCqForm')?.reset();
+  document.getElementById('acadCqIdInput').value = '';
+  if (typeof window.setMediaInputValue === 'function') window.setMediaInputValue('acadCqImageInput', '');
+  if (keepContext && prevCourse && document.getElementById('acadCqClassSelect')) {
+    document.getElementById('acadCqClassSelect').value = prevCourse;
+    window.syncAcadFormSubjects('acadCqClassSelect', 'acadCqSubjectSelect', prevSub);
+    if (prevDiv && document.getElementById('acadCqDivisionSelect')) document.getElementById('acadCqDivisionSelect').value = prevDiv;
+  } else if (document.getElementById('acadCqClassSelect')) {
+    document.getElementById('acadCqClassSelect').value = getAcadDefaultCourseId();
+    window.syncAcadFormSubjects('acadCqClassSelect', 'acadCqSubjectSelect');
+  }
+  const h = document.getElementById('acadCqFormHeading');
+  if (h) h.textContent = 'Add Creative Question (CQ)';
+  const btn = document.getElementById('acadCqSubmitBtn');
+  if (btn) btn.textContent = 'Save CQ';
+  const cancelBtn = document.getElementById('acadCqCancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  document.getElementById('acadCqSingleCard')?.classList.remove('acad-adm-editing-card');
+};
+
+window.editAcadCq = function(id, isDuplicate) {
+  const cq = _adminAcadCatalog.cqs.find(x => x.id === id);
+  if (!cq) return;
+  window.toggleAcadEditorPanel('cq', 'single');
+  const sub = _adminAcadCatalog.subjects.find(s => s.id === cq.subjectId);
+  const cid = cq.classId || sub?.classId || getAcadDefaultCourseId();
+  document.getElementById('acadCqIdInput').value = isDuplicate ? '' : cq.id;
+  const clsEl = document.getElementById('acadCqClassSelect');
+  if (clsEl) {
+    clsEl.value = cid;
+    window.syncAcadFormSubjects('acadCqClassSelect', 'acadCqSubjectSelect', cq.subjectId);
+  }
+  if (document.getElementById('acadCqDivisionSelect')) document.getElementById('acadCqDivisionSelect').value = cq.divisionId || 'div_academics';
+  document.getElementById('acadCqChapterInput').value = cq.chapter || '';
+  document.getElementById('acadCqBoardInput').value = cq.boardTag || '';
+  document.getElementById('acadCqTitleInput').value = cq.title || '';
+  document.getElementById('acadCqStemInput').value = cq.stem || '';
+  document.getElementById('acadCqPartA').value = cq.partA || '';
+  document.getElementById('acadCqAnsA').value = cq.ansA || '';
+  document.getElementById('acadCqPartB').value = cq.partB || '';
+  document.getElementById('acadCqAnsB').value = cq.ansB || '';
+  document.getElementById('acadCqPartC').value = cq.partC || '';
+  document.getElementById('acadCqAnsC').value = cq.ansC || '';
+  document.getElementById('acadCqPartD').value = cq.partD || '';
+  document.getElementById('acadCqAnsD').value = cq.ansD || '';
+  if (typeof window.setMediaInputValue === 'function') {
+    window.setMediaInputValue('acadCqImageInput', cq.imageUrl || '');
+  } else if (document.getElementById('acadCqImageInput')) {
+    document.getElementById('acadCqImageInput').value = cq.imageUrl || '';
+  }
+  const h = document.getElementById('acadCqFormHeading');
+  if (h) h.textContent = isDuplicate ? 'Duplicating CQ (Will Save as New)' : 'Editing CQ: ' + (cq.title || 'Creative Question');
+  const btn = document.getElementById('acadCqSubmitBtn');
+  if (btn) btn.textContent = isDuplicate ? 'Save Copy as New CQ' : 'Update CQ';
+  const cancelBtn = document.getElementById('acadCqCancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  document.getElementById('acadCqSingleCard')?.classList.add('acad-adm-editing-card');
+  document.getElementById('acadCqSingleCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.duplicateAcadCq = function(id) {
+  window.editAcadCq(id, true);
+};
+
+window.resetAcadNoteForm = function() {
+  document.getElementById('acadNoteForm')?.reset();
+  document.getElementById('acadNoteIdInput').value = '';
+  if (document.getElementById('acadNoteClassSelect')) {
+    document.getElementById('acadNoteClassSelect').value = getAcadDefaultCourseId();
+    window.syncAcadFormSubjects('acadNoteClassSelect', 'acadNoteSubjectSelect');
+  }
+  if (typeof window.setMediaInputValue === 'function') {
+    window.setMediaInputValue('acadNoteFileInput', '');
+    window.setMediaInputValue('acadNoteVideoInput', '');
+  }
+  const h = document.getElementById('acadNoteFormHeading');
+  if (h) h.textContent = 'Add Book, Formula Sheet, PDF Handout or Lecture';
+  const btn = document.getElementById('acadNoteSubmitBtn');
+  if (btn) btn.textContent = 'Save Book / Note';
+  const cancelBtn = document.getElementById('acadNoteCancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  document.getElementById('acadNoteFormCard')?.classList.remove('acad-adm-editing-card');
+};
+
+window.editAcadNote = function(id) {
+  const n = _adminAcadCatalog.notes.find(x => x.id === id);
+  if (!n) return;
+  const sub = _adminAcadCatalog.subjects.find(s => s.id === n.subjectId);
+  const cid = n.classId || sub?.classId || getAcadDefaultCourseId();
+  document.getElementById('acadNoteIdInput').value = n.id;
+  const clsEl = document.getElementById('acadNoteClassSelect');
+  if (clsEl) {
+    clsEl.value = cid;
+    window.syncAcadFormSubjects('acadNoteClassSelect', 'acadNoteSubjectSelect', n.subjectId);
+  }
+  if (document.getElementById('acadNoteDivisionSelect')) document.getElementById('acadNoteDivisionSelect').value = n.divisionId || 'div_books';
+  document.getElementById('acadNoteChapterInput').value = n.chapter || '';
+  document.getElementById('acadNoteTypeSelect').value = n.resourceType || 'note';
+  document.getElementById('acadNoteTitleInput').value = n.title || '';
+  document.getElementById('acadNoteSummaryInput').value = n.summary || '';
+  document.getElementById('acadNoteContentInput').value = n.content || '';
+  if (typeof window.setMediaInputValue === 'function') {
+    window.setMediaInputValue('acadNoteFileInput', n.fileUrl || '');
+    window.setMediaInputValue('acadNoteVideoInput', n.videoUrl || '');
+  }
+  const h = document.getElementById('acadNoteFormHeading');
+  if (h) h.textContent = 'Editing Resource: ' + (n.title || '');
+  const btn = document.getElementById('acadNoteSubmitBtn');
+  if (btn) btn.textContent = 'Update Book / Note';
+  const cancelBtn = document.getElementById('acadNoteCancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  document.getElementById('acadNoteFormCard')?.classList.add('acad-adm-editing-card');
+  document.getElementById('acadNoteFormCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
 function renderAdminAcademicsAll() {
-  const { classes, divisions, subjects, mcqs, cqs, notes } = _adminAcadCatalog;
+  const { classes, divisions } = _adminAcadCatalog;
+  if (_acadAdminCourseScope !== 'all' && !classes.some(c => c.id === _acadAdminCourseScope)) {
+    _acadAdminCourseScope = 'all';
+  }
+  const scoped = getAcadScopedData();
+
+  const scopeSel = document.getElementById('acadAdminCourseScope');
+  if (scopeSel) {
+    scopeSel.innerHTML = `<option value="all">All Courses (${classes.length})</option>` +
+      classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
+    scopeSel.value = _acadAdminCourseScope;
+  }
+
+  const scopeSummary = document.getElementById('acadAdminScopeSummary');
+  if (scopeSummary) {
+    scopeSummary.textContent = `${scoped.subjects.length} Subjects · ${scoped.mcqs.length} MCQs · ${scoped.cqs.length} CQs · ${scoped.notes.length} Books`;
+  }
+
+  const setCnt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val); };
+  setCnt('acadTabCnt_courses', classes.length);
+  setCnt('acadTabCnt_subjects', scoped.subjects.length);
+  setCnt('acadTabCnt_divisions', divisions.length);
+  setCnt('acadTabCnt_mcqs', scoped.mcqs.length);
+  setCnt('acadTabCnt_cqs', scoped.cqs.length);
+  setCnt('acadTabCnt_notes', scoped.notes.length);
+  setCnt('acadTabCnt_enrollments', _adminAcadEnrollments.length);
 
   const statsEl = document.getElementById('acadAdminStatsGrid');
   if (statsEl) {
     statsEl.innerHTML = `
       <div class="stat-card"><div class="stat-label">Courses (SQL)</div><div class="stat-value">${classes.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Subjects</div><div class="stat-value">${subjects.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Scoped Subjects</div><div class="stat-value">${scoped.subjects.length}</div></div>
       <div class="stat-card"><div class="stat-label">Divisions</div><div class="stat-value">${divisions.length}</div></div>
-      <div class="stat-card"><div class="stat-label">MCQ Bank</div><div class="stat-value">${mcqs.length}</div></div>
-      <div class="stat-card"><div class="stat-label">CQ Bank</div><div class="stat-value">${cqs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">MCQ Bank</div><div class="stat-value">${scoped.mcqs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">CQ Bank</div><div class="stat-value">${scoped.cqs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Books & Notes</div><div class="stat-value">${scoped.notes.length}</div></div>
     `;
   }
 
-  const courseSel = document.getElementById('acadSubClassSelect');
-  if (courseSel) {
-    const prev = courseSel.value;
-    courseSel.innerHTML = classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('') || '<option value="cls_hsc">HSC</option>';
-    if (prev && classes.some(c => c.id === prev)) courseSel.value = prev;
-  }
+  const courseOpts = classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('') || '<option value="cls_hsc">HSC</option>';
+  const defCourse = getAcadDefaultCourseId();
+  ['acadSubClassSelect', 'acadMcqClassSelect', 'acadBulkMcqClassSelect', 'acadCqClassSelect', 'acadBulkCqClassSelect', 'acadNoteClassSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = courseOpts;
+    if (_acadAdminCourseScope !== 'all') el.value = _acadAdminCourseScope;
+    else if (prev && classes.some(c => c.id === prev)) el.value = prev;
+    else el.value = defCourse;
+  });
+
+  window.syncAcadFormSubjects('acadMcqClassSelect', 'acadMcqSubjectSelect');
+  window.syncAcadFormSubjects('acadBulkMcqClassSelect', 'acadBulkMcqSubjectSelect');
+  window.syncAcadFormSubjects('acadCqClassSelect', 'acadCqSubjectSelect');
+  window.syncAcadFormSubjects('acadBulkCqClassSelect', 'acadBulkCqSubjectSelect');
+  window.syncAcadFormSubjects('acadNoteClassSelect', 'acadNoteSubjectSelect');
+
+  const divOpts = divisions.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}</option>`).join('') || '<option value="div_academics">Academics</option>';
+  ['acadMcqDivisionSelect', 'acadBulkMcqDivisionSelect', 'acadCqDivisionSelect', 'acadBulkCqDivisionSelect', 'acadNoteDivisionSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = divOpts;
+    if (prev && divisions.some(d => d.id === prev)) el.value = prev;
+    else if (id === 'acadNoteDivisionSelect' && divisions.some(d => d.id === 'div_books')) el.value = 'div_books';
+  });
+
+  const scopedSubOpts = `<option value="all">All Subjects (${scoped.subjects.length})</option>` +
+    scoped.subjects.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
+  ['acadFilterMcqSubject', 'acadFilterCqSubject', 'acadFilterNoteSubject'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = scopedSubOpts;
+    if (prev && (prev === 'all' || scoped.subjects.some(s => s.id === prev))) el.value = prev;
+  });
+
+  const filterDivOpts = `<option value="all">All Divisions (${divisions.length})</option>` + divOpts;
+  ['acadFilterMcqDivision', 'acadFilterCqDivision', 'acadFilterNoteDivision'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = filterDivOpts;
+    if (prev && (prev === 'all' || divisions.some(d => d.id === prev))) el.value = prev;
+  });
+
+  const moveSubOpts = `<option value="">Keep Subject</option>` +
+    _adminAcadCatalog.subjects.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(getAcadCourseName(s.classId))} / ${escapeHtml(s.name)}</option>`).join('');
+  ['acadBulkMoveMcqSub', 'acadBulkMoveCqSub'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = moveSubOpts;
+  });
+  const moveDivOpts = `<option value="">Keep Division</option>` + divOpts;
+  ['acadBulkMoveMcqDiv', 'acadBulkMoveCqDiv'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = moveDivOpts;
+  });
 
   const coursesList = document.getElementById('acadAdminCoursesList');
   if (coursesList) {
     coursesList.innerHTML = classes.map(c => {
       const isPaid = c.accessTier === 'paid' || Number(c.price) > 0;
-      const subCount = subjects.filter(s => s.classId === c.id).length;
+      const subCount = _adminAcadCatalog.subjects.filter(s => s.classId === c.id).length;
+      const mcqCount = _adminAcadCatalog.mcqs.filter(m => m.classId === c.id).length;
+      const cqCount = _adminAcadCatalog.cqs.filter(q => q.classId === c.id).length;
+      const isActiveScope = _acadAdminCourseScope === c.id;
       return `
-        <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;">
-          <div style="height:130px; background:#0f172a; position:relative; overflow:hidden;">
+        <div style="background:var(--bg-surface); border:${isActiveScope ? '2px solid #ea580c' : '1px solid var(--border-color)'}; border-radius:14px; overflow:hidden; display:flex; flex-direction:column;">
+          <div style="height:135px; background:#0f172a; position:relative; overflow:hidden;">
             <img src="${escapeHtml(c.imageUrl || '/assets/curiomas-no-bg.png')}" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.opacity='0.3'">
-            <span style="position:absolute; top:8px; left:8px; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(15,23,42,0.78); color:#ffffff;">${escapeHtml(c.badgeText || c.shortName || 'Course')}</span>
+            <span style="position:absolute; top:8px; left:8px; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(15,23,42,0.82); color:#ffffff;">${escapeHtml(c.badgeText || c.shortName || 'Course')}</span>
             <span style="position:absolute; top:8px; right:8px; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px; background:${isPaid ? '#4f46e5' : '#059669'}; color:#ffffff;">${isPaid ? `Paid ৳${Number(c.price).toLocaleString()}` : 'Free'}</span>
           </div>
           <div style="padding:0.95rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.65rem; flex:1;">
             <div>
-              <div style="font-weight:700; font-size:0.98rem; color:var(--text-primary);">${escapeHtml(c.name)}</div>
-              <div style="font-size:0.76rem; color:var(--text-muted); margin-top:0.2rem;">${subCount} subjects / ${Number(c.studentCount || 0).toLocaleString()} students</div>
+              <div style="font-weight:800; font-size:0.98rem; color:var(--text-primary);">${escapeHtml(c.name)}</div>
+              <div style="font-size:0.76rem; color:var(--text-muted); margin-top:0.2rem;">${subCount} subjects · ${mcqCount} MCQs · ${cqCount} CQs · ${Number(c.studentCount || 0).toLocaleString()} students</div>
             </div>
-            <div style="display:flex; gap:0.4rem;">
-              <button type="button" class="btn btn-primary btn-sm" style="flex:1; font-size:0.74rem;" onclick="window.editAcadCourse('${escapeHtml(c.id)}')">Edit Banner & Price</button>
-              <button type="button" class="btn btn-danger btn-sm" style="font-size:0.74rem;" onclick="window.handleDeleteAcadItem('delete_class', '${escapeHtml(c.id)}')">Delete</button>
+            <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" style="flex:1; font-size:0.73rem;" onclick="window.scopeToAcadCourseAndOpen('${escapeHtml(c.id)}', 'mcqs')">Manage Qs</button>
+              <button type="button" class="btn btn-primary btn-sm" style="flex:1; font-size:0.73rem;" onclick="window.editAcadCourse('${escapeHtml(c.id)}')">Edit Course</button>
+              <button type="button" class="btn btn-danger btn-sm" style="font-size:0.73rem;" onclick="window.handleDeleteAcadItem('delete_class', '${escapeHtml(c.id)}')">Delete</button>
             </div>
           </div>
         </div>
@@ -6691,131 +7095,652 @@ function renderAdminAcademicsAll() {
     }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No courses in database. Add one above.</div>';
   }
 
-  const subOpts = subjects.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
-  ['acadMcqSubjectSelect', 'acadCqSubjectSelect', 'acadNoteSubjectSelect'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const prev = el.value;
-    el.innerHTML = subOpts || '<option value="">Create a subject first</option>';
-    if (prev && subjects.some(s => s.id === prev)) el.value = prev;
-  });
+  window.renderAcadAdminSubjectsList();
 
-  const divOpts = divisions.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}</option>`).join('');
-  ['acadMcqDivisionSelect', 'acadCqDivisionSelect', 'acadNoteDivisionSelect'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const prev = el.value;
-    el.innerHTML = divOpts || '<option value="div_academics">Academics</option>';
-    if (prev && divisions.some(d => d.id === prev)) el.value = prev;
-    else if (id === 'acadNoteDivisionSelect' && divisions.some(d => d.id === 'div_books')) el.value = 'div_books';
-  });
-
-  const subList = document.getElementById('acadAdminSubjectsList');
-  if (subList) {
-    subList.innerHTML = subjects.map(s => {
-      const isPaid = s.accessTier === 'paid' || Number(s.price) > 0;
-      const mc = mcqs.filter(m => m.subjectId === s.id).length;
-      const cc = cqs.filter(c => c.subjectId === s.id).length;
+  const divList = document.getElementById('acadAdminDivisionsList');
+  if (divList) {
+    divList.innerHTML = divisions.map(d => {
+      const mCnt = scoped.mcqs.filter(m => m.divisionId === d.id).length;
+      const cCnt = scoped.cqs.filter(c => c.divisionId === d.id).length;
       return `
-        <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;">
-          <div style="height:115px; background:#0f172a; position:relative; overflow:hidden;">
-            <img src="${escapeHtml(s.imageUrl || '/assets/curiomas-no-bg.png')}" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.opacity='0.3'">
-            <span style="position:absolute; top:8px; left:8px; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(15,23,42,0.78); color:#ffffff;">${escapeHtml(s.code || 'HSC')}</span>
-            <span style="position:absolute; top:8px; right:8px; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:${isPaid ? '#4f46e5' : '#059669'}; color:#ffffff;">${isPaid ? `Paid ৳${Number(s.price).toLocaleString()}` : 'Free'}</span>
+        <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid ${escapeHtml(d.accentColor || '#ea580c')}; border-radius:12px; padding:0.95rem 1rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.65rem;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+              <div style="font-weight:800; font-size:0.96rem; color:var(--text-primary);">${escapeHtml(d.name)}</div>
+              <span class="acad-adm-pill">${mCnt} MCQ · ${cCnt} CQ</span>
+            </div>
+            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">${escapeHtml(d.description || '')}</div>
           </div>
-          <div style="padding:0.9rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.65rem; flex:1;">
-            <div>
-              <div style="font-weight:700; font-size:0.94rem; color:var(--text-primary);">${escapeHtml(s.name)}</div>
-              <div style="font-size:0.74rem; color:var(--text-muted); margin-top:0.15rem;">${mc} MCQs / ${cc} CQs / ${(s.chapters || []).length} chapters</div>
-            </div>
-            <div style="display:flex; gap:0.4rem;">
-              <button type="button" class="btn btn-primary btn-sm" style="flex:1; font-size:0.74rem;" onclick="window.editAcadSubject('${escapeHtml(s.id)}')">Edit Image / Price</button>
-              <button type="button" class="btn btn-danger btn-sm" style="font-size:0.74rem;" onclick="window.handleDeleteAcadItem('delete_subject', '${escapeHtml(s.id)}')">Delete</button>
-            </div>
+          <div style="display:flex; gap:0.4rem; justify-content:flex-end;">
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="window.editAcadDivision('${escapeHtml(d.id)}')">Edit</button>
+            <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleDeleteAcadItem('delete_division', '${escapeHtml(d.id)}')">Delete</button>
           </div>
         </div>
       `;
     }).join('');
   }
 
-  const divList = document.getElementById('acadAdminDivisionsList');
-  if (divList) {
-    divList.innerHTML = divisions.map(d => `
-      <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid ${escapeHtml(d.accentColor || '#ea580c')}; border-radius:12px; padding:0.95rem 1rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.65rem;">
-        <div>
-          <div style="font-weight:800; font-size:0.98rem; color:var(--text-primary);">${escapeHtml(d.name)}</div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">${escapeHtml(d.description || '')}</div>
+  window.renderAcadAdminMcqList();
+  window.renderAcadAdminCqList();
+  window.renderAcadAdminNoteList();
+}
+
+window.renderAcadAdminSubjectsList = function() {
+  const subList = document.getElementById('acadAdminSubjectsList');
+  if (!subList) return;
+  const scoped = getAcadScopedData();
+  const q = (document.getElementById('acadAdminSubSearch')?.value || '').trim().toLowerCase();
+  const items = scoped.subjects.filter(s => !q || [s.name, s.code, s.description].join(' ').toLowerCase().includes(q));
+  subList.innerHTML = items.map(s => {
+    const isPaid = s.accessTier === 'paid' || Number(s.price) > 0;
+    const mc = _adminAcadCatalog.mcqs.filter(m => m.subjectId === s.id).length;
+    const cc = _adminAcadCatalog.cqs.filter(c => c.subjectId === s.id).length;
+    const nc = _adminAcadCatalog.notes.filter(n => n.subjectId === s.id).length;
+    return `
+      <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;">
+        <div style="height:115px; background:#0f172a; position:relative; overflow:hidden;">
+          <img src="${escapeHtml(s.imageUrl || '/assets/curiomas-no-bg.png')}" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.opacity='0.3'">
+          <span style="position:absolute; top:8px; left:8px; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(15,23,42,0.82); color:#ffffff;">${escapeHtml(getAcadCourseName(s.classId))} · ${escapeHtml(s.code || 'SUB')}</span>
+          <span style="position:absolute; top:8px; right:8px; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:${isPaid ? '#4f46e5' : '#059669'}; color:#ffffff;">${isPaid ? `Paid ৳${Number(s.price).toLocaleString()}` : 'Free'}</span>
         </div>
-        <div style="display:flex; gap:0.4rem; justify-content:flex-end;">
-          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="window.editAcadDivision('${escapeHtml(d.id)}')">Edit</button>
-          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleDeleteAcadItem('delete_division', '${escapeHtml(d.id)}')">Delete</button>
+        <div style="padding:0.9rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.65rem; flex:1;">
+          <div>
+            <div style="font-weight:800; font-size:0.94rem; color:var(--text-primary);">${escapeHtml(s.name)}</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:0.15rem;">${mc} MCQs · ${cc} CQs · ${nc} Books · ${(s.chapters || []).length} chapters</div>
+          </div>
+          <div style="display:flex; gap:0.35rem;">
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="window.jumpToAcadSubjectMcqs('${escapeHtml(s.id)}')">MCQs (${mc})</button>
+            <button type="button" class="btn btn-primary btn-sm" style="flex:1; font-size:0.72rem;" onclick="window.editAcadSubject('${escapeHtml(s.id)}')">Edit</button>
+            <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleDeleteAcadItem('delete_subject', '${escapeHtml(s.id)}')">Delete</button>
+          </div>
         </div>
       </div>
-    `).join('');
+    `;
+  }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No subjects match this course scope.</div>';
+};
+
+function getFilteredAdminMcqs() {
+  const scoped = getAcadScopedData();
+  const subF = document.getElementById('acadFilterMcqSubject')?.value || 'all';
+  const divF = document.getElementById('acadFilterMcqDivision')?.value || 'all';
+  const diffF = document.getElementById('acadFilterMcqDiff')?.value || 'all';
+  const chapF = (document.getElementById('acadFilterMcqChapter')?.value || '').trim().toLowerCase();
+  const q = (document.getElementById('acadAdminMcqSearch')?.value || '').trim().toLowerCase();
+  return scoped.mcqs.filter(m => {
+    if (subF !== 'all' && m.subjectId !== subF) return false;
+    if (divF !== 'all' && m.divisionId !== divF) return false;
+    if (diffF !== 'all' && (m.difficulty || 'Medium') !== diffF) return false;
+    if (chapF && !(m.chapter || '').toLowerCase().includes(chapF)) return false;
+    if (q) {
+      const hay = [m.question, m.chapter, m.boardTag, m.explanation, ...(m.options || [])].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function getFilteredAdminCqs() {
+  const scoped = getAcadScopedData();
+  const subF = document.getElementById('acadFilterCqSubject')?.value || 'all';
+  const divF = document.getElementById('acadFilterCqDivision')?.value || 'all';
+  const q = (document.getElementById('acadAdminCqSearch')?.value || '').trim().toLowerCase();
+  return scoped.cqs.filter(c => {
+    if (subF !== 'all' && c.subjectId !== subF) return false;
+    if (divF !== 'all' && c.divisionId !== divF) return false;
+    if (q) {
+      const hay = [c.title, c.stem, c.chapter, c.boardTag, c.partA, c.partB, c.partC, c.partD].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function getFilteredAdminNotes() {
+  const scoped = getAcadScopedData();
+  const subF = document.getElementById('acadFilterNoteSubject')?.value || 'all';
+  const divF = document.getElementById('acadFilterNoteDivision')?.value || 'all';
+  const typeF = document.getElementById('acadFilterNoteType')?.value || 'all';
+  const q = (document.getElementById('acadAdminNoteSearch')?.value || '').trim().toLowerCase();
+  return scoped.notes.filter(n => {
+    if (subF !== 'all' && n.subjectId !== subF) return false;
+    if (divF !== 'all' && n.divisionId !== divF) return false;
+    if (typeF !== 'all' && (n.resourceType || 'note') !== typeF) return false;
+    if (q) {
+      const hay = [n.title, n.summary, n.chapter, n.content].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function syncAcadBulkBars() {
+  const mBar = document.getElementById('acadMcqBulkBar');
+  const mCnt = document.getElementById('acadMcqBulkCount');
+  if (mBar && mCnt) {
+    mBar.style.display = _selectedMcqIds.size > 0 ? 'flex' : 'none';
+    mCnt.textContent = `${_selectedMcqIds.size} selected`;
   }
-
-  window.renderAcadAdminMcqList();
-
-  const cqList = document.getElementById('acadAdminCqList');
-  if (cqList) {
-    cqList.innerHTML = cqs.map(cq => {
-      const sub = subjects.find(s => s.id === cq.subjectId);
-      const div = divisions.find(d => d.id === cq.divisionId);
-      return `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem; padding:0.85rem 1rem; border-radius:10px; background:var(--bg-secondary); border:1px solid var(--border-color);">
-          <div>
-            <div style="font-size:0.74rem; color:#ea580c; font-weight:700;">${escapeHtml(sub ? sub.name : '')} • ${escapeHtml(div ? div.name : 'Academics')} • ${escapeHtml(cq.chapter || '')} ${cq.boardTag ? '• ' + escapeHtml(cq.boardTag) : ''}</div>
-            <div style="font-weight:700; font-size:0.9rem; color:var(--text-primary); margin:0.15rem 0;">${escapeHtml(cq.title || 'Creative Question')}</div>
-            <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml((cq.stem || '').slice(0, 140))}...</div>
-          </div>
-          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleDeleteAcadItem('delete_cq', '${escapeHtml(cq.id)}')">Delete</button>
-        </div>
-      `;
-    }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No CQs published yet.</div>';
+  const cBar = document.getElementById('acadCqBulkBar');
+  const cCnt = document.getElementById('acadCqBulkCount');
+  if (cBar && cCnt) {
+    cBar.style.display = _selectedCqIds.size > 0 ? 'flex' : 'none';
+    cCnt.textContent = `${_selectedCqIds.size} selected`;
   }
-
-  const noteList = document.getElementById('acadAdminNoteList');
-  if (noteList) {
-    noteList.innerHTML = notes.map(n => {
-      const sub = subjects.find(s => s.id === n.subjectId);
-      const div = divisions.find(d => d.id === n.divisionId);
-      return `
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; padding:0.85rem 1rem; border-radius:10px; background:var(--bg-secondary); border:1px solid var(--border-color);">
-          <div>
-            <div style="font-size:0.74rem; color:#ea580c; font-weight:700;">${escapeHtml(sub ? sub.name : '')} • ${escapeHtml(div ? div.name : 'Books')} • ${escapeHtml((n.resourceType || 'note').toUpperCase())}</div>
-            <div style="font-weight:700; font-size:0.9rem; color:var(--text-primary);">${escapeHtml(n.title)}</div>
-            <div style="font-size:0.78rem; color:var(--text-muted);">${escapeHtml(n.chapter || '')}${n.summary ? ' — ' + escapeHtml(n.summary) : ''}</div>
-          </div>
-          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleDeleteAcadItem('delete_note', '${escapeHtml(n.id)}')">Delete</button>
-        </div>
-      `;
-    }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No books or study notes published yet.</div>';
+  const nBar = document.getElementById('acadNoteBulkBar');
+  const nCnt = document.getElementById('acadNoteBulkCount');
+  if (nBar && nCnt) {
+    nBar.style.display = _selectedNoteIds.size > 0 ? 'flex' : 'none';
+    nCnt.textContent = `${_selectedNoteIds.size} selected`;
   }
 }
+
+window.toggleAcadSelect = function(kind, id, checked) {
+  const set = kind === 'mcq' ? _selectedMcqIds : (kind === 'cq' ? _selectedCqIds : _selectedNoteIds);
+  if (checked) set.add(id);
+  else set.delete(id);
+  const row = document.getElementById(`acadRow_${kind}_${id}`);
+  if (row) row.classList.toggle('selected', checked);
+  syncAcadBulkBars();
+};
+
+window.toggleAcadSelectAll = function(kind, checked) {
+  const list = kind === 'mcq' ? getFilteredAdminMcqs() : (kind === 'cq' ? getFilteredAdminCqs() : getFilteredAdminNotes());
+  const set = kind === 'mcq' ? _selectedMcqIds : (kind === 'cq' ? _selectedCqIds : _selectedNoteIds);
+  list.forEach(item => {
+    if (checked) set.add(item.id);
+    else set.delete(item.id);
+  });
+  if (kind === 'mcq') window.renderAcadAdminMcqList();
+  else if (kind === 'cq') window.renderAcadAdminCqList();
+  else window.renderAcadAdminNoteList();
+};
+
+window.resetAcadMcqFilters = function() {
+  if (document.getElementById('acadFilterMcqSubject')) document.getElementById('acadFilterMcqSubject').value = 'all';
+  if (document.getElementById('acadFilterMcqDivision')) document.getElementById('acadFilterMcqDivision').value = 'all';
+  if (document.getElementById('acadFilterMcqDiff')) document.getElementById('acadFilterMcqDiff').value = 'all';
+  if (document.getElementById('acadFilterMcqChapter')) document.getElementById('acadFilterMcqChapter').value = '';
+  if (document.getElementById('acadAdminMcqSearch')) document.getElementById('acadAdminMcqSearch').value = '';
+  window.renderAcadAdminMcqList();
+};
+
+window.resetAcadCqFilters = function() {
+  if (document.getElementById('acadFilterCqSubject')) document.getElementById('acadFilterCqSubject').value = 'all';
+  if (document.getElementById('acadFilterCqDivision')) document.getElementById('acadFilterCqDivision').value = 'all';
+  if (document.getElementById('acadAdminCqSearch')) document.getElementById('acadAdminCqSearch').value = '';
+  window.renderAcadAdminCqList();
+};
 
 window.renderAcadAdminMcqList = function() {
   const listEl = document.getElementById('acadAdminMcqList');
   if (!listEl) return;
-  const q = (document.getElementById('acadAdminMcqSearch')?.value || '').trim().toLowerCase();
   const letters = ['A', 'B', 'C', 'D'];
-  const items = _adminAcadCatalog.mcqs.filter(m => {
-    if (!q) return true;
-    return [m.question, m.chapter, m.boardTag, ...(m.options || [])].join(' ').toLowerCase().includes(q);
-  });
-  listEl.innerHTML = items.map(m => {
+  const items = getFilteredAdminMcqs();
+  const cntEl = document.getElementById('acadMcqFilteredCount');
+  if (cntEl) cntEl.textContent = `${items.length} shown`;
+  const selAllEl = document.getElementById('acadSelectAllMcqs');
+  if (selAllEl) selAllEl.checked = items.length > 0 && items.every(m => _selectedMcqIds.has(m.id));
+  syncAcadBulkBars();
+
+  listEl.innerHTML = items.map((m, idx) => {
     const sub = _adminAcadCatalog.subjects.find(s => s.id === m.subjectId);
     const div = _adminAcadCatalog.divisions.find(d => d.id === m.divisionId);
+    const isSel = _selectedMcqIds.has(m.id);
+    const diffClass = m.difficulty === 'Hard' ? 'red' : (m.difficulty === 'Easy' ? 'green' : '');
+    const optsHtml = (m.options || []).map((opt, oi) => `
+      <div class="acad-adm-opt-chip ${oi === Number(m.correctIndex) ? 'correct' : ''}">
+        <strong>${letters[oi] || (oi + 1)}.</strong> ${escapeHtml(opt)}
+      </div>
+    `).join('');
     return `
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem; padding:0.75rem 0.95rem; border-radius:10px; background:var(--bg-secondary); border:1px solid var(--border-color);">
-        <div>
-          <div style="font-size:0.72rem; color:#ea580c; font-weight:700;">${escapeHtml(sub ? sub.name : '')} • ${escapeHtml(div ? div.name : 'Academics')} • ${escapeHtml(m.chapter || '')} ${m.boardTag ? '• ' + escapeHtml(m.boardTag) : ''}</div>
-          <div style="font-weight:700; font-size:0.86rem; color:var(--text-primary); margin:0.2rem 0;">${escapeHtml(m.question)}</div>
-          <div style="font-size:0.76rem; color:#059669; font-weight:600;">Ans (${letters[m.correctIndex] || 'A'}): ${escapeHtml((m.options || [])[m.correctIndex] || '')}</div>
+      <div id="acadRow_mcq_${escapeHtml(m.id)}" class="acad-adm-item-row ${isSel ? 'selected' : ''}">
+        <input type="checkbox" ${isSel ? 'checked' : ''} onchange="window.toggleAcadSelect('mcq', '${escapeHtml(m.id)}', this.checked)" style="margin-top:0.25rem; cursor:pointer; width:16px; height:16px;">
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; flex-wrap:wrap; gap:0.35rem; align-items:center; margin-bottom:0.35rem;">
+            <span class="acad-adm-pill accent">#${idx + 1}</span>
+            <span class="acad-adm-pill">${escapeHtml(getAcadCourseName(m.classId || sub?.classId))}</span>
+            <span class="acad-adm-pill">${escapeHtml(sub ? sub.name : 'Unassigned')}</span>
+            <span class="acad-adm-pill">${escapeHtml(div ? div.name : 'Academics')}</span>
+            ${m.chapter ? `<span class="acad-adm-pill">${escapeHtml(m.chapter)}</span>` : ''}
+            ${m.boardTag ? `<span class="acad-adm-pill">${escapeHtml(m.boardTag)}</span>` : ''}
+            <span class="acad-adm-pill ${diffClass}">${escapeHtml(m.difficulty || 'Medium')}</span>
+            ${m.imageUrl ? `<span class="acad-adm-pill accent">Has Diagram</span>` : ''}
+          </div>
+          <div style="font-weight:700; font-size:0.9rem; color:var(--text-primary); line-height:1.45;">${escapeHtml(m.question)}</div>
+          <div class="acad-adm-opt-grid">${optsHtml}</div>
+          ${m.explanation ? `<div style="font-size:0.76rem; color:var(--text-muted); margin-top:0.4rem;"><strong>Explanation:</strong> ${escapeHtml(m.explanation)}</div>` : ''}
         </div>
-        <button type="button" class="btn btn-danger btn-sm" style="font-size:0.7rem;" onclick="window.handleDeleteAcadItem('delete_mcq', '${escapeHtml(m.id)}')">✕</button>
+        <div style="display:flex; flex-direction:column; gap:0.3rem; flex-shrink:0;">
+          <button type="button" class="btn btn-primary btn-sm" style="font-size:0.72rem; padding:0.28rem 0.6rem;" onclick="window.editAcadMcq('${escapeHtml(m.id)}')">Edit</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.28rem 0.6rem;" onclick="window.duplicateAcadMcq('${escapeHtml(m.id)}')">Duplicate</button>
+          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem; padding:0.28rem 0.6rem;" onclick="window.handleDeleteAcadItem('delete_mcq', '${escapeHtml(m.id)}')">Delete</button>
+        </div>
       </div>
     `;
-  }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No MCQs found.</div>';
+  }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem; padding:1rem; text-align:center;">No MCQs match your active filters.</div>';
+};
+
+window.renderAcadAdminCqList = function() {
+  const cqList = document.getElementById('acadAdminCqList');
+  if (!cqList) return;
+  const items = getFilteredAdminCqs();
+  const cntEl = document.getElementById('acadCqFilteredCount');
+  if (cntEl) cntEl.textContent = `${items.length} shown`;
+  const selAllEl = document.getElementById('acadSelectAllCqs');
+  if (selAllEl) selAllEl.checked = items.length > 0 && items.every(c => _selectedCqIds.has(c.id));
+  syncAcadBulkBars();
+
+  cqList.innerHTML = items.map((cq, idx) => {
+    const sub = _adminAcadCatalog.subjects.find(s => s.id === cq.subjectId);
+    const div = _adminAcadCatalog.divisions.find(d => d.id === cq.divisionId);
+    const isSel = _selectedCqIds.has(cq.id);
+    return `
+      <div id="acadRow_cq_${escapeHtml(cq.id)}" class="acad-adm-item-row ${isSel ? 'selected' : ''}">
+        <input type="checkbox" ${isSel ? 'checked' : ''} onchange="window.toggleAcadSelect('cq', '${escapeHtml(cq.id)}', this.checked)" style="margin-top:0.25rem; cursor:pointer; width:16px; height:16px;">
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; flex-wrap:wrap; gap:0.35rem; align-items:center; margin-bottom:0.3rem;">
+            <span class="acad-adm-pill accent">CQ #${idx + 1}</span>
+            <span class="acad-adm-pill">${escapeHtml(getAcadCourseName(cq.classId || sub?.classId))}</span>
+            <span class="acad-adm-pill">${escapeHtml(sub ? sub.name : 'Unassigned')}</span>
+            <span class="acad-adm-pill">${escapeHtml(div ? div.name : 'Academics')}</span>
+            ${cq.chapter ? `<span class="acad-adm-pill">${escapeHtml(cq.chapter)}</span>` : ''}
+            ${cq.boardTag ? `<span class="acad-adm-pill">${escapeHtml(cq.boardTag)}</span>` : ''}
+            ${cq.imageUrl ? `<span class="acad-adm-pill accent">Has Diagram</span>` : ''}
+          </div>
+          <div style="font-weight:800; font-size:0.93rem; color:var(--text-primary); margin-bottom:0.2rem;">${escapeHtml(cq.title || 'Creative Question')}</div>
+          <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.45;">${escapeHtml((cq.stem || '').slice(0, 200))}${(cq.stem || '').length > 200 ? '...' : ''}</div>
+          <div style="font-size:0.74rem; color:var(--text-muted); margin-top:0.35rem;">
+            <strong>(ক)</strong> ${escapeHtml((cq.partA || '').slice(0, 65))} &nbsp;|&nbsp;
+            <strong>(খ)</strong> ${escapeHtml((cq.partB || '').slice(0, 65))}
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.3rem; flex-shrink:0;">
+          <button type="button" class="btn btn-primary btn-sm" style="font-size:0.72rem; padding:0.28rem 0.6rem;" onclick="window.editAcadCq('${escapeHtml(cq.id)}')">Edit</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.28rem 0.6rem;" onclick="window.duplicateAcadCq('${escapeHtml(cq.id)}')">Duplicate</button>
+          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem; padding:0.28rem 0.6rem;" onclick="window.handleDeleteAcadItem('delete_cq', '${escapeHtml(cq.id)}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem; padding:1rem; text-align:center;">No Creative Questions match your filters.</div>';
+};
+
+window.renderAcadAdminNoteList = function() {
+  const noteList = document.getElementById('acadAdminNoteList');
+  if (!noteList) return;
+  const items = getFilteredAdminNotes();
+  const cntEl = document.getElementById('acadNoteFilteredCount');
+  if (cntEl) cntEl.textContent = `${items.length} shown`;
+  const selAllEl = document.getElementById('acadSelectAllNotes');
+  if (selAllEl) selAllEl.checked = items.length > 0 && items.every(n => _selectedNoteIds.has(n.id));
+  syncAcadBulkBars();
+
+  noteList.innerHTML = items.map(n => {
+    const sub = _adminAcadCatalog.subjects.find(s => s.id === n.subjectId);
+    const div = _adminAcadCatalog.divisions.find(d => d.id === n.divisionId);
+    const isSel = _selectedNoteIds.has(n.id);
+    return `
+      <div id="acadRow_note_${escapeHtml(n.id)}" class="acad-adm-item-row ${isSel ? 'selected' : ''}">
+        <input type="checkbox" ${isSel ? 'checked' : ''} onchange="window.toggleAcadSelect('note', '${escapeHtml(n.id)}', this.checked)" style="margin-top:0.25rem; cursor:pointer; width:16px; height:16px;">
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; flex-wrap:wrap; gap:0.35rem; align-items:center; margin-bottom:0.25rem;">
+            <span class="acad-adm-pill accent">${escapeHtml((n.resourceType || 'note').toUpperCase())}</span>
+            <span class="acad-adm-pill">${escapeHtml(getAcadCourseName(n.classId || sub?.classId))}</span>
+            <span class="acad-adm-pill">${escapeHtml(sub ? sub.name : 'Unassigned')}</span>
+            <span class="acad-adm-pill">${escapeHtml(div ? div.name : 'Books')}</span>
+            ${n.chapter ? `<span class="acad-adm-pill">${escapeHtml(n.chapter)}</span>` : ''}
+          </div>
+          <div style="font-weight:800; font-size:0.92rem; color:var(--text-primary);">${escapeHtml(n.title)}</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.15rem;">${escapeHtml(n.summary || (n.content || '').slice(0, 120))}</div>
+        </div>
+        <div style="display:flex; gap:0.35rem; flex-shrink:0;">
+          <button type="button" class="btn btn-primary btn-sm" style="font-size:0.72rem;" onclick="window.editAcadNote('${escapeHtml(n.id)}')">Edit</button>
+          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleDeleteAcadItem('delete_note', '${escapeHtml(n.id)}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('') || '<div style="color:var(--text-muted); font-size:0.84rem; padding:1rem; text-align:center;">No books or study notes found.</div>';
+};
+
+function parseBulkMcqsText(raw) {
+  const txt = String(raw || '').trim();
+  if (!txt) return [];
+  if (txt.startsWith('[') || txt.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(txt);
+      const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.mcqs) ? parsed.mcqs : [parsed]);
+      return arr.filter(x => x && x.question && Array.isArray(x.options) && x.options.length >= 2).map(x => ({
+        question: String(x.question).trim(),
+        options: x.options.slice(0, 4).map(o => String(o || '').trim()),
+        correctIndex: Math.max(0, Math.min(3, Number(x.correctIndex) || 0)),
+        explanation: String(x.explanation || '').trim(),
+        chapter: String(x.chapter || '').trim(),
+        boardTag: String(x.boardTag || '').trim(),
+        difficulty: ['Easy', 'Medium', 'Hard'].includes(x.difficulty) ? x.difficulty : 'Medium',
+        imageUrl: String(x.imageUrl || '').trim()
+      }));
+    } catch (e) {
+      return [];
+    }
+  }
+  const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  const letterMap = { a: 0, b: 1, c: 2, d: 3, '0': 0, '1': 1, '2': 2, '3': 3 };
+  for (const line of lines) {
+    const sep = line.includes('|') ? '|' : (line.includes('\t') ? '\t' : null);
+    if (!sep) continue;
+    const cols = line.split(sep).map(c => c.trim());
+    if (cols.length < 6) continue;
+    const q = cols[0];
+    const opts = [cols[1], cols[2], cols[3], cols[4]];
+    if (!q || opts.filter(Boolean).length < 2) continue;
+    const ansRaw = (cols[5] || 'A').toLowerCase().replace(/[^a-d0-3]/g, '');
+    const ci = letterMap[ansRaw] !== undefined ? letterMap[ansRaw] : 0;
+    out.push({
+      question: q,
+      options: opts,
+      correctIndex: ci,
+      explanation: cols[6] || '',
+      boardTag: cols[7] || '',
+      difficulty: ['Easy', 'Medium', 'Hard'].includes(cols[8]) ? cols[8] : 'Medium'
+    });
+  }
+  return out;
+}
+
+function parseBulkCqsText(raw) {
+  const txt = String(raw || '').trim();
+  if (!txt) return [];
+  try {
+    const parsed = JSON.parse(txt);
+    const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.cqs) ? parsed.cqs : [parsed]);
+    return arr.filter(x => x && x.stem).map(x => ({
+      title: String(x.title || 'Creative Question').trim(),
+      stem: String(x.stem || '').trim(),
+      chapter: String(x.chapter || '').trim(),
+      boardTag: String(x.boardTag || '').trim(),
+      imageUrl: String(x.imageUrl || '').trim(),
+      partA: String(x.partA || '').trim(),
+      ansA: String(x.ansA || '').trim(),
+      partB: String(x.partB || '').trim(),
+      ansB: String(x.ansB || '').trim(),
+      partC: String(x.partC || '').trim(),
+      ansC: String(x.ansC || '').trim(),
+      partD: String(x.partD || '').trim(),
+      ansD: String(x.ansD || '').trim()
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+window.updateAcadBulkPreview = function(kind) {
+  if (kind === 'mcq') {
+    const raw = document.getElementById('acadBulkMcqInput')?.value || '';
+    const items = parseBulkMcqsText(raw);
+    const el = document.getElementById('acadBulkMcqPreviewCount');
+    if (el) {
+      el.textContent = `Detected: ${items.length} valid MCQ${items.length === 1 ? '' : 's'}`;
+      el.style.color = items.length > 0 ? '#059669' : 'var(--text-secondary)';
+    }
+  } else {
+    const raw = document.getElementById('acadBulkCqInput')?.value || '';
+    const items = parseBulkCqsText(raw);
+    const el = document.getElementById('acadBulkCqPreviewCount');
+    if (el) {
+      el.textContent = `Detected: ${items.length} valid CQ${items.length === 1 ? '' : 's'}`;
+      el.style.color = items.length > 0 ? '#059669' : 'var(--text-secondary)';
+    }
+  }
+};
+
+window.loadAcadBulkSample = function(type) {
+  if (type === 'mcq_lines') {
+    const box = document.getElementById('acadBulkMcqInput');
+    if (box) {
+      box.value = [
+        'Which physical quantity is a vector? | Mass | Speed | Displacement | Temperature | C | Displacement has both magnitude and direction. | DB 2023 | Easy',
+        'If A.B = 0 for two non-zero vectors, the angle between them is? | 0 deg | 45 deg | 90 deg | 180 deg | C | cos(90 deg) = 0 so the dot product vanishes. | BUET 2022 | Medium'
+      ].join('\n');
+      window.updateAcadBulkPreview('mcq');
+    }
+  } else if (type === 'mcq_json') {
+    const box = document.getElementById('acadBulkMcqInput');
+    if (box) {
+      box.value = JSON.stringify([
+        {
+          question: 'What is the dimensional formula of Work?',
+          options: ['[MLT^-1]', '[ML^2T^-2]', '[ML^2T^-3]', '[MLT^-2]'],
+          correctIndex: 1,
+          explanation: 'Work = Force x Distance = [MLT^-2][L] = [ML^2T^-2].',
+          boardTag: 'RB 2024',
+          difficulty: 'Easy'
+        }
+      ], null, 2);
+      window.updateAcadBulkPreview('mcq');
+    }
+  } else if (type === 'cq_json') {
+    const box = document.getElementById('acadBulkCqInput');
+    if (box) {
+      box.value = JSON.stringify([
+        {
+          title: 'Projectile Motion from a Cliff',
+          chapter: 'Ch 3: Dynamics',
+          boardTag: 'Dhaka Board 2024',
+          stem: 'A ball is projected horizontally with velocity 20 m/s from the top of a 45 m high building (g = 10 m/s^2).',
+          partA: 'Define projectile motion.',
+          ansA: 'Motion of an object thrown into the air subject only to gravity.',
+          partB: 'Why does horizontal velocity remain constant in ideal projectile motion?',
+          ansB: 'Because there is no horizontal acceleration when air resistance is neglected.',
+          partC: 'Calculate the time taken by the ball to hit the ground.',
+          ansC: 'h = 0.5*g*t^2 => 45 = 5*t^2 => t = 3 s.',
+          partD: 'Find the horizontal range and resultant velocity just before hitting the ground.',
+          ansD: 'R = 20*3 = 60 m; vy = 30 m/s; v = sqrt(400+900) = 36.06 m/s.'
+        }
+      ], null, 2);
+      window.updateAcadBulkPreview('cq');
+    }
+  }
+};
+
+window.handleAcadBulkFileLoad = function(event, textareaId, kind) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const box = document.getElementById(textareaId);
+    if (box) {
+      box.value = String(reader.result || '');
+      window.updateAcadBulkPreview(kind);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+};
+
+window.handleBulkImportMcqs = async function() {
+  const btn = document.getElementById('acadBulkMcqImportBtn');
+  const raw = document.getElementById('acadBulkMcqInput')?.value || '';
+  const items = parseBulkMcqsText(raw);
+  const classId = document.getElementById('acadBulkMcqClassSelect')?.value || getAcadDefaultCourseId();
+  const subjectId = document.getElementById('acadBulkMcqSubjectSelect')?.value;
+  const divisionId = document.getElementById('acadBulkMcqDivisionSelect')?.value || 'div_academics';
+  const chapter = (document.getElementById('acadBulkMcqChapterInput')?.value || 'General').trim();
+  const boardTag = (document.getElementById('acadBulkMcqBoardInput')?.value || '').trim();
+  if (!subjectId) return window.showToast('Select a target Subject first.', 'warning');
+  if (items.length === 0) return window.showToast('No valid MCQs detected. Check your format or load a sample.', 'warning');
+  if (btn) { btn.disabled = true; btn.textContent = `Importing ${items.length} MCQs...`; }
+  try {
+    await postAcademicsAction({
+      action: 'bulk_save_mcqs',
+      classId,
+      subjectId,
+      divisionId,
+      chapter,
+      boardTag,
+      items
+    }, `Imported ${items.length} MCQs into D1!`);
+    document.getElementById('acadBulkMcqInput').value = '';
+    window.updateAcadBulkPreview('mcq');
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Import All MCQs'; }
+  }
+};
+
+window.handleBulkImportCqs = async function() {
+  const btn = document.getElementById('acadBulkCqImportBtn');
+  const raw = document.getElementById('acadBulkCqInput')?.value || '';
+  const items = parseBulkCqsText(raw);
+  const classId = document.getElementById('acadBulkCqClassSelect')?.value || getAcadDefaultCourseId();
+  const subjectId = document.getElementById('acadBulkCqSubjectSelect')?.value;
+  const divisionId = document.getElementById('acadBulkCqDivisionSelect')?.value || 'div_academics';
+  const chapter = (document.getElementById('acadBulkCqChapterInput')?.value || 'General').trim();
+  const boardTag = (document.getElementById('acadBulkCqBoardInput')?.value || '').trim();
+  if (!subjectId) return window.showToast('Select a target Subject first.', 'warning');
+  if (items.length === 0) return window.showToast('No valid CQs detected. Paste a valid JSON array.', 'warning');
+  if (btn) { btn.disabled = true; btn.textContent = `Importing ${items.length} CQs...`; }
+  try {
+    await postAcademicsAction({
+      action: 'bulk_save_cqs',
+      classId,
+      subjectId,
+      divisionId,
+      chapter,
+      boardTag,
+      items
+    }, `Imported ${items.length} Creative Questions into D1!`);
+    document.getElementById('acadBulkCqInput').value = '';
+    window.updateAcadBulkPreview('cq');
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Import All CQs'; }
+  }
+};
+
+window.handleBulkDeleteMcqs = async function() {
+  const ids = Array.from(_selectedMcqIds);
+  if (ids.length === 0) return;
+  if (!confirm(`Permanently delete ${ids.length} selected MCQ(s)?`)) return;
+  try {
+    await postAcademicsAction({ action: 'bulk_delete_mcqs', ids }, `Deleted ${ids.length} MCQs`);
+    _selectedMcqIds.clear();
+    renderAdminAcademicsAll();
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleBulkMoveMcqs = async function() {
+  const ids = Array.from(_selectedMcqIds);
+  if (ids.length === 0) return;
+  const subjectId = document.getElementById('acadBulkMoveMcqSub')?.value || '';
+  const divisionId = document.getElementById('acadBulkMoveMcqDiv')?.value || '';
+  const chapter = (document.getElementById('acadBulkMoveMcqChap')?.value || '').trim();
+  if (!subjectId && !divisionId && !chapter) {
+    return window.showToast('Choose a new Subject, Division, or Chapter to move selected MCQs.', 'warning');
+  }
+  const sub = subjectId ? _adminAcadCatalog.subjects.find(s => s.id === subjectId) : null;
+  try {
+    await postAcademicsAction({
+      action: 'bulk_move_mcqs',
+      ids,
+      classId: sub ? sub.classId : undefined,
+      subjectId: subjectId || undefined,
+      divisionId: divisionId || undefined,
+      chapter: chapter || undefined
+    }, `Moved ${ids.length} MCQs successfully`);
+    _selectedMcqIds.clear();
+    if (document.getElementById('acadBulkMoveMcqChap')) document.getElementById('acadBulkMoveMcqChap').value = '';
+    renderAdminAcademicsAll();
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleBulkDeleteCqs = async function() {
+  const ids = Array.from(_selectedCqIds);
+  if (ids.length === 0) return;
+  if (!confirm(`Permanently delete ${ids.length} selected CQ(s)?`)) return;
+  try {
+    await postAcademicsAction({ action: 'bulk_delete_cqs', ids }, `Deleted ${ids.length} CQs`);
+    _selectedCqIds.clear();
+    renderAdminAcademicsAll();
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleBulkMoveCqs = async function() {
+  const ids = Array.from(_selectedCqIds);
+  if (ids.length === 0) return;
+  const subjectId = document.getElementById('acadBulkMoveCqSub')?.value || '';
+  const divisionId = document.getElementById('acadBulkMoveCqDiv')?.value || '';
+  const chapter = (document.getElementById('acadBulkMoveCqChap')?.value || '').trim();
+  if (!subjectId && !divisionId && !chapter) {
+    return window.showToast('Choose a new Subject, Division, or Chapter to move selected CQs.', 'warning');
+  }
+  const sub = subjectId ? _adminAcadCatalog.subjects.find(s => s.id === subjectId) : null;
+  try {
+    await postAcademicsAction({
+      action: 'bulk_move_cqs',
+      ids,
+      classId: sub ? sub.classId : undefined,
+      subjectId: subjectId || undefined,
+      divisionId: divisionId || undefined,
+      chapter: chapter || undefined
+    }, `Moved ${ids.length} CQs successfully`);
+    _selectedCqIds.clear();
+    if (document.getElementById('acadBulkMoveCqChap')) document.getElementById('acadBulkMoveCqChap').value = '';
+    renderAdminAcademicsAll();
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.handleBulkDeleteNotes = async function() {
+  const ids = Array.from(_selectedNoteIds);
+  if (ids.length === 0) return;
+  if (!confirm(`Permanently delete ${ids.length} selected resource(s)?`)) return;
+  try {
+    await postAcademicsAction({ action: 'bulk_delete_notes', ids }, `Deleted ${ids.length} resources`);
+    _selectedNoteIds.clear();
+    renderAdminAcademicsAll();
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+};
+
+window.exportAcadAdminJson = function(kind) {
+  let payload;
+  let filename = 'crii-academics-backup.json';
+  if (kind === 'mcqs') {
+    payload = getFilteredAdminMcqs();
+    filename = 'crii-mcqs-filtered.json';
+  } else if (kind === 'mcqs_selected') {
+    payload = _adminAcadCatalog.mcqs.filter(m => _selectedMcqIds.has(m.id));
+    filename = 'crii-mcqs-selected.json';
+  } else if (kind === 'cqs') {
+    payload = getFilteredAdminCqs();
+    filename = 'crii-cqs-filtered.json';
+  } else if (kind === 'cqs_selected') {
+    payload = _adminAcadCatalog.cqs.filter(c => _selectedCqIds.has(c.id));
+    filename = 'crii-cqs-selected.json';
+  } else {
+    payload = getAcadScopedData();
+    filename = _acadAdminCourseScope === 'all' ? 'crii-academics-all.json' : `crii-course-${_acadAdminCourseScope}.json`;
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  if (window.showToast) window.showToast(`Exported ${filename}`, 'success');
 };
 
 window.loadAdminAcademics = async function() {
@@ -6840,21 +7765,39 @@ window.loadAdminAcadEnrollments = async function() {
     });
     const data = await res.json();
     _adminAcadEnrollments = Array.isArray(data.enrollments) ? data.enrollments : [];
-    box.innerHTML = _adminAcadEnrollments.map(en => `
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; padding:0.9rem 1rem; border-radius:12px; background:var(--bg-secondary); border:1px solid var(--border-color);">
-        <div>
-          <div style="font-weight:700; font-size:0.92rem; color:var(--text-primary);">${escapeHtml(en.studentName)} <span style="color:#ea580c;">→ ${escapeHtml(en.subjectName)}</span></div>
-          <div style="font-size:0.78rem; color:var(--text-muted);">${escapeHtml(en.studentEmail)} • ${escapeHtml(en.studentPhone || '')} ${en.college ? '• ' + escapeHtml(en.college) : ''}</div>
-          <div style="font-size:0.78rem; margin-top:0.2rem;"><strong>${escapeHtml(en.paymentMethod)}</strong> • TrxID: <code>${escapeHtml(en.trxId || 'N/A')}</code> • <strong>৳${Number(en.amount || 0).toLocaleString()}</strong></div>
-        </div>
-        <div style="display:flex; gap:0.4rem; align-items:center;">
-          <span class="status-chip ${en.status === 'approved' ? 'published' : 'draft'}">${escapeHtml(en.status)}</span>
-          <button type="button" class="btn btn-primary btn-sm" style="font-size:0.72rem;" onclick="window.handleUpdateEnrollmentStatus('${escapeHtml(en.id)}', 'approved')">✓ Approve</button>
-          <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleUpdateEnrollmentStatus('${escapeHtml(en.id)}', 'declined')">✕ Decline</button>
-        </div>
-      </div>
-    `).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No paid course enrollments submitted yet.</div>';
+    const cnt = document.getElementById('acadTabCnt_enrollments');
+    if (cnt) cnt.textContent = String(_adminAcadEnrollments.length);
+    window.renderAcadAdminEnrollments();
   } catch (e) {}
+};
+
+window.renderAcadAdminEnrollments = function() {
+  const box = document.getElementById('acadAdminEnrollmentsList');
+  if (!box) return;
+  const stF = document.getElementById('acadEnrollStatusFilter')?.value || 'all';
+  const q = (document.getElementById('acadEnrollSearch')?.value || '').trim().toLowerCase();
+  const rows = _adminAcadEnrollments.filter(en => {
+    if (stF !== 'all' && en.status !== stF) return false;
+    if (q) {
+      const hay = [en.studentName, en.studentEmail, en.studentPhone, en.subjectName, en.trxId, en.college].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  box.innerHTML = rows.map(en => `
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; padding:0.9rem 1rem; border-radius:12px; background:var(--bg-secondary); border:1px solid var(--border-color);">
+      <div>
+        <div style="font-weight:700; font-size:0.92rem; color:var(--text-primary);">${escapeHtml(en.studentName)} <span style="color:#ea580c;">/ ${escapeHtml(en.subjectName)}</span></div>
+        <div style="font-size:0.78rem; color:var(--text-muted);">${escapeHtml(en.studentEmail)} · ${escapeHtml(en.studentPhone || '')} ${en.college ? '· ' + escapeHtml(en.college) : ''}</div>
+        <div style="font-size:0.78rem; margin-top:0.2rem;"><strong>${escapeHtml(en.paymentMethod)}</strong> · TrxID: <code>${escapeHtml(en.trxId || 'N/A')}</code> · <strong>৳${Number(en.amount || 0).toLocaleString()}</strong></div>
+      </div>
+      <div style="display:flex; gap:0.4rem; align-items:center;">
+        <span class="status-chip ${en.status === 'approved' ? 'published' : 'draft'}">${escapeHtml(en.status)}</span>
+        <button type="button" class="btn btn-primary btn-sm" style="font-size:0.72rem;" onclick="window.handleUpdateEnrollmentStatus('${escapeHtml(en.id)}', 'approved')">Approve</button>
+        <button type="button" class="btn btn-danger btn-sm" style="font-size:0.72rem;" onclick="window.handleUpdateEnrollmentStatus('${escapeHtml(en.id)}', 'declined')">Decline</button>
+      </div>
+    </div>
+  `).join('') || '<div style="color:var(--text-muted); font-size:0.84rem;">No enrollments match your filter.</div>';
 };
 
 window.handleUpdateEnrollmentStatus = async function(id, status) {
@@ -6895,8 +7838,7 @@ window.handleSaveAcadDivision = async function(e) {
       displayOrder: Number(document.getElementById('acadDivOrderInput').value) || 0,
       description: document.getElementById('acadDivDescInput').value.trim()
     }, 'Academic Division saved!');
-    document.getElementById('acadDivisionForm').reset();
-    document.getElementById('acadDivIdInput').value = '';
+    window.resetAcadDivisionForm();
   } catch (err) {
     window.showToast(err.message, 'error');
   }
@@ -6908,7 +7850,7 @@ window.handleSaveAcadSubject = async function(e) {
     await postAcademicsAction({
       action: 'save_subject',
       id: document.getElementById('acadSubIdInput').value || undefined,
-      classId: document.getElementById('acadSubClassSelect')?.value || 'cls_hsc',
+      classId: document.getElementById('acadSubClassSelect')?.value || getAcadDefaultCourseId(),
       name: document.getElementById('acadSubNameInput').value.trim(),
       code: document.getElementById('acadSubCodeInput').value.trim(),
       icon: 'book',
@@ -6934,16 +7876,18 @@ window.handleSaveAcadSubject = async function(e) {
 
 window.handleSaveAcadMcq = async function(e) {
   e.preventDefault();
+  const isEditing = Boolean(document.getElementById('acadMcqIdInput').value);
   try {
     await postAcademicsAction({
       action: 'save_mcq',
       id: document.getElementById('acadMcqIdInput').value || undefined,
-      classId: 'cls_hsc',
+      classId: document.getElementById('acadMcqClassSelect')?.value || getAcadDefaultCourseId(),
       subjectId: document.getElementById('acadMcqSubjectSelect').value,
       divisionId: document.getElementById('acadMcqDivisionSelect').value,
       chapter: document.getElementById('acadMcqChapterInput').value.trim() || 'General',
       boardTag: document.getElementById('acadMcqBoardInput').value.trim(),
       difficulty: document.getElementById('acadMcqDiffInput').value,
+      imageUrl: document.getElementById('acadMcqImageInput')?.value.trim() || '',
       question: document.getElementById('acadMcqQuestionInput').value.trim(),
       options: [
         document.getElementById('acadMcqOpt0').value.trim(),
@@ -6953,67 +7897,107 @@ window.handleSaveAcadMcq = async function(e) {
       ],
       correctIndex: Number(document.getElementById('acadMcqCorrectSelect').value) || 0,
       explanation: document.getElementById('acadMcqExplanationInput').value.trim()
-    }, 'MCQ saved to exam bank!');
-    document.getElementById('acadMcqQuestionInput').value = '';
-    ['acadMcqOpt0', 'acadMcqOpt1', 'acadMcqOpt2', 'acadMcqOpt3', 'acadMcqExplanationInput', 'acadMcqIdInput'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
+    }, isEditing ? 'MCQ updated!' : 'MCQ saved to exam bank!');
+    window.resetAcadMcqForm(!isEditing);
   } catch (err) {
     window.showToast(err.message, 'error');
   }
 };
 
+async function callAcadAiText(title, prompt) {
+  const res = await fetch('/api/ai-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'write_assist', mode: 'custom', title, instruction: prompt, tone: 'Academic & Peer-Reviewed', length: 'Medium' })
+  });
+  const data = await res.json();
+  let rawText = data.text || '';
+  if ((!res.ok || !rawText) && data.clientTextFallback) {
+    const dr = await fetch(data.clientTextFallback.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: data.clientTextFallback.model, messages: data.clientTextFallback.messages })
+    });
+    const dj = await dr.json().catch(() => ({}));
+    rawText = dj?.choices?.[0]?.message?.content || '';
+  }
+  return rawText;
+}
+
 window.handleAiGenerateMcqs = async function() {
   const btn = document.getElementById('acadAiGenMcqBtn');
+  const count = Number(document.getElementById('acadAiMcqCountSelect')?.value) || 5;
+  const classId = document.getElementById('acadMcqClassSelect')?.value || getAcadDefaultCourseId();
   const subjectId = document.getElementById('acadMcqSubjectSelect')?.value;
   const divisionId = document.getElementById('acadMcqDivisionSelect')?.value || 'div_academics';
-  const chapter = (document.getElementById('acadMcqChapterInput')?.value || 'Core HSC Topics').trim();
+  const chapter = (document.getElementById('acadMcqChapterInput')?.value || 'Core Syllabus Topics').trim();
   const sub = _adminAcadCatalog.subjects.find(s => s.id === subjectId);
   const div = _adminAcadCatalog.divisions.find(d => d.id === divisionId);
   if (!subjectId) {
-    window.showToast('Select an HSC Subject first.', 'warning');
+    window.showToast('Select a Subject first.', 'warning');
     return;
   }
 
-  if (btn) { btn.disabled = true; btn.textContent = '✨ Generating 5 MCQs...'; }
+  if (btn) { btn.disabled = true; btn.textContent = `Generating ${count} MCQs...`; }
   try {
-    const prompt = `Generate exactly 5 authentic Bangladesh HSC multiple-choice questions for ${sub ? sub.name : 'HSC'} (${div ? div.name : 'Academics'} track), Chapter: "${chapter}". Return ONLY a valid JSON array (no markdown fences) with items: {"question":"...","options":["optA","optB","optC","optD"],"correctIndex":0,"explanation":"...","difficulty":"Medium","boardTag":"${div ? div.name : 'HSC'} Model"}.`;
-    const res = await fetch('/api/ai-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'write_assist', mode: 'custom', title: `HSC ${sub ? sub.name : ''} ${chapter}`, instruction: prompt, tone: 'Academic & Peer-Reviewed', length: 'Medium' })
-    });
-    let data = await res.json();
-    let rawText = data.text || '';
-    if ((!res.ok || !rawText) && data.clientTextFallback) {
-      const dr = await fetch(data.clientTextFallback.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: data.clientTextFallback.model, messages: data.clientTextFallback.messages })
-      });
-      const dj = await dr.json().catch(() => ({}));
-      rawText = dj?.choices?.[0]?.message?.content || '';
-    }
+    const prompt = `Generate exactly ${count} authentic Bangladesh ${getAcadCourseName(classId)} multiple-choice questions for ${sub ? sub.name : 'HSC'} (${div ? div.name : 'Academics'} track), Chapter: "${chapter}". Return ONLY a valid JSON array (no markdown fences) with items: {"question":"...","options":["optA","optB","optC","optD"],"correctIndex":0,"explanation":"...","difficulty":"Medium","boardTag":"${div ? div.name : 'HSC'} Model"}.`;
+    const rawText = await callAcadAiText(`${sub ? sub.name : 'HSC'} ${chapter}`, prompt);
     const jsonMatch = rawText.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error('AI response did not contain a valid JSON MCQ array.');
     const items = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(items) || items.length === 0) throw new Error('No MCQs generated.');
-    await postAcademicsAction({ action: 'bulk_save_mcqs', classId: 'cls_hsc', subjectId, divisionId, chapter, boardTag: `${div ? div.name : 'HSC'} Model`, items }, `✨ AI generated & saved ${items.length} MCQs!`);
+    await postAcademicsAction({ action: 'bulk_save_mcqs', classId, subjectId, divisionId, chapter, boardTag: `${div ? div.name : 'HSC'} Model`, items }, `AI generated and saved ${items.length} MCQs!`);
   } catch (err) {
     window.showToast('AI MCQ generation failed: ' + err.message, 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '✨ AI Generate 5 MCQs for Selected Subject & Division'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'AI Generate Batch'; }
+  }
+};
+
+window.handleAiGenerateCq = async function() {
+  const btn = document.getElementById('acadAiGenCqBtn');
+  const classId = document.getElementById('acadCqClassSelect')?.value || getAcadDefaultCourseId();
+  const subjectId = document.getElementById('acadCqSubjectSelect')?.value;
+  const divisionId = document.getElementById('acadCqDivisionSelect')?.value || 'div_academics';
+  const chapter = (document.getElementById('acadCqChapterInput')?.value || 'Core Syllabus Topics').trim();
+  const sub = _adminAcadCatalog.subjects.find(s => s.id === subjectId);
+  const div = _adminAcadCatalog.divisions.find(d => d.id === divisionId);
+  if (!subjectId) return window.showToast('Select a Subject first.', 'warning');
+  if (btn) { btn.disabled = true; btn.textContent = 'Drafting CQ...'; }
+  try {
+    const prompt = `Create 1 authentic Bangladesh ${getAcadCourseName(classId)} Creative Question (CQ / Srijonshil) for ${sub ? sub.name : 'HSC'} (${div ? div.name : 'Academics'}), Chapter: "${chapter}". Return ONLY a valid JSON object (no markdown fences) with keys: title, boardTag, stem, partA, ansA, partB, ansB, partC, ansC, partD, ansD.`;
+    const rawText = await callAcadAiText(`CQ ${sub ? sub.name : ''} ${chapter}`, prompt);
+    const objMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!objMatch) throw new Error('AI response did not contain a valid JSON CQ object.');
+    const cq = JSON.parse(objMatch[0]);
+    window.toggleAcadEditorPanel('cq', 'single');
+    document.getElementById('acadCqTitleInput').value = cq.title || '';
+    document.getElementById('acadCqBoardInput').value = cq.boardTag || `${div ? div.name : 'HSC'} Model`;
+    document.getElementById('acadCqStemInput').value = cq.stem || '';
+    document.getElementById('acadCqPartA').value = cq.partA || '';
+    document.getElementById('acadCqAnsA').value = cq.ansA || '';
+    document.getElementById('acadCqPartB').value = cq.partB || '';
+    document.getElementById('acadCqAnsB').value = cq.ansB || '';
+    document.getElementById('acadCqPartC').value = cq.partC || '';
+    document.getElementById('acadCqAnsC').value = cq.ansC || '';
+    document.getElementById('acadCqPartD').value = cq.partD || '';
+    document.getElementById('acadCqAnsD').value = cq.ansD || '';
+    if (window.showToast) window.showToast('AI drafted a full CQ into the form. Review and click Save CQ!', 'success');
+  } catch (err) {
+    window.showToast('AI CQ draft failed: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'AI Draft Full CQ into Form'; }
   }
 };
 
 window.handleSaveAcadCq = async function(e) {
   e.preventDefault();
+  const isEditing = Boolean(document.getElementById('acadCqIdInput').value);
   try {
     await postAcademicsAction({
       action: 'save_cq',
       id: document.getElementById('acadCqIdInput').value || undefined,
-      classId: 'cls_hsc',
+      classId: document.getElementById('acadCqClassSelect')?.value || getAcadDefaultCourseId(),
       subjectId: document.getElementById('acadCqSubjectSelect').value,
       divisionId: document.getElementById('acadCqDivisionSelect').value,
       chapter: document.getElementById('acadCqChapterInput').value.trim() || 'General',
@@ -7029,9 +8013,8 @@ window.handleSaveAcadCq = async function(e) {
       ansC: document.getElementById('acadCqAnsC').value.trim(),
       partD: document.getElementById('acadCqPartD').value.trim(),
       ansD: document.getElementById('acadCqAnsD').value.trim()
-    }, 'Creative Question (CQ) saved!');
-    document.getElementById('acadCqForm').reset();
-    document.getElementById('acadCqIdInput').value = '';
+    }, isEditing ? 'Creative Question updated!' : 'Creative Question (CQ) saved!');
+    window.resetAcadCqForm(!isEditing);
   } catch (err) {
     window.showToast(err.message, 'error');
   }
@@ -7039,11 +8022,12 @@ window.handleSaveAcadCq = async function(e) {
 
 window.handleSaveAcadNote = async function(e) {
   e.preventDefault();
+  const isEditing = Boolean(document.getElementById('acadNoteIdInput').value);
   try {
     await postAcademicsAction({
       action: 'save_note',
       id: document.getElementById('acadNoteIdInput').value || undefined,
-      classId: 'cls_hsc',
+      classId: document.getElementById('acadNoteClassSelect')?.value || getAcadDefaultCourseId(),
       subjectId: document.getElementById('acadNoteSubjectSelect').value,
       divisionId: document.getElementById('acadNoteDivisionSelect').value,
       chapter: document.getElementById('acadNoteChapterInput').value.trim() || 'General',
@@ -7053,9 +8037,8 @@ window.handleSaveAcadNote = async function(e) {
       content: document.getElementById('acadNoteContentInput').value.trim(),
       fileUrl: document.getElementById('acadNoteFileInput')?.value.trim() || '',
       videoUrl: document.getElementById('acadNoteVideoInput')?.value.trim() || ''
-    }, 'Book / Note saved!');
-    document.getElementById('acadNoteForm').reset();
-    document.getElementById('acadNoteIdInput').value = '';
+    }, isEditing ? 'Book / Note updated!' : 'Book / Note saved!');
+    window.resetAcadNoteForm();
   } catch (err) {
     window.showToast(err.message, 'error');
   }
@@ -7065,6 +8048,10 @@ window.handleDeleteAcadItem = async function(action, id) {
   if (!confirm('Delete this academic item permanently?')) return;
   try {
     await postAcademicsAction({ action, id }, 'Deleted successfully');
+    _selectedMcqIds.delete(id);
+    _selectedCqIds.delete(id);
+    _selectedNoteIds.delete(id);
+    syncAcadBulkBars();
   } catch (err) {
     window.showToast(err.message, 'error');
   }

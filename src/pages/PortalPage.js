@@ -1938,34 +1938,254 @@ export function renderPortalPageHtml() {
       </div>
 
       <div id="tab-academics" class="portal-tab-content" style="display:none;">
+        <style>
+          .acad-adm-scope-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.85rem;
+            padding: 0.9rem 1.15rem;
+            margin-bottom: 1.1rem;
+            border-radius: 14px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+          }
+          .acad-adm-tabs {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+            padding: 0.35rem;
+            border-radius: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+          }
+          .acad-adm-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.16s ease;
+          }
+          .acad-adm-tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-surface);
+          }
+          .acad-adm-tab-btn.active {
+            background: #ea580c;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
+          }
+          .acad-adm-tab-cnt {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            background: rgba(15, 23, 42, 0.08);
+            color: var(--text-primary);
+          }
+          .acad-adm-tab-btn.active .acad-adm-tab-cnt {
+            background: rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+          }
+          .acad-adm-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.65rem;
+            margin-bottom: 1rem;
+          }
+          .acad-adm-filter-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.55rem;
+            padding: 0.85rem;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.85rem;
+          }
+          .acad-adm-bulk-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.65rem;
+            padding: 0.75rem 0.95rem;
+            border-radius: 12px;
+            background: rgba(234, 88, 12, 0.08);
+            border: 1px solid rgba(234, 88, 12, 0.35);
+            margin-bottom: 0.85rem;
+          }
+          .acad-adm-item-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+          }
+          .acad-adm-item-row:hover {
+            border-color: rgba(234, 88, 12, 0.4);
+          }
+          .acad-adm-item-row.selected {
+            border-color: #ea580c;
+            background: rgba(234, 88, 12, 0.04);
+          }
+          .acad-adm-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+          }
+          .acad-adm-pill.accent {
+            background: rgba(234, 88, 12, 0.1);
+            color: #ea580c;
+            border-color: rgba(234, 88, 12, 0.25);
+          }
+          .acad-adm-pill.green {
+            background: rgba(5, 150, 105, 0.1);
+            color: #059669;
+            border-color: rgba(5, 150, 105, 0.25);
+          }
+          .acad-adm-pill.red {
+            background: rgba(220, 38, 38, 0.1);
+            color: #dc2626;
+            border-color: rgba(220, 38, 38, 0.25);
+          }
+          .acad-adm-editing-card {
+            border: 2px solid #ea580c !important;
+            box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1) !important;
+          }
+          .acad-adm-opt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 0.4rem;
+            margin-top: 0.45rem;
+          }
+          .acad-adm-opt-chip {
+            font-size: 0.76rem;
+            padding: 0.32rem 0.6rem;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+          }
+          .acad-adm-opt-chip.correct {
+            background: rgba(5, 150, 105, 0.1);
+            border-color: rgba(5, 150, 105, 0.4);
+            color: #047857;
+            font-weight: 700;
+          }
+        </style>
+
         <div class="portal-topbar">
           <div class="portal-title-block">
-            <h1>HSC Academics & Courses Manager</h1>
-            <p>Manage all 13 HSC subjects & courses (with cover images & Free/Paid pricing), add custom Academic Divisions (Academics, Books, Medical, BUET, College Questions...), and publish MCQs, CQs & Books.</p>
+            <h1>Academic Command Center</h1>
+            <p>Manage SQL Courses, Subject Tiles, Divisions, MCQ & CQ Question Banks, Bulk Import/Delete/Move, AI Generation, and Student Enrollments.</p>
           </div>
-          <div style="display:flex; gap:0.55rem; flex-wrap:wrap;">
-            <a href="/academics" target="_blank" class="btn btn-secondary btn-sm">Open Public /academics ↗</a>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAdminAcademics()">Refresh</button>
+          <div style="display:flex; gap:0.55rem; flex-wrap:wrap; align-items:center;">
+            <a href="/academics" target="_blank" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Public /academics
+            </a>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.exportAcadAdminJson('all')" style="display:inline-flex; align-items:center; gap:0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export JSON
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAdminAcademics()" style="display:inline-flex; align-items:center; gap:0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
           </div>
         </div>
 
-        <div id="acadAdminStatsGrid" class="portal-stats-grid" style="margin-bottom:1.5rem;"></div>
-
-        <div id="acadAdminSubTabs" style="display:flex; gap:0.45rem; flex-wrap:wrap; margin-bottom:1.25rem;">
-          <button type="button" class="btn btn-sm btn-primary" data-asub="courses" onclick="window.switchAcadAdminTab('courses')">Courses (SQL)</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-asub="subjects" onclick="window.switchAcadAdminTab('subjects')">Subjects & Tiles</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-asub="divisions" onclick="window.switchAcadAdminTab('divisions')">Academic Divisions</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-asub="mcqs" onclick="window.switchAcadAdminTab('mcqs')">MCQ Bank + AI Gen</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-asub="cqs" onclick="window.switchAcadAdminTab('cqs')">Creative Questions (CQ)</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-asub="notes" onclick="window.switchAcadAdminTab('notes')">Books & Notes</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-asub="enrollments" onclick="window.switchAcadAdminTab('enrollments')">Enrollments</button>
+        <div class="acad-adm-scope-bar">
+          <div style="display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap;">
+            <span style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#ea580c;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              Active Course Scope
+            </span>
+            <select id="acadAdminCourseScope" class="form-select" onchange="window.setAcadAdminCourseScope(this.value)" style="min-width:240px; max-width:340px; font-weight:700; padding:0.42rem 0.75rem;"></select>
+            <span id="acadAdminScopeSummary" style="font-size:0.78rem; color:var(--text-muted); font-weight:600;"></span>
+          </div>
+          <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.switchAcadAdminTab('mcqs'); window.toggleAcadBulkPanel('mcq', true);" style="display:inline-flex; align-items:center; gap:0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Bulk Add MCQs
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.switchAcadAdminTab('courses'); window.resetAcadCourseForm();" style="display:inline-flex; align-items:center; gap:0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Course
+            </button>
+          </div>
         </div>
+
+        <div id="acadAdminStatsGrid" class="portal-stats-grid" style="margin-bottom:1.25rem;"></div>
+
+        <div id="acadAdminSubTabs" class="acad-adm-tabs">
+          <button type="button" class="acad-adm-tab-btn active" data-asub="courses" onclick="window.switchAcadAdminTab('courses')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            Courses <span class="acad-adm-tab-cnt" id="acadTabCnt_courses">0</span>
+          </button>
+          <button type="button" class="acad-adm-tab-btn" data-asub="subjects" onclick="window.switchAcadAdminTab('subjects')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Subjects & Tiles <span class="acad-adm-tab-cnt" id="acadTabCnt_subjects">0</span>
+          </button>
+          <button type="button" class="acad-adm-tab-btn" data-asub="divisions" onclick="window.switchAcadAdminTab('divisions')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            Divisions <span class="acad-adm-tab-cnt" id="acadTabCnt_divisions">0</span>
+          </button>
+          <button type="button" class="acad-adm-tab-btn" data-asub="mcqs" onclick="window.switchAcadAdminTab('mcqs')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            MCQ Bank <span class="acad-adm-tab-cnt" id="acadTabCnt_mcqs">0</span>
+          </button>
+          <button type="button" class="acad-adm-tab-btn" data-asub="cqs" onclick="window.switchAcadAdminTab('cqs')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            CQ Bank <span class="acad-adm-tab-cnt" id="acadTabCnt_cqs">0</span>
+          </button>
+          <button type="button" class="acad-adm-tab-btn" data-asub="notes" onclick="window.switchAcadAdminTab('notes')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Books & Notes <span class="acad-adm-tab-cnt" id="acadTabCnt_notes">0</span>
+          </button>
+          <button type="button" class="acad-adm-tab-btn" data-asub="enrollments" onclick="window.switchAcadAdminTab('enrollments')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Enrollments <span class="acad-adm-tab-cnt" id="acadTabCnt_enrollments">0</span>
+          </button>
+        </div>
+
+        <datalist id="acadChapterDatalist"></datalist>
+        <datalist id="acadCqChapterDatalist"></datalist>
+        <datalist id="acadNoteChapterDatalist"></datalist>
 
         <div id="acadAdminPane_courses">
-          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.35rem;">
+          <div id="acadCourseFormCard" class="data-table-card" style="padding:1.45rem; margin-bottom:1.35rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.9rem;">
-              <h3 id="acadCourseFormHeading" style="margin:0; font-size:1.08rem;">Add / Edit Course (Stored in D1 SQL)</h3>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadCourseForm()">+ New Course</button>
+              <h3 id="acadCourseFormHeading" style="margin:0; font-size:1.06rem;">Add / Edit Course (Stored in D1 SQL)</h3>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadCourseForm()">New Course</button>
             </div>
             <form id="acadCourseForm" onsubmit="window.handleSaveAcadClass(event)" style="display:flex; flex-direction:column; gap:0.8rem;">
               <input type="hidden" id="acadCourseIdInput">
@@ -2009,27 +2229,27 @@ export function renderPortalPageHtml() {
 
               <textarea id="acadCourseDescInput" class="form-textarea" rows="2" placeholder="Course overview & syllabus summary..."></textarea>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
-                <textarea id="acadCourseFeaturesInput" class="form-textarea" rows="2" placeholder="What's included (one item per line)"></textarea>
+                <textarea id="acadCourseFeaturesInput" class="form-textarea" rows="2" placeholder="What is included (one item per line)"></textarea>
                 <textarea id="acadCoursePayInstrInput" class="form-textarea" rows="2" placeholder="bKash / Nagad / Rocket payment instructions (shown if Paid)"></textarea>
               </div>
               <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadCourseForm()">Clear</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadCourseForm()">Cancel / Clear</button>
                 <button type="submit" class="btn btn-primary btn-sm">Save Course</button>
               </div>
             </form>
           </div>
 
           <div class="data-table-card" style="padding:1.35rem;">
-            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Courses in Database (Edit Banner/Price or Delete Anytime)</h3>
-            <div id="acadAdminCoursesList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:0.9rem;"></div>
+            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Courses in Database</h3>
+            <div id="acadAdminCoursesList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(310px, 1fr)); gap:0.9rem;"></div>
           </div>
         </div>
 
         <div id="acadAdminPane_subjects" style="display:none;">
-          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.35rem;">
+          <div id="acadSubjectFormCard" class="data-table-card" style="padding:1.45rem; margin-bottom:1.35rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.9rem;">
-              <h3 id="acadSubFormHeading" style="margin:0; font-size:1.08rem;">Add / Edit Subject & Background Image</h3>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadSubjectForm()">+ New Subject</button>
+              <h3 id="acadSubFormHeading" style="margin:0; font-size:1.06rem;">Add / Edit Subject & Background Image</h3>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadSubjectForm()">New Subject</button>
             </div>
             <form id="acadSubjectForm" onsubmit="window.handleSaveAcadSubject(event)" style="display:flex; flex-direction:column; gap:0.8rem;">
               <input type="hidden" id="acadSubIdInput">
@@ -2051,19 +2271,19 @@ export function renderPortalPageHtml() {
                   <label class="form-label" style="font-size:0.74rem;">Access Mode</label>
                   <select id="acadSubAccessInput" class="form-select">
                     <option value="public">Free (Public Access)</option>
-                    <option value="paid">Paid Course (Enroll & Purchase UI)</option>
+                    <option value="paid">Paid Subject (Enroll & Purchase UI)</option>
                   </select>
                 </div>
                 <div>
-                  <label class="form-label" style="font-size:0.74rem;">Course Price (৳)</label>
+                  <label class="form-label" style="font-size:0.74rem;">Price (৳)</label>
                   <input type="number" id="acadSubPriceInput" class="form-input" value="0" min="0" placeholder="e.g. 2990">
                 </div>
                 <div>
-                  <label class="form-label" style="font-size:0.74rem;">Original Price (৳ Strikethrough)</label>
+                  <label class="form-label" style="font-size:0.74rem;">Original Price (৳)</label>
                   <input type="number" id="acadSubOrigPriceInput" class="form-input" value="0" min="0" placeholder="e.g. 6000">
                 </div>
                 <div>
-                  <label class="form-label" style="font-size:0.74rem;">Instant Unlock Access Code</label>
+                  <label class="form-label" style="font-size:0.74rem;">Unlock Access Code</label>
                   <input type="text" id="acadSubCodeUnlockInput" class="form-input" placeholder="e.g. CRII-HSC28">
                 </div>
                 <div>
@@ -2072,36 +2292,39 @@ export function renderPortalPageHtml() {
                 </div>
               </div>
 
-              <textarea id="acadSubDescInput" class="form-textarea" rows="2" placeholder="Course / subject description..."></textarea>
+              <textarea id="acadSubDescInput" class="form-textarea" rows="2" placeholder="Subject description..."></textarea>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
                 <textarea id="acadSubChaptersInput" class="form-textarea" rows="3" placeholder="Chapters (comma or newline separated)"></textarea>
-                <textarea id="acadSubFeaturesInput" class="form-textarea" rows="3" placeholder="What's included in this course (one bullet per line)"></textarea>
+                <textarea id="acadSubFeaturesInput" class="form-textarea" rows="3" placeholder="What is included (one bullet per line)"></textarea>
               </div>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
                 <textarea id="acadSubIncludedInput" class="form-textarea" rows="2" placeholder="Included sub-courses for Combo cards (optional, one per line)"></textarea>
-                <textarea id="acadSubPayInstrInput" class="form-textarea" rows="2" placeholder="bKash / Nagad / Rocket payment instructions (shown on Paid Enroll page)"></textarea>
+                <textarea id="acadSubPayInstrInput" class="form-textarea" rows="2" placeholder="bKash / Nagad / Rocket payment instructions"></textarea>
               </div>
 
               <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadSubjectForm()">Clear</button>
-                <button type="submit" class="btn btn-primary btn-sm">Save Subject / Course</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadSubjectForm()">Cancel / Clear</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save Subject</button>
               </div>
             </form>
           </div>
 
           <div class="data-table-card" style="padding:1.35rem;">
-            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">All HSC Subjects & Courses (Click Edit to Add Cover Image or Make Paid)</h3>
+            <div class="acad-adm-toolbar">
+              <h3 style="margin:0; font-size:1.05rem;">Subjects in Active Course Scope</h3>
+              <input type="text" id="acadAdminSubSearch" class="form-input" placeholder="Search subjects..." oninput="window.renderAcadAdminSubjectsList()" style="max-width:260px; font-size:0.82rem; padding:0.38rem 0.7rem;">
+            </div>
             <div id="acadAdminSubjectsList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:0.9rem;"></div>
           </div>
         </div>
 
         <div id="acadAdminPane_divisions" style="display:none;">
           <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
-            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Add / Edit Academic Division (Academics, Books, Medical, BUET, College Questions...)</h3>
+            <h3 id="acadDivFormHeading" style="margin:0 0 0.9rem; font-size:1.05rem;">Add / Edit Academic Division</h3>
             <form id="acadDivisionForm" onsubmit="window.handleSaveAcadDivision(event)" style="display:flex; flex-direction:column; gap:0.75rem;">
               <input type="hidden" id="acadDivIdInput">
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:0.65rem;">
-                <input type="text" id="acadDivNameInput" class="form-input" placeholder="Division Name (e.g. DU Ka Unit)" required>
+                <input type="text" id="acadDivNameInput" class="form-input" placeholder="Division Name (e.g. DU Ka Unit) *" required>
                 <select id="acadDivIconInput" class="form-select">
                   <option value="graduation">Icon: Graduation</option>
                   <option value="book">Icon: Books</option>
@@ -2113,9 +2336,9 @@ export function renderPortalPageHtml() {
                 <input type="color" id="acadDivColorInput" class="form-input" value="#ea580c" style="padding:0.2rem; height:38px;">
                 <input type="number" id="acadDivOrderInput" class="form-input" value="6" placeholder="Display Order">
               </div>
-              <input type="text" id="acadDivDescInput" class="form-input" placeholder="Short description shown on the division selector card...">
+              <input type="text" id="acadDivDescInput" class="form-input" placeholder="Short description shown on the division selector...">
               <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadDivisionForm').reset(); document.getElementById('acadDivIdInput').value='';">Clear</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadDivisionForm()">Clear</button>
                 <button type="submit" class="btn btn-primary btn-sm">Save Academic Division</button>
               </div>
             </form>
@@ -2127,32 +2350,73 @@ export function renderPortalPageHtml() {
         </div>
 
         <div id="acadAdminPane_mcqs" style="display:none;">
-          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
-              <h3 style="margin:0; font-size:1.05rem;">Add MCQ Question (or AI Auto-Generate Batch)</h3>
-              <button type="button" class="btn btn-secondary btn-sm" id="acadAiGenMcqBtn" onclick="window.handleAiGenerateMcqs()" style="border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700;">✨ AI Generate 5 MCQs for Selected Subject & Division</button>
+          <div class="acad-adm-toolbar">
+            <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+              <button type="button" id="acadMcqToggleSingleBtn" class="btn btn-primary btn-sm" onclick="window.toggleAcadEditorPanel('mcq', 'single')">Single MCQ Editor</button>
+              <button type="button" id="acadMcqToggleBulkBtn" class="btn btn-secondary btn-sm" onclick="window.toggleAcadBulkPanel('mcq')">Bulk Add / Import MCQs</button>
+            </div>
+            <div style="display:flex; gap:0.45rem; flex-wrap:wrap; align-items:center;">
+              <select id="acadAiMcqCountSelect" class="form-select" style="width:auto; font-size:0.78rem; padding:0.35rem 0.6rem;">
+                <option value="5">5 MCQs</option>
+                <option value="10">10 MCQs</option>
+                <option value="15">15 MCQs</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-sm" id="acadAiGenMcqBtn" onclick="window.handleAiGenerateMcqs()" style="border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700; display:inline-flex; align-items:center; gap:0.35rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                AI Generate Batch
+              </button>
+            </div>
+          </div>
+
+          <div id="acadMcqSingleCard" class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.95rem;">
+              <h3 id="acadMcqFormHeading" style="margin:0; font-size:1.05rem;">Add New MCQ Question</h3>
+              <button type="button" id="acadMcqCancelEditBtn" class="btn btn-secondary btn-sm" style="display:none;" onclick="window.resetAcadMcqForm()">Cancel Edit</button>
             </div>
             <form id="acadMcqForm" onsubmit="window.handleSaveAcadMcq(event)" style="display:flex; flex-direction:column; gap:0.75rem;">
               <input type="hidden" id="acadMcqIdInput">
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
-                <select id="acadMcqSubjectSelect" class="form-select" required></select>
-                <select id="acadMcqDivisionSelect" class="form-select" required></select>
-                <input type="text" id="acadMcqChapterInput" class="form-input" placeholder="Chapter (e.g. Ch 2: Vector)">
-                <input type="text" id="acadMcqBoardInput" class="form-input" placeholder="Board/College/Year (e.g. BUET 2024)">
-                <select id="acadMcqDiffInput" class="form-select">
-                  <option value="Easy">Easy</option>
-                  <option value="Medium" selected>Medium</option>
-                  <option value="Hard">Hard</option>
-                </select>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(165px, 1fr)); gap:0.65rem;">
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Course *</label>
+                  <select id="acadMcqClassSelect" class="form-select" onchange="window.syncAcadFormSubjects('acadMcqClassSelect', 'acadMcqSubjectSelect')" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Subject *</label>
+                  <select id="acadMcqSubjectSelect" class="form-select" onchange="window.syncAcadChapterDatalist(this.value, 'acadChapterDatalist')" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Division *</label>
+                  <select id="acadMcqDivisionSelect" class="form-select" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Chapter</label>
+                  <input type="text" id="acadMcqChapterInput" list="acadChapterDatalist" class="form-input" placeholder="e.g. Ch 2: Vector">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Board / Exam Tag</label>
+                  <input type="text" id="acadMcqBoardInput" class="form-input" placeholder="e.g. BUET 2024, DB 23">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Difficulty</label>
+                  <select id="acadMcqDiffInput" class="form-select">
+                    <option value="Easy">Easy</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Hard">Hard</option>
+                  </select>
+                </div>
               </div>
-              <textarea id="acadMcqQuestionInput" class="form-textarea" rows="2" placeholder="Enter MCQ question text..." required></textarea>
+              <textarea id="acadMcqQuestionInput" class="form-textarea" rows="2" placeholder="Enter MCQ question stem *" required></textarea>
+              <div>
+                <label class="form-label" style="font-size:0.74rem;">Optional Question Diagram / Image (R2 Upload or URL)</label>
+                ${renderMediaPickerField({ id: 'acadMcqImageInput', accept: 'image/*', uploadLabel: 'Upload Diagram', placeholder: 'Optional image URL or /api/images/...' })}
+              </div>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
                 <input type="text" id="acadMcqOpt0" class="form-input" placeholder="Option A *" required>
                 <input type="text" id="acadMcqOpt1" class="form-input" placeholder="Option B *" required>
                 <input type="text" id="acadMcqOpt2" class="form-input" placeholder="Option C *" required>
                 <input type="text" id="acadMcqOpt3" class="form-input" placeholder="Option D *" required>
               </div>
-              <div style="display:grid; grid-template-columns:180px 1fr; gap:0.65rem;">
+              <div style="display:grid; grid-template-columns:190px 1fr; gap:0.65rem;">
                 <select id="acadMcqCorrectSelect" class="form-select">
                   <option value="0">Correct: Option A</option>
                   <option value="1">Correct: Option B</option>
@@ -2162,35 +2426,155 @@ export function renderPortalPageHtml() {
                 <input type="text" id="acadMcqExplanationInput" class="form-input" placeholder="Step-by-step explanation shown after student submits...">
               </div>
               <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadMcqForm').reset(); document.getElementById('acadMcqIdInput').value='';">Clear</button>
-                <button type="submit" class="btn btn-primary btn-sm">Save MCQ</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadMcqForm()">Clear</button>
+                <button type="submit" id="acadMcqSubmitBtn" class="btn btn-primary btn-sm">Save MCQ</button>
               </div>
             </form>
           </div>
-          <div class="data-table-card" style="padding:1.35rem;">
+
+          <div id="acadMcqBulkCard" class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem; display:none; border-color:rgba(234,88,12,0.4);">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.85rem;">
-              <h3 style="margin:0; font-size:1.05rem;">Existing MCQ Question Bank</h3>
-              <input type="text" id="acadAdminMcqSearch" class="form-input" placeholder="Filter MCQs..." oninput="window.renderAcadAdminMcqList()" style="max-width:260px; font-size:0.82rem; padding:0.38rem 0.7rem;">
+              <div>
+                <h3 style="margin:0; font-size:1.05rem;">Bulk Add MCQs (Quick Lines, Excel/TSV, or JSON Array)</h3>
+                <p style="margin:0.2rem 0 0; font-size:0.78rem; color:var(--text-muted);">Paste one MCQ per line using <code>Question | OptA | OptB | OptC | OptD | A/B/C/D | Explanation | BoardTag</code> (or Tab-separated from Excel) OR paste a JSON array.</p>
+              </div>
+              <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAcadBulkSample('mcq_lines')">Sample Lines</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAcadBulkSample('mcq_json')">Sample JSON</button>
+                <label class="btn btn-secondary btn-sm" style="cursor:pointer; margin:0;">
+                  Upload File
+                  <input type="file" accept=".json,.txt,.csv,.tsv" style="display:none;" onchange="window.handleAcadBulkFileLoad(event, 'acadBulkMcqInput', 'mcq')">
+                </label>
+              </div>
             </div>
-            <div id="acadAdminMcqList" style="display:flex; flex-direction:column; gap:0.65rem; max-height:460px; overflow-y:auto;"></div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:0.6rem; margin-bottom:0.75rem;">
+              <div>
+                <label class="form-label" style="font-size:0.72rem;">Target Course *</label>
+                <select id="acadBulkMcqClassSelect" class="form-select" onchange="window.syncAcadFormSubjects('acadBulkMcqClassSelect', 'acadBulkMcqSubjectSelect')"></select>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.72rem;">Target Subject *</label>
+                <select id="acadBulkMcqSubjectSelect" class="form-select"></select>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.72rem;">Target Division *</label>
+                <select id="acadBulkMcqDivisionSelect" class="form-select"></select>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.72rem;">Default Chapter</label>
+                <input type="text" id="acadBulkMcqChapterInput" list="acadChapterDatalist" class="form-input" placeholder="e.g. Ch 2: Vector">
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.72rem;">Default Board Tag</label>
+                <input type="text" id="acadBulkMcqBoardInput" class="form-input" placeholder="e.g. HSC Board 2024">
+              </div>
+            </div>
+            <textarea id="acadBulkMcqInput" class="form-textarea" rows="8" oninput="window.updateAcadBulkPreview('mcq')" placeholder="What is the SI unit of force? | Joule | Newton | Watt | Pascal | B | F = ma gives kg m/s^2 = Newton | DB 2023" style="font-family:monospace; font-size:0.8rem;"></textarea>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.65rem; margin-top:0.75rem;">
+              <span id="acadBulkMcqPreviewCount" style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);">Detected: 0 valid MCQs</span>
+              <div style="display:flex; gap:0.45rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadBulkMcqInput').value=''; window.updateAcadBulkPreview('mcq');">Clear</button>
+                <button type="button" id="acadBulkMcqImportBtn" class="btn btn-primary btn-sm" onclick="window.handleBulkImportMcqs()">Import All MCQs</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-table-card" style="padding:1.35rem;">
+            <div class="acad-adm-toolbar">
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <h3 style="margin:0; font-size:1.05rem;">MCQ Question Bank</h3>
+                <span id="acadMcqFilteredCount" class="acad-adm-pill accent">0 shown</span>
+              </div>
+              <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.exportAcadAdminJson('mcqs')">Export Filtered JSON</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadMcqFilters()">Reset Filters</button>
+              </div>
+            </div>
+
+            <div class="acad-adm-filter-bar">
+              <select id="acadFilterMcqSubject" class="form-select" onchange="window.renderAcadAdminMcqList()" style="font-size:0.8rem;"></select>
+              <select id="acadFilterMcqDivision" class="form-select" onchange="window.renderAcadAdminMcqList()" style="font-size:0.8rem;"></select>
+              <select id="acadFilterMcqDiff" class="form-select" onchange="window.renderAcadAdminMcqList()" style="font-size:0.8rem;">
+                <option value="all">All Difficulties</option>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+              <input type="text" id="acadFilterMcqChapter" class="form-input" placeholder="Filter by chapter..." oninput="window.renderAcadAdminMcqList()" style="font-size:0.8rem;">
+              <input type="text" id="acadAdminMcqSearch" class="form-input" placeholder="Search question, option, tag..." oninput="window.renderAcadAdminMcqList()" style="font-size:0.8rem;">
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.75rem; padding:0.45rem 0.7rem; border-radius:10px; background:var(--bg-secondary);">
+              <label style="display:inline-flex; align-items:center; gap:0.45rem; font-size:0.8rem; font-weight:700; cursor:pointer;">
+                <input type="checkbox" id="acadSelectAllMcqs" onchange="window.toggleAcadSelectAll('mcq', this.checked)">
+                Select All Visible
+              </label>
+              <span id="acadMcqSelectedHint" style="font-size:0.76rem; color:var(--text-muted);">Select items to bulk move, export, or delete</span>
+            </div>
+
+            <div id="acadMcqBulkBar" class="acad-adm-bulk-bar" style="display:none;">
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span id="acadMcqBulkCount" style="font-weight:800; font-size:0.82rem; color:#ea580c;">0 selected</span>
+                <select id="acadBulkMoveMcqSub" class="form-select" style="width:auto; min-width:155px; font-size:0.76rem; padding:0.3rem 0.55rem;"></select>
+                <select id="acadBulkMoveMcqDiv" class="form-select" style="width:auto; min-width:130px; font-size:0.76rem; padding:0.3rem 0.55rem;"></select>
+                <input type="text" id="acadBulkMoveMcqChap" class="form-input" placeholder="New Chapter (optional)" style="width:150px; font-size:0.76rem; padding:0.3rem 0.55rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.handleBulkMoveMcqs()">Move Selected</button>
+              </div>
+              <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.exportAcadAdminJson('mcqs_selected')">Export Selected</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="window.handleBulkDeleteMcqs()">Delete Selected</button>
+              </div>
+            </div>
+
+            <div id="acadAdminMcqList" style="display:flex; flex-direction:column; gap:0.65rem; max-height:600px; overflow-y:auto;"></div>
           </div>
         </div>
 
         <div id="acadAdminPane_cqs" style="display:none;">
-          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
-            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Add Creative Question (CQ / সৃজনশীল)</h3>
+          <div class="acad-adm-toolbar">
+            <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+              <button type="button" id="acadCqToggleSingleBtn" class="btn btn-primary btn-sm" onclick="window.toggleAcadEditorPanel('cq', 'single')">Single CQ Editor</button>
+              <button type="button" id="acadCqToggleBulkBtn" class="btn btn-secondary btn-sm" onclick="window.toggleAcadBulkPanel('cq')">Bulk Add CQs (JSON)</button>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="acadAiGenCqBtn" onclick="window.handleAiGenerateCq()" style="border-color:rgba(234,88,12,0.45); color:#ea580c; background:rgba(234,88,12,0.08); font-weight:700; display:inline-flex; align-items:center; gap:0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              AI Draft Full CQ into Form
+            </button>
+          </div>
+
+          <div id="acadCqSingleCard" class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.95rem;">
+              <h3 id="acadCqFormHeading" style="margin:0; font-size:1.05rem;">Add Creative Question (CQ)</h3>
+              <button type="button" id="acadCqCancelEditBtn" class="btn btn-secondary btn-sm" style="display:none;" onclick="window.resetAcadCqForm()">Cancel Edit</button>
+            </div>
             <form id="acadCqForm" onsubmit="window.handleSaveAcadCq(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
               <input type="hidden" id="acadCqIdInput">
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
-                <select id="acadCqSubjectSelect" class="form-select" required></select>
-                <select id="acadCqDivisionSelect" class="form-select" required></select>
-                <input type="text" id="acadCqChapterInput" class="form-input" placeholder="Chapter">
-                <input type="text" id="acadCqBoardInput" class="form-input" placeholder="Board/College/Year">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(165px, 1fr)); gap:0.65rem;">
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Course *</label>
+                  <select id="acadCqClassSelect" class="form-select" onchange="window.syncAcadFormSubjects('acadCqClassSelect', 'acadCqSubjectSelect')" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Subject *</label>
+                  <select id="acadCqSubjectSelect" class="form-select" onchange="window.syncAcadChapterDatalist(this.value, 'acadCqChapterDatalist')" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Division *</label>
+                  <select id="acadCqDivisionSelect" class="form-select" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Chapter</label>
+                  <input type="text" id="acadCqChapterInput" list="acadCqChapterDatalist" class="form-input" placeholder="Chapter">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Board / Year</label>
+                  <input type="text" id="acadCqBoardInput" class="form-input" placeholder="e.g. Dhaka Board 2024">
+                </div>
               </div>
               <input type="text" id="acadCqTitleInput" class="form-input" placeholder="CQ Topic Title *" required>
               <textarea id="acadCqStemInput" class="form-textarea" rows="3" placeholder="Uddipok / Scenario Stem *" required></textarea>
               <div>
-                <label class="form-label" style="font-size:0.78rem;">Optional Diagram / Figure</label>
+                <label class="form-label" style="font-size:0.74rem;">Optional Diagram / Figure</label>
                 ${renderMediaPickerField({ id: 'acadCqImageInput', accept: 'image/*', uploadLabel: 'Upload Diagram', placeholder: 'Paste diagram URL or /api/images/...' })}
               </div>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
@@ -2204,63 +2588,188 @@ export function renderPortalPageHtml() {
                 <textarea id="acadCqAnsD" class="form-textarea" rows="2" placeholder="(ঘ) Full Analytical Answer"></textarea>
               </div>
               <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadCqForm').reset(); document.getElementById('acadCqIdInput').value='';">Clear</button>
-                <button type="submit" class="btn btn-primary btn-sm">Save CQ</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadCqForm()">Clear</button>
+                <button type="submit" id="acadCqSubmitBtn" class="btn btn-primary btn-sm">Save CQ</button>
               </div>
             </form>
           </div>
+
+          <div id="acadCqBulkCard" class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem; display:none; border-color:rgba(234,88,12,0.4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.85rem;">
+              <div>
+                <h3 style="margin:0; font-size:1.05rem;">Bulk Add Creative Questions (JSON Array)</h3>
+                <p style="margin:0.2rem 0 0; font-size:0.78rem; color:var(--text-muted);">Paste or upload a JSON array of CQs with <code>title, stem, partA, ansA, partB, ansB, partC, ansC, partD, ansD</code>.</p>
+              </div>
+              <div style="display:flex; gap:0.4rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAcadBulkSample('cq_json')">Sample CQ JSON</button>
+                <label class="btn btn-secondary btn-sm" style="cursor:pointer; margin:0;">
+                  Upload JSON
+                  <input type="file" accept=".json,.txt" style="display:none;" onchange="window.handleAcadBulkFileLoad(event, 'acadBulkCqInput', 'cq')">
+                </label>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:0.6rem; margin-bottom:0.75rem;">
+              <select id="acadBulkCqClassSelect" class="form-select" onchange="window.syncAcadFormSubjects('acadBulkCqClassSelect', 'acadBulkCqSubjectSelect')"></select>
+              <select id="acadBulkCqSubjectSelect" class="form-select"></select>
+              <select id="acadBulkCqDivisionSelect" class="form-select"></select>
+              <input type="text" id="acadBulkCqChapterInput" list="acadCqChapterDatalist" class="form-input" placeholder="Default Chapter">
+              <input type="text" id="acadBulkCqBoardInput" class="form-input" placeholder="Default Board Tag">
+            </div>
+            <textarea id="acadBulkCqInput" class="form-textarea" rows="8" oninput="window.updateAcadBulkPreview('cq')" placeholder='[{"title":"...","stem":"...","partA":"...","ansA":"...","partB":"...","ansB":"...","partC":"...","ansC":"...","partD":"...","ansD":"..."}]' style="font-family:monospace; font-size:0.8rem;"></textarea>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.65rem; margin-top:0.75rem;">
+              <span id="acadBulkCqPreviewCount" style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);">Detected: 0 valid CQs</span>
+              <div style="display:flex; gap:0.45rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadBulkCqInput').value=''; window.updateAcadBulkPreview('cq');">Clear</button>
+                <button type="button" id="acadBulkCqImportBtn" class="btn btn-primary btn-sm" onclick="window.handleBulkImportCqs()">Import All CQs</button>
+              </div>
+            </div>
+          </div>
+
           <div class="data-table-card" style="padding:1.35rem;">
-            <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Published Creative Questions</h3>
+            <div class="acad-adm-toolbar">
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <h3 style="margin:0; font-size:1.05rem;">Published Creative Questions</h3>
+                <span id="acadCqFilteredCount" class="acad-adm-pill accent">0 shown</span>
+              </div>
+              <div style="display:flex; gap:0.45rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.exportAcadAdminJson('cqs')">Export Filtered JSON</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadCqFilters()">Reset Filters</button>
+              </div>
+            </div>
+
+            <div class="acad-adm-filter-bar">
+              <select id="acadFilterCqSubject" class="form-select" onchange="window.renderAcadAdminCqList()" style="font-size:0.8rem;"></select>
+              <select id="acadFilterCqDivision" class="form-select" onchange="window.renderAcadAdminCqList()" style="font-size:0.8rem;"></select>
+              <input type="text" id="acadAdminCqSearch" class="form-input" placeholder="Search CQ title, stem, board..." oninput="window.renderAcadAdminCqList()" style="font-size:0.8rem;">
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.75rem; padding:0.45rem 0.7rem; border-radius:10px; background:var(--bg-secondary);">
+              <label style="display:inline-flex; align-items:center; gap:0.45rem; font-size:0.8rem; font-weight:700; cursor:pointer;">
+                <input type="checkbox" id="acadSelectAllCqs" onchange="window.toggleAcadSelectAll('cq', this.checked)">
+                Select All Visible
+              </label>
+              <span id="acadCqSelectedHint" style="font-size:0.76rem; color:var(--text-muted);">Select CQs to bulk move, export, or delete</span>
+            </div>
+
+            <div id="acadCqBulkBar" class="acad-adm-bulk-bar" style="display:none;">
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span id="acadCqBulkCount" style="font-weight:800; font-size:0.82rem; color:#ea580c;">0 selected</span>
+                <select id="acadBulkMoveCqSub" class="form-select" style="width:auto; min-width:155px; font-size:0.76rem; padding:0.3rem 0.55rem;"></select>
+                <select id="acadBulkMoveCqDiv" class="form-select" style="width:auto; min-width:130px; font-size:0.76rem; padding:0.3rem 0.55rem;"></select>
+                <input type="text" id="acadBulkMoveCqChap" class="form-input" placeholder="New Chapter (optional)" style="width:150px; font-size:0.76rem; padding:0.3rem 0.55rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.handleBulkMoveCqs()">Move Selected</button>
+              </div>
+              <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.exportAcadAdminJson('cqs_selected')">Export Selected</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="window.handleBulkDeleteCqs()">Delete Selected</button>
+              </div>
+            </div>
+
             <div id="acadAdminCqList" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
           </div>
         </div>
 
         <div id="acadAdminPane_notes" style="display:none;">
-          <div class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
-            <h3 style="margin:0 0 0.9rem; font-size:1.05rem;">Add Book, Formula Sheet, PDF Handout or Lecture</h3>
+          <div id="acadNoteFormCard" class="data-table-card" style="padding:1.45rem; margin-bottom:1.25rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.9rem;">
+              <h3 id="acadNoteFormHeading" style="margin:0; font-size:1.05rem;">Add Book, Formula Sheet, PDF Handout or Lecture</h3>
+              <button type="button" id="acadNoteCancelEditBtn" class="btn btn-secondary btn-sm" style="display:none;" onclick="window.resetAcadNoteForm()">Cancel Edit</button>
+            </div>
             <form id="acadNoteForm" onsubmit="window.handleSaveAcadNote(event)" style="display:flex; flex-direction:column; gap:0.7rem;">
               <input type="hidden" id="acadNoteIdInput">
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(175px, 1fr)); gap:0.65rem;">
-                <select id="acadNoteSubjectSelect" class="form-select" required></select>
-                <select id="acadNoteDivisionSelect" class="form-select" required></select>
-                <input type="text" id="acadNoteChapterInput" class="form-input" placeholder="Chapter">
-                <select id="acadNoteTypeSelect" class="form-select">
-                  <option value="note">Book / Concept Note</option>
-                  <option value="formula">Formula Sheet</option>
-                  <option value="pdf">PDF / Handout</option>
-                  <option value="video">Video Lecture</option>
-                </select>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(165px, 1fr)); gap:0.65rem;">
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Course *</label>
+                  <select id="acadNoteClassSelect" class="form-select" onchange="window.syncAcadFormSubjects('acadNoteClassSelect', 'acadNoteSubjectSelect')" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Subject *</label>
+                  <select id="acadNoteSubjectSelect" class="form-select" onchange="window.syncAcadChapterDatalist(this.value, 'acadNoteChapterDatalist')" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Division *</label>
+                  <select id="acadNoteDivisionSelect" class="form-select" required></select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Chapter</label>
+                  <input type="text" id="acadNoteChapterInput" list="acadNoteChapterDatalist" class="form-input" placeholder="Chapter">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.72rem;">Resource Type</label>
+                  <select id="acadNoteTypeSelect" class="form-select">
+                    <option value="note">Book / Concept Note</option>
+                    <option value="formula">Formula Sheet</option>
+                    <option value="pdf">PDF / Handout</option>
+                    <option value="video">Video Lecture</option>
+                  </select>
+                </div>
               </div>
               <input type="text" id="acadNoteTitleInput" class="form-input" placeholder="Resource Title *" required>
               <input type="text" id="acadNoteSummaryInput" class="form-input" placeholder="Short summary...">
               <textarea id="acadNoteContentInput" class="form-textarea" rows="5" placeholder="Markdown notes / formulas (use ## Headings and - bullet points)..."></textarea>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                 <div>
-                  <label class="form-label" style="font-size:0.78rem;">Optional Handout File / PDF / Image (R2 Upload or URL)</label>
+                  <label class="form-label" style="font-size:0.74rem;">Optional Handout File / PDF / Image (R2 Upload or URL)</label>
                   ${renderMediaPickerField({ id: 'acadNoteFileInput', accept: 'image/*,.pdf', uploadLabel: 'Upload File', placeholder: 'Paste PDF/Image URL or /api/images/...' })}
                 </div>
                 <div>
-                  <label class="form-label" style="font-size:0.78rem;">Optional Video Lecture (Upload MP4 or URL)</label>
+                  <label class="form-label" style="font-size:0.74rem;">Optional Video Lecture (Upload MP4 or URL)</label>
                   ${renderMediaPickerField({ id: 'acadNoteVideoInput', accept: 'video/*', uploadLabel: 'Upload Video', placeholder: 'Paste YouTube or MP4 URL...' })}
                 </div>
               </div>
               <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('acadNoteForm').reset(); document.getElementById('acadNoteIdInput').value='';">Clear</button>
-                <button type="submit" class="btn btn-primary btn-sm">Save Book / Note</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.resetAcadNoteForm()">Clear</button>
+                <button type="submit" id="acadNoteSubmitBtn" class="btn btn-primary btn-sm">Save Book / Note</button>
               </div>
             </form>
           </div>
           <div class="data-table-card" style="padding:1.35rem;">
-            <h3 style="margin:0 0 0.85rem; font-size:1.05rem;">Published Books & Study Notes</h3>
+            <div class="acad-adm-toolbar">
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <h3 style="margin:0; font-size:1.05rem;">Published Books & Study Notes</h3>
+                <span id="acadNoteFilteredCount" class="acad-adm-pill accent">0 shown</span>
+              </div>
+            </div>
+            <div class="acad-adm-filter-bar">
+              <select id="acadFilterNoteSubject" class="form-select" onchange="window.renderAcadAdminNoteList()" style="font-size:0.8rem;"></select>
+              <select id="acadFilterNoteDivision" class="form-select" onchange="window.renderAcadAdminNoteList()" style="font-size:0.8rem;"></select>
+              <select id="acadFilterNoteType" class="form-select" onchange="window.renderAcadAdminNoteList()" style="font-size:0.8rem;">
+                <option value="all">All Types</option>
+                <option value="note">Book / Concept Note</option>
+                <option value="formula">Formula Sheet</option>
+                <option value="pdf">PDF / Handout</option>
+                <option value="video">Video Lecture</option>
+              </select>
+              <input type="text" id="acadAdminNoteSearch" class="form-input" placeholder="Search title, summary..." oninput="window.renderAcadAdminNoteList()" style="font-size:0.8rem;">
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.75rem; padding:0.45rem 0.7rem; border-radius:10px; background:var(--bg-secondary);">
+              <label style="display:inline-flex; align-items:center; gap:0.45rem; font-size:0.8rem; font-weight:700; cursor:pointer;">
+                <input type="checkbox" id="acadSelectAllNotes" onchange="window.toggleAcadSelectAll('note', this.checked)">
+                Select All Visible
+              </label>
+              <div id="acadNoteBulkBar" style="display:none; align-items:center; gap:0.5rem;">
+                <span id="acadNoteBulkCount" style="font-weight:800; font-size:0.8rem; color:#ea580c;">0 selected</span>
+                <button type="button" class="btn btn-danger btn-sm" onclick="window.handleBulkDeleteNotes()">Delete Selected</button>
+              </div>
+            </div>
             <div id="acadAdminNoteList" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
           </div>
         </div>
 
         <div id="acadAdminPane_enrollments" style="display:none;">
           <div class="data-table-card" style="padding:1.35rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.9rem;">
+            <div class="acad-adm-toolbar">
               <h3 style="margin:0; font-size:1.05rem;">Paid Course Enrollments & TrxID Verification</h3>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAdminAcadEnrollments()">Refresh Enrollments</button>
+              <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+                <select id="acadEnrollStatusFilter" class="form-select" onchange="window.renderAcadAdminEnrollments()" style="width:auto; font-size:0.8rem;">
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="declined">Declined</option>
+                </select>
+                <input type="text" id="acadEnrollSearch" class="form-input" placeholder="Search student or TrxID..." oninput="window.renderAcadAdminEnrollments()" style="max-width:210px; font-size:0.8rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadAdminAcadEnrollments()">Refresh</button>
+              </div>
             </div>
             <div id="acadAdminEnrollmentsList" style="display:flex; flex-direction:column; gap:0.7rem;"></div>
           </div>

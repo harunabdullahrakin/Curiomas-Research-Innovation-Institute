@@ -651,6 +651,33 @@ export async function onRequestPost(context) {
       return jsonResp({ success: true, ...(await fetchFullCatalog(env.DB)) });
     }
 
+    if (action === "bulk_delete_mcqs") {
+      const ids = Array.isArray(body.ids) ? body.ids.map(x => String(x || "").trim()).filter(Boolean) : [];
+      if (ids.length === 0) return jsonResp({ error: "No MCQ IDs selected" }, 400);
+      await env.DB.batch(ids.map(id => env.DB.prepare("DELETE FROM academics_mcqs WHERE id = ?").bind(id)));
+      return jsonResp({ success: true, deleted: ids.length, ...(await fetchFullCatalog(env.DB)) });
+    }
+
+    if (action === "bulk_move_mcqs") {
+      const ids = Array.isArray(body.ids) ? body.ids.map(x => String(x || "").trim()).filter(Boolean) : [];
+      if (ids.length === 0) return jsonResp({ error: "No MCQ IDs selected" }, 400);
+      const stmts = [];
+      for (const id of ids) {
+        const sets = [];
+        const vals = [];
+        if (body.classId) { sets.push("classId = ?"); vals.push(String(body.classId).trim()); }
+        if (body.subjectId) { sets.push("subjectId = ?"); vals.push(String(body.subjectId).trim()); }
+        if (body.divisionId) { sets.push("divisionId = ?"); vals.push(String(body.divisionId).trim()); }
+        if (body.chapter && String(body.chapter).trim()) { sets.push("chapter = ?"); vals.push(String(body.chapter).trim()); }
+        if (sets.length > 0) {
+          vals.push(id);
+          stmts.push(env.DB.prepare(`UPDATE academics_mcqs SET ${sets.join(", ")} WHERE id = ?`).bind(...vals));
+        }
+      }
+      if (stmts.length > 0) await env.DB.batch(stmts);
+      return jsonResp({ success: true, moved: stmts.length, ...(await fetchFullCatalog(env.DB)) });
+    }
+
     if (action === "save_cq") {
       const classId = String(body.classId || "cls_hsc").trim();
       const subjectId = String(body.subjectId || "").trim();
@@ -707,11 +734,84 @@ export async function onRequestPost(context) {
       return jsonResp({ success: true, id, ...(await fetchFullCatalog(env.DB)) });
     }
 
+    if (action === "bulk_save_cqs") {
+      const items = Array.isArray(body.items) ? body.items : [];
+      const classId = String(body.classId || "cls_hsc").trim();
+      const subjectId = String(body.subjectId || "").trim();
+      const divisionId = String(body.divisionId || "div_academics").trim();
+      if (!subjectId || items.length === 0) {
+        return jsonResp({ error: "Subject and CQ items array are required." }, 400);
+      }
+      const stmts = [];
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        const stem = String(it.stem || "").trim();
+        if (!stem) continue;
+        const id = "cq_" + Date.now().toString(36) + "_" + i + "_" + Math.random().toString(36).slice(2, 5);
+        stmts.push(
+          env.DB.prepare(`
+            INSERT INTO academics_cqs (id, classId, subjectId, divisionId, chapter, title, boardTag, stem, imageUrl, partA, ansA, partB, ansB, partC, ansC, partD, ansD, accessTier, packageId, createdAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            id,
+            classId,
+            subjectId,
+            String(it.divisionId || divisionId).trim(),
+            String(it.chapter || body.chapter || "General").trim(),
+            String(it.title || "Creative Question").trim(),
+            String(it.boardTag || body.boardTag || "").trim(),
+            stem,
+            String(it.imageUrl || "").trim(),
+            String(it.partA || "").trim(),
+            String(it.ansA || "").trim(),
+            String(it.partB || "").trim(),
+            String(it.ansB || "").trim(),
+            String(it.partC || "").trim(),
+            String(it.ansC || "").trim(),
+            String(it.partD || "").trim(),
+            String(it.ansD || "").trim(),
+            String(it.accessTier || "public").trim(),
+            String(it.packageId || "").trim(),
+            now
+          )
+        );
+      }
+      if (stmts.length > 0) await env.DB.batch(stmts);
+      return jsonResp({ success: true, inserted: stmts.length, ...(await fetchFullCatalog(env.DB)) });
+    }
+
     if (action === "delete_cq") {
       const id = String(body.id || "").trim();
       if (!id) return jsonResp({ error: "CQ ID required" }, 400);
       await env.DB.prepare("DELETE FROM academics_cqs WHERE id = ?").bind(id).run();
       return jsonResp({ success: true, ...(await fetchFullCatalog(env.DB)) });
+    }
+
+    if (action === "bulk_delete_cqs") {
+      const ids = Array.isArray(body.ids) ? body.ids.map(x => String(x || "").trim()).filter(Boolean) : [];
+      if (ids.length === 0) return jsonResp({ error: "No CQ IDs selected" }, 400);
+      await env.DB.batch(ids.map(id => env.DB.prepare("DELETE FROM academics_cqs WHERE id = ?").bind(id)));
+      return jsonResp({ success: true, deleted: ids.length, ...(await fetchFullCatalog(env.DB)) });
+    }
+
+    if (action === "bulk_move_cqs") {
+      const ids = Array.isArray(body.ids) ? body.ids.map(x => String(x || "").trim()).filter(Boolean) : [];
+      if (ids.length === 0) return jsonResp({ error: "No CQ IDs selected" }, 400);
+      const stmts = [];
+      for (const id of ids) {
+        const sets = [];
+        const vals = [];
+        if (body.classId) { sets.push("classId = ?"); vals.push(String(body.classId).trim()); }
+        if (body.subjectId) { sets.push("subjectId = ?"); vals.push(String(body.subjectId).trim()); }
+        if (body.divisionId) { sets.push("divisionId = ?"); vals.push(String(body.divisionId).trim()); }
+        if (body.chapter && String(body.chapter).trim()) { sets.push("chapter = ?"); vals.push(String(body.chapter).trim()); }
+        if (sets.length > 0) {
+          vals.push(id);
+          stmts.push(env.DB.prepare(`UPDATE academics_cqs SET ${sets.join(", ")} WHERE id = ?`).bind(...vals));
+        }
+      }
+      if (stmts.length > 0) await env.DB.batch(stmts);
+      return jsonResp({ success: true, moved: stmts.length, ...(await fetchFullCatalog(env.DB)) });
     }
 
     if (action === "save_note") {
@@ -763,6 +863,13 @@ export async function onRequestPost(context) {
       if (!id) return jsonResp({ error: "Note ID required" }, 400);
       await env.DB.prepare("DELETE FROM academics_notes WHERE id = ?").bind(id).run();
       return jsonResp({ success: true, ...(await fetchFullCatalog(env.DB)) });
+    }
+
+    if (action === "bulk_delete_notes") {
+      const ids = Array.isArray(body.ids) ? body.ids.map(x => String(x || "").trim()).filter(Boolean) : [];
+      if (ids.length === 0) return jsonResp({ error: "No Note IDs selected" }, 400);
+      await env.DB.batch(ids.map(id => env.DB.prepare("DELETE FROM academics_notes WHERE id = ?").bind(id)));
+      return jsonResp({ success: true, deleted: ids.length, ...(await fetchFullCatalog(env.DB)) });
     }
 
     if (action === "enroll_course") {
