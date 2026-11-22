@@ -176,6 +176,7 @@ async function ensureAcademicsTables(db) {
   await safeAddColumn(db, "academics_mcqs", "divisionId TEXT DEFAULT 'div_academics'");
   await safeAddColumn(db, "academics_cqs", "divisionId TEXT DEFAULT 'div_academics'");
   await safeAddColumn(db, "academics_notes", "divisionId TEXT DEFAULT 'div_books'");
+  await safeAddColumn(db, "academics_notes", "galleryJson TEXT DEFAULT '[]'");
 }
 
 async function seedHscOnce(db) {
@@ -291,7 +292,8 @@ async function fetchFullCatalog(db) {
   }));
   const notes = (noteRes.results || []).map(n => ({
     ...n,
-    divisionId: n.divisionId || "div_books"
+    divisionId: n.divisionId || "div_books",
+    gallery: safeJsonParse(n.galleryJson, [])
   }));
 
   return {
@@ -822,10 +824,13 @@ export async function onRequestPost(context) {
       if (!subjectId || !title) {
         return jsonResp({ error: "Subject and Resource Title are required." }, 400);
       }
+      const galleryArr = Array.isArray(body.gallery)
+        ? body.gallery.map(u => String(u || "").trim()).filter(Boolean)
+        : String(body.gallery || "").split(/\r?\n/).map(u => u.trim()).filter(Boolean);
       const id = String(body.id || ("note_" + Date.now().toString(36))).trim();
       await env.DB.prepare(`
-        INSERT INTO academics_notes (id, classId, subjectId, divisionId, chapter, title, resourceType, summary, content, fileUrl, videoUrl, accessTier, packageId, createdAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO academics_notes (id, classId, subjectId, divisionId, chapter, title, resourceType, summary, content, fileUrl, videoUrl, galleryJson, accessTier, packageId, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           classId = excluded.classId,
           subjectId = excluded.subjectId,
@@ -837,6 +842,7 @@ export async function onRequestPost(context) {
           content = excluded.content,
           fileUrl = excluded.fileUrl,
           videoUrl = excluded.videoUrl,
+          galleryJson = excluded.galleryJson,
           accessTier = excluded.accessTier,
           packageId = excluded.packageId
       `).bind(
@@ -851,6 +857,7 @@ export async function onRequestPost(context) {
         String(body.content || "").trim(),
         String(body.fileUrl || "").trim(),
         String(body.videoUrl || "").trim(),
+        JSON.stringify(galleryArr),
         String(body.accessTier || "public").trim(),
         String(body.packageId || "").trim(),
         now
@@ -870,6 +877,46 @@ export async function onRequestPost(context) {
       if (ids.length === 0) return jsonResp({ error: "No Note IDs selected" }, 400);
       await env.DB.batch(ids.map(id => env.DB.prepare("DELETE FROM academics_notes WHERE id = ?").bind(id)));
       return jsonResp({ success: true, deleted: ids.length, ...(await fetchFullCatalog(env.DB)) });
+    }
+
+    if (action === "bulk_move_notes") {
+      const ids = Array.isArray(body.ids) ? body.ids.map(x => String(x || "").trim()).filter(Boolean) : [];
+      if (ids.length === 0) return jsonResp({ error: "No Resource IDs selected" }, 400);
+      const stmts = [];
+      for (const id of ids) {
+        const sets = [];
+        const vals = [];
+        if (body.classId) { sets.push("classId = ?"); vals.push(String(body.classId).trim()); }
+        if (body.subjectId) { sets.push("subjectId = ?"); vals.push(String(body.subjectId).trim()); }
+        if (body.divisionId) { sets.push("divisionId = ?"); vals.push(String(body.divisionId).trim()); }
+        if (body.chapter && String(body.chapter).trim()) { sets.push("chapter = ?"); vals.push(String(body.chapter).trim()); }
+        if (sets.length > 0) {
+          vals.push(id);
+          stmts.push(env.DB.prepare(`UPDATE academics_notes SET ${sets.join(", ")} WHERE id = ?`).bind(...vals));
+        }
+      }
+      if (stmts.length > 0) await env.DB.batch(stmts);
+      return jsonResp({ success: true, moved: stmts.length, ...(await fetchFullCatalog(env.DB)) });
+    }
+
+    if (action === "rename_topic") {
+      const subjectId = String(body.subjectId || "").trim();
+      const oldName = String(body.oldName || "").trim();
+      const newName = String(body.newName || "").trim();
+      if (!subjectId || !oldName || !newName) {
+        return jsonResp({ error: "Subject, old topic name, and new topic name are required." }, 400);
+      }
+      const sub = await env.DB.prepare("SELECT chaptersJson FROM academics_subjects WHERE id = ?").bind(subjectId).first();
+      const chaps = sub ? safeJsonParse(sub.chaptersJson, []) : [];
+      const updated = chaps.map(c => (c === oldName ? newName : c));
+      if (!updated.includes(newName)) updated.push(newName);
+      await env.DB.batch([
+        env.DB.prepare("UPDATE academics_subjects SET chaptersJson = ? WHERE id = ?").bind(JSON.stringify(updated), subjectId),
+        env.DB.prepare("UPDATE academics_mcqs SET chapter = ? WHERE subjectId = ? AND chapter = ?").bind(newName, subjectId, oldName),
+        env.DB.prepare("UPDATE academics_cqs SET chapter = ? WHERE subjectId = ? AND chapter = ?").bind(newName, subjectId, oldName),
+        env.DB.prepare("UPDATE academics_notes SET chapter = ? WHERE subjectId = ? AND chapter = ?").bind(newName, subjectId, oldName)
+      ]);
+      return jsonResp({ success: true, ...(await fetchFullCatalog(env.DB)) });
     }
 
     if (action === "enroll_course") {

@@ -530,6 +530,20 @@ export function renderAdminAcademicsTab(renderMediaPickerField) {
             </div>
             <div id="acadVisualDivisionsRow" class="as-div-strip"></div>
           </div>
+
+          <div style="border-top:1px solid var(--border-color); padding-top:0.9rem;">
+            <div class="as-section-head" style="margin-bottom:0.55rem;">
+              <span class="as-section-label"><span class="as-step-num">4</span> Topics & Custom Topics (Select a Subject Above, Then Click Any Topic to Add MCQs, CQs, Dagano Boi & Images Inside It)</span>
+              <div id="acadQuickTopicAddWrap" style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="acadQuickCustomTopicInput" class="form-input" placeholder="New custom topic (e.g. Vector, Dagano Boi Ch-1)..." style="width:265px; font-size:0.78rem; padding:0.3rem 0.65rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();window.handleQuickAddCustomTopic();}">
+                <button type="button" class="btn btn-primary btn-sm" onclick="window.handleQuickAddCustomTopic()" style="display:inline-flex; align-items:center; gap:0.3rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Topic
+                </button>
+              </div>
+            </div>
+            <div id="acadVisualTopicsRow" class="as-div-strip"></div>
+          </div>
         </div>
 
         <datalist id="acadChapterDatalist"></datalist>
@@ -547,11 +561,11 @@ export function renderAdminAcademicsTab(renderMediaPickerField) {
               </button>
               <button type="button" class="as-ws-tab" data-asub="notes" onclick="window.switchAcadAdminTab('notes')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                Books & Notes <span class="as-ws-cnt" id="acadTabCnt_notes">0</span>
+                Dagano Boi, Images & Books <span class="as-ws-cnt" id="acadTabCnt_notes">0</span>
               </button>
               <button type="button" class="as-ws-tab" data-asub="chapters" onclick="window.switchAcadAdminTab('chapters')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                Chapters <span class="as-ws-cnt" id="acadTabCnt_chapters">0</span>
+                Topics Manager <span class="as-ws-cnt" id="acadTabCnt_chapters">0</span>
               </button>
               <button type="button" class="as-ws-tab" data-asub="enrollments" onclick="window.switchAcadAdminTab('enrollments')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -672,19 +686,30 @@ export function renderAdminAcademicsTab(renderMediaPickerField) {
 
             <div id="acadAdminPane_notes" style="display:none;">
               <div class="as-filter-row">
-                <button type="button" class="btn btn-primary btn-sm" onclick="window.openAcadNoteModal()" style="display:inline-flex; align-items:center; gap:0.35rem;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add Book / Note / PDF
-                </button>
+                <div style="display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center;">
+                  <button type="button" class="btn btn-primary btn-sm" onclick="window.openAcadNoteModal(null, 'dagano_boi')" style="display:inline-flex; align-items:center; gap:0.35rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Dagano Boi
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAcadNoteModal(null, 'image')" style="display:inline-flex; align-items:center; gap:0.35rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Add Images / Diagrams
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAcadNoteModal(null, 'pdf')">+ PDF / Book</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAcadNoteModal(null, 'formula')">+ Formula / Note</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.openAcadNoteModal(null, 'video')">+ Video</button>
+                </div>
                 <div style="display:flex; gap:0.45rem; flex-wrap:wrap; align-items:center;">
                   <select id="acadFilterNoteType" class="form-select" onchange="window.renderAcadAdminNoteList()" style="width:auto; font-size:0.78rem; padding:0.35rem 0.6rem;">
-                    <option value="all">All Types</option>
-                    <option value="note">Book / Concept Note</option>
+                    <option value="all">All Material Types</option>
+                    <option value="dagano_boi">Dagano Boi (Marked Book)</option>
+                    <option value="image">Images / Diagrams / Notes</option>
+                    <option value="pdf">PDF / Book / Handout</option>
                     <option value="formula">Formula Sheet</option>
-                    <option value="pdf">PDF / Handout</option>
+                    <option value="note">Concept Note</option>
                     <option value="video">Video Lecture</option>
                   </select>
-                  <input type="text" id="acadAdminNoteSearch" class="form-input" placeholder="Search books & notes..." oninput="window.renderAcadAdminNoteList()" style="width:200px; font-size:0.78rem; padding:0.35rem 0.65rem;">
+                  <input type="text" id="acadAdminNoteSearch" class="form-input" placeholder="Search materials..." oninput="window.renderAcadAdminNoteList()" style="width:190px; font-size:0.78rem; padding:0.35rem 0.65rem;">
                 </div>
               </div>
 
@@ -693,13 +718,18 @@ export function renderAdminAcademicsTab(renderMediaPickerField) {
                   <input type="checkbox" id="acadSelectAllNotes" onchange="window.toggleAcadSelectAll('note', this.checked)">
                   Select All Visible
                 </label>
-                <div style="display:flex; align-items:center; gap:0.6rem;">
-                  <span id="acadNoteFilteredCount" class="as-pill accent">0 shown</span>
-                  <div id="acadNoteBulkBar" style="display:none; align-items:center; gap:0.45rem;">
-                    <span id="acadNoteBulkCount" style="font-weight:800; font-size:0.78rem; color:#ea580c;">0 selected</span>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="window.handleBulkDeleteNotes()">Delete Selected</button>
-                  </div>
+                <span id="acadNoteFilteredCount" class="as-pill accent">0 shown</span>
+              </div>
+
+              <div id="acadNoteBulkBar" class="as-bulk-bar" style="display:none;">
+                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                  <span id="acadNoteBulkCount" style="font-weight:800; font-size:0.82rem; color:#ea580c;">0 selected</span>
+                  <select id="acadBulkMoveNoteSub" class="form-select" style="width:auto; min-width:160px; font-size:0.76rem; padding:0.3rem 0.55rem;"></select>
+                  <select id="acadBulkMoveNoteDiv" class="form-select" style="width:auto; min-width:125px; font-size:0.76rem; padding:0.3rem 0.55rem;"></select>
+                  <input type="text" id="acadBulkMoveNoteChap" class="form-input" placeholder="New Topic (optional)" style="width:155px; font-size:0.76rem; padding:0.3rem 0.55rem;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.handleBulkMoveNotes()">Move Selected</button>
                 </div>
+                <button type="button" class="btn btn-danger btn-sm" onclick="window.handleBulkDeleteNotes()">Delete Selected</button>
               </div>
 
               <div id="acadAdminNoteList" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
@@ -709,8 +739,8 @@ export function renderAdminAcademicsTab(renderMediaPickerField) {
               <div class="as-filter-row">
                 <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; flex:1;">
                   <select id="acadChapterManagerSubSelect" class="form-select" onchange="window.renderAcadChapterManager()" style="max-width:260px; font-weight:700; font-size:0.82rem;"></select>
-                  <input type="text" id="acadNewChapterInput" class="form-input" placeholder="New chapter name (e.g. Ch 4: Newtonian Mechanics)" style="flex:1; min-width:220px; font-size:0.82rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();window.handleAddAcadChapter();}">
-                  <button type="button" class="btn btn-primary btn-sm" onclick="window.handleAddAcadChapter()">Add Chapter</button>
+                  <input type="text" id="acadNewChapterInput" class="form-input" placeholder="New topic or custom topic name (e.g. Ch 4: Mechanics, Dagano Boi Special)" style="flex:1; min-width:220px; font-size:0.82rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();window.handleAddAcadChapter();}">
+                  <button type="button" class="btn btn-primary btn-sm" onclick="window.handleAddAcadChapter()">Add Topic</button>
                 </div>
               </div>
               <div id="acadChapterManagerList" style="display:flex; flex-direction:column; gap:0.55rem;"></div>
@@ -1091,9 +1121,9 @@ export function renderAdminAcademicsTab(renderMediaPickerField) {
         </div>
 
         <div id="acadNoteModal" class="as-modal-backdrop" onclick="if(event.target===this)window.closeAcadModal('acadNoteModal')">
-          <div class="as-modal-dialog">
+          <div class="as-modal-dialog" style="max-width:840px;">
             <div class="as-modal-head">
-              <h3 id="acadNoteFormHeading" style="margin:0; font-size:1.06rem;">Add Book / Formula Sheet / Handout</h3>
+              <h3 id="acadNoteFormHeading" style="margin:0; font-size:1.06rem;">Add Dagano Boi / Images / Book / Note</h3>
               <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeAcadModal('acadNoteModal')">Close</button>
             </div>
             <form id="acadNoteForm" onsubmit="window.handleSaveAcadNote(event)" style="display:flex; flex-direction:column; overflow:hidden; flex:1;">
@@ -1113,36 +1143,58 @@ export function renderAdminAcademicsTab(renderMediaPickerField) {
                     <select id="acadNoteDivisionSelect" class="form-select" required></select>
                   </div>
                   <div>
-                    <label class="form-label" style="font-size:0.72rem;">Chapter</label>
-                    <input type="text" id="acadNoteChapterInput" list="acadChapterDatalist" class="form-input" placeholder="Chapter">
+                    <label class="form-label" style="font-size:0.72rem;">Topic / Custom Topic</label>
+                    <input type="text" id="acadNoteChapterInput" list="acadChapterDatalist" class="form-input" placeholder="e.g. Ch 2: Vector">
                   </div>
                   <div>
-                    <label class="form-label" style="font-size:0.72rem;">Type</label>
+                    <label class="form-label" style="font-size:0.72rem;">Material Type *</label>
                     <select id="acadNoteTypeSelect" class="form-select">
-                      <option value="note">Book / Concept Note</option>
+                      <option value="dagano_boi">Dagano Boi (Marked Book)</option>
+                      <option value="image">Images / Diagrams / Notes</option>
+                      <option value="pdf">PDF / Book / Handout</option>
                       <option value="formula">Formula Sheet</option>
-                      <option value="pdf">PDF / Handout</option>
+                      <option value="note">Concept Note</option>
                       <option value="video">Video Lecture</option>
                     </select>
                   </div>
                 </div>
-                <input type="text" id="acadNoteTitleInput" class="form-input" placeholder="Resource Title *" required>
-                <input type="text" id="acadNoteSummaryInput" class="form-input" placeholder="Short summary...">
-                <textarea id="acadNoteContentInput" class="form-textarea" rows="5" placeholder="Markdown notes / formulas..."></textarea>
+                <input type="text" id="acadNoteTitleInput" class="form-input" placeholder="Title (e.g. Hazari Nag Ch 2 Dagano Boi, Vector Mind Map) *" required>
+                <input type="text" id="acadNoteSummaryInput" class="form-input" placeholder="Short summary or edition info (e.g. 2025 Edition Marked Lines)...">
+
+                <div style="padding:0.9rem; border-radius:12px; background:var(--bg-secondary); border:1px solid var(--border-color); display:flex; flex-direction:column; gap:0.65rem;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                    <div>
+                      <div style="font-size:0.8rem; font-weight:800; color:var(--text-primary);">Marked Book Pages / Image Gallery (Upload Multiple Images to R2)</div>
+                      <div style="font-size:0.72rem; color:var(--text-muted);">Ideal for Dagano Boi pages, handwritten notes, reaction charts, and diagrams.</div>
+                    </div>
+                    <label id="acadNoteGalleryUploadBtn" class="btn btn-primary btn-sm" style="cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:0.35rem;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span>Upload Multiple Images</span>
+                      <input type="file" accept="image/*" multiple style="display:none;" onchange="window.handleAcadGalleryMultiUpload(event)">
+                    </label>
+                  </div>
+                  <div style="display:flex; gap:0.45rem;">
+                    <input type="text" id="acadNoteGalleryUrlAdd" class="form-input" placeholder="Or paste an image URL and click Add..." style="flex:1; font-size:0.78rem;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.handleAcadGalleryAddUrl()">Add Image URL</button>
+                  </div>
+                  <div id="acadNoteGalleryGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(112px, 1fr)); gap:0.55rem;"></div>
+                </div>
+
+                <textarea id="acadNoteContentInput" class="form-textarea" rows="4" placeholder="Optional Markdown notes, key lines, formulas, or description..."></textarea>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;">
                   <div>
-                    <label class="form-label" style="font-size:0.73rem;">PDF / Image Handout</label>
-                    ${renderMediaPickerField({ id: 'acadNoteFileInput', accept: 'image/*,.pdf', uploadLabel: 'Upload File', placeholder: 'Paste PDF/Image URL or /api/images/...' })}
+                    <label class="form-label" style="font-size:0.73rem;">Optional PDF / Book File (R2 Upload or URL)</label>
+                    ${renderMediaPickerField({ id: 'acadNoteFileInput', accept: 'image/*,.pdf', uploadLabel: 'Upload PDF / File', placeholder: 'Paste PDF/Image URL or /api/images/...' })}
                   </div>
                   <div>
-                    <label class="form-label" style="font-size:0.73rem;">Video Lecture</label>
+                    <label class="form-label" style="font-size:0.73rem;">Optional Video Lecture</label>
                     ${renderMediaPickerField({ id: 'acadNoteVideoInput', accept: 'video/*', uploadLabel: 'Upload Video', placeholder: 'Paste YouTube or MP4 URL...' })}
                   </div>
                 </div>
               </div>
               <div class="as-modal-foot">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeAcadModal('acadNoteModal')">Cancel</button>
-                <button type="submit" id="acadNoteSubmitBtn" class="btn btn-primary btn-sm">Save Book / Note</button>
+                <button type="submit" id="acadNoteSubmitBtn" class="btn btn-primary btn-sm">Save Material</button>
               </div>
             </form>
           </div>

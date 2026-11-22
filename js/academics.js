@@ -534,52 +534,73 @@
       });
       const chapters = Array.from(chSet);
 
+      const topicPillsHtml = chapters.length > 0 ? `
+        <div style="margin-bottom:1.15rem;">
+          <div style="font-size:0.74rem; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.5rem;">Topics</div>
+          <div style="display:flex; flex-wrap:wrap; gap:0.45rem;">
+            <button type="button" class="btn btn-sm ${activeChapter === 'all' ? 'btn-primary' : 'btn-secondary'}" onclick="window.setAcadWsChapter('all')" style="border-radius:999px;">All Topics (${chapters.length})</button>
+            ${chapters.map((ch) => {
+              const enc = encodeURIComponent(ch);
+              const tCnt = catalog.mcqs.filter((m) => m.subjectId === sub.id && (m.divisionId || 'div_academics') === selectedDivisionId && m.chapter === ch).length
+                + catalog.cqs.filter((c) => c.subjectId === sub.id && (c.divisionId || 'div_academics') === selectedDivisionId && c.chapter === ch).length
+                + catalog.notes.filter((n) => n.subjectId === sub.id && (n.divisionId || 'div_books') === selectedDivisionId && n.chapter === ch).length;
+              return `<button type="button" class="btn btn-sm ${activeChapter === ch ? 'btn-primary' : 'btn-secondary'}" onclick="window.setAcadWsChapter(decodeURIComponent('${enc}'))" style="border-radius:999px;">${esc(ch)}${tCnt ? ` (${tCnt})` : ''}</button>`;
+            }).join('')}
+          </div>
+        </div>
+      ` : '';
+
       step2Html = `
         <div style="margin-top:1.5rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.65rem; margin-bottom:0.85rem;">
-            <div style="font-size:0.78rem; font-weight:800; color:#ea580c; text-transform:uppercase; letter-spacing:0.06em;">Select Question Mode</div>
-            <select id="acadWsChapterSel" class="form-select" onchange="window.setAcadWsChapter(this.value)" style="max-width:270px; font-size:0.84rem;">
-              <option value="all">All Chapters (${chapters.length})</option>
-              ${chapters.map((ch) => `<option value="${esc(ch)}" ${activeChapter === ch ? 'selected' : ''}>${esc(ch)}</option>`).join('')}
-            </select>
-          </div>
+          ${topicPillsHtml}
+          <div style="font-size:0.78rem; font-weight:800; color:#ea580c; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.7rem;">Select Study Mode</div>
 
-          <div class="acad-seg-grid" style="margin-bottom:1.4rem;">
-            <button type="button" class="acad-mode-card ${selectedQMode === 'mcq' ? 'active' : ''}" onclick="window.selectAcadQMode('mcq')" style="padding:1.15rem 1.25rem;">
+          <div class="acad-seg-grid" style="grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); margin-bottom:1.4rem;">
+            <button type="button" class="acad-mode-card ${selectedQMode === 'mcq' ? 'active' : ''}" onclick="window.selectAcadQMode('mcq')" style="padding:1.05rem 1.15rem;">
               <div>
-                <div style="display:flex; align-items:center; gap:0.45rem; font-size:1.08rem; font-weight:800; margin-bottom:0.2rem;">
-                  <span style="color:#ea580c;">${svgIcon('checkCircle', 18)}</span>
+                <div style="display:flex; align-items:center; gap:0.45rem; font-size:1.02rem; font-weight:800; margin-bottom:0.18rem;">
+                  <span style="color:#ea580c;">${svgIcon('checkCircle', 17)}</span>
                   <span>MCQ</span>
                 </div>
-                <div style="font-size:0.78rem; color:#64748b;">Timed Auto-Exam & Practice</div>
+                <div style="font-size:0.76rem; color:#64748b;">Timed Exam & Practice</div>
               </div>
-              <span style="font-size:1.15rem; font-weight:800; color:#ea580c;">${divMcqs.length}</span>
+              <span style="font-size:1.1rem; font-weight:800; color:#ea580c;">${divMcqs.length}</span>
             </button>
 
-            <button type="button" class="acad-mode-card ${selectedQMode === 'cq' ? 'active' : ''}" onclick="window.selectAcadQMode('cq')" style="padding:1.15rem 1.25rem;">
+            <button type="button" class="acad-mode-card ${selectedQMode === 'cq' ? 'active' : ''}" onclick="window.selectAcadQMode('cq')" style="padding:1.05rem 1.15rem;">
               <div>
-                <div style="display:flex; align-items:center; gap:0.45rem; font-size:1.08rem; font-weight:800; margin-bottom:0.2rem;">
-                  <span style="color:#0284c7;">${svgIcon('fileText', 18)}</span>
+                <div style="display:flex; align-items:center; gap:0.45rem; font-size:1.02rem; font-weight:800; margin-bottom:0.18rem;">
+                  <span style="color:#0284c7;">${svgIcon('fileText', 17)}</span>
                   <span>CQ</span>
                 </div>
-                <div style="font-size:0.78rem; color:#64748b;">Creative Question Selectors</div>
+                <div style="font-size:0.76rem; color:#64748b;">Creative Questions</div>
               </div>
-              <span style="font-size:1.15rem; font-weight:800; color:#0284c7;">${divCqs.length}</span>
+              <span style="font-size:1.1rem; font-weight:800; color:#0284c7;">${divCqs.length}</span>
             </button>
 
-            <button type="button" class="acad-mode-card ${selectedQMode === 'both' ? 'active' : ''}" onclick="window.selectAcadQMode('both')" style="padding:1.15rem 1.25rem;">
+            <button type="button" class="acad-mode-card ${selectedQMode === 'materials' ? 'active' : ''}" onclick="window.selectAcadQMode('materials')" style="padding:1.05rem 1.15rem;">
               <div>
-                <div style="display:flex; align-items:center; gap:0.45rem; font-size:1.08rem; font-weight:800; margin-bottom:0.2rem;">
-                  <span style="color:#059669;">${svgIcon('layers', 18)}</span>
-                  <span>Both (MCQ + CQ)</span>
+                <div style="display:flex; align-items:center; gap:0.45rem; font-size:1.02rem; font-weight:800; margin-bottom:0.18rem;">
+                  <span style="color:#7c3aed;">${svgIcon('book', 17)}</span>
+                  <span>Dagano Boi & Files</span>
                 </div>
-                <div style="font-size:0.78rem; color:#64748b;">Combined Exam & CQ Bank</div>
+                <div style="font-size:0.76rem; color:#64748b;">Marked Books, Images, PDFs</div>
               </div>
-              <span style="font-size:1.15rem; font-weight:800; color:#059669;">${divMcqs.length + divCqs.length}</span>
+              <span style="font-size:1.1rem; font-weight:800; color:#7c3aed;">${divNotes.length}</span>
+            </button>
+
+            <button type="button" class="acad-mode-card ${selectedQMode === 'both' ? 'active' : ''}" onclick="window.selectAcadQMode('both')" style="padding:1.05rem 1.15rem;">
+              <div>
+                <div style="display:flex; align-items:center; gap:0.45rem; font-size:1.02rem; font-weight:800; margin-bottom:0.18rem;">
+                  <span style="color:#059669;">${svgIcon('layers', 17)}</span>
+                  <span>All Content</span>
+                </div>
+                <div style="font-size:0.76rem; color:#64748b;">MCQ + CQ + Materials</div>
+              </div>
+              <span style="font-size:1.1rem; font-weight:800; color:#059669;">${divMcqs.length + divCqs.length + divNotes.length}</span>
             </button>
           </div>
 
-          ${isBooksDiv && divNotes.length > 0 ? `<div id="acadBooksInlineBox" style="margin-bottom:1.5rem;"></div>` : ''}
           <div id="acadWorkspaceContent"></div>
         </div>
       `;
@@ -595,6 +616,7 @@
           <span style="color:#94a3b8;">/</span>
           <strong style="font-size:1.1rem;">${esc(sub.name)}</strong>
           ${activeDiv ? `<span style="color:#94a3b8;">/</span><span style="font-weight:700; color:#ea580c;">${esc(activeDiv.name)}</span>` : ''}
+          ${activeChapter !== 'all' ? `<span style="color:#94a3b8;">/</span><span style="font-weight:700; color:#0284c7;">${esc(activeChapter)}</span>` : ''}
         </div>
         <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
           <button type="button" class="btn btn-secondary btn-sm" onclick="window.saveAcademicsOffline()" style="display:inline-flex; align-items:center; gap:0.35rem;" title="Save Question DB Offline">
@@ -615,10 +637,6 @@
     `;
 
     if (selectedDivisionId) {
-      if (isBooksDiv) {
-        const bBox = document.getElementById('acadBooksInlineBox');
-        if (bBox) renderBooksList(bBox);
-      }
       renderWorkspaceInnerContent();
     }
   }
@@ -632,13 +650,18 @@
     } else if (selectedQMode === 'cq') {
       box.innerHTML = `<div id="acadCqArea"></div>`;
       renderCqSelectorAndDetail(document.getElementById('acadCqArea'));
+    } else if (selectedQMode === 'materials') {
+      box.innerHTML = `<div id="acadBooksArea"></div>`;
+      renderBooksList(document.getElementById('acadBooksArea'));
     } else {
       box.innerHTML = `
         <div style="display:flex; flex-direction:column; gap:1.75rem;">
+          <div id="acadBooksArea"></div>
           <div id="acadMcqArea"></div>
           <div id="acadCqArea"></div>
         </div>
       `;
+      renderBooksList(document.getElementById('acadBooksArea'), true);
       renderMcqSection(document.getElementById('acadMcqArea'));
       renderCqSelectorAndDetail(document.getElementById('acadCqArea'));
     }
@@ -964,28 +987,157 @@
     `;
   }
 
-  function renderBooksList(pane) {
-    const list = filterWorkspaceItems(catalog.notes);
-    if (!list.length) return;
+  let activeMaterialType = 'all';
+  let lightboxState = null;
+
+  const MATERIAL_TYPE_META = {
+    dagano_boi: { label: 'Dagano Boi', color: '#ea580c', bg: 'rgba(234,88,12,0.12)' },
+    image: { label: 'Images / Diagrams', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)' },
+    pdf: { label: 'PDF / Book', color: '#0284c7', bg: 'rgba(2,132,199,0.12)' },
+    formula: { label: 'Formula Sheet', color: '#d97706', bg: 'rgba(217,119,6,0.12)' },
+    note: { label: 'Concept Note', color: '#059669', bg: 'rgba(5,150,105,0.12)' },
+    video: { label: 'Video Lecture', color: '#dc2626', bg: 'rgba(220,38,38,0.12)' }
+  };
+
+  function ensureAcadLightboxEl() {
+    let el = document.getElementById('acadGalleryLightbox');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'acadGalleryLightbox';
+      el.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(6,11,22,0.92); backdrop-filter:blur(6px); display:none; flex-direction:column; align-items:center; justify-content:center; padding:1.25rem;';
+      el.onclick = (e) => { if (e.target === el) window.closeAcadLightbox(); };
+      document.body.appendChild(el);
+      document.addEventListener('keydown', (e) => {
+        if (!lightboxState) return;
+        if (e.key === 'Escape') window.closeAcadLightbox();
+        if (e.key === 'ArrowRight') window.stepAcadLightbox(1);
+        if (e.key === 'ArrowLeft') window.stepAcadLightbox(-1);
+      });
+    }
+    return el;
+  }
+
+  function renderAcadLightbox() {
+    const el = ensureAcadLightboxEl();
+    if (!lightboxState || !lightboxState.images.length) {
+      el.style.display = 'none';
+      return;
+    }
+    const { title, images, index } = lightboxState;
+    const url = images[index];
+    el.style.display = 'flex';
+    el.innerHTML = `
+      <div style="width:100%; max-width:1040px; display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.85rem; color:#ffffff;">
+        <div>
+          <div style="font-weight:800; font-size:1rem;">${esc(title)}</div>
+          <div style="font-size:0.78rem; color:#cbd5e1;">Page ${index + 1} of ${images.length}</div>
+        </div>
+        <div style="display:flex; gap:0.45rem;">
+          <a href="${esc(url)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Open Original</a>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.closeAcadLightbox()">Close</button>
+        </div>
+      </div>
+      <div style="position:relative; width:100%; max-width:1040px; flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
+        <img src="${esc(url)}" alt="${esc(title)} page ${index + 1}" style="max-width:100%; max-height:76vh; object-fit:contain; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.45);">
+      </div>
+      ${images.length > 1 ? `
+        <div style="display:flex; align-items:center; gap:0.65rem; margin-top:0.9rem;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.stepAcadLightbox(-1)" ${index === 0 ? 'disabled' : ''}>Prev Page</button>
+          <span style="color:#e2e8f0; font-size:0.82rem; font-weight:700;">${index + 1} / ${images.length}</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.stepAcadLightbox(1)" ${index === images.length - 1 ? 'disabled' : ''}>Next Page</button>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  window.openAcadLightbox = function (noteId, startIndex) {
+    const n = catalog.notes.find((x) => x.id === noteId);
+    if (!n) return;
+    const imgs = Array.isArray(n.gallery) && n.gallery.length ? n.gallery : (n.fileUrl && /\.(png|jpe?g|webp|gif)(\?|$)/i.test(n.fileUrl) ? [n.fileUrl] : []);
+    if (!imgs.length) return;
+    lightboxState = { title: n.title || 'Viewer', images: imgs, index: Math.max(0, Math.min(imgs.length - 1, Number(startIndex) || 0)) };
+    renderAcadLightbox();
+  };
+
+  window.stepAcadLightbox = function (delta) {
+    if (!lightboxState) return;
+    const next = lightboxState.index + delta;
+    if (next < 0 || next >= lightboxState.images.length) return;
+    lightboxState.index = next;
+    renderAcadLightbox();
+  };
+
+  window.closeAcadLightbox = function () {
+    lightboxState = null;
+    const el = document.getElementById('acadGalleryLightbox');
+    if (el) el.style.display = 'none';
+  };
+
+  window.setAcadMaterialTypeFilter = function (t) {
+    activeMaterialType = t || 'all';
+    const box = document.getElementById('acadBooksArea');
+    if (box) renderBooksList(box);
+  };
+
+  function renderBooksList(pane, hideIfEmpty) {
+    if (!pane) return;
+    const allList = filterWorkspaceItems(catalog.notes);
+    if (!allList.length) {
+      if (hideIfEmpty) { pane.innerHTML = ''; return; }
+      pane.innerHTML = `<div class="acad-glass-panel" style="padding:2rem; text-align:center; color:#64748b;">No Dagano Boi, images, PDFs, or study notes published in this topic yet.</div>`;
+      return;
+    }
+    const list = activeMaterialType === 'all' ? allList : allList.filter((n) => (n.resourceType || 'note') === activeMaterialType);
+    const presentTypes = Array.from(new Set(allList.map((n) => n.resourceType || 'note')));
+
     pane.innerHTML = `
-      <div style="font-size:0.78rem; font-weight:800; color:#059669; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.65rem;">Books, Concept Sheets & Reference Notes</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.85rem;">
+        <div style="font-size:0.78rem; font-weight:800; color:#7c3aed; text-transform:uppercase; letter-spacing:0.06em;">Dagano Boi, Images, Books & Study Materials (${list.length})</div>
+        <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm ${activeMaterialType === 'all' ? 'btn-primary' : 'btn-secondary'}" onclick="window.setAcadMaterialTypeFilter('all')" style="border-radius:999px; font-size:0.74rem;">All (${allList.length})</button>
+          ${presentTypes.map((tp) => {
+            const meta = MATERIAL_TYPE_META[tp] || { label: tp };
+            const cnt = allList.filter((x) => (x.resourceType || 'note') === tp).length;
+            return `<button type="button" class="btn btn-sm ${activeMaterialType === tp ? 'btn-primary' : 'btn-secondary'}" onclick="window.setAcadMaterialTypeFilter('${esc(tp)}')" style="border-radius:999px; font-size:0.74rem;">${esc(meta.label)} (${cnt})</button>`;
+          }).join('')}
+        </div>
+      </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1rem;">
-        ${list.map((n) => `
-          <article class="acad-glass-panel" style="padding:1.25rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.8rem;">
-            <div>
-              <span style="font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(16,185,129,0.12); color:#059669; text-transform:uppercase;">${esc(n.resourceType || 'BOOK')}</span>
-              <h3 style="margin:0.4rem 0 0.25rem; font-size:1.05rem;">${esc(n.title)}</h3>
-              <div style="font-size:0.78rem; color:#64748b; margin-bottom:0.65rem;">${esc(n.chapter || '')}${n.summary ? ' — ' + esc(n.summary) : ''}</div>
-              ${n.content ? `<div style="background:rgba(255,255,255,0.72); border:1px solid rgba(15,23,42,0.08); border-radius:12px; padding:0.85rem; max-height:240px; overflow-y:auto;">${formatSimpleMd(n.content)}</div>` : ''}
+        ${list.map((n) => {
+          const meta = MATERIAL_TYPE_META[n.resourceType] || MATERIAL_TYPE_META.note;
+          const gal = Array.isArray(n.gallery) ? n.gallery : [];
+          const galHtml = gal.length > 0 ? `
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(76px, 1fr)); gap:0.45rem; margin-bottom:0.7rem;">
+              ${gal.slice(0, 6).map((u, idx) => `
+                <button type="button" onclick="window.openAcadLightbox('${esc(n.id)}', ${idx})" style="position:relative; aspect-ratio:1/1; border-radius:10px; overflow:hidden; border:1px solid rgba(15,23,42,0.12); padding:0; cursor:pointer; background:#0f172a;">
+                  <img src="${esc(u)}" loading="lazy" style="width:100%; height:100%; object-fit:cover; display:block;">
+                  <span style="position:absolute; bottom:3px; right:3px; font-size:0.62rem; font-weight:800; padding:1px 5px; border-radius:999px; background:rgba(15,23,42,0.78); color:#ffffff;">${idx + 1}</span>
+                </button>
+              `).join('')}
             </div>
-            ${(n.fileUrl || n.videoUrl) ? `
-              <div style="display:flex; gap:0.45rem; flex-wrap:wrap; padding-top:0.5rem; border-top:1px solid rgba(15,23,42,0.08);">
-                ${n.fileUrl ? `<a href="${esc(n.fileUrl)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Open PDF / Book</a>` : ''}
-                ${n.videoUrl ? `<a href="${esc(n.videoUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Watch Lecture</a>` : ''}
+          ` : '';
+          return `
+            <article class="acad-glass-panel" style="padding:1.25rem; display:flex; flex-direction:column; justify-content:space-between; gap:0.8rem;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                  <span style="font-size:0.68rem; font-weight:800; padding:2px 9px; border-radius:999px; background:${meta.bg}; color:${meta.color}; text-transform:uppercase;">${esc(meta.label)}</span>
+                  ${gal.length ? `<span style="font-size:0.72rem; font-weight:700; color:#64748b;">${gal.length} Page${gal.length === 1 ? '' : 's'}</span>` : ''}
+                </div>
+                <h3 style="margin:0.45rem 0 0.25rem; font-size:1.05rem;">${esc(n.title)}</h3>
+                <div style="font-size:0.78rem; color:#64748b; margin-bottom:0.65rem;">${esc(n.chapter || '')}${n.summary ? ' — ' + esc(n.summary) : ''}</div>
+                ${galHtml}
+                ${n.content ? `<div style="background:rgba(255,255,255,0.72); border:1px solid rgba(15,23,42,0.08); border-radius:12px; padding:0.85rem; max-height:220px; overflow-y:auto;">${formatSimpleMd(n.content)}</div>` : ''}
               </div>
-            ` : ''}
-          </article>
-        `).join('')}
+              ${(gal.length || n.fileUrl || n.videoUrl) ? `
+                <div style="display:flex; gap:0.45rem; flex-wrap:wrap; padding-top:0.55rem; border-top:1px solid rgba(15,23,42,0.08);">
+                  ${gal.length ? `<button type="button" class="btn btn-primary btn-sm" onclick="window.openAcadLightbox('${esc(n.id)}', 0)">View All Pages (${gal.length})</button>` : ''}
+                  ${n.fileUrl ? `<a href="${esc(n.fileUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Open PDF / File</a>` : ''}
+                  ${n.videoUrl ? `<a href="${esc(n.videoUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Watch Lecture</a>` : ''}
+                </div>
+              ` : ''}
+            </article>
+          `;
+        }).join('')}
       </div>
     `;
   }
@@ -1114,7 +1266,9 @@
     selectedDivisionId = divId;
     selectedCqId = null;
     activeChapter = 'all';
-    selectedQMode = 'mcq';
+    activeMaterialType = 'all';
+    const d = getDivisionById(divId);
+    selectedQMode = (d && (d.slug === 'books' || /book/i.test(d.name))) ? 'materials' : 'mcq';
     mcqSubMode = 'exam';
     renderWorkspaceView();
   };
@@ -1141,7 +1295,7 @@
   window.setAcadWsChapter = function (ch) {
     activeChapter = ch;
     selectedCqId = null;
-    renderWorkspaceInnerContent();
+    renderWorkspaceView();
   };
 
   window.handleSubmitCourseEnroll = async function (e, targetId) {
