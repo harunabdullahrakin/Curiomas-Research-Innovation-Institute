@@ -15,8 +15,7 @@ export function renderResearchPageHtml() {
         breadcrumbs: [{ label: 'Home', href: '/' }, { label: 'Research', href: '/research' }]
       })}
 
-      <!-- Wave from Dark Page Hero (#060b16) into Light Content (#faf8f5) -->
-      ${renderCurveDivider({ bgColor: '#060b16', color: '#faf8f5' })}
+      ${renderCurveDivider({ overlay: true, color: '#faf8f5', variant: 'layered', height: 76 })}
 
       <main class="mockup-page-content">
         <div class="mockup-container">

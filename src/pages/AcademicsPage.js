@@ -10,7 +10,7 @@ export function renderAcademicsPageHtml() {
         breadcrumbs: [{ label: 'Home', href: '/' }, { label: 'Academics', href: '/academics' }]
       })}
 
-      ${renderCurveDivider({ bgColor: '#060b16', color: '#faf8f5' })}
+      ${renderCurveDivider({ overlay: true, color: '#faf8f5', variant: 'layered', height: 76 })}
 
       <main class="mockup-page-content" style="padding-top: 2.25rem; padding-bottom: 5rem;">
         <div class="mockup-container">
@@ -21,6 +21,8 @@ export function renderAcademicsPageHtml() {
           <div id="acadStatsView" style="display:none;"></div>
         </div>
       </main>
+
+      ${renderCurveDivider({ bgColor: '#faf8f5', color: '#071f16', variant: 'crest', height: 74 })}
     </div>
   `;
 }

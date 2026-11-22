@@ -8,7 +8,7 @@ import { renderCurveDivider } from '../components/CurveDivider.js';
 export function renderArticlePageHtml() {
   return `
     <div class="page-article-wrapper">
-      <section class="mockup-page-hero" style="min-height: 280px; padding: 7rem 0 3.5rem 0;">
+      <section class="mockup-page-hero" style="min-height: 290px; padding: 7rem 0 5.75rem 0;">
         <div class="mockup-page-hero-bg-layer"></div>
         <div class="mockup-page-hero-bg-overlay"></div>
         <div class="mockup-container">
@@ -23,8 +23,7 @@ export function renderArticlePageHtml() {
         </div>
       </section>
 
-      <!-- Wave from Page Hero into Content -->
-      ${renderCurveDivider({ bgColor: '#060b16', color: '#faf8f5' })}
+      ${renderCurveDivider({ overlay: true, color: '#faf8f5', variant: 'layered', height: 76 })}
 
       <main class="mockup-page-content" style="padding: 3.5rem 0 6rem 0;">
         <div class="mockup-container" style="max-width: 860px;" id="articleContainer">

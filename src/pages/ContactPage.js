@@ -15,8 +15,7 @@ export function renderContactPageHtml() {
         breadcrumbs: [{ label: 'Home', href: '/' }, { label: 'Contact', href: '/contact' }]
       })}
 
-      <!-- Wave from Dark Page Hero (#060b16) into Light Content (#faf8f5) -->
-      ${renderCurveDivider({ bgColor: '#060b16', color: '#faf8f5' })}
+      ${renderCurveDivider({ overlay: true, color: '#faf8f5', variant: 'layered', height: 76 })}
 
       <main class="mockup-page-content">
         <div class="mockup-container" style="max-width: 1080px;">

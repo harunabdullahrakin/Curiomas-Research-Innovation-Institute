@@ -52,12 +52,8 @@ export function renderHomePageHtml() {
         </div>
       </section>
 
-      <!-- Seamless Wave Divider from Hero (#060b16) into Editorial (#f4efe6) -->
-      ${renderCurveDivider({ bgColor: '#060b16', color: '#f4efe6', connectorId: 'editorialSection' })}
+      ${renderCurveDivider({ overlay: true, color: '#f4efe6', variant: 'layered', height: 84, connectorId: 'editorialSection' })}
 
-      <!-- =========================================================================
-           SECTION 2: FROM THE INSTITUTE (OPEN-SOURCE, VERIFIABLE)
-           ========================================================================= -->
       <section class="mockup-editorial-section" id="editorialSection">
         <div class="mockup-container">
           <div class="editorial-header scroll-reveal">
@@ -70,15 +66,12 @@ export function renderHomePageHtml() {
             </div>
           </div>
 
-          <div id="fromTheInstituteContainer" class="scroll-reveal">
-            <!-- Dynamically populated with published articles -->
-          </div>
+          <div id="fromTheInstituteContainer" class="scroll-reveal"></div>
         </div>
       </section>
 
-      <!-- =========================================================================
-           SECTION 3: THE INSTITUTE INTRO
-           ========================================================================= -->
+      ${renderCurveDivider({ bgColor: '#f4efe6', color: '#faf8f5', variant: 'crest', height: 74 })}
+
       <section class="mockup-institute-section">
         <div class="mockup-container">
           <div class="institute-grid">
@@ -103,9 +96,8 @@ export function renderHomePageHtml() {
         </div>
       </section>
 
-      <!-- =========================================================================
-           SECTION 4: OUR RESEARCH DIVISIONS
-           ========================================================================= -->
+      ${renderCurveDivider({ bgColor: '#faf8f5', color: '#efe8db', variant: 'flow', height: 74 })}
+
       <section class="mockup-divisions-section">
         <div class="mockup-container">
           <div class="divisions-header scroll-reveal">
@@ -118,14 +110,11 @@ export function renderHomePageHtml() {
             </a>
           </div>
 
-          <div class="divisions-cards-grid scroll-reveal" id="homeDivisionsContainer">
-            <!-- Rendered dynamically from CRII API / Portal -->
-          </div>
+          <div class="divisions-cards-grid scroll-reveal" id="homeDivisionsContainer"></div>
         </div>
       </section>
 
-      <!-- Repo Section Wave -->
-      ${renderCurveDivider({ bgColor: '#faf8f5', color: '#f4efe6' })}
+      ${renderCurveDivider({ bgColor: '#efe8db', color: '#f8f4ec', variant: 'swell', height: 76 })}
 
       <!-- =========================================================================
            SECTION 5: PUBLICATIONS REPOSITORY INITIALIZING
@@ -187,8 +176,7 @@ export function renderHomePageHtml() {
         </div>
       </section>
 
-      <!-- Emerald Section Wave -->
-      ${renderCurveDivider({ bgColor: '#f4efe6', color: '#09231a' })}
+      ${renderCurveDivider({ bgColor: '#f8f4ec', color: '#09231a', variant: 'layered', height: 82 })}
 
       <!-- =========================================================================
            SECTION 6: BUILT FOR RIGOROUS, VERIFIABLE SCIENCE (DEEP GREEN)
@@ -238,8 +226,7 @@ export function renderHomePageHtml() {
         </div>
       </section>
 
-      <!-- Mentors Section Wave -->
-      ${renderCurveDivider({ bgColor: '#09231a', color: '#faf8f5' })}
+      ${renderCurveDivider({ bgColor: '#09231a', color: '#faf8f5', variant: 'crest', height: 82 })}
 
       <!-- =========================================================================
            SECTION 7: CORE TEAM & RESEARCH MENTORS
@@ -271,8 +258,7 @@ export function renderHomePageHtml() {
         </div>
       </section>
 
-      <!-- Mentors to Sand CTA Wave -->
-      ${renderCurveDivider({ bgColor: '#faf8f5', color: '#ded3be' })}
+      ${renderCurveDivider({ bgColor: '#faf8f5', color: '#ded3be', variant: 'flow', height: 78 })}
 
       <!-- =========================================================================
            SECTION 8: READY TO ADVANCE FRONTIER SCIENCE? (WARM SAND)
@@ -303,8 +289,7 @@ export function renderHomePageHtml() {
         </div>
       </section>
 
-      <!-- Cohort Section Wave -->
-      ${renderCurveDivider({ bgColor: '#ded3be', color: '#faf8f5' })}
+      ${renderCurveDivider({ bgColor: '#ded3be', color: '#faf8f5', variant: 'swell', height: 78 })}
 
       <!-- =========================================================================
            SECTION 9: WHO CAN JOIN US? (COHORT PROFILES)
@@ -336,8 +321,7 @@ export function renderHomePageHtml() {
         </div>
       </section>
 
-      <!-- Cohort to Midnight Section Wave -->
-      ${renderCurveDivider({ bgColor: '#faf8f5', color: '#07101d' })}
+      ${renderCurveDivider({ bgColor: '#faf8f5', color: '#07101d', variant: 'layered', height: 82 })}
 
       <!-- =========================================================================
            SECTION 10: HAVE A QUESTION? (DEEP MIDNIGHT NAVY)
@@ -388,8 +372,7 @@ export function renderHomePageHtml() {
         </div>
       </section>
 
-      <!-- Midnight to Footer Wave -->
-      ${renderCurveDivider({ bgColor: '#07101d', color: '#071f16' })}
+      ${renderCurveDivider({ bgColor: '#07101d', color: '#071f16', variant: 'crest', height: 78 })}
     </div>
   `;
 }
