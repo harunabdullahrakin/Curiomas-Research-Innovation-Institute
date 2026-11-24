@@ -232,7 +232,7 @@ export async function onRequestPost(context) {
     const avatar = data.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
     const university = data.university || "";
     const degree = data.degree || "";
-    const division = data.division || "Space & Astrophysics";
+    const division = data.division || "General";
     const role = data.role || "Research Fellow";
     const cohort = data.cohort || "Spring 2026";
     const status = data.status || "Active";

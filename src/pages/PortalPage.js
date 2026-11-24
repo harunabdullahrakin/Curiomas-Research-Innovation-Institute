@@ -546,17 +546,8 @@ export function renderPortalPageHtml() {
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="bloggerCategoryInput">Scientific Division / Category / Sector *</label>
-                  <input type="text" id="bloggerCategoryInput" list="bloggerCategoryDatalist" class="form-input" placeholder="Select or type new category/sector..." value="Space & Astrophysics">
-                  <datalist id="bloggerCategoryDatalist">
-                    <option value="Space & Astrophysics">
-                    <option value="Ancient Biology & Paleontology">
-                    <option value="AI & Computational Science">
-                    <option value="Astrobiology & Extremophiles">
-                    <option value="Quantum Biophysics">
-                    <option value="Exoplanetary Atmospheres">
-                    <option value="Evolutionary Genomics">
-                    <option value="Open Methods">
-                  </datalist>
+                  <input type="text" id="bloggerCategoryInput" list="bloggerCategoryDatalist" class="form-input" placeholder="Select a division from database or type custom...">
+                  <datalist id="bloggerCategoryDatalist"></datalist>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="bloggerSlugInput">URL Slug / Permalink</label>
@@ -964,10 +955,7 @@ export function renderPortalPageHtml() {
               <div class="form-group">
                 <label class="form-label" for="dsCategoryInput">Division *</label>
                 <select id="dsCategoryInput" class="form-select" required>
-                  <option value="Space & Astrophysics">Space & Astrophysics</option>
-                  <option value="Ancient Biology & Paleontology">Ancient Biology & Paleontology</option>
-                  <option value="AI & Computational Science">AI & Computational Science</option>
-                  <option value="Astrobiology & Extremophiles">Astrobiology & Extremophiles</option>
+                  <option value="">Loading divisions...</option>
                 </select>
               </div>
             </div>
@@ -1079,10 +1067,6 @@ export function renderPortalPageHtml() {
                 <label class="form-label" for="newAllowedDivision">Assigned Division</label>
                 <select id="newAllowedDivision" class="form-select">
                   <option value="Executive Council">Executive Council</option>
-                  <option value="Astrophysics & Space Science">Astrophysics & Space Science</option>
-                  <option value="Ancient Biology & Paleontology">Ancient Biology & Paleontology</option>
-                  <option value="AI & Computational Science">AI & Computational Science</option>
-                  <option value="Astrobiology & Extremophiles">Astrobiology & Extremophiles</option>
                 </select>
               </div>
             </div>
@@ -2260,10 +2244,6 @@ export function renderPortalPageHtml() {
               <label class="form-label" for="resDivisionInput">Division *</label>
               <select id="resDivisionInput" class="form-select" required>
                 <option value="Executive Council">Executive Council</option>
-                <option value="Space & Astrophysics">Space & Astrophysics</option>
-                <option value="Ancient Biology & Paleontology">Ancient Biology & Paleontology</option>
-                <option value="AI & Computational Science">AI & Computational Science</option>
-                <option value="Astrobiology & Extremophiles">Astrobiology & Extremophiles</option>
               </select>
             </div>
           </div>
@@ -2662,7 +2642,10 @@ export function renderPortalPageHtml() {
             </div>
             <div class="form-group">
               <label class="form-label" for="recDivisionInput">Target Division Scope</label>
-              <input type="text" id="recDivisionInput" class="form-input" placeholder="All Research Divisions">
+              <input type="text" id="recDivisionInput" list="recDivisionDatalist" class="form-input" placeholder="All Research Divisions">
+              <datalist id="recDivisionDatalist">
+                <option value="All Research Divisions">
+              </datalist>
             </div>
             <div class="form-group">
               <label class="form-label" for="recStatusInput">Page Status</label>

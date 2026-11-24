@@ -262,7 +262,7 @@ export async function onRequestPost(context) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
     if (!slug) slug = `paper-${Date.now().toString(36)}`;
-    const category = data.category || "Space & Astrophysics";
+    const category = data.category || "General";
     const date = data.date || new Date().toISOString().split("T")[0];
     const nowIso = new Date().toISOString();
     const updatedAt = nowIso;

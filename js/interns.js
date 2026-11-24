@@ -532,14 +532,7 @@ async function initApplicationForm() {
         divSelect.innerHTML = '<option value="">Select Research Division Track...</option>' +
           realDivisions.map(d => `<option value="${escapeHtml(d.title)}">${escapeHtml(d.title)}</option>`).join('');
       } else {
-        divSelect.innerHTML = `
-          <option value="">Select Research Division Track...</option>
-          <option value="Space & Astrophysics">Space & Astrophysics</option>
-          <option value="Ancient Biology & Paleogenomics">Ancient Biology & Paleogenomics</option>
-          <option value="AI & Computational Science">AI & Computational Science</option>
-          <option value="Astrobiology & Extremophiles">Astrobiology & Extremophiles</option>
-          <option value="Interdisciplinary Open Science">Interdisciplinary Open Science</option>
-        `;
+        divSelect.innerHTML = '<option value="">No divisions configured yet</option>';
       }
     } catch (e) {}
   }

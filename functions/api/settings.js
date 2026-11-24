@@ -204,6 +204,8 @@ export async function onRequestPost(context) {
           if (activeIds.length > 0) {
             const placeholders = activeIds.map(() => '?').join(',');
             await env.DB.prepare(`DELETE FROM divisions WHERE id NOT IN (${placeholders})`).bind(...activeIds).run().catch(() => {});
+          } else {
+            await env.DB.prepare("DELETE FROM divisions").run().catch(() => {});
           }
         } catch (syncErr) {}
       }

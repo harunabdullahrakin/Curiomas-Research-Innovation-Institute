@@ -1230,7 +1230,7 @@ class CriiApiClient {
       avatar: memberData.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
       university: memberData.university || "CRII",
       degree: memberData.degree || "",
-      division: memberData.division || "Space & Astrophysics",
+      division: memberData.division || "General",
       role: memberData.role || "Research Fellow",
       cohort: memberData.cohort || "Spring 2026",
       status: memberData.status || "Active",

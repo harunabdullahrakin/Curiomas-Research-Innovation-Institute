@@ -40,12 +40,8 @@ export function renderResearchPageHtml() {
               <input type="text" id="researchSearch" class="search-input" placeholder="Search publications, authors, or scientific keywords...">
             </div>
 
-            <div class="category-pills">
+            <div class="category-pills" id="researchCategoryPills">
               <button class="category-pill active" data-category="all">All Disciplines</button>
-              <button class="category-pill" data-category="Space">Space & Astrophysics</button>
-              <button class="category-pill" data-category="Ancient">Ancient Biology</button>
-              <button class="category-pill" data-category="AI">AI & Computational</button>
-              <button class="category-pill" data-category="Astrobiology">Astrobiology</button>
             </div>
           </div>
 

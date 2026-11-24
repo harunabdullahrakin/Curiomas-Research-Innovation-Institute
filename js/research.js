@@ -6,9 +6,52 @@
 
 let allPapers = [];
 let allDatasets = [];
+let allResearchDivisions = [];
 let currentCategory = 'all';
 let searchQuery = '';
 let activeTab = 'papers';
+
+function escResearchHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function getDivisionBadgeClass(cat) {
+  const palette = ['badge-blue', 'badge-emerald', 'badge-indigo', 'badge-amber'];
+  const s = String(cat || '');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return palette[h % palette.length];
+}
+
+function renderDynamicCategoryPills() {
+  const container = document.getElementById('researchCategoryPills');
+  if (!container) return;
+  const labels = [];
+  const seen = new Set();
+  const addLabel = (raw) => {
+    const t = String(raw || '').trim();
+    if (!t) return;
+    const key = t.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    labels.push(t);
+  };
+  (allResearchDivisions || []).forEach(d => addLabel(d.title));
+  (allPapers || []).forEach(p => addLabel(p.category));
+  (allDatasets || []).forEach(ds => addLabel(ds.category));
+
+  container.innerHTML = `<button class="category-pill ${currentCategory === 'all' ? 'active' : ''}" data-category="all">All Disciplines</button>` +
+    labels.map(lbl => `<button class="category-pill ${currentCategory.toLowerCase() === lbl.toLowerCase() ? 'active' : ''}" data-category="${escResearchHtml(lbl)}">${escResearchHtml(lbl)}</button>`).join('');
+
+  container.querySelectorAll('.category-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      container.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentCategory = pill.dataset.category;
+      renderContent();
+    });
+  });
+}
 
 async function initResearchCatalog() {
   await loadResearchData();
@@ -23,8 +66,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadResearchData() {
-  allPapers = await window.CRII_API.getPosts();
-  allDatasets = await window.CRII_API.getDatasets();
+  const [papers, datasets, divs] = await Promise.all([
+    window.CRII_API.getPosts(),
+    window.CRII_API.getDatasets(),
+    typeof window.CRII_API.getDivisions === 'function' ? window.CRII_API.getDivisions() : Promise.resolve([])
+  ]);
+  allPapers = papers || [];
+  allDatasets = datasets || [];
+  allResearchDivisions = Array.isArray(divs) ? divs : [];
+  renderDynamicCategoryPills();
   renderContent();
 }
 
@@ -45,16 +95,6 @@ function initTabs() {
 }
 
 function initFilters() {
-  const pills = document.querySelectorAll('.category-pill');
-  pills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      pills.forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      currentCategory = pill.dataset.category;
-      renderContent();
-    });
-  });
-
   const searchInput = document.getElementById('researchSearch');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -104,10 +144,7 @@ function renderPapers() {
   }
 
   container.innerHTML = filtered.map(paper => {
-    let badgeClass = 'badge-blue';
-    if (paper.category.includes('Ancient')) badgeClass = 'badge-amber';
-    if (paper.category.includes('AI')) badgeClass = 'badge-indigo';
-    if (paper.category.includes('Astrobiology')) badgeClass = 'badge-emerald';
+    const badgeClass = getDivisionBadgeClass(paper.category);
 
     const coverHtml = paper.coverImage ? `
       <div class="card-cover">

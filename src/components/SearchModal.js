@@ -14,11 +14,7 @@ export function renderSearchModalHtml() {
           <kbd class="crii-search-esc" id="criiSearchEsc">ESC</kbd>
         </div>
         <div class="crii-search-quick-tags" id="criiSearchQuickTags">
-          <span class="quick-tag-label">Suggested:</span>
-          <button type="button" class="quick-tag-btn" data-query="Spectra">Spectra</button>
-          <button type="button" class="quick-tag-btn" data-query="Biophysics">Biophysics</button>
-          <button type="button" class="quick-tag-btn" data-query="Paleogenomics">Paleogenomics</button>
-          <button type="button" class="quick-tag-btn" data-query="Habitability">Habitability</button>
+          <span class="quick-tag-label">Divisions:</span>
         </div>
         <div class="crii-search-body" id="criiSearchResults">
           <div class="crii-search-empty">Type keywords or click a suggestion above to search...</div>
@@ -43,10 +39,25 @@ export function initSearchModal(router) {
 
   if (!overlay || !input) return;
 
+  async function refreshSearchQuickTags() {
+    if (!quickTags || !window.CRII_API || typeof window.CRII_API.getDivisions !== 'function') return;
+    try {
+      const divs = (await window.CRII_API.getDivisions()) || [];
+      if (divs.length > 0) {
+        quickTags.innerHTML = '<span class="quick-tag-label">Divisions:</span>' +
+          divs.slice(0, 6).map(d => {
+            const safe = String(d.title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+            return `<button type="button" class="quick-tag-btn" data-query="${safe}">${safe}</button>`;
+          }).join('');
+      }
+    } catch (e) {}
+  }
+
   function openSearch(initialQuery = '') {
     overlay.style.display = 'flex';
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('search-modal-open');
+    refreshSearchQuickTags();
     if (initialQuery) {
       input.value = initialQuery;
       performSearch(initialQuery);

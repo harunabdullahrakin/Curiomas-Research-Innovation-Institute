@@ -16,6 +16,67 @@ let currentTab = 'overview';
 let cachedPosts = [];
 let cachedInternsData = { activeInterns: [], applications: [] };
 let cachedDatasets = [];
+let cachedDivisions = [];
+
+function getDefaultDivisionTitle() {
+  return (cachedDivisions && cachedDivisions[0] && cachedDivisions[0].title) ? cachedDivisions[0].title : 'General';
+}
+
+function fillSelectWithDivisions(selectEl, divisions, { includeExecutive = false, includeAllLabel = null, preserveValue = null, emptyLabel = 'No divisions created yet' } = {}) {
+  if (!selectEl) return;
+  const currentVal = preserveValue !== null ? preserveValue : selectEl.value;
+  const options = [];
+  if (includeAllLabel) options.push(includeAllLabel);
+  if (includeExecutive) options.push('Executive Council');
+  (divisions || []).forEach(d => {
+    const t = String(d?.title || '').trim();
+    if (t && !options.includes(t)) options.push(t);
+  });
+  if (currentVal && String(currentVal).trim() && !options.includes(currentVal) && currentVal !== 'Loading divisions...') {
+    options.push(currentVal);
+  }
+  if (options.length === 0) {
+    selectEl.innerHTML = `<option value="">${escapeHtml(emptyLabel)}</option>`;
+    return;
+  }
+  selectEl.innerHTML = options.map(opt => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join('');
+  if (currentVal && options.includes(currentVal)) {
+    selectEl.value = currentVal;
+  } else {
+    selectEl.value = options[0];
+  }
+}
+
+async function syncPortalDivisionControls(divisionsOverride) {
+  try {
+    if (Array.isArray(divisionsOverride)) {
+      cachedDivisions = divisionsOverride;
+    } else if (window.CRII_API && typeof window.CRII_API.getDivisions === 'function') {
+      cachedDivisions = (await window.CRII_API.getDivisions()) || [];
+    }
+  } catch (e) {}
+
+  fillSelectWithDivisions(document.getElementById('dsCategoryInput'), cachedDivisions, { emptyLabel: 'Create a division first' });
+  fillSelectWithDivisions(document.getElementById('resDivisionInput'), cachedDivisions, { includeExecutive: true });
+  fillSelectWithDivisions(document.getElementById('newAllowedDivision'), cachedDivisions, { includeExecutive: true });
+  fillSelectWithDivisions(document.getElementById('cohortDivisionInput'), cachedDivisions, { includeAllLabel: 'All Research Tracks' });
+
+  const bloggerDl = document.getElementById('bloggerCategoryDatalist');
+  if (bloggerDl) {
+    bloggerDl.innerHTML = cachedDivisions.map(d => `<option value="${escapeHtml(d.title)}">`).join('');
+  }
+  const bloggerCatInp = document.getElementById('bloggerCategoryInput');
+  if (bloggerCatInp && !bloggerCatInp.value.trim() && cachedDivisions.length > 0) {
+    bloggerCatInp.value = cachedDivisions[0].title;
+  }
+
+  const recDl = document.getElementById('recDivisionDatalist');
+  if (recDl) {
+    recDl.innerHTML = '<option value="All Research Divisions">' + cachedDivisions.map(d => `<option value="${escapeHtml(d.title)}">`).join('');
+  }
+  return cachedDivisions;
+}
+window.syncPortalDivisionControls = syncPortalDivisionControls;
 
 // Blogger Editor State
 let currentEditingPostId = null;
@@ -218,17 +279,24 @@ function showTab(tabName) {
   if (tabName === 'posts' && typeof renderPostsDirectory === 'function') {
     renderPostsDirectory();
   }
+  if (tabName === 'datasets' && typeof renderDatasetsTable === 'function') {
+    syncPortalDivisionControls();
+    renderDatasetsTable();
+  }
   if (tabName === 'roster' && typeof renderRosterGrid === 'function') {
+    syncPortalDivisionControls();
     renderRosterGrid();
   }
   if (tabName === 'access' && typeof renderAllowedUsersTable === 'function') {
+    syncPortalDivisionControls();
     renderAllowedUsersTable();
   }
   if (tabName === 'applications' && typeof renderApplicationsTable === 'function') {
+    syncPortalDivisionControls();
     renderApplicationsTable();
   }
-  if (tabName === 'datasets' && typeof renderDatasetsTable === 'function') {
-    renderDatasetsTable();
+  if (tabName === 'composer') {
+    syncPortalDivisionControls();
   }
   if (tabName === 'divisions' && typeof window.renderDivisionsTab === 'function') {
     window.renderDivisionsTab();
@@ -268,6 +336,7 @@ async function refreshDashboardData() {
   cachedPosts = await window.CRII_API.getPosts({ includeDrafts: true });
   cachedInternsData = await window.CRII_API.getInternsData();
   cachedDatasets = await window.CRII_API.getDatasets();
+  await syncPortalDivisionControls();
 
   // Metrics
   const statPapers = document.getElementById('statPapers');
@@ -413,7 +482,7 @@ function openBloggerEditor(postId) {
     isCurrentPostPublished = p.published !== false;
     document.getElementById('bloggerCoverInput').value = p.coverImage || "";
     document.getElementById('bloggerSlugInput').value = p.slug || "";
-    document.getElementById('bloggerCategoryInput').value = p.category || "Space & Astrophysics";
+    document.getElementById('bloggerCategoryInput').value = p.category || getDefaultDivisionTitle();
     const featEl = document.getElementById('bloggerFeaturedInput');
     if (featEl) featEl.checked = Boolean(p.featured);
     document.getElementById('bloggerAuthorsInput').value = (p.authors || []).join(', ');
@@ -451,7 +520,7 @@ function openBloggerEditor(postId) {
     isCurrentPostPublished = true;
     document.getElementById('bloggerCoverInput').value = "";
     document.getElementById('bloggerSlugInput').value = "";
-    document.getElementById('bloggerCategoryInput').value = "Space & Astrophysics";
+    document.getElementById('bloggerCategoryInput').value = getDefaultDivisionTitle();
     const featEl = document.getElementById('bloggerFeaturedInput');
     if (featEl) featEl.checked = false;
     const user = window.CRII_API.getCurrentUser();
@@ -1044,7 +1113,7 @@ async function saveCurrentPost() {
     return;
   }
 
-  const category = document.getElementById('bloggerCategoryInput')?.value || "Space & Astrophysics";
+  const category = (document.getElementById('bloggerCategoryInput')?.value || '').trim() || getDefaultDivisionTitle();
   const coverImage = (document.getElementById('bloggerCoverInput')?.value || '').trim();
   let slug = (document.getElementById('bloggerSlugInput')?.value || '').trim();
   if (!slug) {
@@ -1376,11 +1445,13 @@ window.filterRosterList = function(type) {
   });
 };
 
-window.openResearcherModal = function(id) {
+window.openResearcherModal = async function(id) {
   const modal = document.getElementById('researcherModal');
   const title = document.getElementById('researcherModalTitle');
   const editId = document.getElementById('researcherEditId');
   if (!modal) return;
+
+  await syncPortalDivisionControls();
 
   if (id) {
     const member = (cachedInternsData.activeInterns || []).find(m => m.id === id);
@@ -1391,7 +1462,10 @@ window.openResearcherModal = function(id) {
       document.getElementById('resEmailInput').value = member.email || '';
       document.getElementById('resAvatarInput').value = member.avatar || '';
       document.getElementById('resRoleInput').value = member.role || '';
-      document.getElementById('resDivisionInput').value = member.division || 'Space & Astrophysics';
+      fillSelectWithDivisions(document.getElementById('resDivisionInput'), cachedDivisions, {
+        includeExecutive: true,
+        preserveValue: member.division || getDefaultDivisionTitle()
+      });
       document.getElementById('resUniversityInput').value = member.university || '';
       document.getElementById('resDegreeInput').value = member.degree || '';
       document.getElementById('resBioInput').value = member.bio || '';
@@ -1404,6 +1478,10 @@ window.openResearcherModal = function(id) {
     if (title) title.innerText = 'Add Researcher / Fellow';
     if (editId) editId.value = '';
     document.getElementById('researcherForm').reset();
+    fillSelectWithDivisions(document.getElementById('resDivisionInput'), cachedDivisions, {
+      includeExecutive: true,
+      preserveValue: getDefaultDivisionTitle()
+    });
     document.getElementById('resAvatarInput').value = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
     document.getElementById('resIsTeamMember').checked = false;
     document.getElementById('resOrderIndex').value = 10;
@@ -2057,7 +2135,7 @@ function initApplicationModal() {
   }
 }
 
-window.reviewApplication = function(appId) {
+window.reviewApplication = async function(appId) {
   activeAppId = appId;
   const app = (cachedInternsData.applications || []).find(a => a.id === appId);
   if (!app) return;
@@ -2066,11 +2144,13 @@ window.reviewApplication = function(appId) {
   const details = document.getElementById('appReviewDetails');
   if (!modal || !details) return;
 
-  // Populate dynamic division options
+  await syncPortalDivisionControls();
   const divSelect = document.getElementById('reviewAppDivisionSelect');
   if (divSelect) {
-    const divs = (window.CRII_API && window.CRII_API.getDivisions && window.CRII_API.getDivisions()) || [];
-    divSelect.innerHTML = divs.map(d => `<option value="${escapeHtml(d.title)}">${escapeHtml(d.title)}</option>`).join('');
+    fillSelectWithDivisions(divSelect, cachedDivisions, {
+      includeExecutive: true,
+      preserveValue: app.preferredDivision || getDefaultDivisionTitle()
+    });
     if (app.preferredDivision) {
       const match = Array.from(divSelect.options).find(o => o.value.toLowerCase().includes(app.preferredDivision.toLowerCase()));
       if (match) divSelect.value = match.value;
@@ -2251,6 +2331,7 @@ function initAccessControl() {
 
       window.showToast(`User ${email} authorized and saved successfully!`, 'success');
       form.reset();
+      await syncPortalDivisionControls();
       await renderAllowedUsersTable();
     } catch (err) {
       window.showToast('Failed to authorize account: ' + err.message, 'error');
@@ -2776,6 +2857,7 @@ async function handleSaveDivision(e) {
     await window.CRII_API.saveDivision(divisionData);
     window.closeDivisionModal();
     await window.renderDivisionsTab();
+    await syncPortalDivisionControls();
     if (window.showToast) window.showToast('Research division saved successfully!', 'success');
   } catch (err) {
     window.alert('Failed to save division: ' + (err.message || err));
@@ -2795,6 +2877,7 @@ async function deleteDivisionConfirm(id, title) {
   try {
     await window.CRII_API.deleteDivision(id);
     await window.renderDivisionsTab();
+    await syncPortalDivisionControls();
     if (window.showToast) window.showToast('Division removed.', 'info');
   } catch (err) {
     window.alert('Failed to delete division: ' + (err.message || err));
